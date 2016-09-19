@@ -1,2 +1,1 @@
-# splunk-docker-build
-# splunk-docker-build
+# See attached .doc file for details
