@@ -59,7 +59,7 @@ Configuration and setup:
 
 You may need to adjust the script to match your network space. Or you can simply use the defaults if your routed network is 192.168.1.0/24. In my lab, the docker-host is 192.168.1.100 it’s also where I ran my dnsmasq (DNS caching server). If you prefer not to use dnsmasq; then just use actual container IPs in your browser. The first container you create will start at 192.168.1.130 and last one will end at 192.168.1.250. If you wish to setup your docker-host with permanent IP aliases see this link http://askubuntu.com/questions/585468/how-do-i-add-an-additional-ip-address-to-an-interface-in-ubuntu-14
 
-```
+```shell
 ETH="eth0"
 BASEIP="192.168.1"                          //must be routed network. We are using class C here!
 BASEOCTET4="129"
