@@ -85,7 +85,7 @@ You have the ability to control verbosity level by using –v switch. I used I/O
 create-splunk.sh –v3 
 ```
 
-Experiment with creating few hosts then point your browser to them. Push the server to the limits to see how many host can you create before your system crashes.
+Experiment with creating few hosts then point your browser to them. Push the server to the limits to see how many host can you create before your system crashes. I was able to create 80 hosts (4 site-2-site cluster 20IDX 3SH each) at one point. All on single Intel NUC SKull device (i7 32GB 1TB SSD). Load avg shot to 20 at one point but went down to 6 once the cluster stablized. Please be aware that it will take 10+ minutes (depending on number of memebers on the cluster) to reacha a stable cluster state.
 
 ```Choose option C```
 
