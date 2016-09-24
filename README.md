@@ -87,29 +87,25 @@ create-splunk.sh –v3
 
 Experiment with creating few hosts then point your browser to them. Push the server to the limits to see how many host can you create before your system crashes.
 
-Choose option C
+```Choose option C```
 
 Add license file(s) to your containers. Make sure you have your all your license files in a directory accessible by the script. This option will be overridden if the host becomes a license-slave
 
-Choose option 6
+```Choose option 6```
 
 The real fun starts on the second clustering-menu. Select any item from the first 1-4 choices then watch the script create everything for you. Once you get familiar with things; then move to the “manual” mode options 5-8. In manual mode you will be able to specify exact hostnames and how many “hosts” to create. Please follow the standard described above. Validate the actions by pointing your browser to any host you create. 
 
-There are few optional items (open source) that I included in the container build that are OS related; it’s up to you if you want to install those items:
-
--screenfetch  : banner screen show host info at ssh login
--bashrc:  customized bash file
 
 ##Navigation:
 
 There are two menu screens the main menu. Here is a brief explanation of important options on the main menu:
-C) Create containers:  Allows you to choose the container name and how many “hosts” to create. Good options if you are to doing a search party or just classroom with stand alone Splunk instances.
+`C) Create containers`: Allows you to choose the container name and how many “hosts” to create. Good options if you are to doing a                               search party or just classroom with stand alone Splunk instances.
 
-C) Delete container: Allows you to delete all containers in the system
+`D) Delete container`:  Allows you to delete all containers in the system
 
-R) Remove all volumes: Docker does not remove any container artifact when deleted or shutdown. You can clean and save disk space using this option.
+`R) Remove all volumes`: Docker does not remove any container artifact when deleted or shutdown. You can clean and save disk space using this option.
 
-4) Show hosts by group: Useful to display categories of the environment by function. It will show all cluster-masters (CM) and possible members associated with it. The same goes for Deployer (DEP) servers.
+`4) Show hosts by group`:Useful to display categories of the environment by function. It will show all cluster-masters (CM) and possible                          members associated with it. The same goes for Deployer (DEP) servers.
 
 The rest of the options are self-explanatory
 
