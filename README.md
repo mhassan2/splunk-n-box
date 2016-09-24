@@ -7,23 +7,24 @@ If you are like me; you must have dealt with similar challenges.
 
 Like most people, you probably attempted to solve the problem by either throwing more hardware at it, or by using some sort of VM technology that does not scale well without additional resources and cost. Well, I have a solution for you! But before that I would like to welcome you to the world of docker, the game changer that brought micro services to reality. Imagine that with a click of a button you are able to create 3-sites cluster, each location running 3-SHs and 10-IDXs. Or maybe just instantly create a portable lab environment for testing or training purposes. 
 
-You may have heard of docker, or you may even experiment with it trying to figure out how can I use it to help my Splunk needs. But learning docker technology by itself is not helpful unless its used in the contest of specific app like Splunk. To help my customers (and myself) I have created a wrapper bash script (around 1200 lines) to manage Splunk instances builds. The script will allow you to create a pre-configured large number of Splunk infrastructure components without having to learn a single docker command and with minimal resources requirements (CPU, memory, HD space). 
+You may have heard of docker, or you may even experiment with it trying to figure out how can I use it to help my Splunk needs. But learning docker technology by itself is not helpful unless its used in the contest of specific app like Splunk. To help my customers (and myself) I have created a wrapper bash script (around 1200 lines) to manage Splunk instances builds. *The script will allow you to create a pre-configured large number of Splunk infrastructure components without having to learn a single docker command and with minimal resources requirements (CPU, memory, HD space).*
 
 In my small test environment I was able to quickly bring upward of 40+ Splunk docker containers for a classroom lab using low powered Intel NUC device (i3 16GB ram, 128G SSD). What’s impressive about docker is that the footprint on my docker-host was extremely small compared to similar buld using a VM solution. I need to emphasize that I have not tested my script under heavy load (either user interaction or data ingestion), however, I believe is just a matter of sizing the hardware appropriately, but at much lower footprint than the alternative methods such as duplicating your production hardware or using virtualization technology.  And that is promise of micro services!
 
 ##Script feature list:
 
--Extensive Error checking when configuring the containers
--Adaptive load control (throttling if exceeds 4xcores) during cluster build
--Built-in dynamic host names and IPs allocation
--Automatically create & configure large number of Splunk hosts very fast
--Different levels of logging (show docker commands executed)
--Complete multi and single site cluster builds including CM and DEP servers
--Manual and auto (standard configurations)
--Modular design that can easily be converted to a higher-level language like python
--Custom login screen (helpful for lab & Search Parties scenarios)
--Low resources requirements
--Eliminate the need to learn docker (but you should)
+- Extensive Error checking when configuring the containers
+- Adaptive load control (throttling if exceeds 4xcores) during cluster build
+- Built-in dynamic host names and IPs allocation
+- Automatically create & configure large number of Splunk hosts very fast
+- Different levels of logging (show docker commands executed)
+- Complete multi and single site cluster builds including CM and DEP servers
+- Manual and auto (standard configurations)
+- Modular design that can easily be converted to a higher-level language like python
+- Custom login screen (helpful for lab & Search Parties scenarios)
+- Low resources requirements
+- Eliminate the need to learn docker (but you should)
+
 
 ##Where to get it?
 
@@ -42,7 +43,7 @@ When the scripts runs for the first time it checks to see if you have any IP ali
 
 I used outcoldman image as basis of this work. But for some reason it was pulled out of docker registry website. You still can get it here:  https://github.com/outcoldman/docker-splunk
 
-Here is his instruction on downloading the image (remember to include the trailing dot):
+Here is his instructions for getting the image (remember to include the trailing dot):
 
 
 ```
@@ -117,6 +118,8 @@ The rest of the options are self-explanatory
 
 
 ##Note:
-There are few optional items (open source) are not part of my work. I added to the container build that is OS related; it’s up to you if you want to install those items. 
--screenfetch  : banner screen show host info at ssh login
+There are few optional items (open source) are not part of my work. I added to the container build that is OS related; it’s up to you if you want to install those items.
+
+-[screenfetch](http://tuxtweaks.com/2013/12/install-screenfetch-linux/)  : banner screen show host info at ssh login
+
 -bashrc:  customized bash file
