@@ -1,4 +1,4 @@
-** __ See SplunkLAB_in_a_box.docx __ for detailed instructions! **
+**See  _SplunkLAB_in_a_box.docx_  for detailed instructions!**
 
 ##Introduction:
 
