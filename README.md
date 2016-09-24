@@ -5,8 +5,8 @@
 Have you ever wanted to create a multi-site cluster environment in your lab but you don’t have the resources for it? Have you ever wondered how does bucket replication translates on the file system level? Have you ever wanted to create portable Splunk classroom but it is cost prohibitive? How about changing critical configuration without worrying about messing up your production environment?
 If you are like me; you must have dealt with similar challenges.
 
-Like most people, you probably attempted to solve the problem by either throwing more hardware at it, or by using some sort of VM technology that does not scale well without additional resources and cost. Well, I have a solution for you! But before that I would like to welcome you to the world of docker, the game changer that brought micro services to reality. Imagine that with a click of a button you are able to create 3-sites cluster, each location running 3-SHs and 10-IDXs. Or maybe just instantly create a portable lab environment for testing or training purposes. 
 
+Like most people, you probably attempted to solve the problem by either throwing more hardware at it, or by using some sort of VM technology that does not scale well without additional resources and cost. Well, I have a solution for you! But before that I would like to welcome you to the world of docker, the game changer that brought micro services to reality. Imagine that with a click of a button you are able to create 3-sites cluster, each location running 3-SHs and 10-IDXs. Or maybe just instantly create a portable lab environment for testing or training purposes. 
 You may have heard of docker, or you may even experiment with it trying to figure out how can I use it to help my Splunk needs. But learning docker technology by itself is not helpful unless its used in the contest of specific app like Splunk. To help my customers (and myself) I have created a wrapper bash script (around 1200 lines) to manage Splunk instances builds. *The script will allow you to create a pre-configured large number of Splunk infrastructure components without having to learn a single docker command and with minimal resources requirements (CPU, memory, HD space).*
 
 In my small test environment I was able to quickly bring upward of 40+ Splunk docker containers for a classroom lab using low powered Intel NUC device (i3 16GB ram, 128G SSD). What’s impressive about docker is that the footprint on my docker-host was extremely small compared to similar buld using a VM solution. I need to emphasize that I have not tested my script under heavy load (either user interaction or data ingestion), however, I believe is just a matter of sizing the hardware appropriately, but at much lower footprint than the alternative methods such as duplicating your production hardware or using virtualization technology.  And that is promise of micro services!
@@ -99,6 +99,7 @@ The real fun starts on the second clustering-menu. Select any item from the firs
 ##Navigation:
 
 There are two menu screens the main menu. Here is a brief explanation of important options on the main menu:
+
 `C) Create containers` : Allows you to choose the container name and how many “hosts” to create. Good options if you are to doing a                               search party or just classroom with stand alone Splunk instances.
 
 `D) Delete container`  :  Allows you to delete all containers in the system
