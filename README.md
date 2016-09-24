@@ -144,7 +144,7 @@ display_menu ()
 
 
 ##Note:
-There are few optional items (open source) are not part of my work. I added to the container build that is OS related; it’s up to you if you want to install those items.
+There are few optional items (open source) are not part of my work. I added the to the container build for troubleshooting.; it’s up to you if you want to install those items. You may want to include them to keep the container footprint small.
 
 -[screenfetch](http://tuxtweaks.com/2013/12/install-screenfetch-linux/)  : banner screen show host info at ssh login
 
