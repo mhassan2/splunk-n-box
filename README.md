@@ -99,11 +99,11 @@ The real fun starts on the second clustering-menu. Select any item from the firs
 ##Navigation:
 
 There are two menu screens the main menu. Here is a brief explanation of important options on the main menu:
-`C) Create containers`: Allows you to choose the container name and how many “hosts” to create. Good options if you are to doing a                               search party or just classroom with stand alone Splunk instances.
+`C) Create containers` : Allows you to choose the container name and how many “hosts” to create. Good options if you are to doing a                               search party or just classroom with stand alone Splunk instances.
 
-`D) Delete container`:  Allows you to delete all containers in the system
+`D) Delete container`  :  Allows you to delete all containers in the system
 
-`R) Remove all volumes`: Docker does not remove any container artifact when deleted or shutdown. You can clean and save disk space using this option.
+`R) Remove all volumes`: Docker does not remove any container artifact when deleted or shutdown. You can clean and save disk space using                          this option.
 
 `4) Show hosts by group`:Useful to display categories of the environment by function. It will show all cluster-masters (CM) and possible                          members associated with it. The same goes for Deployer (DEP) servers.
 
