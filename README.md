@@ -44,9 +44,12 @@ I used outcoldman image as basis of this work. But for some reason it was pulled
 
 Here is his instruction on downloading the image (remember to include the trailing dot):
 
+
+```
 git clone https://github.com/outcoldman/docker-splunk.git 
 cd docker-splunk/splunk 
 docker build --tag="$USER/splunk" .
+```
 
 If that doesn’t work for you then try another “splunk” image on the registry. Or you can make your own-stripped down Splunk image. If there is enough interested I will probably post my own but at this point what’s out there should work.
 
@@ -55,17 +58,18 @@ Configuration and setup:
 
 You may need to adjust the script to match your network space. Or you can simply use the defaults if your routed network is 192.168.1.0/24. In my lab, the docker-host is 192.168.1.100 it’s also where I ran my dnsmasq (DNS caching server). If you prefer not to use dnsmasq; then just use actual container IPs in your browser. The first container you create will start at 192.168.1.130 and last one will end at 192.168.1.250. If you wish to setup your docker-host with permanent IP aliases see this link http://askubuntu.com/questions/585468/how-do-i-add-an-additional-ip-address-to-an-interface-in-ubuntu-14
 
+```
 ETH="eth0"
-BASEIP="192.168.1"      #must be routed network. We are using class C here!
+BASEIP="192.168.1"                          //must be routed network. We are using class C here!
 BASEOCTET4="129"
 START_OCTET4="130"
 END_OCTET4="250"
-DNSSERVER="192.168.1.100"       #if running dnsmasq on the host machine 192.168.1.100
+DNSSERVER="192.168.1.100"                   //if running dnsmasq on the host machine 192.168.1.100
 
-#SPLUNK_IMAGE="outcoldman/splunk:6.4.2"  #taken offline by outcoldman
+//SPLUNK_IMAGE="outcoldman/splunk:6.4.2"     //taken offline by outcoldman
 SPLUNK_IMAGE="root/splunk"
 BASEHOSTNAME="IDX"
-
+```
 
 ##Container host names rules:
 
@@ -76,7 +80,9 @@ When you get comfortable navigating around the options you will soon discover it
 
 You have the ability to control verbosity level by using –v switch. I used I/O redirection to control verbosity (and logging level). 
 
+```
 create-splunk.sh –v3 
+```
 
 Experiment with creating few hosts then point your browser to them. Push the server to the limits to see how many host can you create before your system crashes.
 
