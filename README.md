@@ -74,7 +74,7 @@ BASEHOSTNAME="IDX"
 
 ##Container host names rules:
 
-When you get comfortable navigating around the options you will soon discover it so easy to pop up hosts all the time. Inconsistent hostnames will lead to confusion. That actually happened to me! Therefore I am enforcing standard naming convention. You have the option to override that behavior in the “manual” mode. But remember the script relies on host names as a way to evaluate the host role. Diverting from the standard disrupts the logic in certain functions (like show groups). The script will automatically assign a sequence number next to the base host name. For example in some functions you will be prompted to enter Indexer name; you should enter IDX only. The script will find the next unused sequence number and IP address and use it (example IDX01, IDX02, IDX03,..etc). That logic does not apply to the “site” portion of the hostname. 
+When you get comfortable navigating around the options you will soon discover that it is so easy to pop up hosts all the time. Inconsistent hostnames will lead to confusion. That actually happened to me! Therefore I am enforcing standard host naming convention. You have the option to override that behavior in the “manual” mode. But remember the script relies on host names as a way to evaluate the host role. Diverting from the standard disrupts the logic in certain functions [like show_groups() ]. The script will automatically assign a sequence host number next to the base host name. For example in some functions you will be prompted to enter Indexer name; you should enter IDX only. The script will find the next unused sequence number and IP address and use it (example IDX01, IDX02, IDX03,..etc). That logic does not apply to the “site” portion of the hostname. 
 
 
 ##How to use:
@@ -111,7 +111,36 @@ There are two menu screens the main menu. Here is a brief explanation of importa
 The rest of the options are self-explanatory
 
 
-
+###List of functions:
+```
+echo_logline()
+setup_ip_aliases ()
+check_load ()
+detect_os ()		 ####### NOT USED YET ########
+contains()
+add_license_file ()
+reset_splunk_passwd ()
+pausing ()
+restart_splunkd ()
+display_output ()
+host_status ()     ####### NOT USED YET ########
+make_lic_slave ()
+check_host_exist ()		 ####### NOT USED YET ########
+show_all_containers ()
+splunkd_status_all ()
+show_groups ()
+custom_login_screen ()
+assign_server_role ()		 ####### NOT USED YET ########
+create_single_splunkhost ()
+create_generic_splunk ()
+create_single_shc ()
+create_single_idxc ()
+build_single_site ()
+build_multi_site_cluster ()
+display_menu2 ()
+clustering_menu ()
+display_menu ()
+```
 
 
 ##Note:
