@@ -11,7 +11,7 @@ You may have heard of docker, or you may even experiment with it trying to figur
 
 In my small test environment I was able to quickly bring upward of 40+ Splunk docker containers for a classroom lab using low powered Intel NUC device (i3 16GB ram, 128G SSD). What’s impressive about docker is that the footprint on my docker-host was extremely small compared to similar buld using a VM solution. I need to emphasize that I have not tested my script under heavy load (either user interaction or data ingestion), however, I believe is just a matter of sizing the hardware appropriately, but at much lower footprint than the alternative methods such as duplicating your production hardware or using virtualization technology.  And that is promise of micro services!
 
-Script feature list:
+##Script feature list:
 
 -Extensive Error checking when configuring the containers
 -Adaptive load control (throttling if exceeds 4xcores) during cluster build
@@ -25,20 +25,20 @@ Script feature list:
 -Low resources requirements
 -Eliminate the need to learn docker (but you should)
 
-Where to get it?
+##Where to get it?
 
 I have posted the source code on github https://github.com/mhassan2/splunk-n-box
 
 Please download and install in your lab. The script was tested on Ubuntu 16.04. I am guessing running on equivalent Linux distribution will not be a problem. I have not tested the code on MAC OSX or Windows, nor I recommend doing so at this point in time (until more native docker solution is developed for these two platforms). Windows and OSX do not support c-blocks natively, therefore there is an additional layer of virtualization (Oracle VBOX to be specific) required, which really defeat the purpose of micro servers concept. Additionally the scripts heavily utilizes NATing to allow Splunk containers to be visible to the outside world, which means you probably have to NAT 2-3 times to achieve the same goal using non-Linux host OS.
 
-How does it work?
+##How does it work?
 
 Once you have your Ubuntu up and running please follow the instructions for installing docker https://docs.docker.com/engine/installation/linux/ubuntulinux/
 Please be aware that Ubunto 14.04 did not work very well for me. There is a bug around mounting docker volumes. Your mileage may vary if you decide to use CentOS or equivalent Linux distribution.
 
 When the scripts runs for the first time it checks to see if you have any IP aliases available (the range specified in the script). If not; then it will configure IP aliases 192.168.1.100-250. The aliased IPs will be automatically mapped, at container creation time, to the internal docker IP space (172.17.0.0/24). You should be able to point your browser to any NATed IP on port 8000 and that will get you directly to the container. During my research I haven’t seen many people using that technique and they opt for changing the ports. My approach is to keep the standard Splunk ports (8000, 8089, 9997,etc) and use iptable NATs to make the containers visible to the outside world.  This will save you a lot of headache when dealing with creating large number of Splunk containers (aka hosts).
 
-Splunk image:
+##Splunk image:
 
 I used outcoldman image as basis of this work. But for some reason it was pulled out of docker registry website. You still can get it here:  https://github.com/outcoldman/docker-splunk
 
@@ -67,12 +67,12 @@ SPLUNK_IMAGE="root/splunk"
 BASEHOSTNAME="IDX"
 
 
-Container host names rules:
+##Container host names rules:
 
 When you get comfortable navigating around the options you will soon discover it so easy to pop up hosts all the time. Inconsistent hostnames will lead to confusion. That actually happened to me! Therefore I am enforcing standard naming convention. You have the option to override that behavior in the “manual” mode. But remember the script relies on host names as a way to evaluate the host role. Diverting from the standard disrupts the logic in certain functions (like show groups). The script will automatically assign a sequence number next to the base host name. For example in some functions you will be prompted to enter Indexer name; you should enter IDX only. The script will find the next unused sequence number and IP address and use it (example IDX01, IDX02, IDX03,..etc). That logic does not apply to the “site” portion of the hostname. 
 
 
-How to use:
+##How to use:
 
 You have the ability to control verbosity level by using –v switch. I used I/O redirection to control verbosity (and logging level). 
 
@@ -93,7 +93,7 @@ There are few optional items (open source) that I included in the container buil
 -screenfetch  : banner screen show host info at ssh login
 -bashrc:  customized bash file
 
-Navigation:
+##Navigation:
 
 There are two menu screens the main menu. Here is a brief explanation of important options on the main menu:
 C) Create containers:  Allows you to choose the container name and how many “hosts” to create. Good options if you are to doing a search party or just classroom with stand alone Splunk instances.
@@ -110,7 +110,7 @@ The rest of the options are self-explanatory
 
 
 
-Note:
+##Note:
 There are few optional items (open source) are not part of my work. I added to the container build that is OS related; it’s up to you if you want to install those items. 
 -screenfetch  : banner screen show host info at ssh login
 -bashrc:  customized bash file
