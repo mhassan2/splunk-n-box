@@ -1,6 +1,6 @@
 *See SplunkLAB_in_a_box.docx for detailed instructions!
 
-Introduction:
+##Introduction:
 
 Have you ever wanted to create a multi-site cluster environment in your lab but you don’t have the resources for it? Have you ever wondered how does bucket replication translates on the file system level? Have you ever wanted to create portable Splunk classroom but it is cost prohibitive? How about changing critical configuration without worrying about messing up your production environment?
 If you are like me; you must have dealt with similar challenges.
