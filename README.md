@@ -6,10 +6,10 @@ Have you ever wanted to create a multi-site cluster environment in your lab but 
 If you are like me; you must have dealt with similar challenges.
 
 
-Like most people, you probably attempted to solve the problem by either throwing more hardware at it, or by using some sort of VM technology that does not scale well without additional resources and cost. Well, I have a solution for you! But before that I would like to welcome you to the world of docker, the game changer that brought micro services to reality. Imagine that with a click of a button you are able to create 3-sites cluster, each location running 3-SHs and 10-IDXs. Or maybe just instantly create a portable lab environment for testing or training purposes. 
+Like with most people, you probably attempted to solve the problem by either throwing more hardware at it, or by using some sort of VM technology that does not scale well without additional resources and cost. Well, I have a solution for you! But before that I would like to welcome you to the world of docker, the game changer that brought micro services to reality. Imagine that with a click of a button you are able to create 3-sites cluster, each location running 3-SHs and 10-IDXs. Or maybe just instantly create a portable lab environment for testing or training purposes. 
 You may have heard of docker, or you may even experiment with it trying to figure out how can I use it to help my Splunk needs. But learning docker technology by itself is not helpful unless its used in a context of specific app like Splunk. To help my customers (and myself) I have created a wrapper bash script (around 1200 lines) to manage Splunk instances builds. *The script will allow you to create a pre-configured large number of Splunk infrastructure components without having to learn a single docker command and with minimal resources requirements (CPU, memory, HD space).*
 
-In my small test environment I was able to quickly bring upward of 40+ Splunk docker containers for a classroom lab using low powered Intel NUC device (i3 16GB ram, 128G SSD). What’s realy impressive about docker is that the footprint on docker-host was extremely tiny compaired to a VM based build. I need to emphasize that I have not tested my script under heavy load (either user interaction or data ingestion), however, I believe is just a matter of sizing the hardware appropriately, but at much lower footprint than the alternative methods such as duplicating your production hardware or using virtualization technology.  And that is promise of micro services!
+In my small test environment I was able to quickly bring upward of 40+ Splunk docker containers for a classroom lab using low powered Intel NUC device (i3 16GB ram, 128G SSD). What’s really impressive about docker is the resouce utilization on docker-host was extremely tiny compaired to a VM based build. I need to emphasize that I have not tested my script under heavy load (either user traffic or data ingestion), however, I believe is just a matter of sizing the hardware appropriately.
 
 ##Script feature list:
 
@@ -85,7 +85,7 @@ You have the ability to control verbosity level by using –v switch. I used I/O
 create-splunk.sh –v3 
 ```
 
-Experiment with creating few hosts then point your browser to them. Push the server to the limits to see how many host can you create before your system crashes. I was able to create 80 hosts (4 site-2-site cluster 20IDX 3SH each) at one point. All on single Intel NUC SKull device (i7 32GB 1TB SSD). Load avg shot to 20 at one point but went down to 6 once the cluster stablized. Please be aware that it will take 10+ minutes (depending on number of memebers on the cluster) to reacha a stable cluster state.
+Experiment with creating few hosts then point your browser to them. Push the server to the limits to see how many host can you create before your system crashes. I was able to create 80 hosts (4 site-2-site cluster 20IDX 3SH each) on a single Intel NUC SKull device (i7 32GB 1TB SSD). Load avg shot to 20 during the build, but went down to 6 once the cluster stablized. Please be aware that it will take 10+ minutes (depending on number of memebers on the cluster) to reach a stable cluster state.
 
 ```Choose option C```
 
@@ -100,13 +100,13 @@ The real fun starts on the second clustering-menu. Select any item from the firs
 
 There are two menu screens the main menu. Here is a brief explanation of important options on the main menu:
 
-`C) Create containers` : Allows you to choose the container name and how many “hosts” to create. Good options if you are to doing a                               search party or just classroom with stand alone Splunk instances.
+`C) Create containers` : Allows you to choose the container name and how many “hosts” to create. Good option if you are to doing a                               search party or just classroom with stand alone Splunk instances.
 
 `D) Delete container`  :  Allows you to delete all containers in the system
 
 `R) Remove all volumes`: Docker does not remove any container artifact when deleted or shutdown. You can clean and save disk space using                          this option.
 
-`4) Show hosts by group`:Useful to display categories of the environment by function. It will show all cluster-masters (CM) and possible                          members associated with it. The same goes for Deployer (DEP) servers.
+`4) Show hosts by group`:Useful for displaying categories of the environment by function. It will show all cluster-masters (CM) and possible                          members associated with it. The same goes for Deployer (DEP) servers.
 
 The rest of the options are self-explanatory
 
@@ -144,7 +144,7 @@ display_menu ()
 
 
 ##Note:
-There are few optional items (open source) are not part of my work. I added the to the container build for troubleshooting.; it’s up to you if you want to install those items. You may want to include them to keep the container footprint small.
+There are few optional items (open source) are not part of my work. I added them to the container build for troubleshooting,it’s up to you if you want to install them. You may want to exclude them to keep the container footprint small.
 
 -[screenfetch](http://tuxtweaks.com/2013/12/install-screenfetch-linux/)  : banner screen show host info at ssh login
 
