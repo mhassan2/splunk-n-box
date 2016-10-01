@@ -631,6 +631,8 @@ create_single_splunkhost () {
 	#chmod -R 777 $MOUNTPOINT/$fullhostname
 	#chown -R mhassan $MOUNTPOINT/$fullhostname
 	#start vsplunk one time only
+	echo "Creating docker network, so all containers will see each other. One time only"
+ 	docker network create -o --iptables=true -o --ip-masq -o --ip-forward=true $SPLUNKNET
 	#if [ -z $(docker ps -aqf "name=$VOLCONTAINER") ]; then
 	#	printf "No volume container present [$VOLCONTAINER] creating one!\n"
 	#	CMD="docker run -d -v $MOUNTPOINT/$fullhostname/var -v $MOUNTPOINT/$fullhostname/etc --name $VOLCONTAINER busybox true"
