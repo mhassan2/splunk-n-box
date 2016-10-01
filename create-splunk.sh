@@ -25,6 +25,9 @@
 #		-v3	recommended for inital testing
 #		-v4	increase verbosity
 #		-v5	even more verbosity
+# OSX OSX : must install ggrep to get PCRE regrex matching working 
+# -for Darwin http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html
+# -mount point must be under /User/${USER}
 #
 # TODO: -add routines for UF and HF containers with eventgen.py
 #	-add DS containers with default serverclass.conf
@@ -43,15 +46,29 @@ LightGray="\033[0;37m";     	DarkGray="\033[1;30m"
 BoldYellowBlueBackground="\e[1;33;44m"
 
 #Network stuff
-ETH="eth0"
-BASEIP="192.168.1"	#must be routed network. We are using class C here!
-BASEOCTET4="129"
-START_OCTET4="130"
-END_OCTET4="250"
-DNSSERVER="192.168.1.100"	#if running dnsmasq on the host machine 192.168.1.100
+ETH_OSX="lo0"		#default interface to use with OSX OSX
+ETH_LINUX="eno1"		#default interface to use with Linux
+GREP_OSX="/usr/local/bin/ggrep"
+GREP_LINUX="/bin/grep"
+
+#IP aliases range to create. Must use routed network if you want reach host from outside
+START_ALIAS="192.168.1.100"
+END_ALIAS="192.168.1.110"
+
+DNSSERVER="192.168.1.100"	#if running dnsmasq if used. Set to docker-host machine
+
+PROJ_DIR="/Users/mhassan/splunk_docker_script_github"  #anything that needs to copied to container
+LIC_DIR="$PROJ_DIR/NFR"   		#license file(s) location
+
+#The following are set in detect_os()
+#MOUNTPOINT=
+#ETH=
+#GREP=
+VOLCONTAINER="vsplunk"
+SPLUNKNET="splunk-net"
 
 #SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	 #taken offline by outcoldman
-SPLUNK_IMAGE="root/splunk"
+SPLUNK_IMAGE="mhassan/splunk"
 BASEHOSTNAME="IDX"
 
 #Splunk stadard ports
@@ -64,7 +81,6 @@ REPL_PORT="9887"
 HEC_PORT="8081"
 USERADMIN="admin"
 USERPASS="hello"
-MOUNTPOINT="datavolumes"
 
 #default cluster configurations
 RFACTOR="3"
@@ -82,47 +98,86 @@ MAXLOADTIME=10
 MAXLOADAVG=4
 LOADFACTOR=3            #allow 3xcores of load on host
 
-#SITE01="STL"; SITE02="LON"; SITE03="HKG"; SITE04="CIN"	#default site names
-
-#----------------- log level is controlled with IO redirection ------------
+#-log level is controlled with IO redirection -------
 # Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
 exec >> >(tee -i $LOGFILE)
 exec 2>&1
-#---------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------------------------------------
+check_shell () {
+# Check that we're in a BASH shell
+if test -z "$BASH" ; then
+  echo "This script ${0##*/} must be run in the BASH shell... Aborting."; echo;
+  exit 192
+fi
+}    #end check_shell()
+#---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-echo_logline() {
+echo_logline() {    #### NOT USED YET ####
     echo -e `date +'%b %e %R '` "$@"
 }
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 setup_ip_aliases () {
-#Check if ip aliases created, if not them bring up (test on Ubuntu 14.04). Quick and dirty method. May need to change
-#if running different Linux
-for  ((i=$START_OCTET4; i<=$END_OCTET4 ; i++))  do 
-	if [ -z "$(ifconfig -a | grep $ETH:$i)" ]; then
-        	echo -ne "${NC}Bring up IP aliases: >>  $ETH:${Purple}$BASEIP.${Yellow}$i\r"
-		ifconfig $ETH:$i $BASEIP.$i up; 
-	fi
-done
+#Check if ip aliases created, if not them bring up (tested on Ubuntu 16.04). Quick and dirty method. May need to change
+
+base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `;  base_ip=$base_ip"."
+start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
+end_octet4=`echo $END_ALIAS | cut -d"." -f4 `
+
+printf "Checking if last IP alias exist! [$END_ALIAS]..."
+last_alias=`ifconfig | $GREP $END_ALIAS `
+if [ -n "$last_alias" ]; then
+	printf "${Green} Ok!\n"
+else
+	printf "${Red}No IP aliases configured${NC}\n"
+fi
+echo
+if [ "$os" == "Darwin" ] && [ -z "$last_alias" ]; then
+	read -p "Enter ethernet interface name (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_OSX"; fi
+	printf "Building IP aliases for OSX...[$base_ip$start_octet4-$end_octet4]\n"
+        #to remove aliases repeat with -alias switch
+        for i in `seq $start_octet4  $end_octet4`; do 
+		sudo ifconfig  $eth  $base_ip$i 255.255.255.0 alias
+        	echo -ne "${NC}Adding: >>  $eth:${Purple}$base_ip${Yellow}$i\r"
+	done
+
+elif [ "$os" == "Linux" ] && [ -z "$last_alias" ]; then
+	read -p "Enter ethernet interface name (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_LINUX"; fi
+	printf "Building IP aliases for LINUX...[$base_ip$start_octet4-$end_octet4]\n"
+	for  ((i=$start_octet4; i<=$end_octet4 ; i++))  do 
+        	echo -ne "${NC}Adding: >>  $eth:${Purple}$base_ip${Yellow}$i\r"
+		ifconfig $eth:$i "$base_ip$i" up; 
+	done
+fi
 printf "${NC}\n"
+read -p "Hit <ENTER> to continue..."
 return 0
-}
-##192.168.1.128/25         192.168.1.128 - 192.168.1.255           255.255.255.128         128
+}  #setup_ip_aliases()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 check_load () {
 #We need to throttle back host creation if running on low powerd server. Set to 4 x num of cores
+if [ "$os" == "Darwin" ]; then
+	cores=`sysctl -n hw.ncpu`
+else
+	cores=`$GREP -c ^processor /proc/cpuinfo`
+fi
 
-cores=`grep -c ^processor /proc/cpuinfo`
 #int=${float%.*}
 #if [ $(echo " $test > $k" | bc) -eq 1 ] float comparison
 t=$MAXLOADTIME;
 while true 
 do
-        loadavg=`uptime |awk '{print $11}'|sed 's/,//g'`
+	if [ "$os" == "Darwin" ]; then
+		loadavg=`sysctl -n vm.loadavg | awk '{print $2}'`
+	else
+        	loadavg=`cat /proc/loadavg |awk '{print $1}'|sed 's/,//g'`
+	fi
 	load=${loadavg%.*}
 	MAXLOADAVG=`echo $cores \* $LOADFACTOR | bc -l `
 	c=`echo " $load > $MAXLOADAVG" | bc `;
+	echo "OS:[$os] MAX ALLOWED LOAD:[$MAXLOADAVG] current load:[$loadavg]"
 	if [  "$c" == "1" ]; then
 		for c in $(seq 1 $t); do
 			echo -ne "${LightRed}High load avg [load:$loadavg max allowed:$MAXLOADAVG cores:$cores]. Pausing ${Yellow}$t${NC} seconds... ${Yellow}$c\033[0K\r"
@@ -137,22 +192,86 @@ return 0
 }  #check load()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-detect_os () {		 ####### NOT USED YET ########
+detect_os () {	
+#Set global vars based on OS type:
+# ETH to use
+# GREP command. Must install ggrep utililty on OSX 
+# MOUNTPOINT   (OSX is strict about permissions)
+
+uname=`uname -a | awk '{print $1}'`	
 if [ "$(uname)" == "Darwin" ]; then
-    	os="Darwain"
-	ETH="lo0"
-	for i in `seq 130  132`; do sudo ifconfig  $ETH alias $BASEIP.$i 255.255.255.0; done
+    	os="Darwin"
+	ETH=$ETH_OSX
+	GREP=$GREP_OSX		#for Darwin http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html
+	MOUNT_OSX="/Users/${USER}/docker-volumes"
+	printf "Detected MAC OSX...\n"
+	printf "Checking if GNU grep is installed ($GREP)..."
+	condition=$(which $GREP_OSX 2>/dev/null | grep -v "not found" | wc -l)
+	if [ $condition -eq 0 ] ; then
+    		printf "${Red}$GREP not installed${NC}\n"
+		printf "GNU grep is needed for this script to work. We use PCRE in ggrep! \nhttp://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html \n"
+		echo
+		exit
+	else
+		printf "${Green} Ok!${NC}\n"
+	fi
+	#----------------------	
+	printf "Checking if docker is running..."
+	is_running=`docker info|grep Images`
+	if [ -z "$is_running" ]; then
+		printf "${Red}docker is not running or not installed${NC}.\n"
+		printf "See this link for MAC OSX installtion: https://docs.docker.com/v1.10/mac/step_one/ \n"
+		exit
+	else
+		printf "${Green} Ok!${NC}\n"
+	fi
+	printf "Checking if splunk docker image is available ($SPLUNK_IMAGE)..."
+	is_running=`docker images|grep $SPLUNK_IMAGE`
+	if [ -z "$is_running" ]; then
+		printf "${Red}Cannot locate splunk image ${NC}.\n"
+		printf "Build you own splunk image or see this link: https://github.com/outcoldman/docker-splunk \n"
+		exit
+	else
+		printf "${Green} Ok!${NC}\n"
+	fi
+	#----------------------	
+
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
     	os="Linux"
+	GREP=$GREP_LINUX
+	ETH=$ETH_LINUX
+	MOUNT_LINUX="/home/${USER}/docker-volumes"
+	printf "Detected LINUX...\n"
+	#----------------------
+        printf "Checking if docker is running..."
+        is_running=`docker info|grep Images`
+        if [ -z "$is_running" ]; then
+                printf "${Red}docker is not running or not installed${NC}.\n"
+                printf "See this link for Linux installtion: https://docs.docker.com/engine/installation/ \n"
+		exit
+        else
+                printf "${Green} Ok!${NC}\n"
+        fi
+        printf "Checking if splunk docker is image available ($SPLUNK_IMAGE)..."
+        is_running=`docker images|grep $SPLUNK_IMAGE`
+        if [ -z "$is_running" ]; then
+                printf "${Red}Cannot locate splunk image ${NC}.\n"
+		printf "Build you own splunk image or see this link: https://github.com/outcoldman/docker-splunk \n"
+		exit
+        else
+                printf "${Green} Ok!${NC}\n"
+        fi
+        #----------------------
+
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
     	os="Windows"
 fi
 return 0
-}
+}	#end detect_os ()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 contains() {
-# String comparision route.
+# String comparision routine.
 # usage:   contains(string, substring)
 # Returns 0 if the specified string contains the specified substring,otherwise return 1
     string="$1"
@@ -171,7 +290,7 @@ add_license_file () {
 #as a license-slave; then this file become irrelevant
 # $1=fullhostname
 #Little tricky see: https://docs.docker.com/engine/reference/commandline/cp/
-CMD="docker cp NFR $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
+CMD="docker cp $LIC_DIR $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
 printf "\t->Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "fail" "n" "3"
 printf " ${DarkGray}CMD:[$CMD]${NC}\n" >&4 
 if ( contains "$1" "LM" ); then
@@ -224,7 +343,6 @@ if [ "$2" == "b" ]; then
         CMD="docker exec -d $1 /opt/splunk/bin/splunk restart "
         OUT=`$CMD`; display_output "$OUT" "Starting splunk server daemon" "n" "3"
    	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
-
 else
 	printf "\t->Restarting splunkd. Please wait! " >&3
 	CMD="docker exec -ti $1 /opt/splunk/bin/splunk restart "
@@ -237,6 +355,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_output () {
+#This function displays the output from CMD (docker command executed)
 #$1  Actuall message after executing docker command
 #$2  The expected "good" message returned if docker command executed ok. Otherwise everthing would be an error
 #$3  Always force the output regardless if good or bad
@@ -246,7 +365,7 @@ outputmsg=$1; OKmsg=$2; debug=$3; loglevel=$4
 OKmsg=`echo $OKmsg| tr '[a-z]' '[A-Z]'`				#convert to upper case 
 outputmsg=`echo $outputmsg| tr '[a-z]' '[A-Z]'`				#convert to upper case 
 size=${#outputmsg}
-#
+
 if [ "$debug" == "d" ]; then
         printf "\n${LightRed}FORCED DEBUG> outputmsg:[%s] ${NC} \n" "$1"
 fi
@@ -268,7 +387,7 @@ host_status () {     ####### NOT USED YET ########
 #$1=hostname
 #restart host and splunkd is not running
 hoststate=`docker ps -a --filter name=$1 --format "{{.Status}}" | awk '{print $1}'`
-splunkstate=`docker exec -ti $1 /opt/splunk/bin/splunk status| grep splunkd| awk '{ print $3}'`
+splunkstate=`docker exec -ti $1 /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ print $3}'`
 #printf "$D1:host_status(): host:[$1] hoststate:[$hoststate] splunkstate:[$splunkstate] ${NC}\n"
 
 if [ "$hoststate" == "" ];  then
@@ -287,6 +406,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 make_lic_slave () {
+# This function designated $hostname as license-slave using LM (License Manager)
 hostname=$1; lm=$2
 #echo "hostname[$hostname]  lm[$lm] _____________";exit
 lm_ip=`docker port  $lm| awk '{print $3}'| cut -d":" -f1|head -1`
@@ -295,9 +415,8 @@ lm_ip=`docker port  $lm| awk '{print $3}'| cut -d":" -f1|head -1`
 	printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4 ; OUT=`$CMD`
         printf "\t->Make a license-slave [license master:$lm] " >&3 ; display_output "$OUT" "object has been edited" "n" "3"
         fi
-
 return
-} #end make_lic_slave
+} 	#end make_lic_slave()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 check_host_exist () {		 ####### NOT USED YET ########
@@ -324,7 +443,7 @@ fi
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 show_all_containers () {
-
+#This function diplays contianers groups by role (role is determined using hostname ex: SH, DS, IDX, CM,...etc)
 count=`docker ps -aq|wc -l`
 if [ $count == 0 ]; then
 	echo "No containers to list"
@@ -332,11 +451,11 @@ if [ $count == 0 ]; then
 fi
 for id in $(docker ps -aq); do
     internal_ip=`docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id`
-    bind_ip=`docker inspect --format '{{ .HostConfig }}' $id| grep -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+    bind_ip=`docker inspect --format '{{ .HostConfig }}' $id| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
     hoststate=`docker ps -a --filter id=$id --format "{{.Status}}" | awk '{print $1}'`
     hostname=`docker ps -a --filter id=$id --format "{{.Names}}"`
     if [ $hoststate == "Up" ]; then
-    	splunkstate=`docker exec -ti $id /opt/splunk/bin/splunk status| grep splunkd| awk '{ print $3}'`
+    	splunkstate=`docker exec -ti $id /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ print $3}'`
     else
 	splunkstate=""	
     fi	
@@ -350,13 +469,13 @@ for id in $(docker ps -aq); do
     else
 		splunkstate="${Red}$splunkstate${NC}"
     fi
-if ( contains "$hostname" "DEP" ); then
-    printf "${LightBlue}%-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
-elif ( contains "$hostname" "CM" ); then
-    printf "${LightBlue}%-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
-else
-    printf "${Purple}%-15s%-20b${NC} Splunkd:%-20b Bind:${LightGray}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
-fi
+    if ( contains "$hostname" "DEP" ); then
+    	printf "${LightBlue}%-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+    elif ( contains "$hostname" "CM" ); then
+    	printf "${LightBlue}%-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+   else
+    	printf "${Purple}%-15s%-20b${NC} Splunkd:%-20b Bind:${LightGray}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+   fi
 done
 
 echo  "count: $count"
@@ -365,21 +484,21 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 splunkd_status_all () {
+#This functinos displays splunkd status on all containers
 for i in `docker ps --format "{{.Names}}"`; do
         printf "${Purple}$i${NC}: "
-        docker exec -ti $i /opt/splunk/bin/splunk status| grep splunkd| awk '{ \
+        docker exec -ti $i /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ \
         if($3=="not")           {$3="\033[31m" $3 "\033[0m" }  \
         if($3=="running")       {$3="\033[32m" $3 "\033[0m" } ; \
         print $1,$2,$3,$4,$5 }'
 done
-
 return 0
 }	#end splunkd_status_all()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 show_groups () {
-# show all containers grouped by role (using base hostname)
-#captain=`docker exec -ti $i /opt/splunk/bin/splunk show shcluster-status|head -10 | grep -i label |awk '{print $3}'| sed -e 's/^M//g' | tr -d '\r' | tr  '\n' ' '`
+#This functions shows all containers grouped by role (using base hostname)
+#captain=`docker exec -ti $i /opt/splunk/bin/splunk show shcluster-status|head -10 | $GREP -i label |awk '{print $3}'| sed -e 's/^M//g' | tr -d '\r' | tr  '\n' ' '`
 
 idx_list=`docker ps -a --filter name="IDX|idx" --format "{{.Names}}"|sort `
 sh_list=`docker ps -a --filter name="SH|sh" --format "{{.Names}}"|sort`
@@ -389,6 +508,7 @@ dep_list=`docker ps -a --filter name="DEP|dep" --format "{{.Names}}"|sort`
 ds_list=`docker ps -a --filter name="DS|ds" --format "{{.Names}}"|sort`
 hf_list=`docker ps -a --filter name="HF|hf" --format "{{.Names}}"|sort`
 uf_list=`docker ps -a --filter name="UF|uf" --format "{{.Names}}"|sort`
+
 echo "------------ Servers grouped by hostname (i.e. role) ---------------"
 printf "${Purple}LMs${NC}: " ;      printf "%-5s " $lm_list;echo
 printf "${Purple}CMs${NC}: " ;      printf "%-5s " $cm_list;echo
@@ -404,14 +524,14 @@ echo "---------- Current running IDXC's -------"
 for i in $cm_list; do
 	printf "${Yellow}$i${NC}: "	
 	docker exec -ti $i /opt/splunk/bin/splunk show cluster-status -auth $USERADMIN:$USERPASS \
-	| grep -i IDX | awk '{print $1}' | paste -sd ' ' -
+	| $GREP -i IDX | awk '{print $1}' | paste -sd ' ' -
 done
 echo
 
 echo "---------- Current running SHC's -------"
 prev_list=''
 for i in $sh_list; do
-	sh_cluster=`docker exec -ti $i /opt/splunk/bin/splunk show shcluster-status -auth $USERADMIN:$USERPASS | grep -i label |awk '{print $3}'| sed -e 's/^M//g' | tr -d '\r' | tr  '\n' ' ' `
+	sh_cluster=`docker exec -ti $i /opt/splunk/bin/splunk show shcluster-status -auth $USERADMIN:$USERPASS | $GREP -i label |awk '{print $3}'| sed -e 's/^M//g' | tr -d '\r' | tr  '\n' ' ' `
 	if ( contains "$sh_cluster" "$prev_list" );  then
 		continue
 	else
@@ -426,7 +546,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 custom_login_screen () {
-#create custom login screen with some useful data
+#This function creates custom login screen with some useful data (hostnam, IP, cluster lable)
 vip=$1;  fullhostname=$2
 
 #reset passwod to "$USERADMIN:$USERPASS"
@@ -452,12 +572,12 @@ if ( contains "$CMD" "failed" ); then
 fi
 
 #set home screen banner in web.conf
-hosttxt=`echo $fullhostname| grep -Po '\d+(?!.*\d)'  `        #extract string portion
-hostnum=`echo $fullhostname| grep -Po '\d+(?!.*\d)'  `        #extract digits portion
+hosttxt=`echo $fullhostname| $GREP -Po '\d+(?!.*\d)'  `        #extract string portion
+hostnum=`echo $fullhostname| $GREP -Po '\d+(?!.*\d)'  `        #extract digits portion
 
-container_ip=`docker inspect $fullhostname| grep IPAddress |grep -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1  ` 
-#cluster_label=`docker exec -ti $fullhostname grep cluster_label /opt/splunk/etc/system/local/server.conf | awk '{print $3}' `
-cluster_label=`cat web.conf.tmp | grep -Po 'cluster.* (.*_LABEL)'| cut -d">" -f3`
+container_ip=`docker inspect $fullhostname| $GREP IPAddress |$GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1  ` 
+#cluster_label=`docker exec -ti $fullhostname $GREP cluster_label /opt/splunk/etc/system/local/server.conf | awk '{print $3}' `
+cluster_label=`cat $PROJ_DIR/web.conf.tmp | $GREP -Po 'cluster.* (.*_LABEL)'| cut -d">" -f3`
 if [ -z "$cluster_label" ]; then
         cluster_label="--"
 fi
@@ -471,10 +591,9 @@ LINE5="<font color=\"green\">SPLUNK LAB (docker infrastructure )</font>"
 
 custom_web_conf="[settings]\nlogin_content =<div align=\"right\" style=\"border:1px solid green\"><CENTER><H1> $LINE1 <BR> $LINE2<BR> $LINE3 </H1><H3> $LINE4 <BR><BR> $LINE5 </H2></CENTER> </div> <p>This data is auto-generated at reboot time  (container internal IP=$container_ip)  .</p>\n"
 
-
-printf "$custom_web_conf" > web.conf.tmp 
-cp web.conf.tmp /$MOUNTPOINT/$fullhostname/etc/system/local/web.conf
-printf "\t->Customizing web.conf using volume mount!${Green} Done!${NC}\n" >&3 
+printf "$custom_web_conf" > $PROJ_DIR/web.conf
+CMD=`docker cp $PROJ_DIR/web.conf $fullhostname:/opt/splunk/etc/system/local/web.conf`
+printf "\t->Customizing web.conf!${Green} Done!${NC}\n" >&3 
 
 return 0
 }  #end custom_login_screen ()
@@ -483,7 +602,7 @@ return 0
 assign_server_role () {		 ####### NOT USED YET ########
 name=$1; role=$2
 	
-echo "localhost,"$name","$name","$name","$role",,,,," >  /$MOUNTPOINT/$name/etc/apps/splunk_management_console/lookups/assets.csv
+echo "localhost,"$name","$name","$name","$role",,,,," >  $MOUNTPOINT/$name/etc/apps/splunk_management_console/lookups/assets.csv
 #dmc_group_indexer
 #dmc_group_license_master
 #dmc_group_search_head
@@ -494,46 +613,37 @@ return 0
 
 #---------------------------------------------------------------------------------
 create_single_splunkhost () {
-#-----------------------------------------------------------------------------------------------------
-# Create single splunk container
+#This function creates single splunk container using $vip and $hostname
 #inputs: $vip: container's IP to use (nated IP aka as bind IP)
 #	 $2:$fullhostname:  container name (may include site and host number sequence)
 #output: -create single host. will not prompt user for any input data
 #	 -reset password and setup splunk's login screen
 #        -configure container's OS related items if needed
-#-----------------------------------------------------------------------------------------------------
-
-	check_load		#throttle back if high load
 
 	vip=$1  fullhostname=$2
+	check_load		#throttle back if high load
+
 	fullhostname=`echo $fullhostname| tr -d '[[:space:]]'`	#trim whitespace if they exist
 	#echo "fullhostname[$fullhostname]"
-	rm -fr /$MOUNTPOINT/$fullhostname
-	mkdir -p /$MOUNTPOINT/$fullhostname/etc
-	mkdir -p /$MOUNTPOINT/$fullhostname/var
-#docker run --hostname splunk --name splunk --volumes-from=vsplunk -p 8000:8000 -d --env SPLUNK_START_ARGS="--accept-license --answer-yes --no-prompt" outcoldman/splunk:6.4.3
-#	--volumes-from=vsplunk \
-	#docker run --name vsplunk -v /opt/splunk/etc -v /opt/splunk/var busybox
-        CMD="docker run -d --hostname=$fullhostname --name=$fullhostname\
-               	--dns=$DNSSERVER \
-		-v /$MOUNTPOINT/$fullhostname/etc:/opt/splunk/etc \
-		-v /$MOUNTPOINT/$fullhostname/var:/opt/splunk/var \
-                -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT \
-		-p $vip:$SSHD_PORT:$SSHD_PORT	
-                -p $vip:$KV_PORT:$KV_PORT -p $vip:$IDX_PORT:$IDX_PORT  -p $vip:$REPL_PORT:$REPL_PORT \
-                -v /$MOUNTPOINT/$fullhostname/etc:/opt/splunk/etc \
-		-v /$MOUNTPOINT/$fullhostname/var:/opt/splunk/var \
-                --env SPLUNK_START_ARGS="--accept-license" \
-                --env SPLUNK_ENABLE_LISTEN=$IDX_PORT \
-                --env SPLUNK_SERVER_NAME=$fullhostname \
-                --env SPLUNK_SERVER_IP=$vip \
-		$SPLUNK_IMAGE "
-                #--env SPLUNK_DEPLOYMENT_SERVER='ds01:$MGMT_PORT' $SPLUNK_IMAGE
-	
-		#-u="splunk" \
-        printf "[${Purple}$fullhostname${NC}:${DarkGray}$vip${NC}] ${LightBlue}Creating new splunk docker container ${NC} " 
-	OUT=`$CMD` ; display_output "$OUT" "Error" "n" "2"
-	CMD=`echo $CMD | sed 's/\t//g' `; printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+	#rm -fr $MOUNTPOINT/$fullhostname
+	#mkdir -m 777 -p $MOUNTPOINT/$fullhostname/etc
+	#mkdir -m 777 -p $MOUNTPOINT/$fullhostname/var
+	#chmod -R 777 $MOUNTPOINT/$fullhostname
+	#chown -R mhassan $MOUNTPOINT/$fullhostname
+	#start vsplunk one time only
+	#if [ -z $(docker ps -aqf "name=$VOLCONTAINER") ]; then
+	#	printf "No volume container present [$VOLCONTAINER] creating one!\n"
+	#	CMD="docker run -d -v $MOUNTPOINT/$fullhostname/var -v $MOUNTPOINT/$fullhostname/etc --name $VOLCONTAINER busybox true"
+	#	OUT=`$CMD` ; display_output "$OUT" "Error" "d" "2"
+	#	printf "${DarkGray}->CMD:[$CMD]${NC}\n" >&4
+	#fi
+
+        CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$KV_PORT:$KV_PORT -p $vip:$IDX_PORT:$IDX_PORT -p $vip:$REPL_PORT:$REPL_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$IDX_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $SPLUNK_IMAGE"
+        
+	printf "[${Purple}$fullhostname${NC}:${DarkGray}$vip${NC}] ${LightBlue}Creating new splunk docker container ${NC} " 
+	OUT=`$CMD` ; display_output "$OUT" "Error" "d" "2"
+	#CMD=`echo $CMD | sed 's/\t//g' `; 
+	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	#echo_logline "[${Purple}$fullhostname${NC}:${Cyan}$vip${NC}] Creating new splunk container..." >> ${LOGFILE}
 
 	pausing "15"
@@ -545,26 +655,26 @@ create_single_splunkhost () {
 	add_license_file $fullhostname
 
 	#Misc OS stuff
-        CMD=`docker cp /root/screenfetch/screenfetch  $fullhostname:/usr/local/bin`
+        CMD=`docker cp $PROJ_DIR/screenfetch/screenfetch  $fullhostname:/usr/local/bin`
         CMD=`docker exec -ti $fullhostname bash -c "echo screenfetch >> /root/.bashrc"`		#cool ssh login banner
-        CMD=`docker cp containers.bashrc $fullhostname:/root/.bashrc`
+        CMD=`docker cp $PROJ_DIR/containers.bashrc $fullhostname:/root/.bashrc`
         #install sutff you will need in  background
         CMD=`docker exec -it $fullhostname apt-get update > /dev/null >&1`
         CMD=`docker exec -it $fullhostname apt-get install -y vim net-tools telnet dnsutils > /dev/null >&1`
         #docker exec -it $fullhostname apt-get install -y  net-tools > /dev/null >&1
 
-	#DNS stuff to be used with dnsmasq.
-	printf "\t->Updating dnsmasq records[$vip  $fullhostname]..." >&3
-	if [ ! -f $HOSTSFILE ]; then
-		touch $HOSTSFILE
-	fi
-	if [ $(cat $HOSTSFILE | grep $fullhostname | wc -l | sed 's/^ *//g') != 0 ]; then
-        	printf "\t${Red}[$fullhostname] is already in the hosts file. Removing...${NC}\n" >&4
-        	cat $HOSTSFILE | grep -v $vip | sort > tmp && mv tmp $HOSTSFILE
-	fi
-	printf "${Green}OK!${NC}\n" >&3
-	printf "$vip\t$fullhostname\n" >> $HOSTSFILE
-	killall -HUP dnsmasq	#must referesh to read local.host file
+	#DNS stuff to be used with dnsmasq. Need to revisit for OSX  9/29/16
+	#printf "\t->Updating dnsmasq records[$vip  $fullhostname]..." >&3
+	#if [ ! -f $HOSTSFILE ]; then
+	#	touch $HOSTSFILE
+	#fi
+	#if [ $(cat $HOSTSFILE | $GREP $fullhostname | wc -l | sed 's/^ *//g') != 0 ]; then
+       # 	printf "\t${Red}[$fullhostname] is already in the hosts file. Removing...${NC}\n" >&4
+        #	cat $HOSTSFILE | $GREP -v $vip | sort > tmp && mv tmp $HOSTSFILE
+	#fi
+	#printf "${Green}OK!${NC}\n" >&3
+	#printf "$vip\t$fullhostname\n" >> $HOSTSFILE
+	#killall -HUP dnsmasq	#must referesh to read local.host file
 
 return 0
 
@@ -572,21 +682,20 @@ return 0
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
 create_generic_splunk () {
-#-----------------------------------------------------------------------------------------------------
+#This function create generic splunk containers. Role is assigned later
 #inputs: $1:basehostname: (ex IDX, SH,HF) just the base (no numbers)
 #	 $2:hostcount:     how many containers to create from this host type (ie name)
 #outputs: $gLIST:  global var contains the list of hostname just got created
 #	  $host_num :  last host number sequence just got created
 #	-calcuate host number sequence
 #	 -calculate next IP sequence (octet4)
-#-----------------------------------------------------------------------------------------------------
 
 count=0;starting=0; ending=0;basename=$BASEHOSTNAME; basesite=$3
 # Figure out the starting octet4 
-# OCTET4FILE=`iptables -t nat -L |grep DNAT | awk '{print $5}'  | sort -u|tail -1|cut -d"." -f4`
+# OCTET4FILE=`iptables -t nat -L |$GREP DNAT | awk '{print $5}'  | sort -u|tail -1|cut -d"." -f4`
 #printf "$D1 _________create_generic_splunk():  basename[$1]  hostcount[$2]  site[$3]__________${NC}\n"
 
-# -----verification in case we dont have basename by now -----
+# -----verification step in case we dont have basename by now -----
 if [ -z "$1" ]; then
         read -p ">>>> Enter BASE HOSTNAME (default: $BASEHOSTNAME)?: " basename
 else
@@ -599,33 +708,38 @@ if [ -z "$basename" ]; then
 fi
 #always convert to upper case before creating
 basename=`echo $basename| tr '[a-z]' '[A-Z]'`	
-#-----------------------------------------------------------------
 
-#--------Find last IP used. This is not hostname or site dependant-------
-if [ $(docker ps -aq|wc -l) = 0 ]; then		#no containers created yet
-	octet4=$BASEOCTET4;
-        last_id_ip="$BASEIP.$octet4"
-        #printf "No hosts exists [will start@$last_id_ip]\n";
-else    #extra:ct last octet4 used
-        last_id_ip=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aql)|grep -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-        octet4=`echo $last_id_ip |cut -d"." -f4`
-        #printf "Some hosts exists [last used:$last_id_ip]\n";
-fi
-#-------------------------------------------------------------------------
-
-#------Verification in case we dont have count by now!----
+#------Verification step in case we dont have count by now!----
 if [ -z "$2" ]; then
         read -p ">>>> How many hosts to create (default 1)? " count
 else
         count=$2
 fi
-if [ -z "$count" ]; then 
-	count=1
+if [ -z "$count" ]; then
+        count=1
 fi
 #----------------------------------------------------------------
 
+#-----------------------------------------------------------------
+
+#--------Find last IP used. This is not hostname or site dependant-------
+base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `;  base_ip=$base_ip"."
+start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
+
+#get last octet4 used ----
+if [ $(docker ps -aq | wc -l) = 0 ]; then
+        last_ip_used="$base_ip.$start_octet4"
+        #printf "No hosts exists [will start@$last_ip_used]\n";
+
+else    #Find last container created IP
+        last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aql)|$GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+        start_octet4=`echo $last_ip_used |cut -d"." -f4`
+        #printf "Some hosts exists [last used:$last_ip_used]\n";
+fi
+#-------------------------------------------------------------------------
+
 #---- calculate count range -----------
-last_host_num=`docker ps -a --format "{{.Names}}"|grep "^$basename"|head -1| grep -P '\d+(?!.*\d)' -o`;  #last digit from last created
+last_host_num=`docker ps -a --format "{{.Names}}"|$GREP "^$basename"|head -1| $GREP -P '\d+(?!.*\d)' -o`;  #last digit from last created
 if [ -z "$last_host_num" ]; then    					#no previouse hosts with this name exists
         printf "\n${DarkGray}[$basename] New basename. ${NC}" >&3
 	starting=1
@@ -662,9 +776,9 @@ do
      	fi
      	fullhostname="$basename"$host_num  	#create full hostname (base + 2-digits)
 
-     	# Full VIP processing
-     	octet4=`expr $octet4 + 1`       	#calcute new octet4
-     	vip="$BASEIP.$octet4"            	#build new IP to be assigned
+     	# VIP processing
+     	octet4=`expr $start_octet4 + 1`       	#increment octet4
+     	vip="$base_ip""$octet4"            	#build new IP to be assigned
 	#printf "$D1:creat_generic_linux():fulhostnae:[$fullhostname] vip:[$vip]  basename:[$basename]   count[$count] ${NC}\n";
 	create_single_splunkhost $vip $fullhostname
 	gLIST="$gLIST""$fullhostname "   	
@@ -673,14 +787,11 @@ done  #end for loop
 #--------------------------
 
 return $host_num
-
 }  #end of create_generic_splunk ()
 #---------------------------------------------------------------------------------------------------------------
-
-
 #---------------------------------------------------------------------------------------------------------------
 create_single_shc () {
-#-----------------------------------------------------------------------------------------------------
+#This function creates single Search Head Cluster. Details is passed using $1
 #inputs: $1: pass all compnents (any order) needed and how many to create. The names the counts will be extracted
 #example : create_single_idxc "$site-IDX:$IDXcount $cm:1 $lm:1"
 #outputs: -adjust hostname with sitename if used
@@ -695,12 +806,12 @@ server_list=""    #used by STEP#3
 START1=$(date +%s);
 
 #Extract parms from $1, if not we will prompt user later
-lm=`echo $1| grep -Po '(\s*\w*-*LM\d+)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
-cm=`echo $1| grep -Po '(\s*\w*-*CM\d+)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
-DEPname=`echo $1| grep -Po '(\s*\w*-*DEP)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
-DEPcount=`echo $1| grep -Po '(\s*\w*-*DEP):\K(\d+)'| tr -d '[[:space:]]' `
-SHname=`echo $1| grep -Po '(\s*\w*-*SH)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' ` 
-SHcount=`echo $1| grep -Po '(\s*\w*-*SH):\K(\d+)'| tr -d '[[:space:]]' `
+lm=`echo $1| $GREP -Po '(\s*\w*-*LM\d+)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
+cm=`echo $1| $GREP -Po '(\s*\w*-*CM\d+)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
+DEPname=`echo $1| $GREP -Po '(\s*\w*-*DEP)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
+DEPcount=`echo $1| $GREP -Po '(\s*\w*-*DEP):\K(\d+)'| tr -d '[[:space:]]' `
+SHname=`echo $1| $GREP -Po '(\s*\w*-*SH)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' ` 
+SHcount=`echo $1| $GREP -Po '(\s*\w*-*SH):\K(\d+)'| tr -d '[[:space:]]' `
 
 #generate all global lists
 dep_list=`docker ps -a --filter name="$DEPname" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
@@ -750,20 +861,16 @@ printf "${LightBlue}___________ Starting STEP#1 (deployer configuration) _______
 printf "${DarkGray}Configuring SHC with created hosts: DEPLOYER[$dep]  MEMBERS[$members_list] ${NC}\n" >&3
  
 printf "[${Purple}$dep${NC}]${LightBlue} Configuring Deployer ... ${NC}\n"
-bind_ip_dep=`docker inspect --format '{{ .HostConfig }}' $dep| grep -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+bind_ip_dep=`docker inspect --format '{{ .HostConfig }}' $dep| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 
-#cluster_label=`cat web.conf.tmp | grep -Po 'cluster.* (.*_LABEL)'| cut -d">" -f3`
+#cluster_label=`cat web.conf.tmp | $GREP -Po 'cluster.* (.*_LABEL)'| cut -d">" -f3`
 txt="\n #-----Modified by Docker Management script ----\n [shclustering]\n pass4SymmKey = $MYSECRET \n shcluster_label = $SHCLUSTERLABEL\n"
-printf "%b" "$txt" >> /$MOUNTPOINT/$dep/etc/system/local/server.conf	#cheeze fix!
+#printf "%b" "$txt" >> $MOUNTPOINT/$dep/etc/system/local/server.conf	#cheeze fix!
+printf "%b" "$txt" > server.conf.append
+CMD="docker cp server.conf.append $dep:/tmp/server.conf.append"; OUT=`$CMD`
+CMD=`docker exec -ti $dep  bash -c "cat /tmp/server.conf.append >> /opt/splunk/etc/system/local/server.conf" `; #OUT=`$CMD`
 
-#CMD="docker exec -ti $dep bash -c \"printf \"%b\" \"$txt\" >> /opt/splunk/etc/system/local/server.conf\" "
-#CMD="docker exec -ti $dep bash -c  \' printf \"#--Modified by Docker Management script \n\" >> /opt/splunk/etc/system/local/server.conf \'  "
-#CMD="docker exec -ti $dep bash -c \"printf '\n#-----Modified by Docker Management script ----\n[shclustering]\npass4SymmKey = '$MYSECRET'\nshcluster_label = '$SHCLUSTERLABEL'\n ' >> /opt/splunk/etc/system/local/server.conf \" "
-#OUT=`$CMD`
-#OUT=`echo $OUT | tr -d '\r' | tr -d '\n' `   # clean it up
-#printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
-OUT="Direct file edit!"; CMD="printf "%b" "$txt" >> /$MOUNTPOINT/$dep/etc/system/local/server.conf"
-printf "\t->Adding stanza [shclustering] to server.conf using volume mount!" >&3 ; display_output "$OUT" "Direct" "n" "3"
+printf "\t->Adding stanza [shclustering] to server.conf!" >&3 ; display_output "$OUT" "" "n" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 
 if [ -n "$lm" ]; then make_lic_slave "$dep" "$lm"; fi
@@ -774,8 +881,8 @@ printf "${LightBlue}___________ Starting STEP#2 (SH cluster members configuratio
 #printf "$D1:create_single_shc():After members_list loop> parm2:[$2] members_list:[$members_list] sh_list:[$sh_list]${NC}\n"
 for i in $members_list ; do
  	printf "[${Purple}$i${NC}]${LightBlue} Making cluster memeber...${NC}\n"
-	bind_ip_sh=`docker inspect --format '{{ .HostConfig }}' $i| grep -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-        bind_ip_sh=`docker inspect --format '{{ .HostConfig }}' $i| grep -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+	bind_ip_sh=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+        bind_ip_sh=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 
 	CMD="docker exec -ti $i /opt/splunk/bin/splunk init shcluster-config -auth $USERADMIN:$USERPASS -mgmt_uri https://$bind_ip_sh:$MGMT_PORT -replication_port $REPL_PORT -replication_factor $RFACTOR -register_replication_address $bind_ip_sh -conf_deploy_fetch_url https://$bind_ip_dep:$MGMT_PORT -secret $MYSECRET"
 	OUT=`$CMD`
@@ -834,6 +941,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 create_single_idxc () {
+#This function creates single IDX cluster. Details are parsed from $1
 #$1 AUTO or MANUAL mode
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
@@ -842,12 +950,12 @@ START2=$(date +%s);
 #"$site01-CM:1"; "$site02-IDX:2" "$site03-LM:3"
 
 #Extract values from $1 if passed to us!
-lm=`echo $1| grep -Po '(\s*\w*-*LM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
-cm=`echo $1| grep -Po '(\s*\w*-*CM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
-IDXname=`echo $1| grep -Po '(\s*\w*-*IDX)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
-IDXcount=`echo $1| grep -Po '(\s*\w*-*IDX):\K(\d+)'| tr -d '[[:space:]]' `
-CMname=`echo $1| grep -Po '(\s*\w*-*CM)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
-CMcount=`echo $1| grep -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space:]]' `
+lm=`echo $1| $GREP -Po '(\s*\w*-*LM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
+cm=`echo $1| $GREP -Po '(\s*\w*-*CM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
+IDXname=`echo $1| $GREP -Po '(\s*\w*-*IDX)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
+IDXcount=`echo $1| $GREP -Po '(\s*\w*-*IDX):\K(\d+)'| tr -d '[[:space:]]' `
+CMname=`echo $1| $GREP -Po '(\s*\w*-*CM)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
+CMcount=`echo $1| $GREP -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space:]]' `
 
 cm_list=`docker ps -a --filter name="$CMname" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
 lm_list=`docker ps -a --filter name="$LMname" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'` #global list
@@ -876,12 +984,11 @@ else
 fi
 printf "${LightBlue}___________ Finished creating hosts ___________________________________________${NC}\n"
 
-
 printf "${BrownOrange}[$mode]>>Building IDXCluster: using LM:[$lm] CM:[$cm] IDXC:[$IDXname:($IDXcount)]${NC}\n"
 
 printf "${LightBlue}____________ Starting STEP#1 (Configuring IDX Cluster Master) _____________________${NC}\n" >&3
 printf "[${Purple}$cm${NC}]${LightBlue} Configuring Cluster Master... ${NC}\n"
-bind_ip_cm=`docker inspect --format '{{ .HostConfig }}' $cm| grep -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+bind_ip_cm=`docker inspect --format '{{ .HostConfig }}' $cm| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 
 CMD="docker exec $cm /opt/splunk/bin/splunk edit cluster-config  -mode master -replication_factor $RFACTOR -search_factor $SFACTOR -secret $MYSECRET -cluster_label $IDXCLUSTERLABEL -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`
@@ -896,7 +1003,7 @@ printf "${LightBlue}____________ Finished STEP#1 _______________________________
 printf "${LightBlue}____________ Starting STEP#2 (configuring IDXC nodes) _________________${NC}\n" >&3
 for i in $members_list ; do
 	printf "[${Purple}$i${NC}]${LightBlue} Making search peer... ${NC}\n"
-        bind_ip_idx=`docker inspect --format '{{ .HostConfig }}' $i| grep -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+        bind_ip_idx=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 
         CMD="docker exec $i /opt/splunk/bin/splunk edit cluster-config -mode slave -master_uri https://$bind_ip_cm:$MGMT_PORT -replication_port $REPL_PORT -register_replication_address $bind_ip_idx -secret $MYSECRET -auth $USERADMIN:$USERPASS "
 	OUT=`$CMD`
@@ -927,20 +1034,18 @@ printf "${DarkGray}Execution time for create_single_idxc():  [$TIME] ${NC}\n\n"
 return 0
 }  #end create_single_idxc()
 #---------------------------------------------------------------------------------------------------------------
-
-
 #---------------------------------------------------------------------------------------------------------------
 build_single_site () {
-#This function will build 1 CM and 1 LM then call create_generic_splunk()
+#This function will build 1 CM and 1 LM then calls create_generic_splunk()
 # Expected paramaters: "$cm $lm $site-IDX:$IDXcount $site-SH:$SHcount $site-DEP:1"
 #$1 AUTO or MANUAL mode
 
 printf "Single-site cluster\n"
 #extract these values from $1 if passed to us!
-lm=`echo $1| grep -Po '(\s*\w*-*LM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
-cm=`echo $1| grep -Po '(\s*\w*-*CM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
-CMname=`echo $1| grep -Po '(\s*\w*-*CM)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
-CMcount=`echo $1| grep -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space:]]' `
+lm=`echo $1| $GREP -Po '(\s*\w*-*LM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
+cm=`echo $1| $GREP -Po '(\s*\w*-*CM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
+CMname=`echo $1| $GREP -Po '(\s*\w*-*CM)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
+CMcount=`echo $1| $GREP -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space:]]' `
 
 #if CMname and LMname passed to function; user will NOT be prompted
 #if [ -z "$lm" ]; then read -p "Enter LM hostname to use [$lm_list]> " lm; fi
@@ -984,6 +1089,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 build_multi_site_cluster () {
+#This function create site-2-site cluster
 START3=$(date +%s);
 #http://docs.splunk.com/Documentation/Splunk/6.4.3/Indexer/Migratetomultisite
 
@@ -1058,13 +1164,10 @@ for site  in $SITEnames; do
 	create_single_shc "$site-SH:$SHcount $site-DEP:1 $cm $lm"
 done
 
-#----------------------------------------------------------------
 idx_list=`docker ps -a --filter name="IDX|idx" --format "{{.Names}}"|sort | tr -d '\r' | tr  '\n' ' ' `
 sh_list=`docker ps -a --filter name="SH|sh" --format "{{.Names}}"|sort | tr -d '\r' | tr  '\n' ' ' `
 cm_list=`docker ps -a --filter name="CM|cm" --format "{{.Names}}"|sort | tr -d '\r' | tr  '\n' ' ' `
 site_list=`echo $cm_list | sed 's/\-[a-zA-Z0-9]*//g' `
-
-#----------------------
 
 printf "${BoldYellowBlueBackground}Migrating existing IDXCs & SHCs to site-2-site cluster: LM[$lm] CM[$cm] sites[$SITEnames] SitesStr[$SitesStr]${NC}\n"
 
@@ -1094,8 +1197,8 @@ printf "${Cyan}____________ Starting STEP#2 (Configuring search peers in [site:"
 
 for str in $SITEnames; do
 	site="site""$seq"
-	site_idx_list=`echo $idx_list | grep -Po '('$str'-\w+\d+)' | tr -d '\r' | tr  '\n' ' '  `
-	site_sh_list=`echo $sh_list | grep -Po '('$str'-\w+\d+)' | tr -d '\r' | tr  '\n' ' '  `
+	site_idx_list=`echo $idx_list | $GREP -Po '('$str'-\w+\d+)' | tr -d '\r' | tr  '\n' ' '  `
+	site_sh_list=`echo $sh_list | $GREP -Po '('$str'-\w+\d+)' | tr -d '\r' | tr  '\n' ' '  `
 	for i in $site_idx_list; do
 		printf "[${Purple}$i${NC}]${Cyan} Migrating Indexer (restarting takes time)... ${NC}\n"
 		CMD="docker exec -ti $i /opt/splunk/bin/splunk edit cluster-config -site $site -master_uri https://$cm_ip:$MGMT_PORT -replication_port $REPL_PORT  -auth $USERADMIN:$USERPASS "
@@ -1125,7 +1228,6 @@ printf "${Cyan}____________ Finished STEP#3 ____________________________________
 seq=`expr $seq + 1`
 done  #looping thru the sites list
 
-
 printf "${Cyan}____________ Starting STEP#4 (CM maintenance-mode) _____________________${NC}\n" >&3
 printf "[${Purple}$cm${NC}]${Cyan} Disabling maintenance-mode... ${NC}\n"
 CMD="docker exec -ti $cm /opt/splunk/bin/splunk disable maintenance-mode -auth $USERADMIN:$USERPASS"
@@ -1143,10 +1245,6 @@ printf "${DarkGray}Execution time for build_multi_site_cluster():  [$TIME] ${NC}
 return 0
 }  #build_multi_site_cluster ()
 #---------------------------------------------------------------------------------------------------------------
-# restore stdout and stderr
-#exec  3>&1 4>&1 5>&1
-#exec 1>&3 2>&4
-
 #---------------------------------------------------------------------------------------------------------------
 display_menu2 () {
 	clear
@@ -1165,13 +1263,12 @@ display_menu2 () {
 	printf "${LightBlue}6${NC}) Create Stand alone Search Head Cluster (SHC)\n"
         printf "${LightBlue}7${NC}) Build Single-site Cluster\n"
         printf "${LightBlue}8${NC}) Build Multi-site Cluster${NC} \n";echo 
-
-
 return 0
 } #display_menu2()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 clustering_menu () {
+#This function captures user selection for clustering_menu
 while true;
 do
         dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
@@ -1201,6 +1298,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_menu () {
+#This function display user options for the main menu
 	clear
 	printf "${Yellow}Docker Splunk Infrastructure Managment Main Menu:${NC} ${LightBlue}[$dockerinfo]${NC}\n"
 	echo "=========================================================================================================="
@@ -1222,14 +1320,10 @@ display_menu () {
 	echo
 return 0
 }    #end display_menu()
-#---------------------------------------------------------------------------------------------------------------
-aliases_count=`ifconfig | grep "eth0:" |wc -l`
-if [ "$aliases_count" == "0" ]; then
-	printf "No IP aliases setup. Creating..."
-	setup_ip_aliases
-fi
-
-#--------------------------------------------------
+#---------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------
+set_log_level () {
+#This function captures and sets the log level
 loglevel=2 #Start counting at 2 so that any increase to this will result in a minimum of file descriptor 3.  You should leave this alone.
 maxloglevel=5 #The highest loglevel we use / allow to be displayed.  Feel free to adjust.
 while getopts "h:v:" arg; do
@@ -1249,13 +1343,16 @@ for v in $(seq $(( loglevel+1 )) $maxloglevel ) #From the loglevel level one hig
 do
     (( "$v" > "2" )) && eval exec "$v>/dev/null" #Redirect these to bitbucket, provided that they don't match stdout and stderr.
 done
-#--------------------------------------------------
+return 0
+}   #set_log_level()
+#---------------------------------------------------------------------------------------------------------
 
-# Check that we're in a BASH shell
-if test -z "$BASH" ; then
-  echo "This script ${0##*/} must be run in the BASH shell... Aborting."; echo;
-  exit 192
-fi
+### Start main body. Let the fun begin! #####
+
+set_log_level
+check_shell
+detect_os
+setup_ip_aliases
 
 while true;  
 do
@@ -1269,10 +1366,11 @@ do
 			docker rm -f $(docker ps -a --format "{{.Names}}");
 			rm -fr $HOSTSFILE;;
 		r|R ) echo "Removing all volumes (to recover diskspace): "; 
-			disk1=`df -kh /var/lib/docker/| awk '{print $4}'| grep -v Avail|sed 's/G//g'`
+			#disk1=`df -kh /var/lib/docker/| awk '{print $4}'| $GREP -v Avail|sed 's/G//g'`
+			disk1=`df -kh $MOUNTPOINT| awk '{print $4}'| $GREP -v Avail|sed 's/G//g'`
 			docker volume rm $(docker volume ls -qf 'dangling=true') 
-			rm -fr /$MOUNTPOINT
-			disk2=`df -kh /var/lib/docker/| awk '{print $4}'| grep -v Avail|sed 's/G//g'`
+			rm -fr $MOUNTPOINT
+			disk2=`df -kh $MOUNTPOINT| awk '{print $4}'| $GREP -v Avail|sed 's/G//g'`
 			freed=`expr $disk2 - $disk1`
 			printf "Disk space freed [$freed] GB\n"
 			rm -fr $HOSTSFILE
@@ -1306,6 +1404,8 @@ do
 	echo "------------------------------------------------------";echo
 
 done  #end of while(true) loop
+echo "Script terminated...!"
 
-echo
+##### EOF #######
+
 
