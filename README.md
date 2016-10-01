@@ -24,6 +24,7 @@ In my small test environment I was able to quickly bring upward of 40+ Splunk do
 - Custom login screen (helpful for lab & Search Parties scenarios)
 - Low resources requirements
 - Eliminate the need to learn docker (but you should)
+- MAC OSX support
 
 
 ##Where to get it?
@@ -60,16 +61,19 @@ Configuration and setup:
 You may need to adjust the script to match your network space. Or you can simply use the defaults if your routed network is 192.168.1.0/24. In my lab, the docker-host is 192.168.1.100 it’s also where I ran my dnsmasq (DNS caching server). If you prefer not to use dnsmasq; then just use actual container IPs in your browser. The first container you create will start at 192.168.1.130 and last one will end at 192.168.1.250. If you wish to setup your docker-host with permanent IP aliases see this link http://askubuntu.com/questions/585468/how-do-i-add-an-additional-ip-address-to-an-interface-in-ubuntu-14
 
 ```shell
-ETH="eth0"
-BASEIP="192.168.1"                          //must be routed network. We are using class C here!
-BASEOCTET4="129"
-START_OCTET4="130"
-END_OCTET4="250"
-DNSSERVER="192.168.1.100"                   //if running dnsmasq on the host machine 192.168.1.100
 
-//SPLUNK_IMAGE="outcoldman/splunk:6.4.2"     //taken offline by outcoldman
-SPLUNK_IMAGE="root/splunk"
-BASEHOSTNAME="IDX"
+#Network stuff
+ETH_OSX="lo0"		#default interface to use with OSX OSX
+ETH_LINUX="eno1"		#default interface to use with Linux
+GREP_OSX="/usr/local/bin/ggrep"
+GREP_LINUX="/bin/grep"
+
+#IP aliases range to create. Must use routed network if you want reach host from outside
+START_ALIAS="192.168.1.100"
+END_ALIAS="192.168.1.110"
+
+DNSSERVER="192.168.1.100"	#if running dnsmasq if used. Set to docker-host machine
+
 ```
 
 ##Container host names rules:
