@@ -52,24 +52,27 @@ GREP_OSX="/usr/local/bin/ggrep"
 GREP_LINUX="/bin/grep"
 
 #IP aliases range to create. Must use routed network if you want reach host from outside
-START_ALIAS="192.168.1.100"
-END_ALIAS="192.168.1.110"
+#OSX will space will not be routed and just local to the laptop.
+#LINUX is routed and hosts can be reached from anywhere in the network
+START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.200"
+START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.200"
 
-DNSSERVER="192.168.1.100"	#if running dnsmasq if used. Set to docker-host machine
+DNSSERVER="192.168.2.100"	#if running dnsmasq if used. Set to docker-host machine
 
-PROJ_DIR="/Users/mhassan/splunk_docker_script_github"  #anything that needs to copied to container
-LIC_DIR="$PROJ_DIR/NFR"   		#license file(s) location
+#Full PATH is dynamic  based on OS type (see detect_os() )
+FILES_DIR="splunk_docker_script_github"  #place anything needs to copy to container here
+LIC_FILES_DIR="licenses_files"
+VOL_DIR="docker-volumes"
 
 #The following are set in detect_os()
 #MOUNTPOINT=
 #ETH=
 #GREP=
-VOLCONTAINER="vsplunk"
-SPLUNKNET="splunk-net"
 
 #SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	 #taken offline by outcoldman
 SPLUNK_IMAGE="mhassan/splunk"
 BASEHOSTNAME="IDX"
+SPLUNKNET="splunk-net"
 
 #Splunk stadard ports
 SSHD_PORT="8022"	#in case we need to enable sshd, not recommended
@@ -118,14 +121,38 @@ echo_logline() {    #### NOT USED YET ####
 }
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-setup_ip_aliases () {
-#Check if ip aliases created, if not them bring up (tested on Ubuntu 16.04). Quick and dirty method. May need to change
-
-base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `;  base_ip=$base_ip"."
+remove_ip_aliases () {
+base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `; # base_ip=$base_ip"."
 start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
 end_octet4=`echo $END_ALIAS | cut -d"." -f4 `
 
-printf "Checking if last IP alias exist! [$END_ALIAS]..."
+#to remove aliases repeat with -alias switch
+if [ "$os" == "Darwin" ]; then
+	read -p "Enter ethernet interface name (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_OSX"; fi
+	for i in `seq $start_octet4  $end_octet4`; do
+		sudo ifconfig  $eth  $base_ip.$i 255.255.255.0 -alias
+        	echo -ne "${NC}Removing: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
+	done
+elif  [ "$os" == "Linux" ]; then
+	read -p "Enter ethernet interface name (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_LINUX"; fi
+ 	for  ((i=$start_octet4; i<=$end_octet4 ; i++))  do
+                echo -ne "${NC}Removing: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
+                sudo ifconfig $eth:$i "$base_ip.$i" down;
+        done
+fi
+printf "${NC}\n"
+return 0
+}
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+setup_ip_aliases () {
+#Check if ip aliases created, if not them bring up (tested on Ubuntu 16.04). Quick and dirty method. May need to change
+
+base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `; # base_ip=$base_ip"."
+start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
+end_octet4=`echo $END_ALIAS | cut -d"." -f4 `
+
+printf "Checking if last IP alias is configured on any NIC [$END_ALIAS]..."
 last_alias=`ifconfig | $GREP $END_ALIAS `
 if [ -n "$last_alias" ]; then
 	printf "${Green} Ok!\n"
@@ -135,19 +162,19 @@ fi
 echo
 if [ "$os" == "Darwin" ] && [ -z "$last_alias" ]; then
 	read -p "Enter ethernet interface name (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_OSX"; fi
-	printf "Building IP aliases for OSX...[$base_ip$start_octet4-$end_octet4]\n"
+	printf "Building IP aliases for OSX...[$base_ip.$start_octet4-$end_octet4]\n"
         #to remove aliases repeat with -alias switch
         for i in `seq $start_octet4  $end_octet4`; do 
-		sudo ifconfig  $eth  $base_ip$i 255.255.255.0 alias
-        	echo -ne "${NC}Adding: >>  $eth:${Purple}$base_ip${Yellow}$i\r"
+		sudo ifconfig  $eth  $base_ip.$i 255.255.255.0 alias
+        	echo -ne "${NC}Adding: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
 	done
 
 elif [ "$os" == "Linux" ] && [ -z "$last_alias" ]; then
 	read -p "Enter ethernet interface name (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_LINUX"; fi
-	printf "Building IP aliases for LINUX...[$base_ip$start_octet4-$end_octet4]\n"
+	printf "Building IP aliases for LINUX...[$base_ip.$start_octet4-$end_octet4]\n"
 	for  ((i=$start_octet4; i<=$end_octet4 ; i++))  do 
-        	echo -ne "${NC}Adding: >>  $eth:${Purple}$base_ip${Yellow}$i\r"
-		ifconfig $eth:$i "$base_ip$i" up; 
+        	echo -ne "${NC}Adding: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
+		sudo ifconfig $eth:$i "$base_ip.$i" up; 
 	done
 fi
 printf "${NC}\n"
@@ -177,7 +204,7 @@ do
 	load=${loadavg%.*}
 	MAXLOADAVG=`echo $cores \* $LOADFACTOR | bc -l `
 	c=`echo " $load > $MAXLOADAVG" | bc `;
-	echo "OS:[$os] MAX ALLOWED LOAD:[$MAXLOADAVG] current load:[$loadavg]"
+	#echo "OS:[$os] MAX ALLOWED LOAD:[$MAXLOADAVG] current load:[$loadavg]"
 	if [  "$c" == "1" ]; then
 		for c in $(seq 1 $t); do
 			echo -ne "${LightRed}High load avg [load:$loadavg max allowed:$MAXLOADAVG cores:$cores]. Pausing ${Yellow}$t${NC} seconds... ${Yellow}$c\033[0K\r"
@@ -192,76 +219,95 @@ return 0
 }  #check load()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
+validation_check () {
+
+if [ "$os" == "Darwin" ]; then
+	printf "Checking if GNU grep is installed [$GREP]..."
+        condition=$(which $GREP_OSX 2>/dev/null | grep -v "not found" | wc -l)
+        if [ $condition -eq 0 ] ; then
+                printf "${Red}$GREP not installed${NC}\n"
+                printf "GNU grep is needed for this script to work. We use PCRE in ggrep! \n"
+		printf "http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html \n"
+                exit
+        else
+                printf "${Green} Ok!${NC}\n"
+        fi
+fi
+
+printf "Checking if docker daemon is running..."
+is_running=`docker info|grep Images`
+if [ -z "$is_running" ]; then
+	printf "${Red}docker is not running or not installed${NC}.\n"
+	if [ "$os" == "Darwin" ]; then
+                printf "See this link for MAC OSX installtion: https://docs.docker.com/v1.10/mac/step_one/ \n"
+	elif [ "$os" == "Linux" ]; then
+                printf "See this link for Linux installtion: https://docs.docker.com/engine/installation/ \n"
+	fi
+        exit
+else
+        printf "${Green} Ok!${NC}\n"
+fi
+
+printf "Checking if splunk image is available [$SPLUNK_IMAGE]..."
+is_running=`docker images|grep $SPLUNK_IMAGE`
+if [ -z "$is_running" ]; then
+	printf "${Red}Cannot locate splunk image ${NC}.\n"
+        printf "Build you own splunk image \n"
+	printf "Or see this link: https://github.com/outcoldman/docker-splunk \n"
+	printf "Or check docker hub for more splunk images\n"
+        exit
+else
+        printf "${Green} Ok!${NC}\n"
+fi
+
+printf "Checking if docker network is created [$SPLUNKNET]..."
+net=`docker network ls | grep $SPLUNKNET `
+if [ -z "$net" ]; then 
+	printf "${Green} Created!${NC}\n"
+        docker network create -o --iptables=true -o --ip-masq -o --ip-forward=true $SPLUNKNET
+else
+       printf "${Green} Ok!${NC}\n"
+fi
+#check dnsmasq
+#check $USER
+return 0
+}     #end validation_check()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
 detect_os () {	
 #Set global vars based on OS type:
 # ETH to use
 # GREP command. Must install ggrep utililty on OSX 
 # MOUNTPOINT   (OSX is strict about permissions)
 
+#FILES_DIR="splunk_docker_script_github"  #place anything needs to copy to container here
+#LIC_FILES_DIR="license_files"
+#VOL_DIR="docker-volumes"
+
 uname=`uname -a | awk '{print $1}'`	
 if [ "$(uname)" == "Darwin" ]; then
     	os="Darwin"
+	START_ALIAS=$START_ALIAS_OSX
+	END_ALIAS=$END_ALIAS_OSX
 	ETH=$ETH_OSX
 	GREP=$GREP_OSX		#for Darwin http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html
-	MOUNT_OSX="/Users/${USER}/docker-volumes"
+	MOUNTPOINT="/Users/${USER}/$VOL_DIR"
+	PROJ_DIR="/Users/${USER}/$FILES_DIR"  #anything that needs to copied to container
+
 	printf "Detected MAC OSX...\n"
-	printf "Checking if GNU grep is installed ($GREP)..."
-	condition=$(which $GREP_OSX 2>/dev/null | grep -v "not found" | wc -l)
-	if [ $condition -eq 0 ] ; then
-    		printf "${Red}$GREP not installed${NC}\n"
-		printf "GNU grep is needed for this script to work. We use PCRE in ggrep! \nhttp://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html \n"
-		echo
-		exit
-	else
-		printf "${Green} Ok!${NC}\n"
-	fi
-	#----------------------	
-	printf "Checking if docker is running..."
-	is_running=`docker info|grep Images`
-	if [ -z "$is_running" ]; then
-		printf "${Red}docker is not running or not installed${NC}.\n"
-		printf "See this link for MAC OSX installtion: https://docs.docker.com/v1.10/mac/step_one/ \n"
-		exit
-	else
-		printf "${Green} Ok!${NC}\n"
-	fi
-	printf "Checking if splunk docker image is available ($SPLUNK_IMAGE)..."
-	is_running=`docker images|grep $SPLUNK_IMAGE`
-	if [ -z "$is_running" ]; then
-		printf "${Red}Cannot locate splunk image ${NC}.\n"
-		printf "Build you own splunk image or see this link: https://github.com/outcoldman/docker-splunk \n"
-		exit
-	else
-		printf "${Green} Ok!${NC}\n"
-	fi
-	#----------------------	
+	validation_check
 
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
     	os="Linux"
+	START_ALIAS=$START_ALIAS_LINUX
+        END_ALIAS=$END_ALIAS_LINUX
 	GREP=$GREP_LINUX
 	ETH=$ETH_LINUX
-	MOUNT_LINUX="/home/${USER}/docker-volumes"
+	MOUNTPOINT="/home/${USER}/$VOL_DIR"
+	PROJ_DIR="/home/${USER}/$FILES_DIR"
+
 	printf "Detected LINUX...\n"
-	#----------------------
-        printf "Checking if docker is running..."
-        is_running=`docker info|grep Images`
-        if [ -z "$is_running" ]; then
-                printf "${Red}docker is not running or not installed${NC}.\n"
-                printf "See this link for Linux installtion: https://docs.docker.com/engine/installation/ \n"
-		exit
-        else
-                printf "${Green} Ok!${NC}\n"
-        fi
-        printf "Checking if splunk docker is image available ($SPLUNK_IMAGE)..."
-        is_running=`docker images|grep $SPLUNK_IMAGE`
-        if [ -z "$is_running" ]; then
-                printf "${Red}Cannot locate splunk image ${NC}.\n"
-		printf "Build you own splunk image or see this link: https://github.com/outcoldman/docker-splunk \n"
-		exit
-        else
-                printf "${Green} Ok!${NC}\n"
-        fi
-        #----------------------
+	validation_check
 
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
     	os="Windows"
@@ -290,9 +336,10 @@ add_license_file () {
 #as a license-slave; then this file become irrelevant
 # $1=fullhostname
 #Little tricky see: https://docs.docker.com/engine/reference/commandline/cp/
-CMD="docker cp $LIC_DIR $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
-printf "\t->Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "fail" "n" "3"
-printf " ${DarkGray}CMD:[$CMD]${NC}\n" >&4 
+CMD="docker cp $PROJ_DIR/$LIC_FILES_DIR  $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
+printf "\t->Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "" "n" "3"
+printf " ${DarkGray}CMD:[$CMD]${NC}\n" >&3
+
 if ( contains "$1" "LM" ); then
 	printf "\t->*LM* host! Forcing splunkd restart " >&3
 	docker exec -ti $1  /opt/splunk/bin/splunk restart > /dev/null >&1
@@ -358,7 +405,7 @@ display_output () {
 #This function displays the output from CMD (docker command executed)
 #$1  Actuall message after executing docker command
 #$2  The expected "good" message returned if docker command executed ok. Otherwise everthing would be an error
-#$3  Always force the output regardless if good or bad
+#$3  if set; always force the output regardless if good or bad. Used for debugging
 #$4  The loglevel (I/O redirect) to display the message (good for verbosity settings)
 
 outputmsg=$1; OKmsg=$2; debug=$3; loglevel=$4
@@ -621,29 +668,21 @@ create_single_splunkhost () {
 #        -configure container's OS related items if needed
 
 	vip=$1  fullhostname=$2
+	fullhostname=`echo $fullhostname| tr -d '[[:space:]]'`	#trim whitespace if they exist
+
 	check_load		#throttle back if high load
 
-	fullhostname=`echo $fullhostname| tr -d '[[:space:]]'`	#trim whitespace if they exist
 	#echo "fullhostname[$fullhostname]"
 	#rm -fr $MOUNTPOINT/$fullhostname
 	#mkdir -m 777 -p $MOUNTPOINT/$fullhostname/etc
 	#mkdir -m 777 -p $MOUNTPOINT/$fullhostname/var
 	#chmod -R 777 $MOUNTPOINT/$fullhostname
 	#chown -R mhassan $MOUNTPOINT/$fullhostname
-	#start vsplunk one time only
-	echo "Creating docker network, so all containers will see each other. One time only"
- 	docker network create -o --iptables=true -o --ip-masq -o --ip-forward=true $SPLUNKNET
-	#if [ -z $(docker ps -aqf "name=$VOLCONTAINER") ]; then
-	#	printf "No volume container present [$VOLCONTAINER] creating one!\n"
-	#	CMD="docker run -d -v $MOUNTPOINT/$fullhostname/var -v $MOUNTPOINT/$fullhostname/etc --name $VOLCONTAINER busybox true"
-	#	OUT=`$CMD` ; display_output "$OUT" "Error" "d" "2"
-	#	printf "${DarkGray}->CMD:[$CMD]${NC}\n" >&4
-	#fi
 
         CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$KV_PORT:$KV_PORT -p $vip:$IDX_PORT:$IDX_PORT -p $vip:$REPL_PORT:$REPL_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$IDX_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $SPLUNK_IMAGE"
         
 	printf "[${Purple}$fullhostname${NC}:${DarkGray}$vip${NC}] ${LightBlue}Creating new splunk docker container ${NC} " 
-	OUT=`$CMD` ; display_output "$OUT" "Error" "d" "2"
+	OUT=`$CMD` ; display_output "$OUT" "Error" "" "2"
 	#CMD=`echo $CMD | sed 's/\t//g' `; 
 	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	#echo_logline "[${Purple}$fullhostname${NC}:${Cyan}$vip${NC}] Creating new splunk container..." >> ${LOGFILE}
@@ -692,12 +731,14 @@ create_generic_splunk () {
 #	-calcuate host number sequence
 #	 -calculate next IP sequence (octet4)
 
-count=0;starting=0; ending=0;basename=$BASEHOSTNAME; basesite=$3
-# Figure out the starting octet4 
+count=0;starting=0; ending=0;basename=$BASEHOSTNAME; basesite=$3; octet4=0
+gLIST=""   #build global list of hosts created by this session. Used somewhere else
+
+#Another method to figure out the starting octet4 
 # OCTET4FILE=`iptables -t nat -L |$GREP DNAT | awk '{print $5}'  | sort -u|tail -1|cut -d"." -f4`
 #printf "$D1 _________create_generic_splunk():  basename[$1]  hostcount[$2]  site[$3]__________${NC}\n"
 
-# -----verification step in case we dont have basename by now -----
+#---Prompt user for host basename (if not in auto mode) -----
 if [ -z "$1" ]; then
         read -p ">>>> Enter BASE HOSTNAME (default: $BASEHOSTNAME)?: " basename
 else
@@ -711,34 +752,14 @@ fi
 #always convert to upper case before creating
 basename=`echo $basename| tr '[a-z]' '[A-Z]'`	
 
-#------Verification step in case we dont have count by now!----
+#---Prompt user for host count (if not in auto mode) -----
 if [ -z "$2" ]; then
         read -p ">>>> How many hosts to create (default 1)? " count
 else
         count=$2
 fi
-if [ -z "$count" ]; then
-        count=1
-fi
-#----------------------------------------------------------------
-
-#-----------------------------------------------------------------
-
-#--------Find last IP used. This is not hostname or site dependant-------
-base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `;  base_ip=$base_ip"."
-start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
-
-#get last octet4 used ----
-if [ $(docker ps -aq | wc -l) = 0 ]; then
-        last_ip_used="$base_ip.$start_octet4"
-        #printf "No hosts exists [will start@$last_ip_used]\n";
-
-else    #Find last container created IP
-        last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aql)|$GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-        start_octet4=`echo $last_ip_used |cut -d"." -f4`
-        #printf "Some hosts exists [last used:$last_ip_used]\n";
-fi
-#-------------------------------------------------------------------------
+if [ -z "$count" ]; then count=1;  fi
+#----------------------------------------
 
 #---- calculate count range -----------
 last_host_num=`docker ps -a --format "{{.Names}}"|$GREP "^$basename"|head -1| $GREP -P '\d+(?!.*\d)' -o`;  #last digit from last created
@@ -764,10 +785,27 @@ if [ "$starting" -lt "10" ]; then
                 endx=$ending
         fi
 printf "${DarkGray}Next sequence:${NC} [${Purple}$basename${Yellow}$startx${NC} --> ${Purple}$basename${Yellow}$endx${NC}]\n"  >&3
-#echo "_________exit______";exit
 
-#--generate fullhostname(using base and seq numbers) and full IP------------------------
-gLIST=""					#build global list of hosts created by this session. Used somewhere else
+#--generate fullhostname (w/ seq numbers) and VIP------------------------
+
+#--------Find last IP used. This is not hostname or site dependant-------
+base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `;  #base_ip=$base_ip"."
+
+#get last octet4 used ----
+if [ $(docker ps -aq | wc -l) = 0 ]; then
+        last_used_octet4=`echo $START_ALIAS | cut -d"." -f4 `
+        last_ip_used="$base_ip.$start_octet4"
+        #printf "DEBBUG: No hosts exists [will start@$last_ip_used][last_octet4:$last_used_octet4]\n";
+
+else    #Find last container created IP
+        last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aql)|$GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+        last_used_octet4=`echo $last_ip_used |cut -d"." -f4`
+        #printf "DEBUGG: Some hosts exists [last used:$last_ip_used][last_octet4:$last_used_octet4]\n";
+fi
+#-------------------------------------------------------------------------
+
+octet4=$last_used_octet4
+#Loop to create $count total hosts ----
 for (( x=${starting}; x <= ${ending}; x++)) 
 do
 	#fix the digits size first
@@ -779,11 +817,13 @@ do
      	fullhostname="$basename"$host_num  	#create full hostname (base + 2-digits)
 
      	# VIP processing
-     	octet4=`expr $start_octet4 + 1`       	#increment octet4
-     	vip="$base_ip""$octet4"            	#build new IP to be assigned
-	#printf "$D1:creat_generic_linux():fulhostnae:[$fullhostname] vip:[$vip]  basename:[$basename]   count[$count] ${NC}\n";
+     	octet4=`expr $octet4 + 1`       	#increment octet4
+     	vip="$base_ip.$octet4"            	#build new IP to be assigned
+	#printf "$D1:creat_generic_linux():fulhostname:[$fullhostname] vip:[$vip] basename:[$basename] count[$count] ${NC}\n";
+	
 	create_single_splunkhost $vip $fullhostname
-	gLIST="$gLIST""$fullhostname "   	
+	gLIST="$gLIST""$fullhostname "
+
 done  #end for loop
 	gLIST=`echo $gLIST |sed 's/;$//'`	#remove last space (causing host to look like "SH "
 #--------------------------
@@ -1250,7 +1290,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_menu2 () {
 	clear
-	printf "${Green}Docker Splunk Infrastructure Managment -> Clustering Menu: ${DarkGray}[$dockerinfo]${NC}\n"
+	printf "${Green}Docker Splunk Infrastructure Managment -> Clustering Menu: ${DarkGray}[$dockerinfo][$os]${NC}\n"
         echo "====================================================================================================================="
 	printf "${Yellow}B${NC}) Go back to MAIN menu\n\n"
 
@@ -1300,9 +1340,9 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_menu () {
-#This function display user options for the main menu
+#This function displays user options for the main menu
 	clear
-	printf "${Yellow}Docker Splunk Infrastructure Managment Main Menu:${NC} ${LightBlue}[$dockerinfo]${NC}\n"
+	printf "${Yellow}Docker Splunk Infrastructure Managment Main Menu:${NC} ${LightBlue}[$dockerinfo][$os]${NC}\n"
 	echo "=========================================================================================================="
 	printf "${Red}C${NC}) CREATE containers ${DarkGray}[docker run ...]${NC}\n"
 	printf "${Red}D${NC}) DELETE all containers ${DarkGray}[docker rm -f \$(docker ps -aq)]${NC}\n"
@@ -1324,34 +1364,43 @@ return 0
 }    #end display_menu()
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
-set_log_level () {
-#This function captures and sets the log level
-loglevel=2 #Start counting at 2 so that any increase to this will result in a minimum of file descriptor 3.  You should leave this alone.
-maxloglevel=5 #The highest loglevel we use / allow to be displayed.  Feel free to adjust.
-while getopts "h:v:" arg; do
-case $arg in
-    	h) echo "usage: file -v [log level]" ;;
-    	v) loglevel=$OPTARG ;;
-	*) loglevel=2 ;;
-  esac
-done
 
-for v in $(seq 3 $loglevel) #Start counting from 3 since 1 and 2 are standards (stdout/stderr).
-do
+#---------------------------------------
+loglevel=2
+maxloglevel=5 #The highest loglevel we use / allow to be displayed. 
+
+# A POSIX variable
+OPTIND=1         # Reset in case getopts has been used previously in the shell.
+output_file=""
+while getopts "h?v:f:" opt; do
+    case "$opt" in
+    h|\?)
+        echo "HELP!"
+        exit 0
+        ;;
+    v)  loglevel=$OPTARG
+        ;;
+    f)  output_file=$OPTARG
+       ;;
+    esac
+done
+shift $((OPTIND-1))
+[ "$1" = "--" ] && shift
+#echo "loglevel='$loglevel'   output_file='$output_file'    Leftovers: $@"
+#echo "1------[$opt][$OPTARG] [${loglevel}]-----"
+
+#Start counting at 2 so that any increase to this will result in a minimum of file descriptor 3.  You should leave this alone.
+#Start counting from 3 since 1 and 2 are standards (stdout/stderr).
+for v in $(seq 3 $loglevel); do
     (( "$v" <= "$maxloglevel" )) && eval exec "$v>&2"  #Don't change anything higher than the maximum loglevel allowed.
 done
 
-for v in $(seq $(( loglevel+1 )) $maxloglevel ) #From the loglevel level one higher than requested, through the maximum;
-do
+#From the loglevel level one higher than requested, through the maximum;
+for v in $(seq $(( loglevel+1 )) $maxloglevel ); do
     (( "$v" > "2" )) && eval exec "$v>/dev/null" #Redirect these to bitbucket, provided that they don't match stdout and stderr.
 done
-return 0
-}   #set_log_level()
-#---------------------------------------------------------------------------------------------------------
+#---------------------------------------
 
-### Start main body. Let the fun begin! #####
-
-set_log_level
 check_shell
 detect_os
 setup_ip_aliases
@@ -1398,6 +1447,8 @@ do
 	        	done;;
 
 		10 ) clustering_menu ;;
+		11 ) remove_ip_aliases ;;
+
 		q|Q ) echo "Exit!" ;break ;;
 		#*) break ;;
 	esac  #end case ---------------------------
