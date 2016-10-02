@@ -100,6 +100,7 @@ HOSTSFILE="/etc/docker-hosts.dnsmasq"
 MAXLOADTIME=10
 MAXLOADAVG=4
 LOADFACTOR=3            #allow 3xcores of load on host
+LOADFACTOR_OSX=1            #allow 1xcores for the MAC (testing..)
 
 #-log level is controlled with IO redirection -------
 # Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
@@ -128,13 +129,13 @@ end_octet4=`echo $END_ALIAS | cut -d"." -f4 `
 
 #to remove aliases repeat with -alias switch
 if [ "$os" == "Darwin" ]; then
-	read -p "Enter ethernet interface name (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_OSX"; fi
+	read -p "Enter interface aliases binded to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_OSX"; fi
 	for i in `seq $start_octet4  $end_octet4`; do
 		sudo ifconfig  $eth  $base_ip.$i 255.255.255.0 -alias
         	echo -ne "${NC}Removing: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
 	done
 elif  [ "$os" == "Linux" ]; then
-	read -p "Enter ethernet interface name (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_LINUX"; fi
+	read -p "Enter interface aliases binded to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_LINUX"; fi
  	for  ((i=$start_octet4; i<=$end_octet4 ; i++))  do
                 echo -ne "${NC}Removing: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
                 sudo ifconfig $eth:$i "$base_ip.$i" down;
@@ -161,7 +162,7 @@ else
 fi
 echo
 if [ "$os" == "Darwin" ] && [ -z "$last_alias" ]; then
-	read -p "Enter ethernet interface name (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_OSX"; fi
+	read -p "Enter interface to bind aliases to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_OSX"; fi
 	printf "Building IP aliases for OSX...[$base_ip.$start_octet4-$end_octet4]\n"
         #to remove aliases repeat with -alias switch
         for i in `seq $start_octet4  $end_octet4`; do 
@@ -170,7 +171,7 @@ if [ "$os" == "Darwin" ] && [ -z "$last_alias" ]; then
 	done
 
 elif [ "$os" == "Linux" ] && [ -z "$last_alias" ]; then
-	read -p "Enter ethernet interface name (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_LINUX"; fi
+	read -p "Enter interface to bind aliases to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_LINUX"; fi
 	printf "Building IP aliases for LINUX...[$base_ip.$start_octet4-$end_octet4]\n"
 	for  ((i=$start_octet4; i<=$end_octet4 ; i++))  do 
         	echo -ne "${NC}Adding: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
@@ -198,11 +199,13 @@ while true
 do
 	if [ "$os" == "Darwin" ]; then
 		loadavg=`sysctl -n vm.loadavg | awk '{print $2}'`
+		#LOADFACTOR=$LOADFACTOR_OSX
 	else
         	loadavg=`cat /proc/loadavg |awk '{print $1}'|sed 's/,//g'`
 	fi
 	load=${loadavg%.*}
-	MAXLOADAVG=`echo $cores \* $LOADFACTOR | bc -l `
+	#MAXLOADAVG=`echo $cores \* $LOADFACTOR | bc -l `
+	#MAXLOADAVG=3
 	c=`echo " $load > $MAXLOADAVG" | bc `;
 	#echo "OS:[$os] MAX ALLOWED LOAD:[$MAXLOADAVG] current load:[$loadavg]"
 	if [  "$c" == "1" ]; then
@@ -270,6 +273,7 @@ else
 fi
 #check dnsmasq
 #check $USER
+#check if local splunkd running on laptop
 return 0
 }     #end validation_check()
 #---------------------------------------------------------------------------------------------------------------
@@ -1356,7 +1360,7 @@ display_menu () {
 	printf "${LightBlue}5${NC}) RESET all splunk passwords [changeme --> hello] ${DarkGray}[splunkd must be running]${NC}\n"
 	printf "${LightBlue}6${NC}) ADD splunk licenses ${DarkGray}[splunkd must be running]${NC}\n"
 	printf "${LightBlue}7${NC}) Splunkd status ${DarkGray}[docker -exec -it hostname /opt/splunk/bin/splunk status]${NC}\n"
-	printf "${LightBlue}8${NC}) TEST connectivity to all hosts ${DarkGray}[curl http://\$ip:\$exposed_port]${NC}\n"
+	printf "${LightBlue}8${NC}) Remove IP alises on the ethernet interface${NC}\n"
 	printf "${LightBlue}9${NC}) RESTART all splunkd instances\n\n"
 	printf "${Green}10${NC}) Clustering Menu \n"
 	echo
@@ -1440,14 +1444,12 @@ do
 		6 ) for i in `docker ps --format "{{.Names}}"`; do add_license_file $i; done ;;
 
 		7 ) splunkd_status_all ;;
-		8 ) printf "This option is under construction!\n";;
-			#curl http://$vip:$SPLUNKWEB_PORT ;;
+		8 ) remove_ip_aliases ;;
 		9) for i in `docker ps --format "{{.Names}}"`; do
 			restart_splunkd "$i"
 	        	done;;
 
 		10 ) clustering_menu ;;
-		11 ) remove_ip_aliases ;;
 
 		q|Q ) echo "Exit!" ;break ;;
 		#*) break ;;
