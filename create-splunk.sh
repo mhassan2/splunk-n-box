@@ -71,7 +71,7 @@ VOL_DIR="docker-volumes"
 #GREP=
 
 #SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	 #taken offline by outcoldman
-SPLUNK_IMAGE="mhassan/splunk"
+SPLUNK_IMAGE="splunk/splunk"
 BASEHOSTNAME="IDX"
 SPLUNKNET="splunk-net"
 
