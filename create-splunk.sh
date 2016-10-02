@@ -16,6 +16,7 @@
 #	-Custom login screen (helpful for lab & Search Parties scenarios)
 #	-Low resources requirements
 #	-Eliminate the need to learn docker (but you should)
+#	-OSX support
 #
 # Licenses: Licensesed under GPL v3 <link>
 # Author:    mhassan@splunk.com
@@ -46,7 +47,7 @@ LightGray="\033[0;37m";     	DarkGray="\033[1;30m"
 BoldYellowBlueBackground="\e[1;33;44m"
 
 #Network stuff
-ETH_OSX="lo0"		#default interface to use with OSX OSX
+ETH_OSX="lo0"			#default interface to use with OSX OSX
 ETH_LINUX="eno1"		#default interface to use with Linux
 GREP_OSX="/usr/local/bin/ggrep"
 GREP_LINUX="/bin/grep"
@@ -57,7 +58,7 @@ GREP_LINUX="/bin/grep"
 START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.200"
 START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.200"
 
-DNSSERVER="192.168.2.100"	#if running dnsmasq if used. Set to docker-host machine
+DNSSERVER="192.168.2.100"		#if running dnsmasq if used. Set to docker-host machine
 
 #Full PATH is dynamic  based on OS type (see detect_os() )
 FILES_DIR="splunk_docker_script_github"  #place anything needs to copy to container here
@@ -100,7 +101,7 @@ HOSTSFILE="/etc/docker-hosts.dnsmasq"
 MAXLOADTIME=10
 MAXLOADAVG=4
 LOADFACTOR=3            #allow 3xcores of load on host
-LOADFACTOR_OSX=1            #allow 1xcores for the MAC (testing..)
+LOADFACTOR_OSX=1        #allow 1xcores for the MAC (testing..)
 
 #-log level is controlled with IO redirection -------
 # Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
@@ -204,7 +205,7 @@ do
         	loadavg=`cat /proc/loadavg |awk '{print $1}'|sed 's/,//g'`
 	fi
 	load=${loadavg%.*}
-	#MAXLOADAVG=`echo $cores \* $LOADFACTOR | bc -l `
+	MAXLOADAVG=`echo $cores \* $LOADFACTOR | bc -l `
 	#MAXLOADAVG=3
 	c=`echo " $load > $MAXLOADAVG" | bc `;
 	#echo "OS:[$os] MAX ALLOWED LOAD:[$MAXLOADAVG] current load:[$loadavg]"
@@ -255,9 +256,10 @@ printf "Checking if splunk image is available [$SPLUNK_IMAGE]..."
 is_running=`docker images|grep $SPLUNK_IMAGE`
 if [ -z "$is_running" ]; then
 	printf "${Red}Cannot locate splunk image ${NC}.\n"
-        printf "Build you own splunk image \n"
-	printf "Or see this link: https://github.com/outcoldman/docker-splunk \n"
-	printf "Or check docker hub for more splunk images\n"
+        printf ">Build you own splunk image \n"
+	printf ">Or see this link: https://github.com/outcoldman/docker-splunk \n"
+	printf ">Or see this link: https://github.com/splunk/docker-splunk/tree/master/enterprise \n"
+	printf ">Or check docker hub for more splunk images\n"
         exit
 else
         printf "${Green} Ok!${NC}\n"
