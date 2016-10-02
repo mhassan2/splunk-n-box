@@ -63,16 +63,23 @@ You may need to adjust the script to match your network space. Or you can simply
 ```shell
 
 #Network stuff
-ETH_OSX="lo0"		#default interface to use with OSX OSX
-ETH_LINUX="eno1"		#default interface to use with Linux
+ETH_OSX="lo0"                   #default interface to use with OSX OSX
+ETH_LINUX="eno1"                #default interface to use with Linux
 GREP_OSX="/usr/local/bin/ggrep"
 GREP_LINUX="/bin/grep"
 
 #IP aliases range to create. Must use routed network if you want reach host from outside
-START_ALIAS="192.168.1.100"
-END_ALIAS="192.168.1.110"
+#OSX will space will not be routed and just local to the laptop.
+#LINUX is routed and hosts can be reached from anywhere in the network
+START_ALIAS_LINUX="192.168.1.100";      END_ALIAS_LINUX="192.168.1.200"
+START_ALIAS_OSX="10.0.0.100";           END_ALIAS_OSX="10.0.0.200"
 
-DNSSERVER="192.168.1.100"	#if running dnsmasq if used. Set to docker-host machine
+DNSSERVER="192.168.2.100"               #if running dnsmasq if used. Set to docker-host machine
+
+#Full PATH is dynamic  based on OS type (see detect_os() )
+FILES_DIR="splunk_docker_script_github"  #place anything needs to copy to container here
+LIC_FILES_DIR="licenses_files"
+VOL_DIR="docker-volumes"
 
 ```
 
