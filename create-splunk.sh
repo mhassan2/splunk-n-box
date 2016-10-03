@@ -22,11 +22,11 @@
 # Author:    mhassan@splunk.com
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
-#		v1-2	defaults setting (recommended for ongoing usage)
+#		v1-2	default setting (recommended for ongoing usage)
 #		-v3	recommended for inital testing
 #		-v4	increase verbosity
 #		-v5	even more verbosity
-# OSX OSX : must install ggrep to get PCRE regrex matching working 
+# MAC OSX : must install ggrep to get PCRE regrex matching working 
 # -for Darwin http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html
 # -mount point must be under /User/${USER}
 #
@@ -58,7 +58,7 @@ GREP_LINUX="/bin/grep"
 START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.200"
 START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.200"
 
-DNSSERVER="192.168.2.100"		#if running dnsmasq if used. Set to docker-host machine
+DNSSERVER="192.168.1.100"		#if running dnsmasq if used. Set to docker-host machine
 
 #Full PATH is dynamic  based on OS type (see detect_os() )
 FILES_DIR="splunk_docker_script_github"  #place anything needs to copy to container here
@@ -71,7 +71,10 @@ VOL_DIR="docker-volumes"
 #GREP=
 
 #SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	 #taken offline by outcoldman
-SPLUNK_IMAGE="splunk/splunk"
+SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-
+#SPLUNK_IMAGE="splunk/splunk:6.5.0"	#official image
+#SPLUNK_IMAGE="btorresgil/splunk"
+#SPLUNK_IMAGE="xeor/splunk"
 BASEHOSTNAME="IDX"
 SPLUNKNET="splunk-net"
 
@@ -97,10 +100,12 @@ STD_SHC_COUNT="3"	#in auth ode create 3 SHC
 
 #Misc
 LOGFILE="${0##*/}.log"   #log file will be this_script_name.log
-HOSTSFILE="/etc/docker-hosts.dnsmasq"
-MAXLOADTIME=10
-MAXLOADAVG=4
-LOADFACTOR=3            #allow 3xcores of load on host
+HOSTSFILE="/etc/docker-hosts.dnsmasq"  #optional if caching dns is used
+
+#load control
+MAXLOADTIME=10		#seconds increments for timer
+MAXLOADAVG=4		#Not used
+LOADFACTOR=3            #allow (3 x cores) of load on host
 LOADFACTOR_OSX=1        #allow 1xcores for the MAC (testing..)
 
 #-log level is controlled with IO redirection -------
@@ -124,11 +129,12 @@ echo_logline() {    #### NOT USED YET ####
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 remove_ip_aliases () {
+#Delete ip aliases (OS dependant)
+
 base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `; # base_ip=$base_ip"."
 start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
 end_octet4=`echo $END_ALIAS | cut -d"." -f4 `
 
-#to remove aliases repeat with -alias switch
 if [ "$os" == "Darwin" ]; then
 	read -p "Enter interface aliases binded to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_OSX"; fi
 	for i in `seq $start_octet4  $end_octet4`; do
@@ -238,6 +244,32 @@ if [ "$os" == "Darwin" ]; then
         fi
 fi
 
+#-----------
+printf "Checking if we have enough memory..."
+if [ "$os" == "Linux" ]; then
+        mem=`free -mg|grep -i mem|awk '{print $2}' `
+        if [ "$mem" -le "30" ]; then
+		printf "[$mem GB]  ${Red}WARNING!${NC}\n"
+                printf "        Recominding 32GB for smooth operation\n"
+                printf "	Some of the cluster automated builds may fail!\n"
+                printf "	Please limit your builds to under 15 containers! Please restart EXISTED container manually${NC}\n"
+	else
+                printf "[$mem GB]${Green} Ok!${NC}\n"
+	fi
+elif [ "$os" == "Darwin" ]; then
+	mem=`top -l 1 | head -n 10 | grep PhysMem | awk '{print $2}' | sed 's/G//g' `
+        if [ "$mem" -le "30" ]; then
+		printf "[$mem GB]  ${Red}WARNING!${NC}\n"
+                printf "	Recomending 32GB for smooth operation\n"
+                printf "	Some of the cluster automated builds may fail!\n"
+                printf "	Please limit your builds to under 15 containers! Please restart EXISTED container manually${NC}\n"
+	else
+                printf "[$mem GB]${Green} Ok!${NC}\n"
+	fi
+fi
+#-----------
+
+#-----------
 printf "Checking if docker daemon is running..."
 is_running=`docker info|grep Images`
 if [ -z "$is_running" ]; then
@@ -251,20 +283,26 @@ if [ -z "$is_running" ]; then
 else
         printf "${Green} Ok!${NC}\n"
 fi
+#-----------
 
+#-----------
 printf "Checking if splunk image is available [$SPLUNK_IMAGE]..."
-is_running=`docker images|grep $SPLUNK_IMAGE`
-if [ -z "$is_running" ]; then
-	printf "${Red}Cannot locate splunk image ${NC}.\n"
-        printf ">Build you own splunk image \n"
-	printf ">Or see this link: https://github.com/outcoldman/docker-splunk \n"
-	printf ">Or see this link: https://github.com/splunk/docker-splunk/tree/master/enterprise \n"
-	printf ">Or check docker hub for more splunk images\n"
+image_ok=`docker images|grep $SPLUNK_IMAGE`
+if [ -z "$image_ok" ]; then
+	printf "${Red}Cannot locate splunk image ${NC}.\n\n"
+        printf "Will attempt to download image. If that doesn't work you can try: \n"
+	printf "	1-link: https://github.com/outcoldman/docker-splunk \n"
+	printf "  	2-link: https://github.com/splunk/docker-splunk/tree/master/enterprise \n"
+	printf "  	3-Or check docker hub for more splunk images\n\n"
+	read -p "Hit <ENTER> to download... [docker pull $SPLUNK_IMAGE]"	
+	docker pull $SPLUNK_IMAGE
         exit
 else
         printf "${Green} Ok!${NC}\n"
 fi
+#-----------
 
+#-----------
 printf "Checking if docker network is created [$SPLUNKNET]..."
 net=`docker network ls | grep $SPLUNKNET `
 if [ -z "$net" ]; then 
@@ -273,6 +311,8 @@ if [ -z "$net" ]; then
 else
        printf "${Green} Ok!${NC}\n"
 fi
+#-----------
+
 #check dnsmasq
 #check $USER
 #check if local splunkd running on laptop
@@ -377,7 +417,7 @@ return 0
 #---------------------------------------------------------------------------------
 pausing () {
 #$1=seconds
-#printf "   ->${DarkGray}Pausing $1 seconds... "
+
 for c in $(seq 1 $1); do  
 	echo -ne "${LightGray}\t->Pausing $1 seconds... ${Yellow}$c\r"  >&3
 	sleep 1
@@ -439,6 +479,7 @@ return 0
 host_status () {     ####### NOT USED YET ########
 #$1=hostname
 #restart host and splunkd is not running
+
 hoststate=`docker ps -a --filter name=$1 --format "{{.Status}}" | awk '{print $1}'`
 splunkstate=`docker exec -ti $1 /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ print $3}'`
 #printf "$D1:host_status(): host:[$1] hoststate:[$hoststate] splunkstate:[$splunkstate] ${NC}\n"
@@ -460,6 +501,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 make_lic_slave () {
 # This function designated $hostname as license-slave using LM (License Manager)
+
 hostname=$1; lm=$2
 #echo "hostname[$hostname]  lm[$lm] _____________";exit
 lm_ip=`docker port  $lm| awk '{print $3}'| cut -d":" -f1|head -1`
@@ -496,7 +538,8 @@ fi
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 show_all_containers () {
-#This function diplays contianers groups by role (role is determined using hostname ex: SH, DS, IDX, CM,...etc)
+#This function diplays containers groups by role (role is determined using hostname ex: SH, DS, IDX, CM,...etc)
+
 count=`docker ps -aq|wc -l`
 if [ $count == 0 ]; then
 	echo "No containers to list"
@@ -538,6 +581,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 splunkd_status_all () {
 #This functinos displays splunkd status on all containers
+
 for i in `docker ps --format "{{.Names}}"`; do
         printf "${Purple}$i${NC}: "
         docker exec -ti $i /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ \
@@ -667,8 +711,8 @@ return 0
 #---------------------------------------------------------------------------------
 create_single_splunkhost () {
 #This function creates single splunk container using $vip and $hostname
-#inputs: $vip: container's IP to use (nated IP aka as bind IP)
-#	 $2:$fullhostname:  container name (may include site and host number sequence)
+#inputs: $1: container's IP to use (nated IP aka as bind IP)
+#	 $2: fullhostname:  container name (may include site and host number sequence)
 #output: -create single host. will not prompt user for any input data
 #	 -reset password and setup splunk's login screen
 #        -configure container's OS related items if needed
@@ -680,10 +724,7 @@ create_single_splunkhost () {
 
 	#echo "fullhostname[$fullhostname]"
 	#rm -fr $MOUNTPOINT/$fullhostname
-	#mkdir -m 777 -p $MOUNTPOINT/$fullhostname/etc
-	#mkdir -m 777 -p $MOUNTPOINT/$fullhostname/var
-	#chmod -R 777 $MOUNTPOINT/$fullhostname
-	#chown -R mhassan $MOUNTPOINT/$fullhostname
+	mkdir -m 777 -p $MOUNTPOINT/$fullhostname
 
         CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$KV_PORT:$KV_PORT -p $vip:$IDX_PORT:$IDX_PORT -p $vip:$REPL_PORT:$REPL_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$IDX_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $SPLUNK_IMAGE"
         
@@ -729,7 +770,7 @@ return 0
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
 create_generic_splunk () {
-#This function create generic splunk containers. Role is assigned later
+#This function creates generic splunk containers. Role is assigned later
 #inputs: $1:basehostname: (ex IDX, SH,HF) just the base (no numbers)
 #	 $2:hostcount:     how many containers to create from this host type (ie name)
 #outputs: $gLIST:  global var contains the list of hostname just got created
@@ -991,6 +1032,7 @@ return 0
 create_single_idxc () {
 #This function creates single IDX cluster. Details are parsed from $1
 #$1 AUTO or MANUAL mode
+
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
 START2=$(date +%s);
@@ -1137,9 +1179,10 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 build_multi_site_cluster () {
-#This function create site-2-site cluster
-START3=$(date +%s);
+#This function creates site-2-site cluster
 #http://docs.splunk.com/Documentation/Splunk/6.4.3/Indexer/Migratetomultisite
+
+START3=$(date +%s);
 
 s=""; SitesStr=""     			#used with "splunk edit cluster-config" on CM
 SITEnames=""
@@ -1370,8 +1413,10 @@ return 0
 }    #end display_menu()
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
+### MAIN BEGINGS #####
 
-#---------------------------------------
+#The following must start at the begining for the code since we use I/O redirection for logging
+#--------------------
 loglevel=2
 maxloglevel=5 #The highest loglevel we use / allow to be displayed. 
 
@@ -1405,8 +1450,9 @@ done
 for v in $(seq $(( loglevel+1 )) $maxloglevel ); do
     (( "$v" > "2" )) && eval exec "$v>/dev/null" #Redirect these to bitbucket, provided that they don't match stdout and stderr.
 done
-#---------------------------------------
+#------------------
 
+#house keeping functions
 check_shell
 detect_os
 setup_ip_aliases
