@@ -250,9 +250,9 @@ if [ "$os" == "Linux" ]; then
         mem=`free -mg|grep -i mem|awk '{print $2}' `
         if [ "$mem" -le "30" ]; then
 		printf "[$mem GB]  ${Red}WARNING!${NC}\n"
-                printf "        Recominding 32GB for smooth operation\n"
+                printf "        Recomending 32GB or more for smooth operation\n"
                 printf "	Some of the cluster automated builds may fail!\n"
-                printf "	Please limit your builds to under 15 containers! Please restart EXISTED container manually${NC}\n"
+                printf "	Please limit your builds to 15 containers! Please restart EXISTED container manually${NC}\n"
 	else
                 printf "[$mem GB]${Green} Ok!${NC}\n"
 	fi
@@ -260,9 +260,9 @@ elif [ "$os" == "Darwin" ]; then
 	mem=`top -l 1 | head -n 10 | grep PhysMem | awk '{print $2}' | sed 's/G//g' `
         if [ "$mem" -le "30" ]; then
 		printf "[$mem GB]  ${Red}WARNING!${NC}\n"
-                printf "	Recomending 32GB for smooth operation\n"
+                printf "	Recomending 32GB or more for smooth operation\n"
                 printf "	Some of the cluster automated builds may fail!\n"
-                printf "	Please limit your builds to under 15 containers! Please restart EXISTED container manually${NC}\n"
+                printf "	Please limit your builds to 15 containers! Please restart EXISTED container manually${NC}\n"
 	else
                 printf "[$mem GB]${Green} Ok!${NC}\n"
 	fi
@@ -290,12 +290,13 @@ printf "Checking if splunk image is available [$SPLUNK_IMAGE]..."
 image_ok=`docker images|grep $SPLUNK_IMAGE`
 if [ -z "$image_ok" ]; then
 	printf "${Red}Cannot locate splunk image ${NC}.\n\n"
-        printf "Will attempt to download image. If that doesn't work you can try: \n"
+        printf "I will attempt to download this image. If that doesn't work you can try: \n"
 	printf "	1-link: https://github.com/outcoldman/docker-splunk \n"
 	printf "  	2-link: https://github.com/splunk/docker-splunk/tree/master/enterprise \n"
-	printf "  	3-Or check docker hub for more splunk images\n\n"
+	printf "  	3-Search for splunk images https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=splunk&starCount=0\n\n"
 	read -p "Hit <ENTER> to download... [docker pull $SPLUNK_IMAGE]"	
 	docker pull $SPLUNK_IMAGE
+	printf "\nPlease restart the script again!\n"
         exit
 else
         printf "${Green} Ok!${NC}\n"
@@ -306,7 +307,7 @@ fi
 printf "Checking if docker network is created [$SPLUNKNET]..."
 net=`docker network ls | grep $SPLUNKNET `
 if [ -z "$net" ]; then 
-	printf "${Green} Created!${NC}\n"
+	printf "${Green} Creating...${NC}\n"
         docker network create -o --iptables=true -o --ip-masq -o --ip-forward=true $SPLUNKNET
 else
        printf "${Green} Ok!${NC}\n"
@@ -1339,8 +1340,8 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_menu2 () {
 	clear
-	printf "${Green}Docker Splunk Infrastructure Managment -> Clustering Menu: ${DarkGray}[$dockerinfo][$os]${NC}\n"
-        echo "====================================================================================================================="
+	printf "${Green}Docker Splunk Infrastructure Managment -> Clustering Menu:${NC}${LightBlue}[$dockerinfo]${NC}\n"
+	echo "=====================================================================================[OS:$os][loglevel:$loglevel]=="
 	printf "${Yellow}B${NC}) Go back to MAIN menu\n\n"
 
 	printf "${Purple}AUTO BUILDS (R3/S2 1CM 1DEP 3SHC 1CM 3IDXC):\n"
@@ -1391,8 +1392,8 @@ return 0
 display_menu () {
 #This function displays user options for the main menu
 	clear
-	printf "${Yellow}Docker Splunk Infrastructure Managment Main Menu:${NC} ${LightBlue}[$dockerinfo][$os]${NC}\n"
-	echo "=========================================================================================================="
+	printf "${Yellow}Docker Splunk Infrastructure Managment Main Menu:${NC}${LightBlue}[$dockerinfo]${NC}\n"
+	echo "==================================================================================[OS:$os][loglevel:$loglevel]=="
 	printf "${Red}C${NC}) CREATE containers ${DarkGray}[docker run ...]${NC}\n"
 	printf "${Red}D${NC}) DELETE all containers ${DarkGray}[docker rm -f \$(docker ps -aq)]${NC}\n"
 	printf "${Red}R${NC}) REMOVE all volumes to recover diskpace ${DarkGray}[docker volume rm \$(docker volume ls -qf 'dangling=true')]${NC}\n"
