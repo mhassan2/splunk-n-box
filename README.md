@@ -36,7 +36,7 @@ Please download and install in your lab. The script was tested on Ubuntu 16.04. 
 ##How does it work?
 
 Once you have your Ubuntu up and running please follow the instructions for installing docker https://docs.docker.com/engine/installation/linux/ubuntulinux/
-Please be aware that Ubunto 14.04 did not work very well for me. There is a bug around mounting docker volumes. Your mileage may vary if you decide to use CentOS or equivalent Linux distribution.
+Please be aware that Ubunto 14.04 did not work very well for me. There is a bug around mounting docker volumes. Your mileage may vary if you decide to use CentOS or equivalent Linux distribution. For OSX see https://github.com/docker/dcus-hol-2016/tree/master/docker-developer
 
 When the scripts runs for the first time it checks to see if you have any IP aliases available (the range specified in the script). If not; then it will configure IP aliases 192.168.1.100-200. The aliased IPs will be automatically mapped, at container creation time, to the internal docker IP space (172.18.0.0/24). You should be able to point your browser to any NATed IP on port 8000 and that will get you directly to the container. During my research I haven’t seen many people using that technique and they opt for changing the ports or using a proxy docker. My approach is to keep the standard Splunk ports (8000, 8089, 9997,etc) and use iptable NATs to make the containers visible to the outside world.  This will save you a lot of headache when dealing with creating large number of Splunk containers (aka hosts). Running under OSX then I used private network segment 10.0.0.0/24. The assumption is you dont need to NAT to the outside world and evetything will be local to your MAC laptop.
 
