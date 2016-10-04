@@ -65,13 +65,14 @@ If you want the docker-host be be able to resolved host IPs (optional) install d
 #MAC OSX installtion:
 Install docker & Tool box : https://docs.docker.com/engine/installation/mac/
 
-``` Notes: 
+``` 
+Notes: 
 1. Do not use older boot2docker stuff. If you google OSX docker install you will see references to that every where. DO NOT USE! Starting docker 1.12 Orcale VBOX is no longer used, a new hypervisor is used xhyve.
 2. Perfromance on OSX is noticably less that Linux runs. So be aware that you may not be able to bring up as many containers will similar hardware resources.
  ``` 
 
 
--If you have older OSX docker install; try removing boot2docker and vbox (if not using it).
+-If you have older OSX docker installed; try removing boot2docker and VBOX (if not using it).
 
 Install brew packages managment: http://www.howtogeek.com/211541/homebrew-for-os-x-easily-installs-desktop-apps-and-terminal-utilities/
 
