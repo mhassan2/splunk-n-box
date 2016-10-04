@@ -70,8 +70,9 @@ VOL_DIR="docker-volumes"
 #ETH=
 #GREP=
 
+SPLUNK_IMAGE="mhassan/splunk"		#my own built image
 #SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	 #taken offline by outcoldman
-SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-
+#SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-
 #SPLUNK_IMAGE="splunk/splunk:6.5.0"	#official image
 #SPLUNK_IMAGE="btorresgil/splunk"
 #SPLUNK_IMAGE="xeor/splunk"
@@ -195,7 +196,7 @@ check_load () {
 #We need to throttle back host creation if running on low powerd server. Set to 4 x num of cores
 if [ "$os" == "Darwin" ]; then
 	cores=`sysctl -n hw.ncpu`
-else
+elif [ "$os" == "Linux" ]; then
 	cores=`$GREP -c ^processor /proc/cpuinfo`
 fi
 
@@ -205,17 +206,21 @@ t=$MAXLOADTIME;
 while true 
 do
 	if [ "$os" == "Darwin" ]; then
+	#sudo memory_pressure -l warn| head -n 28
 		loadavg=`sysctl -n vm.loadavg | awk '{print $2}'`
-		#LOADFACTOR=$LOADFACTOR_OSX
+		LOADFACTOR=$LOADFACTOR_OSX
+		#max_mem=`top -l 1 | head -n 10 | grep PhysMem | awk '{print $2}' | sed 's/G//g' `
 	else
         	loadavg=`cat /proc/loadavg |awk '{print $1}'|sed 's/,//g'`
+        	#max_mem=`free -mg|grep -i mem|awk '{print $2}' `
 	fi
+
 	load=${loadavg%.*}
 	MAXLOADAVG=`echo $cores \* $LOADFACTOR | bc -l `
-	#MAXLOADAVG=3
 	c=`echo " $load > $MAXLOADAVG" | bc `;
 	#echo "OS:[$os] MAX ALLOWED LOAD:[$MAXLOADAVG] current load:[$loadavg]"
 	if [  "$c" == "1" ]; then
+		echo
 		for c in $(seq 1 $t); do
 			echo -ne "${LightRed}High load avg [load:$loadavg max allowed:$MAXLOADAVG cores:$cores]. Pausing ${Yellow}$t${NC} seconds... ${Yellow}$c\033[0K\r"
         		sleep 1
@@ -236,7 +241,7 @@ if [ "$os" == "Darwin" ]; then
         condition=$(which $GREP_OSX 2>/dev/null | grep -v "not found" | wc -l)
         if [ $condition -eq 0 ] ; then
                 printf "${Red}$GREP not installed${NC}\n"
-                printf "GNU grep is needed for this script to work. We use PCRE in ggrep! \n"
+                printf "GNU grep is needed for this script to work. We use PCRE regex in ggrep! \n"
 		printf "http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html \n"
                 exit
         else
@@ -247,24 +252,29 @@ fi
 #-----------
 printf "Checking if we have enough memory..."
 if [ "$os" == "Linux" ]; then
-        mem=`free -mg|grep -i mem|awk '{print $2}' `
-        if [ "$mem" -le "30" ]; then
-		printf "[$mem GB]  ${Red}WARNING!${NC}\n"
+        max_mem=`free -mg|grep -i mem|awk '{print $2}' `
+        if [ "$max_mem" -le "30" ]; then
+		printf "[$max_mem GB]  ${Red}WARNING!${NC}\n"
                 printf "        Recomending 32GB or more for smooth operation\n"
                 printf "	Some of the cluster automated builds may fail!\n"
-                printf "	Please limit your builds to 15 containers! Please restart EXISTED container manually${NC}\n"
+                printf "	Try limiting your builds to 15 containers!\n"
+		printf "	Restart EXISTED container manually\n\n"
 	else
-                printf "[$mem GB]${Green} Ok!${NC}\n"
+                printf "[$max_mem GB]${Green} Ok!${NC}\n"
 	fi
 elif [ "$os" == "Darwin" ]; then
-	mem=`top -l 1 | head -n 10 | grep PhysMem | awk '{print $2}' | sed 's/G//g' `
-        if [ "$mem" -le "30" ]; then
-		printf "[$mem GB]  ${Red}WARNING!${NC}\n"
+	max_mem=`top -l 1 | head -n 10 | grep PhysMem | awk '{print $2}' | sed 's/G//g' `
+        if [ "$max_mem" -le "30" ]; then
+		printf "[$max_mem GB]  ${Red}WARNING!${NC}\n"
+		printf "	Suggestions:\n"
+		printf "	${White}*Change docker default settings! From docker icon ->Preference->General->Choose max CPU/MEM available${NC}\n" 
+		printf "	Remove legacy boot2docker is installed (no longer used by docker)\n" 
                 printf "	Recomending 32GB or more for smooth operation\n"
                 printf "	Some of the cluster automated builds may fail!\n"
-                printf "	Please limit your builds to 15 containers! Please restart EXISTED container manually${NC}\n"
+                printf "	Try limiting your builds to 15 containers!\n"
+		printf "	Restart EXISTED containers manually\n\n"
 	else
-                printf "[$mem GB]${Green} Ok!${NC}\n"
+                printf "[$max_mem GB]${Green} Ok!${NC}\n"
 	fi
 fi
 #-----------
@@ -734,9 +744,12 @@ create_single_splunkhost () {
 	#CMD=`echo $CMD | sed 's/\t//g' `; 
 	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	#echo_logline "[${Purple}$fullhostname${NC}:${Cyan}$vip${NC}] Creating new splunk container..." >> ${LOGFILE}
-
-	pausing "15"
-
+	
+	if [ "$os" == "Darwin" ]; then
+		pausing "30"
+	else
+		pausing "15"
+	fi
         #set home screen banner in web.conf & change default admin password
 	printf "\t->Splunk initiliazation (pass change, licenses, login screen)..." >&3
 	custom_login_screen "$vip" "$fullhostname"
