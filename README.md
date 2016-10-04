@@ -65,24 +65,32 @@ If you want the docker-host be be able to resolved host IPs (optional) install d
 #MAC OSX installtion:
 Install docker & Tool box : https://docs.docker.com/engine/installation/mac/
 
-```Note: 
-  1. Do not use older boot2docker stuff. If you google OSX docker install you will see references to that every where. DO NOT USE! Starting docker 1.12 Orcale VBOX is no longer used, a new hypervisor is used xhyve.
-  2. Perfromance on OSX is noticably less that Linux runs. So be aware that you may not be able to bring up as many containers will similar hardware resources.
+``` Notes: 
+1. Do not use older boot2docker stuff. If you google OSX docker install you will see references to that every where. DO NOT USE! Starting docker 1.12 Orcale VBOX is no longer used, a new hypervisor is used xhyve.
+2. Perfromance on OSX is noticably less that Linux runs. So be aware that you may not be able to bring up as many containers will similar hardware resources.
  ``` 
 
 
 -If you have older OSX docker install; try removing boot2docker and vbox (if not using it).
 
-Install brew managment package  http://www.howtogeek.com/211541/homebrew-for-os-x-easily-installs-desktop-apps-and-terminal-utilities/
+Install brew packages managment: http://www.howtogeek.com/211541/homebrew-for-os-x-easily-installs-desktop-apps-and-terminal-utilities/
 
-``` /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"  ```
+``` 
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)  
+```
 
 Install Gnu grep (ggrep) to get PCRE regex support. The script will not work without it: http://apple.stackexchange.com/questions/193288/how-to-install-and-use-gnu-grep-in-osx
 
-``` brew tap homebrew/dupes; brew install grep ```
+``` 
+brew tap homebrew/dupes; brew install grep 
+```
 
-Configure docker for maximum CPU and Memory usage. Click on Docker icon -> Preference -> General -> slide everthing all the way to right
-The amount of container you can create is heavily dependant on resource
+Configure docker for maximum CPU and Memory usage. The number of containers you can create is heavily dependant on resource.
+
+```
+Click on Docker icon -> Preference -> General -> slide everthing all the way to right
+```
+
 
 
 ##Configuration and setup:
@@ -109,7 +117,6 @@ DNSSERVER="192.168.2.100"               #if running dnsmasq if used. Set to dock
 FILES_DIR="splunk_docker_script_github"  #place anything needs to copy to container here
 LIC_FILES_DIR="licenses_files"
 VOL_DIR="docker-volumes"
-
 ```
 
 ##Container host names rules:
