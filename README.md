@@ -55,6 +55,28 @@ docker build --tag="$USER/splunk" .
 
 If that doesn’t work for you then try another “splunk” image on the registry. Or you can make your own-stripped down Splunk image. If there is enough interested I will probably post my own but at this point what’s out there should work.
 
+##Linux installation:
+Follow the instruction here for docker install on Linux (make sure to create UID/GID needed) https://docs.docker.com/engine/installation/
+
+If you want the host be be resolved install dnsmasq (google for your Linux flavor).
+
+
+#MAC OSX installtion:
+Follow instruction here for OSX install : https://docs.docker.com/engine/installation/mac/
+-Do not use older boot2docker stuff. If you google OSX docker install you will see references to that every where. DO NOT USE! Starting docker 1.12 Oracle VBOX is no longer used, a new hypervisor is used xhyve .
+-If you have older OSX docker install try removing boot2docker and vbox (if not using it).
+
+Install brew managment package  http://www.howtogeek.com/211541/homebrew-for-os-x-easily-installs-desktop-apps-and-terminal-utilities/
+
+``` /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"  ```
+
+Install Gnu grep (ggrep) to get PCRE regex support. The script will not work without it: http://apple.stackexchange.com/questions/193288/how-to-install-and-use-gnu-grep-in-osx
+
+``` brew tap homebrew/dupes; brew install grep ```
+
+Configure docker for maximum CPU and Memory usage. Click on Docker icon -> Preference -> General -> slide everthing all the way to right
+The amount of container you can create is heavily dependant on resource
+
 
 ##Configuration and setup:
 
