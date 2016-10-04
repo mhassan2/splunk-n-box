@@ -66,7 +66,7 @@ If you want the docker-host be be able to resolved host IPs (optional) install d
 Install docker & Tool box : https://docs.docker.com/engine/installation/mac/
 
 ``` 
-Notes: 
+Note: 
 1. Do not use older boot2docker stuff. If you google OSX docker install you will see references to that every where. DO NOT USE! Starting docker 1.12 Orcale VBOX is no longer used, a new hypervisor is used xhyve.
 2. Perfromance on OSX is noticably less that Linux runs. So be aware that you may not be able to bring up as many containers will similar hardware resources.
  ``` 
@@ -74,10 +74,10 @@ Notes:
 
 -If you have older OSX docker installed; try removing boot2docker and VBOX (if not using it).
 
-Install brew packages managment: http://www.howtogeek.com/211541/homebrew-for-os-x-easily-installs-desktop-apps-and-terminal-utilities/
+Install brew packages managment: http://www.howtogeek.com/211541/homebrew-for-os-x-easily-installs-desktop-apps-and-terminal-utilities
 
 ``` 
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)  
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
 Install Gnu grep (ggrep) to get PCRE regex support. The script will not work without it: http://apple.stackexchange.com/questions/193288/how-to-install-and-use-gnu-grep-in-osx
