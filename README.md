@@ -63,6 +63,8 @@ If you want the docker-host be be able to resolved host IPs (optional) install d
 
 
 #MAC OSX installtion:
+xcode-select --install
+
 Install docker & Tool box : https://docs.docker.com/engine/installation/mac/
 
 ``` 
@@ -78,6 +80,10 @@ Install brew packages managment: http://www.howtogeek.com/211541/homebrew-for-os
 
 ``` 
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
+
+```
+brew update
 ```
 
 Install Gnu grep (ggrep) to get PCRE regex support. The script will not work without it: http://apple.stackexchange.com/questions/193288/how-to-install-and-use-gnu-grep-in-osx
