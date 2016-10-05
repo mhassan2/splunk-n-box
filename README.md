@@ -56,25 +56,28 @@ docker build --tag="$USER/splunk" .
 If that doesn’t work for you then try another “splunk” image on the registry. Or you can make your own-stripped down Splunk image. If there is enough interested I will probably post my own but at this point what’s out there should work.
 
 ##Linux installation:
-install docker
-Linux (make sure to create UID/GID needed) https://docs.docker.com/engine/installation/
+
+
+ 
+Install docker. Linux (make sure to create UID/GID needed) https://docs.docker.com/engine/installation/
 
 If you want the docker-host be be able to resolved host IPs (optional) install dnsmasq (google for your Linux flavor). Change --dns-host=x.x.x.x  to point the caching dns server.
 
 
 #MAC OSX installtion:
-xcode-select --install
-
-Install docker & Tool box : https://docs.docker.com/engine/installation/mac/
-
 ``` 
 Note: 
 1. Do not use older boot2docker stuff. If you google OSX docker install you will see references to that every where. DO NOT USE! Starting docker 1.12 Orcale VBOX is no longer used, a new hypervisor is used xhyve.
 2. Perfromance on OSX is noticably less that Linux runs. So be aware that you may not be able to bring up as many containers will similar hardware resources.
  ``` 
+ 
+Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-mavericks-10.9-configuration/
+```
+xcode-select --install
+```
 
+Install docker & Tool box : https://docs.docker.com/engine/installation/mac/
 
--If you have older OSX docker installed; try removing boot2docker and VBOX (if not using it).
 
 Install brew packages managment: http://www.howtogeek.com/211541/homebrew-for-os-x-easily-installs-desktop-apps-and-terminal-utilities
 
@@ -95,7 +98,7 @@ brew tap homebrew/dupes; brew install grep
 Configure docker for maximum CPU and Memory usage. The number of containers you can create is heavily dependant on resource.
 
 ```
-Click on Docker icon -> Preference -> General -> slide everthing all the way to right
+Click on Docker Icon -> Preference -> General -> slide everthing all the way to the right
 ```
 
 
