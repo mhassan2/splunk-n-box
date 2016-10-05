@@ -53,7 +53,7 @@ cd docker-splunk/splunk
 docker build --tag="$USER/splunk" .
 ```
 
-If that doesn’t work for you then try another “splunk” image on the registry. Or you can make your own-stripped down Splunk image. If there is enough interested I will probably post my own but at this point what’s out there should work.
+If that doesn’t work for you then try another “splunk” image on the registry https://hub.docker.com/. Or you can make your own-stripped down Splunk image. If there is enough interest I will probably post my own but at this point what’s out there should work.
 
 ##Linux installation:
  
