@@ -56,12 +56,11 @@ docker build --tag="$USER/splunk" .
 If that doesn’t work for you then try another “splunk” image on the registry. Or you can make your own-stripped down Splunk image. If there is enough interested I will probably post my own but at this point what’s out there should work.
 
 ##Linux installation:
-
-
  
-Install docker. Linux (make sure to create UID/GID needed) https://docs.docker.com/engine/installation/
+For differnt linux distributions/version see:  https://docs.docker.com/engine/installation/
 
-If you want the docker-host be be able to resolved host IPs (optional) install dnsmasq (google for your Linux flavor). Change --dns-host=x.x.x.x  to point the caching dns server.
+If you want the docker-host be be able to resolve host IPs (optional) install dnsmasq (google for your Linux flavor). 
+Change DNSSERVER="192.168.2.100"  to point the caching dns server. This does not work on OSX yet!
 
 
 #MAC OSX installtion:
