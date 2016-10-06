@@ -53,12 +53,13 @@ GREP_OSX="/usr/local/bin/ggrep"
 GREP_LINUX="/bin/grep"
 
 #IP aliases range to create. Must use routed network if you want reach host from outside
-#OSX will space will not be routed and just local to the laptop.
 #LINUX is routed and hosts can be reached from anywhere in the network
 START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.200"
+
+#OSX will space will not be routed and host reached from the laptop only
 START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.200"
 
-DNSSERVER="192.168.1.100"		#if running dnsmasq if used. Set to docker-host machine
+DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine
 
 #Full PATH is dynamic  based on OS type (see detect_os() )
 FILES_DIR="splunk_docker_script_github"  #place anything needs to copy to container here
@@ -70,6 +71,7 @@ VOL_DIR="docker-volumes"
 #ETH=
 #GREP=
 
+#more can be found http://hub.docker.com
 SPLUNK_IMAGE="mhassan/splunk"		#my own built image
 #SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	 #taken offline by outcoldman
 #SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-
@@ -78,6 +80,10 @@ SPLUNK_IMAGE="mhassan/splunk"		#my own built image
 #SPLUNK_IMAGE="xeor/splunk"
 BASEHOSTNAME="IDX"
 SPLUNKNET="splunk-net"
+
+#Set the local splunkd path if you're runnig splunk on this docker-host (ex laptop).
+#Used in validation_check() routine to detect local instance and kill it, otherwise it will interfer with this script operation
+LOCAL_SPLUNKD="/opt/splunk/bin/splunk"
 
 #Splunk stadard ports
 SSHD_PORT="8022"	#in case we need to enable sshd, not recommended
@@ -96,20 +102,20 @@ SFACTOR="2"
 SHCLUSTERLABEL="shcluster1"
 IDXCLUSTERLABEL="idxcluster1"
 MYSECRET="mysecret"
-STD_IDXC_COUNT="3"	#in auto mode create 3 IDX
-STD_SHC_COUNT="3"	#in auth ode create 3 SHC
+STD_IDXC_COUNT="3"	#default IDXC size
+STD_SHC_COUNT="3"	#default SHC size
 
 #Misc
 LOGFILE="${0##*/}.log"   #log file will be this_script_name.log
-HOSTSFILE="/etc/docker-hosts.dnsmasq"  #optional if caching dns is used
+HOSTSFILE="/etc/docker-hosts.dnsmasq"  #optional if dns caching is used
 
-#load control
+#Load control
 MAXLOADTIME=10		#seconds increments for timer
 MAXLOADAVG=4		#Not used
-LOADFACTOR=3            #allow (3 x cores) of load on host
-LOADFACTOR_OSX=1        #allow 1xcores for the MAC (testing..)
+LOADFACTOR=3            #allow (3 x cores) of load on docker-host
+LOADFACTOR_OSX=1        #allow (1 x cores) for the MAC (testing..)
 
-#-log level is controlled with IO redirection -------
+#-log level is controlled with I/O redirection. Must be first thing executed --
 # Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
 exec >> >(tee -i $LOGFILE)
 exec 2>&1
@@ -130,7 +136,7 @@ echo_logline() {    #### NOT USED YET ####
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 remove_ip_aliases () {
-#Delete ip aliases (OS dependant)
+#Delete ip aliases on the interface (OS dependant)
 
 base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `; # base_ip=$base_ip"."
 start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
@@ -268,9 +274,9 @@ elif [ "$os" == "Darwin" ]; then
 		printf "[$max_mem GB]  ${Red}WARNING!${NC}\n"
 		printf "	Suggestions:\n"
 		printf "	${White}*Change docker default settings! From docker icon ->Preference->General->Choose max CPU/MEM available${NC}\n" 
-		printf "	Remove legacy boot2docker is installed (no longer used by docker)\n" 
+		printf "	Remove legacy boot2docker if installed (starting docker 1.12 it no longer needed)\n" 
                 printf "	Recomending 32GB or more for smooth operation\n"
-                printf "	Some of the cluster automated builds may fail!\n"
+                printf "	Some of the cluster automated builds may fail if we dont have enough memory/cpu!\n"
                 printf "	Try limiting your builds to 15 containers!\n"
 		printf "	Restart EXISTED containers manually\n\n"
 	else
@@ -321,6 +327,23 @@ if [ -z "$net" ]; then
         docker network create -o --iptables=true -o --ip-masq -o --ip-forward=true $SPLUNKNET
 else
        printf "${Green} Ok!${NC}\n"
+fi
+#-----------
+#-----------
+printf "Checking if splunkd is running on this host [$LOCAL_SPLUNKD]..."
+PID=`ps aux | $GREP 'splunkd' | head -1 | awk '{print $2}' `
+#SPLK=`ps aux | $GREP 'splunkd' | head -1 | awk '{print $11}' `
+
+if ps -p $PID > /dev/null; then
+	printf "${Red}Running [$PID]${NC}\n"
+	read -p "Kill it? [Y/n]? " answer
+       	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+		sudo $LOCAL_SPLUNKD stop
+	else
+		printf "${Red}WARNING! local splunkd may prevent containers from binding to interfaces!${NC}\n\n"	
+	fi
+else
+	printf "${Green} Ok!${NC}\n"
 fi
 #-----------
 
@@ -727,7 +750,7 @@ create_single_splunkhost () {
 #output: -create single host. will not prompt user for any input data
 #	 -reset password and setup splunk's login screen
 #        -configure container's OS related items if needed
-
+START1=$(date +%s);
 	vip=$1  fullhostname=$2
 	fullhostname=`echo $fullhostname| tr -d '[[:space:]]'`	#trim whitespace if they exist
 
@@ -765,18 +788,21 @@ create_single_splunkhost () {
         CMD=`docker exec -it $fullhostname apt-get install -y vim net-tools telnet dnsutils > /dev/null >&1`
         #docker exec -it $fullhostname apt-get install -y  net-tools > /dev/null >&1
 
-	#DNS stuff to be used with dnsmasq. Need to revisit for OSX  9/29/16
-	#printf "\t->Updating dnsmasq records[$vip  $fullhostname]..." >&3
-	#if [ ! -f $HOSTSFILE ]; then
-	#	touch $HOSTSFILE
-	#fi
-	#if [ $(cat $HOSTSFILE | $GREP $fullhostname | wc -l | sed 's/^ *//g') != 0 ]; then
-       # 	printf "\t${Red}[$fullhostname] is already in the hosts file. Removing...${NC}\n" >&4
-        #	cat $HOSTSFILE | $GREP -v $vip | sort > tmp && mv tmp $HOSTSFILE
-	#fi
-	#printf "${Green}OK!${NC}\n" >&3
-	#printf "$vip\t$fullhostname\n" >> $HOSTSFILE
-	#killall -HUP dnsmasq	#must referesh to read local.host file
+#DNS stuff to be used with dnsmasq. Need to revisit for OSX  9/29/16
+#Enable for Linux for now
+if [ "$os" == "Linux" ]; then
+	printf "\t->Updating dnsmasq records[$vip  $fullhostname]..." >&3
+	if [ ! -f $HOSTSFILE ]; then
+		touch $HOSTSFILE
+	fi
+	if [ $(cat $HOSTSFILE | $GREP $fullhostname | wc -l | sed 's/^ *//g') != 0 ]; then
+        	printf "\t${Red}[$fullhostname] is already in the hosts file. Removing...${NC}\n" >&4
+        	cat $HOSTSFILE | $GREP -v $vip | sort > tmp && mv tmp $HOSTSFILE
+	fi
+	printf "${Green}OK!${NC}\n" >&3
+	printf "$vip\t$fullhostname\n" >> $HOSTSFILE
+	killall -HUP dnsmasq	#must referesh to read $HOSTFILE file
+fi
 
 return 0
 
@@ -983,6 +1009,7 @@ printf "${LightBlue}___________ Finshed STEP#1 _________________________________
 printf "${LightBlue}___________ Starting STEP#2 (SH cluster members configurations) _______________${NC}\n" >&3
 #printf "$D1:create_single_shc():After members_list loop> parm2:[$2] members_list:[$members_list] sh_list:[$sh_list]${NC}\n"
 for i in $members_list ; do
+	check_load	#throttle during SHC build
  	printf "[${Purple}$i${NC}]${LightBlue} Making cluster memeber...${NC}\n"
 	bind_ip_sh=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
         bind_ip_sh=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
@@ -1106,6 +1133,7 @@ printf "${LightBlue}____________ Finished STEP#1 _______________________________
 
 printf "${LightBlue}____________ Starting STEP#2 (configuring IDXC nodes) _________________${NC}\n" >&3
 for i in $members_list ; do
+	check_load	#throttle during IDXC build
 	printf "[${Purple}$i${NC}]${LightBlue} Making search peer... ${NC}\n"
         bind_ip_idx=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 
@@ -1414,7 +1442,7 @@ display_menu () {
 	printf "${Yellow}1${NC}) SHOW all containers details ${DarkGray}[custom view]${NC} \n"
 	printf "${Yellow}2${NC}) START all stopped containers ${DarkGray}[docker start \$(docker ps -a --format \"{{.Names}}\")]${NC}\n"
 	printf "${Yellow}3${NC}) STOP all running containers ${DarkGray}[docker stop \$(docker ps -aq)]${NC}\n"
-	printf "${Yellow}4${NC}) Show hosts by hostname groups\n"
+	printf "${Yellow}4${NC}) Show hosts by hostname groups ${DarkGray}[works only if you followed the host naming rules]${NC}\n"
 	echo
 	printf "${LightBlue}5${NC}) RESET all splunk passwords [changeme --> hello] ${DarkGray}[splunkd must be running]${NC}\n"
 	printf "${LightBlue}6${NC}) ADD splunk licenses ${DarkGray}[splunkd must be running]${NC}\n"
