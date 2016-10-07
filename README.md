@@ -72,7 +72,7 @@ Note:
  
 Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-mavericks-10.9-configuration/
 ```
-xcode-select --install
+xcode-select --install   (this is an optional step. You may not need it)
 ```
 
 Install docker & Tool box : https://docs.docker.com/engine/installation/mac/
