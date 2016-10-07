@@ -63,11 +63,11 @@ If you want the docker-host be be able to resolve host IPs (optional) install dn
 Change DNSSERVER="192.168.2.100"  to point the caching dns server. This does not work on OSX yet!
 
 
-##MAC OSX installtion:
+##MAC OSX installation:
 ``` 
 Note: 
 1. Do not use older boot2docker stuff. If you google OSX docker install you will see references to that every where. DO NOT USE! Starting docker 1.12 Orcale VBOX is no longer used, a new hypervisor is used xhyve.
-2. Perfromance on OSX is noticably less than Linux runs. So be aware that you may not be able to bring up as many containers will similar hardware resources.
+2. Perfromance on OSX is noticeably less than Linux runs. So be aware that you may not be able to bring up as many containers will similar hardware resources.
  ``` 
  
 Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-mavericks-10.9-configuration/
@@ -78,7 +78,7 @@ xcode-select --install   (this is an optional step. You may not need it)
 Install docker & Tool box : https://docs.docker.com/engine/installation/mac/
 
 
-Install brew packages managment: http://www.howtogeek.com/211541/homebrew-for-os-x-easily-installs-desktop-apps-and-terminal-utilities
+Install brew packages management: http://www.howtogeek.com/211541/homebrew-for-os-x-easily-installs-desktop-apps-and-terminal-utilities
 
 ``` 
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
