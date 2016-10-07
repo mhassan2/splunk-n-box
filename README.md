@@ -145,6 +145,11 @@ UF  : Universal Forwarder
 
 ##How to use:
 
+The first time you run the script it will create the needed IP aliases. You may want to exit the script after the first run and verify that aliases are create. Theres is a menu option to remove the aliases later.
+```
+ifconfig | more
+```
+
 You have the ability to control verbosity level by using –v switch. I used I/O redirection to control verbosity (and logging level). 
 
 ```
@@ -153,11 +158,13 @@ create-splunk.sh –v3
 
 Experiment with creating few hosts then point your browser to them. Push the server to the limits to see how many host can you create before your system crashes. I was able to create 80 hosts (4 site-2-site cluster 20IDX 3SH each) on a single Intel NUC SKull device (i7 32GB 1TB SSD). Load avg shot to 20 during the build, but went down to 6 once the cluster stablized. Please be aware that it will take 10+ minutes (depending on number of memebers on the cluster) to reach a stable cluster state.
 
-```Choose option C```
+```Choose option C
+```
 
 Add license file(s) to your containers. Make sure you have your all your license files in a directory accessible by the script. This option will be overridden if the host becomes a license-slave
 
-```Choose option 6```
+```Choose option 6
+```
 
 The real fun starts on the second clustering-menu. Select any item from the first 1-4 choices then watch the script create everything for you. Once you get familiar with things; then move to the “manual” mode options 5-8. In manual mode you will be able to specify exact hostnames and how many “hosts” to create. Please follow the standard described above. Validate the actions by pointing your browser to any host you create. 
 
@@ -210,7 +217,7 @@ display_menu ()
 
 
 ##Note:
-There are few optional items (open source) are not part of my work. I added them to the container build for troubleshooting,it’s up to you if you want to install them. You may want to exclude them to keep the container footprint small.
+There are few optional items (open source) not part of my work. I added them to the container build for troubleshooting,it’s up to you if you want to install them. You may want to exclude them to keep the container footprint small.
 
 -[screenfetch](http://tuxtweaks.com/2013/12/install-screenfetch-linux/)  : banner screen show host info at ssh login
 
