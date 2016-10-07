@@ -63,7 +63,7 @@ If you want the docker-host be be able to resolve host IPs (optional) install dn
 Change DNSSERVER="192.168.2.100"  to point the caching dns server. This does not work on OSX yet!
 
 
-#MAC OSX installtion:
+##MAC OSX installtion:
 ``` 
 Note: 
 1. Do not use older boot2docker stuff. If you google OSX docker install you will see references to that every where. DO NOT USE! Starting docker 1.12 Orcale VBOX is no longer used, a new hypervisor is used xhyve.
@@ -130,13 +130,17 @@ VOL_DIR="docker-volumes"
 
 ##Container host names rules:
 
-When you get comfortable navigating around the options you will soon discover that it is so easy to pop up hosts all the time. Inconsistent hostnames will lead to confusion. That actually happened to me! Therefore I am enforcing standard host naming convention. You have the option to override that behavior in the “manual” mode. But remember the script relies on host names as a way to evaluate the host role. Diverting from the standard disrupts the logic in certain functions [like show_groups() ]. The script will automatically assign a sequence host number next to the base host name. For example in some functions you will be prompted to enter Indexer name; you should enter IDX only. The script will find the next unused sequence number and IP address and use it (example IDX01, IDX02, IDX03,..etc). That logic does not apply to the “site” portion of the hostname. The script will use the following naming conventions:
+When you get comfortable navigating around the options you will soon discover that it is so easy to pop up hosts all the time. Inconsistent hostnames will lead to confusion. That actually happened to me! Therefore I am enforcing standard host naming convention. You have the option to override that behavior in the “manual” mode. But remember the script relies on host names as a way to evaluate the host role. Diverting from the standard disrupts the logic in certain functions [like show_groups() ]. The script will automatically assign a sequence host number next to the base host name. For example in some functions you will be prompted to enter Indexer name; you should enter IDX only. The script will find the next unused sequence number and IP address and use it (example IDX01, IDX02, IDX03,..etc). That logic does not apply to the “site” portion of the hostname. The script will use the following naming convention:
+```
 IDX : Indexer
 SH  : Search Head
 DS  : Deployment Server
 LM  : Licnese Master
 CM  : Cluster Manager
-
+DEP : Search Head Cluster Deployer
+HF  : Heavy Forwarder
+UF  : Universal Forwarder
+```
 
 ##How to use:
 
