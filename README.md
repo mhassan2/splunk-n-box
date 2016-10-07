@@ -67,7 +67,7 @@ Change DNSSERVER="192.168.2.100"  to point the caching dns server. This does not
 ``` 
 Note: 
 1. Do not use older boot2docker stuff. If you google OSX docker install you will see references to that every where. DO NOT USE! Starting docker 1.12 Orcale VBOX is no longer used, a new hypervisor is used xhyve.
-2. Perfromance on OSX is noticably less that Linux runs. So be aware that you may not be able to bring up as many containers will similar hardware resources.
+2. Perfromance on OSX is noticably less than Linux runs. So be aware that you may not be able to bring up as many containers will similar hardware resources.
  ``` 
  
 Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-mavericks-10.9-configuration/
@@ -135,8 +135,8 @@ When you get comfortable navigating around the options you will soon discover th
 IDX : Indexer
 SH  : Search Head
 DS  : Deployment Server
-LM  : Licnese Master
-CM  : Cluster Manager
+LM  : License Manager
+CM  : Cluster Master
 DEP : Search Head Cluster Deployer
 HF  : Heavy Forwarder
 UF  : Universal Forwarder
