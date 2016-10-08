@@ -42,18 +42,12 @@ When the scripts runs for the first time it checks to see if you have any IP ali
 
 ##Splunk image:
 
-I used outcoldman image as basis of this work. But for some reason it was pulled out of docker registry website. You still can get it here:  https://github.com/outcoldman/docker-splunk
-
-Here is his instructions for getting the image (remember to include the trailing dot):
-
+My original work used outcoldman imaage. But for some reason it was pulled out of docker registry website.  https://github.com/outcoldman/docker-splunk . I have cloned outcoldman image into my own so its always availalbe for download
 
 ```
-git clone https://github.com/outcoldman/docker-splunk.git 
-cd docker-splunk/splunk 
-docker build --tag="$USER/splunk" .
+mhassan/splunk
 ```
-
-If that doesn’t work for you then try another “splunk” image on the registry https://hub.docker.com/. Or you can make your own-stripped down Splunk image. If there is enough interest I will probably post my own but at this point what’s out there should work.
+There are multiple splunk images on docker hub https://hub.docker.com/  but I havent verified them. 
 
 ##Linux installation:
  
