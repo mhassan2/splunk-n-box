@@ -243,6 +243,56 @@ return 0
 }  #check load()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
+install_gnu_grep () {
+
+#----------
+printf "${Yellow}Checking xcode commandline tools:${NC} "
+cmd=$(xcode-select -p)
+if [ -n $cmd ]; then
+	printf "${Green}Already installed${NC}\n"
+else
+	printf "${Yellow}Running [xcode-select --install]${NC}\n"
+ 	cmd=$(xcode-select --install)
+fi
+#----------
+printf "${Yellow}Checking brew package management:${NC} "
+condition=$(which brew 2>/dev/null | grep -v "not found" | wc -l)
+if [ $condition -eq 0 ]; then
+	printf "${Yellow}Running [/usr/bin/ruby -e \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\" ]${NC}\n"
+ 	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+else
+	printf "${Green}Already installed${NC}\n"
+fi
+#----------
+printf "${Yellow}Checking pcre package:${NC} "
+cmd=$(brew ls pcre --versions)
+if [ -n "$cmd" ]; then
+	printf "${Green}Already installed${NC}\n"
+else
+	printf "${Yellow}Running [brew install pcre]${NC}\n"
+ 	brew install pcre
+fi
+#----------
+printf "${Yellow}Checking ggrep package:${NC} "
+cmd=$(brew ls grep --versions|cut -d" " -f2)
+if [ -n "$cmd" ]; then
+        printf "${Green}Already installed${NC}\n"
+else
+        printf "${Yellow}Running [brew install homebrew/dupes/grep]${NC}\n"
+ 	brew tap homebrew/dupes
+ 	brew install homebrew/dupes/grep
+        printf "${Yellow}Running [sudo ln -s /usr/local/Cellar/grep/$cmd/bin/ggrep /usr/local/bin/ggrep]${NC}\n"
+ 	sudo ln -s /usr/local/Cellar/grep/$cmd/bin/ggrep /usr/local/bin/ggrep
+fi
+printf "${Yellow}Running [brew list]${NC}\n"
+ brew list --versions
+printf "${Yellow}Installtion done!${NC}\n\n"
+read -p "Hit <ENTER> to continue..."
+echo
+return 0
+}  #end install gnu_grep
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
 validation_check () {
 
 if [ "$os" == "Darwin" ]; then
@@ -252,7 +302,14 @@ if [ "$os" == "Darwin" ]; then
                 printf "${Red}$GREP not installed${NC}\n"
                 printf "GNU grep is needed for this script to work. We use PCRE regex in ggrep! \n"
 		printf "http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html \n"
-                exit
+		read -p "Install Gnu grep ggrep? [Y/n]? " answer
+        	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+			install_gnu_grep
+		else
+			printf "${LightRed}This scrip will not work withouth Gnu grep${NC}\n"
+			printf "http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html \n"
+			exit
+		fi
         else
                 printf "${Green} Ok!${NC}\n"
         fi
@@ -264,10 +321,12 @@ if [ "$os" == "Linux" ]; then
         max_mem=`free -mg|grep -i mem|awk '{print $2}' `
         if [ "$max_mem" -le "30" ]; then
 		printf "[$max_mem GB]  ${Red}WARNING!${NC}\n"
-                printf "        Recomending 32GB or more for smooth operation\n"
-                printf "	Some of the cluster automated builds may fail!\n"
-                printf "	Try limiting your builds to 15 containers!\n"
-		printf "	Restart EXISTED container manually\n\n"
+		printf "Suggestions:\n"
+                printf "1-Recomending 32GB or more for smooth operation\n"
+                printf "2-Some of the cluster automated builds may fail!\n"
+                printf "3-Try limiting your builds to 15 containers!\n"
+		printf "4-Restart EXISTED container manually\n\n"
+		printf " ----------------------------------------------\n\n"
 	else
                 printf "[$max_mem GB]${Green} Ok!${NC}\n"
 	fi
@@ -275,13 +334,14 @@ elif [ "$os" == "Darwin" ]; then
 	max_mem=`top -l 1 | head -n 10 | grep PhysMem | awk '{print $2}' | sed 's/G//g' `
         if [ "$max_mem" -le "30" ]; then
 		printf "[$max_mem GB]  ${Red}WARNING!${NC}\n"
-		printf "	Suggestions:\n"
-		printf "	${White}*Change docker default settings! From docker icon ->Preference->General->Choose max CPU/MEM available${NC}\n" 
-		printf "	Remove legacy boot2docker if installed (starting docker 1.12 it no longer needed)\n" 
-                printf "	Recomending 32GB or more for smooth operation\n"
-                printf "	Some of the cluster automated builds may fail if we dont have enough memory/cpu!\n"
-                printf "	Try limiting your builds to 15 containers!\n"
-		printf "	Restart EXISTED containers manually\n\n"
+		printf "Suggestions:\n"
+		printf "1-Remove legacy boot2docker if installed (starting docker 1.12 no longer needed)\n" 
+                printf "2-Recomending 32GB or more for smooth operation\n"
+                printf "3-Some of the cluster automated builds may fail if we dont have enough memory/cpu!\n"
+                printf "4-Try limiting your builds to 15 containers!\n"
+		printf "5-Restart EXISTED containers manually\n"
+		printf "${White}4-Change docker default settings! From docker icon ->Preference->General->Choose max CPU/MEM available${NC}\n" 
+		printf " ----------------------------------------------\n\n"
 	else
                 printf "[$max_mem GB]${Green} Ok!${NC}\n"
 	fi
