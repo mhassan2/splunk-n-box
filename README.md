@@ -31,14 +31,14 @@ In my small test environment I was able to quickly bring upward of 40+ Splunk do
 
 I have posted the source code on github https://github.com/mhassan2/splunk-n-box
 
-Please download and install in your lab. The script was tested on Ubuntu 16.04. I am guessing running on equivalent Linux distribution will not be a problem. Windows and OSX do not support c-blocks natively, therefore there is an additional layer of virtualization (Oracle VBOX to be specific) required, which really defeat the purpose of micro servers concept. Additionally the scripts heavily utilizes NATing to allow Splunk containers to be visible to the outside world, which means you probably have to NAT 2-3 times to achieve the same goal using non-Linux host OS.
+Please download and install in your lab. The script was tested on Ubuntu 16.04 and Macbook Pro El Captin 10.11.6. I am guessing running on equivalent Linux distribution will not be a problem. Windows and OSX do not support c-blocks natively, therefore there is an additional layer of virtualization required, which really defeat the purpose of micro servers concept. Additionally the scripts heavily utilizes NATing to allow Splunk containers to be visible to the outside world, which means you probably have to NAT 2-3 times to achieve the same goal using non-Linux host OS.
 
 ##How does it work?
 
 Once you have your Ubuntu up and running please follow the instructions for installing docker https://docs.docker.com/engine/installation/linux/ubuntulinux/
 Please be aware that Ubunto 14.04 did not work very well for me. There is a bug around mounting docker volumes. Your mileage may vary if you decide to use CentOS or equivalent Linux distribution. For OSX see https://github.com/docker/dcus-hol-2016/tree/master/docker-developer
 
-When the scripts runs for the first time it checks to see if you have any IP aliases available (the range specified in the script). If not; then it will configure IP aliases 192.168.1.100-200. The aliased IPs will be automatically mapped, at container creation time, to the internal docker IP space (172.18.0.0/24). You should be able to point your browser to any NATed IP on port 8000 and that will get you directly to the container. During my research I haven’t seen many people using that technique and they opt for changing the ports or using a proxy docker. My approach is to keep the standard Splunk ports (8000, 8089, 9997,etc) and use iptable NATs to make the containers visible to the outside world.  This will save you a lot of headache when dealing with creating large number of Splunk containers (aka hosts). Running under OSX then I used private network segment 10.0.0.0/24. The assumption is you dont need to NAT to the outside world and evetything will be local to your MAC laptop.
+When the scripts runs for the first time it checks to see if you have any IP aliases available (the range specified in the script). If not; then it will configure IP aliases 192.168.1.100-254. The aliased IPs will be automatically mapped, at container creation time, to the internal docker IP space (172.18.0.0/24). You should be able to point your browser to any NATed IP on port 8000 and that will get you directly to the container. During my research I haven’t seen many people using this technique and they opt for changing the ports or using a proxy container. My approach is to keep the standard Splunk ports (8000, 8089, 9997,etc) and use iptable NATs to make the containers visible to the outside world.  This will save you a lot of headache when dealing with creating large number of Splunk containers (aka hosts). Running under OSX I used private network segment 10.0.0.0/24. The assumption here is you don't need to NAT to the outside world and evetything will be local to your MAC laptop.
 
 ##Splunk image:
 
@@ -57,7 +57,7 @@ If you want the docker-host be be able to resolve host IPs (optional) install dn
 Change DNSSERVER="192.168.2.100"  to point the caching dns server. This does not work on OSX yet!
 
 
-##MAC OSX installation:
+##MAC OSX installation (laptop):
 ``` 
 Note: 
 1. Do not use older boot2docker stuff. If you google OSX docker install you will see references to that every where. DO NOT USE! Starting docker 1.12 Orcale VBOX is no longer used, a new hypervisor is used xhyve.
@@ -78,7 +78,6 @@ Install brew packages management: http://www.howtogeek.com/211541/homebrew-for-o
 ``` 
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
-
 ```
 brew update
 ```
@@ -89,17 +88,16 @@ Install Gnu grep (ggrep) to get PCRE regex support. The script will not work wit
 brew tap homebrew/dupes; brew install grep 
 ```
 
-Configure docker for maximum CPU and Memory usage. The number of containers you can create is heavily dependant on resource.
+Configure docker for maximum CPU and Memory usage. The number of containers you can create is heavily dependant on the resources you allocate.
 
 ```
 Click on Docker Icon -> Preference -> General -> slide everthing all the way to the right
 ```
 
 
-
 ##Configuration and setup:
 
-You may need to adjust the script to match your network space. Or you can simply use the defaults if your routed network is 192.168.1.0/24. In my lab, the docker-host is 192.168.1.100 it’s also where I ran my dnsmasq (DNS caching server). If you prefer not to use dnsmasq; then just use actual container IPs in your browser. The first container you create will start at 192.168.1.101 and last one will end at 192.168.1.200 (OSX version network used 10.0.0.0/24 ). If you wish to setup your docker-host with permanent IP aliases see this link http://askubuntu.com/questions/585468/how-do-i-add-an-additional-ip-address-to-an-interface-in-ubuntu-14
+You may need to adjust the script to match your network space. Or you can simply use the defaults if your routed network is 192.168.1.0/24. In my lab, the docker-host is 192.168.1.100 it’s also where I ran my dnsmasq (DNS caching server). If you prefer not to use dnsmasq; then just use actual container IPs in your browser. The first container you create will start at 192.168.1.101 and last one will end at 192.168.1.200 (OSX version network usse this space 10.0.0.0/24 ). If you wish to setup your docker-host with permanent IP aliases see this link http://askubuntu.com/questions/585468/how-do-i-add-an-additional-ip-address-to-an-interface-in-ubuntu-14
 
 ```shell
 
@@ -112,10 +110,10 @@ GREP_LINUX="/bin/grep"
 #IP aliases range to create. Must use routed network if you want reach host from outside
 #OSX will space will not be routed and just local to the laptop.
 #LINUX is routed and hosts can be reached from anywhere in the network
-START_ALIAS_LINUX="192.168.1.100";      END_ALIAS_LINUX="192.168.1.200"
-START_ALIAS_OSX="10.0.0.100";           END_ALIAS_OSX="10.0.0.200"
+START_ALIAS_LINUX="192.168.1.100";      END_ALIAS_LINUX="192.168.1.254"
+START_ALIAS_OSX="10.0.0.100";           END_ALIAS_OSX="10.0.0.254"
 
-DNSSERVER="192.168.2.100"               #if running dnsmasq if used. Set to docker-host machine
+DNSSERVER="192.168.1.100"               #if running dnsmasq if used. Set to docker-host machine
 
 #Full PATH is dynamic  based on OS type (see detect_os() )
 FILES_DIR="splunk_docker_script_github"  #place anything needs to copy to container here
@@ -125,7 +123,7 @@ VOL_DIR="docker-volumes"
 
 ##Container host names rules:
 
-When you get comfortable navigating around the options you will soon discover that it is so easy to pop up hosts all the time. Inconsistent hostnames will lead to confusion. That actually happened to me! Therefore I am enforcing standard host naming convention. You have the option to override that behavior in the “manual” mode. But remember the script relies on host names as a way to evaluate the host role. Diverting from the standard disrupts the logic in certain functions [like show_groups() ]. The script will automatically assign a sequence host number next to the base host name. For example in some functions you will be prompted to enter Indexer name; you should enter IDX only. The script will find the next unused sequence number and IP address and use it (example IDX01, IDX02, IDX03,..etc). That logic does not apply to the “site” portion of the hostname. The script will use the following naming convention:
+When you get comfortable navigating around the options you will soon discover that it is so easy to pop up hosts all the time. Inconsistent hostnames will lead to confusion. That actually happened to me! therefore I am enforcing standard host naming convention. You have the option to override this behavior in the “manual” mode. But remember the script relies on host names as a way to evaluate the host role. Diverting from the standard disrupts the logic in certain functions [like show_groups() ]. The script will automatically assign a sequence host number next to the base host name. For example in some functions you will be prompted to enter Indexer name; you should type IDX . The script will find the next unused sequence number and IP address and allocate it (example IDX01, IDX02, IDX03,..etc). That logic does not apply to the “site” portion of the hostname. All hostnames (ie conainer names) will be converted to upper case. The script will use the following naming convention:
 ```
 IDX : Indexer
 SH  : Search Head
@@ -139,7 +137,7 @@ UF  : Universal Forwarder
 
 ##How to use:
 
-The first time you run the script it will create the needed IP aliases. You may want to exit the script after the first run and verify that aliases are create. Theres is a menu option to remove the aliases later.
+The first time you run the script it will create the required IP aliases. You may want to exit the script after the first run and verify that aliases are create. Theres is a menu option to remove the aliases later.
 ```
 ifconfig | more
 ```
@@ -152,20 +150,22 @@ create-splunk.sh –v3
 
 Experiment with creating few hosts then point your browser to them. Push the server to the limits to see how many host can you create before your system crashes. I was able to create 80 hosts (4 site-2-site cluster 20IDX 3SH each) on a single Intel NUC SKull device (i7 32GB 1TB SSD). Load avg shot to 20 during the build, but went down to 6 once the cluster stablized. Please be aware that it will take 10+ minutes (depending on number of memebers on the cluster) to reach a stable cluster state.
 
-```Choose option C
+```
+Choose option C
 ```
 
-Add license file(s) to your containers. Make sure you have your all your license files in a directory accessible by the script. This option will be overridden if the host becomes a license-slave
+Add license file(s) to your containers. Make sure you have your all your license files placed in a directory accessible by the script ($PROJ_DIR). This option will be overridden if the host becomes a license-slave
 
-```Choose option 6
+```
+Choose option 6
 ```
 
-The real fun starts on the second clustering-menu. Select any item from the first 1-4 choices then watch the script create everything for you. Once you get familiar with things; then move to the “manual” mode options 5-8. In manual mode you will be able to specify exact hostnames and how many “hosts” to create. Please follow the standard described above. Validate the actions by pointing your browser to any host you create. 
+The real fun starts on the second clustering-menu. Select any item from option t 1-4 then watch the script create everything for you. Once you get familiar with things; then move to the “manual” mode options 5-8. In manual mode you will be able to specify exact hostnames and how many “hosts” to create. Please follow the standard naming convention described above. Validate everything by pointing your browser to any host you create, example http://192.168.1.101:8000
 
 
 ##Navigation:
 
-There are two menu screens the main menu. Here is a brief explanation of important options on the main menu:
+There are two menu screens the main menu and clustering menu. Here is a brief explanation of important options on the main menu:
 
 `C) Create containers` : Allows you to choose the container name and how many “hosts” to create. Good option if you are to doing a                               search party or just classroom with stand alone Splunk instances.
 
