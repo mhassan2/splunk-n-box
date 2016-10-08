@@ -1400,17 +1400,17 @@ display_menu2 () {
 	echo "=====================================================================================[OS:$os][loglevel:$loglevel]=="
 	printf "${Yellow}B${NC}) Go back to MAIN menu\n\n"
 
-	printf "${Purple}AUTO BUILDS (R3/S2 1CM 1DEP 3SHC 1CM 3IDXC):\n"
-        printf "${Purple}1${NC}) Create Stand alone Index Cluster (IDXC)\n";
-        printf "${Purple}2${NC}) Create Stand alone Search Head Cluster (SHC)\n"
+	printf "${Purple}AUTO BUILDS (fixed counts R3/S2 1-CM 1-DEP 3-SHC 1-CM 3-IDXC):\n"
+        printf "${Purple}1${NC}) Create Stand-alone Index Cluster (IDXC)\n";
+        printf "${Purple}2${NC}) Create Stand-alone Search Head Cluster (SHC)\n"
         printf "${Purple}3${NC}) Build Single-site Cluster\n"
         printf "${Purple}4${NC}) Build Multi-site Cluster${NC} \n";echo
 	
 	printf "${LightBlue}MANUAL BUILDS (specifiy base hostnames and counts)\n"
-        printf "${LightBlue}5${NC}) Create Stand alone Index cluster (IDXC)\n";
-	printf "${LightBlue}6${NC}) Create Stand alone Search Head Cluster (SHC)\n"
-        printf "${LightBlue}7${NC}) Build Single-site Cluster\n"
-        printf "${LightBlue}8${NC}) Build Multi-site Cluster${NC} \n";echo 
+        printf "${LightBlue}5${NC}) Create Manual Stand-alone Index cluster (IDXC)\n";
+	printf "${LightBlue}6${NC}) Create Maual Stand-alone Search Head Cluster (SHC)\n"
+        printf "${LightBlue}7${NC}) Build Manul Single-site Cluster\n"
+        printf "${LightBlue}8${NC}) Build Manul Multi-site Cluster${NC} \n";echo 
 return 0
 } #display_menu2()
 #---------------------------------------------------------------------------------------------------------------
