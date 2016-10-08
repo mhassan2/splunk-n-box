@@ -18,8 +18,9 @@
 #	-Eliminate the need to learn docker (but you should)
 #	-OSX support
 #
-# Licenses: Licensesed under GPL v3 <link>
-# Author:    mhassan@splunk.com
+# Licenses: 	Licensesed under GPL v3 <link>
+# Author:    	mhassan@splunk.com
+# Version:	1.0
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
 #		v1-2	default setting (recommended for ongoing usage)
@@ -35,36 +36,25 @@
 #	-ability to adjust RF and SF
 #################################################################################
 
-NC='\033[0m' # No Color
-Black="\033[0;30m";		White="\033[1;37m"
-Red="\033[0;31m";     		LightRed="\033[1;31m"
-Green="\033[0;32m";  		LightGreen="\033[1;32m"
-BrownOrange="\033[0;33m";     	Yellow="\033[1;33m"
-Blue="\033[0;34m";   		LightBlue="\033[1;34m"
-Purple="\033[0;35m";   		LightPurple="\033[1;35m"
-Cyan="\033[0;36m";          	LightCyan="\033[1;36m"
-LightGray="\033[0;37m";     	DarkGray="\033[1;30m"
-BoldYellowBlueBackground="\e[1;33;44m"
-
 #Network stuff
-ETH_OSX="lo0"			#default interface to use with OSX OSX
-ETH_LINUX="eno1"		#default interface to use with Linux
-GREP_OSX="/usr/local/bin/ggrep"
-GREP_LINUX="/bin/grep"
+ETH_OSX="lo0"			#default interface to use with OSX laptop
+ETH_LINUX="eno1"		#default interface to use with Linux server
+GREP_OSX="/usr/local/bin/ggrep"	#you MUST install Gnu grep on OSX
+GREP_LINUX="/bin/grep"		#default grep for Linux
 
 #IP aliases range to create. Must use routed network if you want reach host from outside
 #LINUX is routed and hosts can be reached from anywhere in the network
-START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.200"
+START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.254"
 
-#OSX will space will not be routed and host reached from the laptop only
-START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.200"
+#OSX space will not be routed, and host reached from the laptop only
+START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.254"
 
-DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine
+DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine IP
 
-#Full PATH is dynamic  based on OS type (see detect_os() )
-FILES_DIR="splunk_docker_script_github"  #place anything needs to copy to container here
-LIC_FILES_DIR="licenses_files"
-VOL_DIR="docker-volumes"
+#Full PATH is dynamic based on OS type, see detect_os()
+FILES_DIR="splunk_docker_script_github" #place anything needs to copy to container here
+LIC_FILES_DIR="licenses_files"		#place all your license file here
+VOL_DIR="docker-volumes"		#directory name for volumes mount point.Full path is dynamic based on OS type
 
 #The following are set in detect_os()
 #MOUNTPOINT=
@@ -73,19 +63,19 @@ VOL_DIR="docker-volumes"
 
 #more can be found http://hub.docker.com
 SPLUNK_IMAGE="mhassan/splunk"		#my own built image
-#SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	 #taken offline by outcoldman
+#SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	#taken offline by outcoldman
 #SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-
 #SPLUNK_IMAGE="splunk/splunk:6.5.0"	#official image
 #SPLUNK_IMAGE="btorresgil/splunk"
 #SPLUNK_IMAGE="xeor/splunk"
-BASEHOSTNAME="IDX"
-SPLUNKNET="splunk-net"
+BASEHOSTNAME="IDX"			#default hostname to create
+SPLUNKNET="splunk-net"			#default name for splunk docker network (host-to-host comm)
 
 #Set the local splunkd path if you're runnig splunk on this docker-host (ex laptop).
 #Used in validation_check() routine to detect local instance and kill it, otherwise it will interfer with this script operation
-LOCAL_SPLUNKD="/opt/splunk/bin/splunk"
+LOCAL_SPLUNKD="/opt/splunk/bin/splunk"	#dont run local splunkd instance on docker-host
 
-#Splunk stadard ports
+#Splunk standard ports
 SSHD_PORT="8022"	#in case we need to enable sshd, not recommended
 SPLUNKWEB_PORT="8000"
 MGMT_PORT="8089"
@@ -115,7 +105,21 @@ MAXLOADAVG=4		#Not used
 LOADFACTOR=3            #allow (3 x cores) of load on docker-host
 LOADFACTOR_OSX=1        #allow (1 x cores) for the MAC (testing..)
 
-#-log level is controlled with I/O redirection. Must be first thing executed --
+#Using colors to make it user friendly -:)
+NC='\033[0m' # No Color
+Black="\033[0;30m";             White="\033[1;37m"
+Red="\033[0;31m";               LightRed="\033[1;31m"
+Green="\033[0;32m";             LightGreen="\033[1;32m"
+BrownOrange="\033[0;33m";       Yellow="\033[1;33m"
+Blue="\033[0;34m";              LightBlue="\033[1;34m"
+Purple="\033[0;35m";            LightPurple="\033[1;35m"
+Cyan="\033[0;36m";              LightCyan="\033[1;36m"
+LightGray="\033[0;37m";         DarkGray="\033[1;30m"
+BoldYellowBlueBackground="\e[1;33;44m"
+
+# *** Let the fun begin ***
+
+#Log level is controlled with I/O redirection. Must be first thing executed in a bash script
 # Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
 exec >> >(tee -i $LOGFILE)
 exec 2>&1
@@ -183,7 +187,6 @@ if [ "$os" == "Darwin" ] && [ -z "$last_alias" ]; then
 		sudo ifconfig  $eth  $base_ip.$i 255.255.255.0 alias
         	echo -ne "${NC}Adding: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
 	done
-
 elif [ "$os" == "Linux" ] && [ -z "$last_alias" ]; then
 	read -p "Enter interface to bind aliases to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_LINUX"; fi
 	printf "Building IP aliases for LINUX...[$base_ip.$start_octet4-$end_octet4]\n"
@@ -305,15 +308,27 @@ fi
 printf "Checking if splunk image is available [$SPLUNK_IMAGE]..."
 image_ok=`docker images|grep $SPLUNK_IMAGE`
 if [ -z "$image_ok" ]; then
-	printf "${Red}Cannot locate splunk image ${NC}.\n\n"
+	printf "${Red}NOT FOUND!${NC}\n\n"
         printf "I will attempt to download this image. If that doesn't work you can try: \n"
-	printf "	1-link: https://github.com/outcoldman/docker-splunk \n"
-	printf "  	2-link: https://github.com/splunk/docker-splunk/tree/master/enterprise \n"
-	printf "  	3-Search for splunk images https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=splunk&starCount=0\n\n"
-	read -p "Hit <ENTER> to download... [docker pull $SPLUNK_IMAGE]"	
+	printf "  1-link: https://github.com/outcoldman/docker-splunk \n"
+	printf "  2-link: https://github.com/splunk/docker-splunk/tree/master/enterprise \n"
+	printf "  3-Search for splunk images https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=splunk&starCount=0\n\n"
+	printf "${Yellow}"
+	read -p "Hit <ENTER> to download... [$SPLUNK_IMAGE]"	
+	printf "${Yellow}Running [docker pull $SPLUNK_IMAGE]...(may take time)${NC}\n\n"
 	docker pull $SPLUNK_IMAGE
-	printf "\nPlease restart the script again!\n"
-        exit
+	docker images
+	#out="$(docker pull $SPLUNK_IMAGE 2>&1)"
+	#if ( contains "$out" "error" ); then
+	#	printf "Pull failed! Lets try searching for \"splunk\" image on the repository...."
+	#	#printf "${Yellow}Running [docker search splunk]...${NC}\n\n"
+	#	#docker search splunk
+	#else	
+	#	printf "${Yellow}Running [docker images]...${NC}\n\n"
+	#	docker images
+	#	printf "\n\n${Yellow}Please restart the script again!${NC}\n"
+        #exit
+	#fi
 else
         printf "${Green} Ok!${NC}\n"
 fi
@@ -333,14 +348,13 @@ fi
 printf "Checking if splunkd is running on this host [$LOCAL_SPLUNKD]..."
 PID=`ps aux | $GREP 'splunkd' | head -1 | awk '{print $2}' `
 #SPLK=`ps aux | $GREP 'splunkd' | head -1 | awk '{print $11}' `
-
 if ps -p $PID > /dev/null; then
 	printf "${Red}Running [$PID]${NC}\n"
 	read -p "Kill it? [Y/n]? " answer
        	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		sudo $LOCAL_SPLUNKD stop
 	else
-		printf "${Red}WARNING! local splunkd may prevent containers from binding to interfaces!${NC}\n\n"	
+		printf "${Red}WARNING! Runing local splunkd may prevent containers from binding to interfaces!${NC}\n\n"	
 	fi
 else
 	printf "${Green} Ok!${NC}\n"
@@ -349,7 +363,6 @@ fi
 
 #check dnsmasq
 #check $USER
-#check if local splunkd running on laptop
 return 0
 }     #end validation_check()
 #---------------------------------------------------------------------------------------------------------------
@@ -789,7 +802,7 @@ START1=$(date +%s);
         #docker exec -it $fullhostname apt-get install -y  net-tools > /dev/null >&1
 
 #DNS stuff to be used with dnsmasq. Need to revisit for OSX  9/29/16
-#Enable for Linux for now
+#Enable for Linux at this point
 if [ "$os" == "Linux" ]; then
 	printf "\t->Updating dnsmasq records[$vip  $fullhostname]..." >&3
 	if [ ! -f $HOSTSFILE ]; then
@@ -1240,7 +1253,6 @@ else
 	count=3;
 	mode="AUTO"
 fi
-
 for (( i=1; i <= ${count}; i++));  
 do
 	if [ "$1" != "AUTO" ]; then
@@ -1262,7 +1274,10 @@ do
 		mode="AUTO"
 	fi
 done
-SitesStr=$(echo -n $SitesStr | head -c -1)  		#remove last comma
+
+#SitesStr=`echo -n $SitesStr | head -c -1`  		#remove last comma
+SitesStr=`echo ${SitesStr%?}`  		#remove last comma
+
 SITEnames=`echo $SITEnames| tr '[a-z]' '[A-Z]' `	#upper case
 siteone=`echo $SITEnames|awk '{print $1}'`		#where CM,LM resides
 
