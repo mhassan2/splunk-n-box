@@ -255,10 +255,16 @@ else
  	cmd=$(xcode-select --install)
 fi
 #----------
+#To completely remove brew and ggrep:
+#brew uninstall grep pcre
+#rm -fr /usr/local/bin/ggrep
+#/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
+#sudo rm -rf /usr/local/Homebrew/
 printf "${Yellow}Checking brew package management:${NC} "
 condition=$(which brew 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${Yellow}Running [/usr/bin/ruby -e \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\" ]${NC}\n"
+	#cd ~
  	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 else
 	printf "${Green}Already installed${NC}\n"
@@ -417,10 +423,16 @@ else
 fi
 #-----------
 #-----------
-printf "Checking if splunkd is running on this host [$LOCAL_SPLUNKD]..."
-PID=`ps aux | $GREP 'splunkd' | head -1 | awk '{print $2}' `
-#SPLK=`ps aux | $GREP 'splunkd' | head -1 | awk '{print $11}' `
-if ps -p $PID > /dev/null; then
+printf "Checking if non-docker splunkd proces is running on this host [$LOCAL_SPLUNKD]..."
+PID=`ps aux | $GREP 'splunkd' | $GREP 'start' | head -1 | awk '{print $2}' `  	#works on OSX & Linux
+if [ "$os" == "Darwin" ]; then
+	splunk_is_running="$PID"
+elif [ "$os" == "Linux" ]; then
+	splunk_is_running=`cat /proc/$PID/cgroup|head -n 1|grep -v docker`	#works on linux only
+fi
+#echo "PID[$PID]"
+#echo "splunk_is_running[$splunk_is_running]"
+if [ -n "$splunk_is_running" ]; then
 	printf "${Red}Running [$PID]${NC}\n"
 	read -p "Kill it? [Y/n]? " answer
        	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
@@ -1476,7 +1488,7 @@ display_menu2 () {
         printf "${Purple}1${NC}) Create Stand-alone Index Cluster (IDXC)\n";
         printf "${Purple}2${NC}) Create Stand-alone Search Head Cluster (SHC)\n"
         printf "${Purple}3${NC}) Build Single-site Cluster\n"
-        printf "${Purple}4${NC}) Build Multi-site Cluster${NC} \n";echo
+        printf "${Purple}4${NC}) Build Multi-site Cluster (3 sites)${NC} \n";echo
 	
 	printf "${LightBlue}MANUAL BUILDS (specifiy base hostnames and counts)\n"
         printf "${LightBlue}5${NC}) Create Manual Stand-alone Index cluster (IDXC)\n";
