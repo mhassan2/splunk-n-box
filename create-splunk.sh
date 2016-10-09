@@ -329,10 +329,10 @@ if [ "$os" == "Linux" ]; then
         if [ "$max_mem" -le "30" ]; then
 		printf "[$max_mem GB]  ${BrownOrange}WARNING!${NC}\n"
 		printf "Suggestions:\n"
-                printf "1-Recomending 32GB or more for smooth operation\n"
-                printf "2-Some of the cluster automated builds may fail!\n"
-                printf "3-Try limiting your builds to 15 containers!\n"
-		printf "4-Restart EXISTED container manually\n\n"
+                printf " 1-Recomending 32GB or more for smooth operation\n"
+                printf " 2-Some of the cluster automated builds may fail!\n"
+                printf " 3-Try limiting your builds to 15 containers!\n"
+		printf " 4-Restart \"existed\" container manually\n\n"
 		printf " ----------------------------------------------\n\n"
 	else
                 printf "[$max_mem GB]${Green} Ok!${NC}\n"
@@ -353,11 +353,11 @@ elif [ "$os" == "Darwin" ]; then
         if [ "$max_mem" -le "30" ]; then
 		printf "[$max_mem GB]  ${BrownOrange}WARNING!${NC}\n"
 		printf "Suggestions:\n"
-		printf "1-Remove legacy boot2docker if installed (starting docker 1.12 no longer needed)\n" 
-                printf "2-Recomending 32GB or more for smooth operation\n"
-                printf "3-Some of the cluster automated builds may fail if we dont have enough memory/cpu!\n"
-                printf "4-Try limiting your builds to 15 containers!\n"
-		printf "5-Restart EXISTED containers manually\n"
+		printf " 1-Remove legacy boot2docker if installed (starting docker 1.12 no longer needed)\n" 
+                printf " 2-Recomending 32GB or more for smooth operation\n"
+                printf " 3-Some of the cluster automated builds may fail if we dont have enough memory/cpu!\n"
+                printf " 4-Try limiting your builds to 15 containers!\n"
+		printf " 5-Restart \"exited\" containers manually\n"
 		printf "${White}4-Change docker default settings! From docker icon ->Preference->General->Choose max CPU/MEM available${NC}\n" 
 		printf " ----------------------------------------------\n\n"
 	else
