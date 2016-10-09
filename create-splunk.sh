@@ -286,7 +286,8 @@ else
 fi
 printf "${Yellow}Running [brew list]${NC}\n"
  brew list --versions
-printf "${Yellow}Installtion done!${NC}\n\n"
+
+printf "${Yellow}Installation done!${NC}\n\n"
 read -p "Hit <ENTER> to continue..."
 echo
 return 0
@@ -316,11 +317,11 @@ if [ "$os" == "Darwin" ]; then
 fi
 
 #-----------
-printf "Checking if we have enough memory..."
+printf "Checking if we have enough memory free..."
 if [ "$os" == "Linux" ]; then
         max_mem=`free -mg|grep -i mem|awk '{print $2}' `
         if [ "$max_mem" -le "30" ]; then
-		printf "[$max_mem GB]  ${Red}WARNING!${NC}\n"
+		printf "[$max_mem GB]  ${BrownOrange}WARNING!${NC}\n"
 		printf "Suggestions:\n"
                 printf "1-Recomending 32GB or more for smooth operation\n"
                 printf "2-Some of the cluster automated builds may fail!\n"
@@ -331,9 +332,20 @@ if [ "$os" == "Linux" ]; then
                 printf "[$max_mem GB]${Green} Ok!${NC}\n"
 	fi
 elif [ "$os" == "Darwin" ]; then
-	max_mem=`top -l 1 | head -n 10 | grep PhysMem | awk '{print $2}' | sed 's/G//g' `
+#http://apple.stackexchange.com/questions/4286/is-there-a-mac-os-x-terminal-version-of-the-free-command-in-linux-systems
+	FREE_BLOCKS=$(vm_stat | grep free | awk '{ print $3 }' | sed 's/\.//')
+	INACTIVE_BLOCKS=$(vm_stat | grep inactive | awk '{ print $3 }' | sed 's/\.//')
+	SPECULATIVE_BLOCKS=$(vm_stat | grep speculative | awk '{ print $3 }' | sed 's/\.//')
+	FREE=$((($FREE_BLOCKS+SPECULATIVE_BLOCKS)*4096/1048576))
+	INACTIVE=$(($INACTIVE_BLOCKS*4096/1048576))
+	TOTAL=$((($FREE+$INACTIVE)))
+	#echo "Free: $FREE MB"
+	#echo "Inactive:$INACTIVE MB"
+	#echo "Total free: $TOTAL MB"
+#	max_mem=`top -l 1 | head -n 10 | grep PhysMem | awk '{print $6}' | sed 's/M//g' `
+	max_mem=`expr $TOTAL / 1024`
         if [ "$max_mem" -le "30" ]; then
-		printf "[$max_mem GB]  ${Red}WARNING!${NC}\n"
+		printf "[$max_mem GB]  ${BrownOrange}WARNING!${NC}\n"
 		printf "Suggestions:\n"
 		printf "1-Remove legacy boot2docker if installed (starting docker 1.12 no longer needed)\n" 
                 printf "2-Recomending 32GB or more for smooth operation\n"
@@ -1519,7 +1531,7 @@ display_menu () {
 	printf "${Yellow}3${NC}) STOP all running containers ${DarkGray}[docker stop \$(docker ps -aq)]${NC}\n"
 	printf "${Yellow}4${NC}) Show hosts by hostname groups ${DarkGray}[works only if you followed the host naming rules]${NC}\n"
 	echo
-	printf "${LightBlue}5${NC}) RESET all splunk passwords [changeme --> hello] ${DarkGray}[splunkd must be running]${NC}\n"
+	printf "${LightBlue}5${NC}) RESET all splunk passwords [changeme --> $USERPASS] ${DarkGray}[splunkd must be running]${NC}\n"
 	printf "${LightBlue}6${NC}) ADD splunk licenses ${DarkGray}[splunkd must be running]${NC}\n"
 	printf "${LightBlue}7${NC}) Splunkd status ${DarkGray}[docker -exec -it hostname /opt/splunk/bin/splunk status]${NC}\n"
 	printf "${LightBlue}8${NC}) Remove IP alises on the ethernet interface${NC}\n"
