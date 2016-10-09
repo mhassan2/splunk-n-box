@@ -65,6 +65,7 @@ Read this first:
 - Perfromance on OSX is noticeably less than Linux runs. So be aware that you may not be able to bring up as many containers will similar hardware resources.
 - Do not run any local splunkd instances on docker-host (where script is used). It will prevent containers from starting due to interace binding. 
 - OSX runs splunks (inside containers) will bind to local loopback interface IP aliases. Hosts will not be reachable from outside your laptop. This is not the case in Linux runs.
+- Default docker settings on OSX are limited. You need to change it to take advantage of all avaiable memory and CPU (under preferences).
  
  
  
