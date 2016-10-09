@@ -177,6 +177,18 @@ There are two menu screens the main menu and clustering menu. Here is a brief ex
 
 The rest of the options are self-explanatory
 
+##Validation checks:
+I have extensive set of checks and validation routines that catches multiple issues. The validations are OS dependent. Here is the list:
+```
+- Check if all required package installed (ggrep, pcre, brew). If not offer the user the option of installing them.
+- Check available memory at startup. Issue warnings and suggest remidiation steps.
+- Check if docker daemon is installed/running. Exist if condition is not meet.
+- Check is required splunk image is installed. if not; install it (pull from docker hub)
+- Check if required splunk-net is configured. This is for container-to-container communications.
+- Check if local splunkd is running (anything that is not a docker-process). Local splunkd will use ports and prevent splunkd inside containers from binding to the aliased IP.
+- Check if IP aliases are creaed, if not; create them. User have a menu option to delete them.
+- During container builds and cluster builds check load avg. Pause excution until it goes down. This will solve problems on hosts with limited resouces (ie Mac laptop or 16GB ram devices).
+```
 
 ###List of functions:
 ```
