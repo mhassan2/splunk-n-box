@@ -67,6 +67,7 @@ Read this first:
 - OSX runs splunks (inside containers) will bind to local loopback interface IP aliases. Hosts will not be reachable from outside your laptop. This is not the case in Linux runs.
  
  
+ 
 Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-mavericks-10.9-configuration/
 ```
 xcode-select --install   (this is an optional step. You may NOT need it)
