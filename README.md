@@ -60,10 +60,11 @@ Change DNSSERVER="192.168.2.100"  to point the caching dns server. This does not
 ##MAC OSX installation (laptop):
 
 Read this first: 
-1. Do not use older boot2docker stuff. If you google OSX docker install you will see references to that every where. DO NOT USE! Starting docker 1.12 Orcale VBOX is no longer used, a new hypervisor is used xhyve.
-2. Perfromance on OSX is noticeably less than Linux runs. So be aware that you may not be able to bring up as many containers will similar hardware resources.
-3. Do not run any local splunkd instances on docker-host (where script is used). It will prevent containers from starting due to interace binding
-4. OSX runs splunks (inside containers) will bind to local loopback interface IP aliases. Hosts will not be reachable from outside your laptop. This is not the case in Linux runs.
+
+- Do not use older boot2docker stuff. If you google OSX docker install you will see references to that every where. DO NOT USE! Starting docker 1.12 Orcale VBOX is no longer used, a new hypervisor is used xhyve.
+- Perfromance on OSX is noticeably less than Linux runs. So be aware that you may not be able to bring up as many containers will similar hardware resources.
+- Do not run any local splunkd instances on docker-host (where script is used). It will prevent containers from starting due to interace binding. 
+- OSX runs splunks (inside containers) will bind to local loopback interface IP aliases. Hosts will not be reachable from outside your laptop. This is not the case in Linux runs.
  
  
 Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-mavericks-10.9-configuration/
