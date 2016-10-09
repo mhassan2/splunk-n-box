@@ -171,7 +171,7 @@ base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `; # base_ip=$base_ip"."
 start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
 end_octet4=`echo $END_ALIAS | cut -d"." -f4 `
 
-printf "Checking if last IP alias is configured on any NIC [$END_ALIAS]..."
+printf "${LightBlue}==>${NC} Checking if last IP alias is configured on any NIC [$END_ALIAS]..."
 last_alias=`ifconfig | $GREP $END_ALIAS `
 if [ -n "$last_alias" ]; then
 	printf "${Green} Ok!\n"
@@ -246,7 +246,7 @@ return 0
 install_gnu_grep () {
 
 #----------
-printf "${Yellow}Checking xcode commandline tools:${NC} "
+printf "${LightBlue}==>${NC} Checking xcode commandline tools:${NC} "
 cmd=$(xcode-select -p)
 if [ -n $cmd ]; then
 	printf "${Green}Already installed${NC}\n"
@@ -260,7 +260,7 @@ fi
 #rm -fr /usr/local/bin/ggrep
 #/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
 #sudo rm -rf /usr/local/Homebrew/
-printf "${Yellow}Checking brew package management:${NC} "
+printf "${LightBlue}==>${NC} Checking brew package management:${NC} "
 condition=$(which brew 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${Yellow}Running [/usr/bin/ruby -e \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\" ]${NC}\n"
@@ -270,7 +270,7 @@ else
 	printf "${Green}Already installed${NC}\n"
 fi
 #----------
-printf "${Yellow}Checking pcre package:${NC} "
+printf "${LightBlue}==>${NC} Checking pcre package:${NC} "
 cmd=$(brew ls pcre --versions)
 if [ -n "$cmd" ]; then
 	printf "${Green}Already installed${NC}\n"
@@ -279,7 +279,7 @@ else
  	brew install pcre
 fi
 #----------
-printf "${Yellow}Checking ggrep package:${NC} "
+printf "${LightBlue}==>${NC} Checking ggrep package:${NC} "
 cmd=$(brew ls grep --versions|cut -d" " -f2)
 if [ -n "$cmd" ]; then
         printf "${Green}Already installed${NC}\n"
@@ -303,7 +303,7 @@ return 0
 validation_check () {
 
 if [ "$os" == "Darwin" ]; then
-	printf "Checking if GNU grep is installed [$GREP]..."
+	printf "${LightBlue}==>${NC} Checking if GNU grep is installed [$GREP]..."
         condition=$(which $GREP_OSX 2>/dev/null | grep -v "not found" | wc -l)
         if [ $condition -eq 0 ] ; then
                 printf "${Red}$GREP not installed${NC}\n"
@@ -323,7 +323,7 @@ if [ "$os" == "Darwin" ]; then
 fi
 
 #-----------
-printf "Checking if we have enough memory free..."
+printf "${LightBlue}==>${NC} Checking if we have enough free memory..."
 if [ "$os" == "Linux" ]; then
         max_mem=`free -mg|grep -i mem|awk '{print $2}' `
         if [ "$max_mem" -le "30" ]; then
@@ -367,7 +367,7 @@ fi
 #-----------
 
 #-----------
-printf "Checking if docker daemon is running..."
+printf "${LightBlue}==>${NC} Checking if docker daemon is running..."
 is_running=`docker info|grep Images`
 if [ -z "$is_running" ]; then
 	printf "${Red}docker is not running or not installed${NC}.\n"
@@ -383,7 +383,7 @@ fi
 #-----------
 
 #-----------
-printf "Checking if splunk image is available [$SPLUNK_IMAGE]..."
+printf "${LightBlue}==>${NC} Checking if splunk image is available [$SPLUNK_IMAGE]..."
 image_ok=`docker images|grep $SPLUNK_IMAGE`
 if [ -z "$image_ok" ]; then
 	printf "${Red}NOT FOUND!${NC}\n\n"
@@ -413,7 +413,7 @@ fi
 #-----------
 
 #-----------
-printf "Checking if docker network is created [$SPLUNKNET]..."
+printf "${LightBlue}==>${NC} Checking if docker network is created [$SPLUNKNET]..."
 net=`docker network ls | grep $SPLUNKNET `
 if [ -z "$net" ]; then 
 	printf "${Green} Creating...${NC}\n"
@@ -423,7 +423,7 @@ else
 fi
 #-----------
 #-----------
-printf "Checking if non-docker splunkd proces is running on this host [$LOCAL_SPLUNKD]..."
+printf "${LightBlue}==>${NC} Checking if non-docker splunkd process is running on this host [$LOCAL_SPLUNKD]..."
 PID=`ps aux | $GREP 'splunkd' | $GREP 'start' | head -1 | awk '{print $2}' `  	#works on OSX & Linux
 if [ "$os" == "Darwin" ]; then
 	splunk_is_running="$PID"
@@ -1151,7 +1151,7 @@ printf " ${DarkGray}CMD:[$CMD]${NC}\n" >&4
 printf "${LightBlue}___________ Finshed STEP#3 ____________________________________________________${NC}\n" >&3
 
 printf "${LightBlue}___________ Starting STEP#4 (Seach Head cluster status) __________________________________${NC}\n" >&3
-printf "[${Purple}$i${NC}]${LightBlue} Checking SHC status (on captian)...${NC}"
+printf "[${Purple}$i${NC}]${LightBlue}==> Checking SHC status (on captian)...${NC}"
 
 CMD="docker exec -ti $i /opt/splunk/bin/splunk show shcluster-status -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`
@@ -1250,7 +1250,7 @@ done
 printf "${LightBlue}____________ Finished STEP#2 __________________________________________________${NC}\n" >&3
 
 printf "${LightBlue}____________ Starting STEP#3 (IDXC status) _________________________________${NC}\n" >&3
-printf "[${Purple}$cm${NC}]${LightBlue} Checking IDXC status...${NC}"
+printf "[${Purple}$cm${NC}]${LightBlue}==> Checking IDXC status...${NC}"
 CMD="docker exec -ti $cm /opt/splunk/bin/splunk show cluster-status -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`; display_output "$OUT" "Replication factor" "n" "2"
 printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
