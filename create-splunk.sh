@@ -52,8 +52,8 @@ START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.254"
 DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine IP
 
 #Full PATH is dynamic based on OS type, see detect_os()
-FILES_DIR="splunk_docker_script_github" #place anything needs to copy to container here
-LIC_FILES_DIR="licenses_files"		#place all your license file here
+FILES_DIR="$PWD" #place anything needs to copy to container here
+LIC_FILES_DIR="NFR"		#place all your license file here
 VOL_DIR="docker-volumes"		#directory name for volumes mount point.Full path is dynamic based on OS type
 
 #The following are set in detect_os()
@@ -246,7 +246,7 @@ return 0
 install_gnu_grep () {
 
 #----------
-printf "${LightBlue}==>${NC} Checking xcode commandline tools:${NC} "
+printf "${LightBlue}==>${NC} Checking Xcode commandline tools:${NC} "
 cmd=$(xcode-select -p)
 if [ -n $cmd ]; then
 	printf "${Green}Already installed${NC}\n"
@@ -329,12 +329,14 @@ if [ "$os" == "Linux" ]; then
         max_mem=`free -mg|grep -i mem|awk '{print $2}' `
         if [ "$max_mem" -le "30" ]; then
 		printf "${BrownOrange} [$max_mem GB] WARNING!${NC}\n"
-		printf " Suggestions:\n"
-                printf " 1-Recommending 32GB or more for smooth operation.\n"
-                printf " 2-Some of the cluster automated builds may fail.\n"
-                printf " 3-Try limiting your builds to 15 containers.\n"
-                printf " 4-Kill unused apps running on this host.\n"
-		printf " 5-Restart \"existed\" container manually.\n\n"
+		printf "${DarkGray}"
+		printf "    Suggestions:\n"
+                printf "    1-Recommending 32GB or more for smooth operation.\n"
+                printf "    2-Some of the cluster automated builds may fail.\n"
+                printf "    3-Try limiting your builds to 15 containers.\n"
+                printf "    4-Kill unused apps running on this host.\n"
+		printf "    5-Restart \"existed\" container manually.\n\n"
+		printf "${NC}"
 	else
                 printf "[$max_mem GB]${Green} OK!${NC}\n"
 	fi
@@ -353,14 +355,15 @@ elif [ "$os" == "Darwin" ]; then
 	max_mem=`expr $TOTAL / 1024`
         if [ "$max_mem" -le "30" ]; then
 		printf "${BrownOrange} [$max_mem GB] WARNING!${NC}\n"
-		printf " Suggestions:\n"
-		printf " 1-Remove legacy boot2docker if installed (Not needed starting docker 1.12).\n" 
-                printf " 2-Recommending 32GB or more for smooth operation.\n"
-                printf " 3-Some of the cluster automated builds may fail if we don't have enough memory/CPU.\n"
-                printf " 4-Try limiting your builds to 15 containers.\n"
-                printf " 5-Kill unused apps running on this host.\n"
-		printf " 6-Restart \"exited\" containers manually.\n"
-		printf "${White} 4-Change docker default settings! Docker icon ->Preferences->General->Choose max CPU/MEM available${NC}\n\n" 
+		printf "${DarkGray}"
+		printf "    Suggestions:\n"
+		printf "    1-Remove legacy boot2docker if installed (Not needed starting docker 1.12).\n" 
+                printf "    2-Recommending 32GB or more for smooth operation.\n"
+                printf "    3-Some of the cluster automated builds may fail if we don't have enough memory/CPU.\n"
+                printf "    4-Try limiting your builds to 15 containers.\n"
+                printf "    5-Kill unused apps running on this host.\n"
+		printf "    6-Restart \"exited\" containers manually.\n"
+		printf "${White}    7-Change docker default settings! Docker-icon->Preferences->General->pick max CPU/MEM available${NC}\n\n" 
 	else
                 printf "[$max_mem GB]${Green} OK!${NC}\n"
 	fi
@@ -431,12 +434,21 @@ else
        printf "${Green} OK!${NC}\n"
 fi
 #-----------
+printf "${LightBlue}==>${NC} Checking if we have license files *.lic in [$PROJ_DIR/$LIC_FILES_DIR]..."
+if [ ! -d $PROJ_DIR/$LIC_FILES_DIR ]; then
+    		printf "${Red} DIR DOESN'T EXIST!${NC}\n"
+elif  ls $PROJ_DIR/$LIC_FILES_DIR/*.lic 1> /dev/null 2>&1 ; then 
+       		printf "${Green} OK!${NC}\n"
+	else
+        	printf "${Red}NO LIC FILE(S) FOUND!${NC}\n"
+		printf "${BrownOrange}    Please create $PROJ_DIR/$LIC_FILES_DIR and place all *.lic files there.${NC}\n"
+fi
 #-----------
 printf "${LightBlue}==>${NC} Checking if non-docker splunkd process is running [$LOCAL_SPLUNKD]..."
 PID=`ps aux | $GREP 'splunkd' | $GREP 'start' | head -1 | awk '{print $2}' `  	#works on OSX & Linux
-if [ "$os" == "Darwin" ]; then
+if [ "$os" == "Darwin" ] && [ -n "$PID" ]; then
 	splunk_is_running="$PID"
-elif [ "$os" == "Linux" ]; then
+elif [ "$os" == "Linux" ] && [ -n "$PID" ]; then
 	splunk_is_running=`cat /proc/$PID/cgroup|head -n 1|grep -v docker`	#works on Linux only
 fi
 #echo "PID[$PID]"
@@ -454,8 +466,12 @@ else
 fi
 #-----------
 
+#TO DO:
 #check dnsmasq
 #check $USER
+#Your Mac must be running OS X 10.8 “Mountain Lion” or newer to run Docker software.
+#https://docs.docker.com/engine/installation/mac/
+
 return 0
 }     #end validation_check()
 #---------------------------------------------------------------------------------------------------------------
@@ -466,10 +482,6 @@ detect_os () {
 # GREP command. Must install ggrep utility on OSX 
 # MOUNTPOINT   (OSX is strict about permissions)
 
-#FILES_DIR="splunk_docker_script_github"  #place anything needs to copy to container here
-#LIC_FILES_DIR="license_files"
-#VOL_DIR="docker-volumes"
-
 uname=`uname -a | awk '{print $1}'`	
 if [ "$(uname)" == "Darwin" ]; then
     	os="Darwin"
@@ -478,7 +490,7 @@ if [ "$(uname)" == "Darwin" ]; then
 	ETH=$ETH_OSX
 	GREP=$GREP_OSX		#for Darwin http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html
 	MOUNTPOINT="/Users/${USER}/$VOL_DIR"
-	PROJ_DIR="/Users/${USER}/$FILES_DIR"  #anything that needs to copied to container
+	PROJ_DIR="/Users/${USER}"  #anything that needs to copied to container
 
 	printf "${LightBlue}==> ${White}Detected MAC OSX...${NC}\n"
 	validation_check
@@ -490,7 +502,7 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	GREP=$GREP_LINUX
 	ETH=$ETH_LINUX
 	MOUNTPOINT="/home/${USER}/$VOL_DIR"
-	PROJ_DIR="/home/${USER}/$FILES_DIR"
+	PROJ_DIR="/home/${USER}/"
 
 	printf "${LightBlue}==> ${White}Detected LINUX...${NC}\n"
 	validation_check
@@ -640,7 +652,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 make_lic_slave () {
-# This function designated $hostname as license-slave using LM (License Manager)
+# This function designate $hostname as license-slave using LM (License Manager)
 
 hostname=$1; lm=$2
 #echo "hostname[$hostname]  lm[$lm] _____________";exit
@@ -830,6 +842,10 @@ custom_web_conf="[settings]\nlogin_content =<div align=\"right\" style=\"border:
 
 printf "$custom_web_conf" > $PROJ_DIR/web.conf
 CMD=`docker cp $PROJ_DIR/web.conf $fullhostname:/opt/splunk/etc/system/local/web.conf`
+
+#restarting splunkweb may not work with 6.5+
+CMD=`docker exec -ti $fullhostname /opt/splunk/bin/splunk restart splunkweb -auth $USERADMIN:$USERPASS`
+
 printf "\t->Customizing web.conf!${Green} Done!${NC}\n" >&3 
 
 return 0
@@ -886,8 +902,6 @@ START1=$(date +%s);
 	add_license_file $fullhostname
 
 	#Misc OS stuff
-        #CMD=`docker cp $PROJ_DIR/screenfetch/screenfetch  $fullhostname:/usr/local/bin`
-        #CMD=`docker exec -ti $fullhostname bash -c "echo screenfetch >> /root/.bashrc"`		#cool ssh login banner
         CMD=`docker cp $PROJ_DIR/containers.bashrc $fullhostname:/root/.bashrc`
         #install stuff you will need in  background
         #CMD=`docker exec -it $fullhostname apt-get update > /dev/null >&1`
@@ -1489,7 +1503,7 @@ return 0
 display_menu2 () {
 	clear
 	printf "${Green}Docker Splunk Infrastructure Management -> Clustering Menu:${NC}${LightBlue}[$dockerinfo]${NC}\n"
-	echo "=====================================================================================[OS:$os][loglevel:$loglevel]=="
+	printf "=====================[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxLoad:$MAXLOADAVG] [LogLevel:$loglevel]==\n\n"
 	printf "${Yellow}B${NC}) Go back to MAIN menu\n\n"
 
 	printf "${Purple}AUTO BUILDS (fixed: R3/S2 1-CM 1-DEP 3-SHC 1-CM 3-IDXC):\n"
@@ -1549,7 +1563,7 @@ display_menu () {
 #This function displays user options for the main menu
 	clear
 	printf "${Yellow}Docker Splunk Infrastructure Management Main Menu:${NC}${LightBlue}[$dockerinfo]${NC}\n"
-	echo "============================================================[OS:$os Mem:$max_mem GB MaxLoad:$MAXLOADAVG][LogLevel:$loglevel]=="
+	printf "=====================[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxLoad:$MAXLOADAVG] [LogLevel:$loglevel]==\n\n"
 	printf "${Red}C${NC}) CREATE containers ${DarkGray}[docker run ...]${NC}\n"
 	printf "${Red}D${NC}) DELETE all containers ${DarkGray}[docker rm -f \$(docker ps -aq)]${NC}\n"
 	printf "${Red}R${NC}) REMOVE all volumes to recover diskspace ${DarkGray}[docker volume rm \$(docker volume ls -qf 'dangling=true')]${NC}\n"
@@ -1619,6 +1633,8 @@ setup_ip_aliases
 while true;  
 do
 	dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
+	dockerinfo2=`docker info| $GREP -Po 'Server Version:\s+(\d+\.\d+\d+\.\d+).*|\n*CPUs:\s+(\d+).*|\n*Total Memory:\s+(\d+)'| sed 's/Server Version/Docker/'|sed 's/Total Memory/TotalMem/g'| sed 's/ //g' `
+	dockerinfo2=`echo $dockerinfo2 | tr -d '\n' `
 	display_menu 
 	choice=""
 	read -p "Select a number: " choice
