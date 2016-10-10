@@ -42,7 +42,7 @@ When the scripts runs for the first time it checks to see if you have any IP ali
 
 ##Splunk image:
 
-My original work used outcoldman imaage. But for some reason it was pulled out of docker registry website.  https://github.com/outcoldman/docker-splunk . I have cloned outcoldman image into my own so its always availalbe for download
+My original work used outcoldman image. But for some reason it was pulled out of docker registry website.  https://github.com/outcoldman/docker-splunk . I have cloned outcoldman image into my own so its always availalbe for download
 
 ```
 mhassan/splunk
