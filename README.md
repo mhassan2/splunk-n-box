@@ -61,9 +61,9 @@ Change DNSSERVER="192.168.2.100"  to point the caching dns server. This does not
 
 Read this first: 
 
-- Do not use older boot2docker stuff. If you google OSX docker install you will see references to that every where. DO NOT USE! Starting docker 1.12 Orcale VBOX is no longer used, a new hypervisor is used xhyve.
-- Perfromance on OSX is noticeably less than Linux runs. So be aware that you may not be able to bring up as many containers will similar hardware resources.
-- Do not run any local splunkd instances on docker-host (where script is used). It will prevent containers from starting due to interace binding. 
+- Do not use older boot2docker stuff. If you google OSX docker install you will see references to oracale VirtualBox and boot2docker every where. Starting docker 1.12 Orcale VBOX is replaced with small new hypervisor is used xhyve. Boot2docker is replace with moby (tiny Linux)
+- Perfromance on OSX is noticeably less than Linux. So be aware that you may not be able to bring up as many containers will similar hardware resources.
+- Do not run any local splunkd instances on the docker-host (where script is used). It will prevent containers from starting due to interace binding. 
 - OSX runs splunks (inside containers) will bind to local loopback interface IP aliases. Hosts will not be reachable from outside your laptop. This is not the case in Linux runs.
 - Default docker settings on OSX are limited. You need to change it to take advantage of all avaiable memory and CPU (under preferences).
  
@@ -187,7 +187,8 @@ I have extensive set of checks and validation routines that catches multiple iss
 - Check if all required package installed (ggrep, pcre, brew). If not offer the user the option of installing them.
 - Check available memory at startup. Issue warnings and suggest remidiation steps.
 - Check if docker daemon is installed/running. Exist if condition is not meet.
-- Check is required splunk image is installed. if not; install it (pull from docker hub)
+- Check is required splunk image is installed. if not; install it (pull from docker hub).
+- Check if LICNESE directory (and \*.lic files) exist.
 - Check if required splunk-net is configured. This is for container-to-container communications.
 - Check if local splunkd is running (anything that is not a docker-process). Local splunkd will use ports and prevent splunkd inside containers from binding to the aliased IP.
 - Check if IP aliases are creaed, if not; create them. User have a menu option to delete them.
@@ -228,7 +229,5 @@ display_menu ()
 
 ##Note:
 There are few optional items (open source) not part of my work. I added them to the container build for troubleshooting,it’s up to you if you want to install them. You may want to exclude them to keep the container footprint small.
-
--[screenfetch](http://tuxtweaks.com/2013/12/install-screenfetch-linux/)  : banner screen show host info at ssh login
 
 -bashrc:  customized bash file
