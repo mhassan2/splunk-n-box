@@ -61,13 +61,14 @@ Change DNSSERVER="192.168.2.100"  to point the caching dns server. This does not
 
 Read this first: 
 
-- Do not use older boot2docker stuff. If you google OSX docker install you will see references to oracale VirtualBox and boot2docker every where. Starting docker 1.12 Orcale VBOX is replaced with small new hypervisor is used xhyve. Boot2docker is replace with moby (tiny Linux)
+- Do not use older boot2docker stuff. If you google OSX docker install you will see references to oracale VirtualBox and boot2docker every where. Starting docker 1.12 Orcale VBOX is replaced with small new hypervisor called xhyve. Boot2docker is replace with moby (tiny Linux)
 - Perfromance on OSX is noticeably less than Linux. So be aware that you may not be able to bring up as many containers will similar hardware resources.
 - Do not run any local splunkd instances on the docker-host (where script is used). It will prevent containers from starting due to interace binding. 
 - OSX runs splunks (inside containers) will bind to local loopback interface IP aliases. Hosts will not be reachable from outside your laptop. This is not the case in Linux runs.
 - Default docker settings on OSX are limited. You need to change it to take advantage of all avaiable memory and CPU (under preferences).
  
- 
+
+The following steps are automated but you can skip and execute manually if you wish:
  
 Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-mavericks-10.9-configuration/
 ```
@@ -95,11 +96,11 @@ brew tap homebrew/dupes; brew install grep
 Configure docker for maximum CPU and Memory usage. The number of containers you can create is heavily dependant on the resources you allocate.
 
 ```
-Click on Docker Icon -> Preference -> General -> slide everthing all the way to the right
+Click on Docker Icon(desktop) -> Preferences -> General -> slide everthing all the way to the right
 ```
 
 
-##Configuration and setup:
+##Configuration and Setup:
 
 You may need to adjust the script to match your network space. Or you can simply use the defaults if your routed network is 192.168.1.0/24. In my lab, the docker-host is 192.168.1.100 it’s also where I ran my dnsmasq (DNS caching server). If you prefer not to use dnsmasq; then just use actual container IPs in your browser. The first container you create will start at 192.168.1.101 and last one will end at 192.168.1.200 (OSX version network usse this space 10.0.0.0/24 ). If you wish to setup your docker-host with permanent IP aliases see this link http://askubuntu.com/questions/585468/how-do-i-add-an-additional-ip-address-to-an-interface-in-ubuntu-14
 
@@ -146,7 +147,7 @@ The first time you run the script it will create the required IP aliases. You ma
 ifconfig | more
 ```
 
-You have the ability to control verbosity level by using –v switch. I used I/O redirection to control verbosity (and logging level). 
+You have the ability to control verbosity level by using –v switch. The script uses I/O redirection to control verbosity (and logging level to the log file). 
 
 ```
 create-splunk.sh –v3 
@@ -182,6 +183,7 @@ There are two menu screens the main menu and clustering menu. Here is a brief ex
 The rest of the options are self-explanatory
 
 ##Validation checks:
+
 I have extensive set of checks and validation routines that catches multiple issues. The validations are OS dependent. Here is the list:
 
 - Check if all required package installed (ggrep, pcre, brew). If not offer the user the option of installing them.
