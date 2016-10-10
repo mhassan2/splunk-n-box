@@ -29,9 +29,9 @@ In my small test environment I was able to quickly bring upward of 40+ Splunk do
 
 ##Where to get it?
 
-I have posted the source code on github https://github.com/mhassan2/splunk-n-box
+Source code is posted here: https://github.com/mhassan2/splunk-n-box
 
-Please download and install in your lab. The script was tested on Ubuntu 16.04 and Macbook Pro El Captin 10.11.6. I am guessing running on equivalent Linux distribution will not be a problem. Windows and OSX do not support c-blocks natively, therefore there is an additional layer of virtualization required, which really defeat the purpose of micro servers concept. Additionally the scripts heavily utilizes NATing to allow Splunk containers to be visible to the outside world, which means you probably have to NAT 2-3 times to achieve the same goal using non-Linux host OS.
+Please download and install in your lab. The script was tested on Ubuntu 16.04 and Macbook Pro El Captin 10.11.6. I am guessing running on equivalent Linux distribution will not be a problem. Windows and OSX do not support linux c-groups natively, therefore there is an additional layer of virtualization required, which really defeat the purpose of micro servers concept. Additionally the scripts heavily utilizes NATing to allow Splunk containers to be visible to the outside world, which means you probably have to NAT 2-3 times to achieve the same goal using non-Linux host OS.
 
 ##How does it work?
 
