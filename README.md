@@ -1,4 +1,4 @@
- &#x1F535;     **_scroll all the way down to see sample screenshots_**
+ &#x1F534;     **_Scroll all the way down to see sample screenshots_**
 
 
 
