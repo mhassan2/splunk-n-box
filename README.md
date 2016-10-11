@@ -1,4 +1,4 @@
-:exclamation:      **_scroll all the way down to see sample screenshots_**
+ &#x1F535;     **_scroll all the way down to see sample screenshots_**
 
 
 
@@ -70,7 +70,7 @@ Change DNSSERVER="192.168.2.100"  to point the caching DNS server. This does not
 - Default docker settings on OSX are limited. You need to change it to take advantage of all available memory and CPU (under preferences).
  
 
-:information_source:_The following steps are automated but you can skip and execute manually if you wish:_
+:exclamation::information_source:_The following steps are automated but you can skip and execute manually if you wish:_
 
  
 Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-mavericks-10.9-configuration/
