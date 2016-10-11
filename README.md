@@ -141,6 +141,7 @@ CM  : Cluster Master
 DEP : Search Head Cluster Deployer
 HF  : Heavy Forwarder
 UF  : Universal Forwarder
+DMC : Distributed Management Console ( splunk 6.5 name changed to Monitoring Console)
 ```
 
 ##How to use:
