@@ -232,11 +232,12 @@ display_menu ()
 ```
 
 ##Misc stuff:
-There are few optional items (open source) not part of my work. I added them to the container build for troubleshooting,it’s up to you if you want to install them. You may want to exclude them to keep the container footprint small.
+There are few optional items (open source) not part of my work. I added them to the container build for troubleshooting. You may want to exclude them to keep the container footprint small.
 
--container.bashrc:  Customized bash file
--screenfetch:       Run from .bashr,  rovides "hardware" info.
--docker-ssh:        Small script to simulate ssh command with containers
+- container.bashrc:  Customized bash file
+- screenfetch:       Run from .bashrc,  rovides "hardware" info.
+- docker-ssh:        Small script to simulate ssh command with containers
+
 
 ##Screenshots:
 
