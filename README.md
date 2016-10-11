@@ -235,4 +235,10 @@ There are few optional items (open source) not part of my work. I added them to 
 
 ##Screenshots:
 
-![Main Menu](https://github.com/mhassan2/splunk-n-box/blob/master/screen1.png)
+![Main Menu](https://cloud.githubusercontent.com/assets/16661624/19256750/7e549c8a-8f2f-11e6-8617-008f98ee6e9e.png)
+![Cluster Menu](https://cloud.githubusercontent.com/assets/16661624/19256751/7e5868d8-8f2f-11e6-8f2a-b63295e318f3.png)
+![Listing Hosts](https://cloud.githubusercontent.com/assets/16661624/19256754/7e59237c-8f2f-11e6-800a-77a79f6062e6.png)
+![Cluster build](https://cloud.githubusercontent.com/assets/16661624/19256752/7e587ec2-8f2f-11e6-9ee8-c6dfa6c8fe90.png)
+![Login screen](https://cloud.githubusercontent.com/assets/16661624/19256753/7e58cddc-8f2f-11e6-9e9a-fc5112ec1357.png)
+![sample cluster_splunk](https://cloud.githubusercontent.com/assets/16661624/19256755/7e5a344c-8f2f-11e6-9cf6-2fca31f7ea10.png)
+![sample 80 cluster splunk](https://cloud.githubusercontent.com/assets/16661624/19256757/7e6ef288-8f2f-11e6-8f9f-dff114db6f76.png)
