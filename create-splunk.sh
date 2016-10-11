@@ -52,9 +52,9 @@ START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.254"
 DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine IP
 
 #Full PATH is dynamic based on OS type, see detect_os()
-FILES_DIR="$PWD" #place anything needs to copy to container here
+FILES_DIR="$PWD" 		#place anything needs to copy to container here
 LIC_FILES_DIR="NFR"		#place all your license file here
-VOL_DIR="docker-volumes"		#directory name for volumes mount point.Full path is dynamic based on OS type
+VOL_DIR="docker-volumes"	#directory name for volumes mount point.Full path is dynamic based on OS type
 
 #The following are set in detect_os()
 #MOUNTPOINT=
@@ -76,7 +76,7 @@ SPLUNKNET="splunk-net"			#default name for splunk docker network (host-to-host c
 LOCAL_SPLUNKD="/opt/splunk/bin/splunk"	#don't run local splunkd instance on docker-host
 
 #Splunk standard ports
-SSHD_PORT="8022"	#in case we need to enable sshd, not recommended
+SSHD_PORT="8022"			#in case we need to enable sshd, not recommended
 SPLUNKWEB_PORT="8000"
 MGMT_PORT="8089"
 KV_PORT="8191"
@@ -1537,7 +1537,7 @@ do
                 3 ) build_single_site "AUTO"; read -p "Hit <ENTER> to continue..." ;;
                 4 ) build_multi_site_cluster "AUTO"; read -p "Hit <ENTER> to continue..." ;;
 
-                5 ) 	printf "Please remember to follow host naming convention..\n";
+                5 ) 	printf "${White} *Please remember to follow host naming convention..${NC}\n";
 			create_single_idxc; 
 			read -p "Hit <ENTER> to continue..." ;;
 		6 ) 	printf "Please remember to follow host naming convention..\n";
@@ -1674,15 +1674,15 @@ do
 
 		10 ) clustering_menu ;;
 
-		q|Q ) echo "Quitting!" ;break ;;
-		#*) break ;;
+		q|Q ) echo;
+		      echo -e "Quitting... Please send feedback to mhassan@splunk.com! \0360\0237\0230\0200";
+		      break ;;
 	esac  #end case ---------------------------
 	
 	read -p "Hit <ENTER> to continue..."
 	echo "------------------------------------------------------";echo
 
 done  #end of while(true) loop
-echo "Have a good one -:)"
 
 ##### EOF #######
 
