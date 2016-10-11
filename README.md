@@ -1,4 +1,6 @@
-**See  _Splunk-n-box-screens.docx_  for screenshots!**
+  *** __See sample screen shots below__ ***
+http://github.com - automatic!
+[GitHub](http://github.com)
 
 ##Introduction:
 
