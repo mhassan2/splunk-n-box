@@ -240,11 +240,26 @@ There are few optional items (open source) not part of my work. I added them to 
 
 ##Screenshots:
 
+#sample validation screen (OSX run):
 ![validation](https://cloud.githubusercontent.com/assets/16661624/19257521/de9a93fa-8f35-11e6-9910-fb73199c93a6.png)
+
+#Main Menu:
 ![Main Menu](https://cloud.githubusercontent.com/assets/16661624/19257520/de8cef70-8f35-11e6-857e-6a3eb2b747a0.png)
+
+#Clustering Menu:
 ![Cluster Menu](https://cloud.githubusercontent.com/assets/16661624/19256751/7e5868d8-8f2f-11e6-8f2a-b63295e318f3.png)
+
+#Sample Host Listing:
 ![Listing Hosts](https://cloud.githubusercontent.com/assets/16661624/19256754/7e59237c-8f2f-11e6-800a-77a79f6062e6.png)
+
+#Sample site-2-site Build:
 ![Cluster build](https://cloud.githubusercontent.com/assets/16661624/19256752/7e587ec2-8f2f-11e6-9ee8-c6dfa6c8fe90.png)
+
+#Sample Login Screen (with host details):
 ![Login screen](https://cloud.githubusercontent.com/assets/16661624/19256753/7e58cddc-8f2f-11e6-9e9a-fc5112ec1357.png)
+
+#Sample Result in Splunk:
 ![sample cluster_splunk](https://cloud.githubusercontent.com/assets/16661624/19256755/7e5a344c-8f2f-11e6-9cf6-2fca31f7ea10.png)
+
+#Sample Result in Splunk (80 hosts multi-site cluster):
 ![sample 80 cluster splunk](https://cloud.githubusercontent.com/assets/16661624/19256757/7e6ef288-8f2f-11e6-8f9f-dff114db6f76.png)
