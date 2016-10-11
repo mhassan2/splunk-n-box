@@ -53,7 +53,7 @@ There are multiple splunk images on docker hub https://hub.docker.com/  but I ha
 
 ##Linux installation:
  
-For differnt linux distributions/version see:  https://docs.docker.com/engine/installation/
+For different linux distributions/version see:  https://docs.docker.com/engine/installation/
 
 If you want the docker-host be be able to resolve host IPs (optional) install dnsmasq (google for your Linux flavor). 
 Change DNSSERVER="192.168.2.100"  to point the caching dns server. This does not work on OSX yet!
@@ -70,7 +70,7 @@ Read this first:
 - Default docker settings on OSX are limited. You need to change it to take advantage of all avaiable memory and CPU (under preferences).
  
 
-The following steps are automated but you can skip and execute manually if you wish:
+:large_blue_circle:_The following steps are automated but you can skip and execute manually if you wish:_
  
 Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-mavericks-10.9-configuration/
 ```
