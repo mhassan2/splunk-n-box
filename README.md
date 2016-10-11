@@ -70,7 +70,8 @@ Read this first:
 - Default docker settings on OSX are limited. You need to change it to take advantage of all avaiable memory and CPU (under preferences).
  
 
-:large_blue_circle:_The following steps are automated but you can skip and execute manually if you wish:_
+:information_source:_The following steps are automated but you can skip and execute manually if you wish:_
+
  
 Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-mavericks-10.9-configuration/
 ```
