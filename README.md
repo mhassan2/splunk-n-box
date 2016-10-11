@@ -228,8 +228,11 @@ clustering_menu ()
 display_menu ()
 ```
 
-
 ##Note:
 There are few optional items (open source) not part of my work. I added them to the container build for troubleshooting,it’s up to you if you want to install them. You may want to exclude them to keep the container footprint small.
 
 -bashrc:  customized bash file
+
+##Screenshots:
+
+https://cloud.githubusercontent.com/assets/16661624/19256322/740445b8-8f2b-11e6-8f5b-c02d1e461de0.png
