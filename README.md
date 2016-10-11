@@ -4,23 +4,23 @@
 
 ##Introduction:
 
-Have you ever wanted to create a multi-site cluster environment in your lab but you don’t have the resources for it? Have you ever wondered how does bucket replication translates on the file system level? Have you ever wanted to create portable Splunk classroom but it is cost prohibitive? How about changing critical configuration without worrying about messing up your production environment?
+Have you ever wanted to create a multi-site cluster environment in your lab but you don’t have the resources for it? Have you ever wondered how does bucket replication translates on the file system level? Have you ever wanted to create a portable Splunk classroom but it is cost prohibitive? How about changing critical configuration without worrying about messing up your production environment?
 If you are like me; you must have dealt with similar challenges.
 
 
-Like with most people, you probably attempted to solve the problem by either throwing more hardware at it or by using some sort of VM technology that does not scale well without additional resources and cost. Well, I have a solution for you! But before that, I would like to welcome you to the world of docker, the game changer that brought micro services to reality. Imagine that with a click of a button you are able to create 3-sites cluster, each location running 3-SHs and 10-IDXs. Or maybe just instantly create a portable lab environment for testing or training purposes. 
-You may have heard of docker, or you may even experiment with it trying to figure out how can I use it to help my Splunk needs. But learning docker technology by itself is not helpful unless used in a context of a specific app like Splunk. To help my customers (and myself) I have created a wrapper bash script (around 1200 lines) to manage Splunk instances builds. *The script will allow you to create a pre-configured large number of Splunk infrastructure components without having to learn a single docker command and with minimal resources requirements (CPU, memory, HD space).*
+Like with most people, you probably attempted to solve the problem by either throwing more hardware at it or by using some sort of VM technology that does not scale well without additional resources and cost. Well, I have a solution for you! But before that, I would like to welcome you to the world of DOCKER! The game changer that brought micro services to reality. Imagine that with a click of a button you are able to create 3-site cluster, each location has 3-SHs and 10-IDXs. Or maybe just instantly create a portable lab environment for testing or training purposes. 
+You may have heard of docker, or you may even experiment with it trying to figure out how can I use it to help my Splunk needs. But learning docker technology by itself is not helpful unless used in a context of a specific app like Splunk. To help my customers (and myself) I have created a wrapper bash script (around 1600 lines) to manage Splunk instances builds. *The script will allow you to create a pre-configured large number of Splunk infrastructure components without having to learn a single docker command and with minimal resources requirements.*
 
-In my small test environment, I was able to quickly bring upward of 40+ Splunk docker containers for a classroom lab using low powered Intel NUC device (i3 16GB ram, 128G SSD). What’s really impressive about docker is the resource utilization on docker-host was extremely tiny compared to a VM based build. I need to emphasize that I have not tested my script under heavy load (either user traffic or data ingestion), however, I believe is just a matter of sizing the hardware appropriately.
+In my small test environment, I was able to quickly bring upward of 40+ Splunk docker containers for a classroom lab using low powered Intel NUC device (i3 16GB ram, 128G SSD). What’s really impressive about docker is the resource utilization on the docker-host was extremely tiny compared to a VM based build. I need to emphasize the fact that I have not tested builds under heavy load (either user traffic or data ingestion), however, I believe is just a matter of sizing the hardware appropriately.
 
 ##Script feature list:
 
-- Extensive Error checking when configuring the containers
-- Adaptive load control (throttling if exceeds 4xcores) during cluster build
+- Extensive Error checking during startup & while building containers.
+- Adaptive load control during cluster build (throttle execution if exceeds 4 x cores) 
 - Built-in dynamic hostnames and IPs allocation
 - Automatically create & configure large number of Splunk hosts very fast
 - Different levels of logging (show docker commands executed)
-- Complete multi and single site cluster build including CM and DEP servers
+- Fully conifigured multi & single site cluster builds (including CM and DEP servers)
 - Manual and auto (standard configurations)
 - Modular design that can easily be converted to a higher-level language like python
 - Custom login screen (helpful for lab & Search Parties scenarios)
@@ -33,14 +33,14 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk d
 
 Source code is posted here: https://github.com/mhassan2/splunk-n-box
 
-Please download and install in your lab. The script was tested on Ubuntu 16.04 and Macbook Pro El Captin 10.11.6. I am guessing running on equivalent Linux distribution will not be a problem. Windows and OSX do not support Linux c-groups natively, therefore there is an additional layer of virtualization required, which really defeat the purpose of micro servers concept. Additionally, the scripts heavily utilize NATing to allow Splunk containers to be visible to the outside world, which means you probably have to NAT 2-3 times to achieve the same goal using non-Linux host OS.
+Please download and install in your lab. The script was tested on Ubuntu 16.04 and Macbook Pro El Captin 10.11.6. I am guessing running on equivalent Linux distribution will not be a problem. 
 
 ##How does it work?
 
 Once you have your Ubuntu up and running please follow the instructions for installing docker https://docs.docker.com/engine/installation/linux/ubuntulinux/
 Please be aware that Ubuntu 14.04 did not work very well for me. There is a bug around mounting docker volumes. Your mileage may vary if you decide to use CentOS or equivalent Linux distribution. For OSX see https://github.com/docker/dcus-hol-2016/tree/master/docker-developer
 
-When the scripts run for the first time it checks to see if you have any IP aliases available (the range specified in the script). If not; then it will configure IP aliases 192.168.1.100-254. The aliased IPs will be automatically mapped, at container creation time, to the internal docker IP space (172.18.0.0/24). You should be able to point your browser to any NATed IP on port 8000 and that will get you directly to the container. During my research, I haven’t seen many people using this technique and they opt for changing the ports or using a proxy container. My approach is to keep the standard Splunk ports (8000, 8089, 9997,etc) and use iptable NATs to make the containers visible to the outside world.  This will save you a lot of headaches when dealing with creating a large number of Splunk containers (aka hosts). Running under OSX I used private network segment 10.0.0.0/24. The assumption here is you don't need to NAT to the outside world and everything will be local to your MAC laptop.
+When you run the scripts for the first time it will check to see if you have any IP aliases available (the range specified in script). If not; then it will configure IP aliases 192.168.1.100-254. The aliased IPs will be automatically mapped, at container creation time, to the internal docker IP space (172.18.0.0/24). You should be able to point your browser to any NATed IP on port 8000 and that will get you directly to the container. During my research, I haven’t seen many people using this technique and they mostly opt for changing the ports or using a proxy container. My approach is to keep the standard Splunk ports (8000, 8089, 9997,etc) and use iptable NATs to make the containers visible to the outside world.  This will save you a lot of headaches when dealing with creating a large number of Splunk containers (aka hosts). Running under OSX I used private network segment 10.0.0.0/24. The assumption here is you don't need to NAT to the outside world and everything will be local to your MAC laptop. Windows and OSX do not support Linux c-groups natively, therefore there is an additional layer of virtualization required, which will impact perfromance. 
 
 ##Splunk image:
 
@@ -53,9 +53,9 @@ There are multiple splunk images on docker hub https://hub.docker.com/  but I ha
 
 ##Linux installation:
  
-For different linux distributions/version see:  https://docs.docker.com/engine/installation/
+For different linux distributions/versions see:  https://docs.docker.com/engine/installation/
 
-If you want the docker host to be able to resolve host IPs (optional) install dnsmasq (google for your Linux flavor). 
+If you want the docker-host to be able to resolve host IPs (optional) install dnsmasq (google for your Linux flavor). 
 Change DNSSERVER="192.168.2.100"  to point the caching DNS server. This does not work on OSX yet!
 
 
