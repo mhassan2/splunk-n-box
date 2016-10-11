@@ -1,4 +1,5 @@
- @octocat :+1:  *** __Scroll al the way down readme.md to sample screenshots__ ***
+ :+1:  *** __Scroll al the way down readme.md to sample screenshots__ ***
+
 
 
 ##Introduction:
@@ -233,6 +234,8 @@ display_menu ()
 There are few optional items (open source) not part of my work. I added them to the container build for troubleshooting,it’s up to you if you want to install them. You may want to exclude them to keep the container footprint small.
 
 -bashrc:  customized bash file
+
+
 
 ##Screenshots:
 
