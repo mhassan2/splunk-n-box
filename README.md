@@ -1,6 +1,6 @@
-  *** __See sample screen shots below__ ***
-http://github.com - automatic!
-[GitHub](http://github.com)
+                               *** __See sample screen shots below__ ***
+https://github.com/mhassan2/splunk-n-box/blob/master/README.md - automatic!
+[GitHub](https://github.com/mhassan2/splunk-n-box/blob/master/README.md)
 
 ##Introduction:
 
