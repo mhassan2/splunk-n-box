@@ -20,7 +20,7 @@
 #
 # Licenses: 	Licensed under GPL v3 <link>
 # Author:    	mhassan@splunk.com
-# Version:	1.0
+# Version:	 $Id:$
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
 #		v1-2	default setting (recommended for ongoing usage)
