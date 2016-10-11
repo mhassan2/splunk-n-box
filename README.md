@@ -231,12 +231,12 @@ clustering_menu ()
 display_menu ()
 ```
 
-##Note:
+##Misc stuff:
 There are few optional items (open source) not part of my work. I added them to the container build for troubleshooting,it’s up to you if you want to install them. You may want to exclude them to keep the container footprint small.
 
--bashrc:  customized bash file
-
-
+-container.bashrc:  Customized bash file
+-screenfetch:       Run from .bashr,  rovides "hardware" info.
+-docker-ssh:        Small script to simulate ssh command with containers
 
 ##Screenshots:
 
