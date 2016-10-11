@@ -258,7 +258,7 @@ There are few optional items (open source) not part of my work. I added them to 
 ##Sample Splunk customized login screen (with host details):
 ![Login screen](https://cloud.githubusercontent.com/assets/16661624/19256753/7e58cddc-8f2f-11e6-9e9a-fc5112ec1357.png)
 
-##Sample Splunk result:
+##Sample Splunk result (search heads cluster):
 ![sample cluster_splunk](https://cloud.githubusercontent.com/assets/16661624/19256755/7e5a344c-8f2f-11e6-9cf6-2fca31f7ea10.png)
 
 ##Sample Splunk result (80 hosts multi-site cluster):
