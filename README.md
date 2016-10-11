@@ -61,13 +61,13 @@ Change DNSSERVER="192.168.2.100"  to point the caching DNS server. This does not
 
 ##MAC OSX installation (laptop):
 
-&#x1F4D9;Read this first: 
+&#x1F4D9;For Darwin installtions read this first: 
 
 - Do not use older boot2docker stuff. If you google OSX docker install you will see references to oracle VirtualBox and boot2docker everywhere. Starting docker 1.12 Oracle VBOX is replaced with small new hypervisor called xhyve. Boot2docker is replaced with moby (tiny Linux)
-- Performance on OSX is noticeably less than Linux. So be aware that you may not be able to bring up as many containers will similar hardware resources.
-- Do not run any local splunkd instances on the docker host (where the script is used). It will prevent containers from starting due to interface binding. 
-- OSX runs Splunk (inside containers) will bind to local loopback interface IP aliases. Hosts will not be reachable from outside your laptop. This is not the case in Linux runs.
-- Default docker settings on OSX are limited. You need to change it to take advantage of all available memory and CPU (under preferences).
+- Performance on OSX is noticeably less than Linux. So be aware that you may not be able to bring up as many containers with similar hardware resources.
+- Do not run any local splunkd instances on the docker-host (where the script is used). It will prevent containers from starting due to network interface binding conflict. 
+- Splunk instance (inside containers) will bind to local loopback interface IP aliases on docker-host (i.e your laptop). Hosts will not be reachable from outside your laptop. This is not the case in Linux runs.
+- Default docker settings on OSX are limited. Please change to take advantage of all available memory and CPU (under preferences).
  
 
 :exclamation:_The following steps are automated but you can skip and execute manually if you wish:_
