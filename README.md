@@ -1,4 +1,4 @@
-:exclamation:      **_croll all the way down to see sample screenshots_**
+:exclamation:      **_scroll all the way down to see sample screenshots_**
 
 
 
