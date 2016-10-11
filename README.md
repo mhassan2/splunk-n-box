@@ -235,8 +235,4 @@ There are few optional items (open source) not part of my work. I added them to 
 
 ##Screenshots:
 
-https://cloud.githubusercontent.com/assets/16661624/19256322/740445b8-8f2b-11e6-8f5b-c02d1e461de0.png
-![screen2](/images/screen2.png)
-Format: ![Alt Text](url)
-
-![GitHub Logo](/images/logo.png)
+![Image of Yaktocat](https://octodex.github.com/images/yaktocat.png)
