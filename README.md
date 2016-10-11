@@ -1,6 +1,5 @@
-                               *** __See sample screen shots below__ ***
-https://github.com/mhassan2/splunk-n-box/blob/master/README.md - automatic!
-[GitHub](https://github.com/mhassan2/splunk-n-box/blob/master/README.md)
+ @octocat :+1:  *** __Scroll al the way down readme.md to sample screenshots__ ***
+
 
 ##Introduction:
 
