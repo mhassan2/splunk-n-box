@@ -235,4 +235,4 @@ There are few optional items (open source) not part of my work. I added them to 
 
 ##Screenshots:
 
-![Image of Yaktocat](https://octodex.github.com/images/yaktocat.png)
+![Main Menu](https://github.com/mhassan2/splunk-n-box/blob/master/screen1.png)
