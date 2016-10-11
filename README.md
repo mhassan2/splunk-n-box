@@ -61,7 +61,7 @@ Change DNSSERVER="192.168.2.100"  to point the caching DNS server. This does not
 
 ##MAC OSX installation (laptop):
 
-Read this first: 
+ (&#x1F4D9;): Read this first: 
 
 - Do not use older boot2docker stuff. If you google OSX docker install you will see references to oracle VirtualBox and boot2docker everywhere. Starting docker 1.12 Oracle VBOX is replaced with small new hypervisor called xhyve. Boot2docker is replaced with moby (tiny Linux)
 - Performance on OSX is noticeably less than Linux. So be aware that you may not be able to bring up as many containers will similar hardware resources.
