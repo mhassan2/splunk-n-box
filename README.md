@@ -129,7 +129,7 @@ LIC_FILES_DIR="licenses_files"
 VOL_DIR="docker-volumes"
 ```
 
-##Container host names rules:
+##Hostnames (i.e container names) rules:
 
 When you get comfortable navigating around the options you will soon discover that it is so easy to pop up hosts all the time. Inconsistent hostnames will lead to confusion. That actually happened to me! therefore I am enforcing standard host naming convention. You have the option to override this behavior in the “manual” mode. But remember the script relies on host names as a way to evaluate the host role. Diverting from the standard disrupts the logic in certain functions [like show_groups() ]. The script will automatically assign a sequence host number next to the base hostname. For example in some functions you will be prompted to enter Indexer name; you should type IDX . The script will find the next unused sequence number and IP address and allocate it (example IDX01, IDX02, IDX03,..etc). That logic does not apply to the “site” portion of the hostname. All hostnames (ie container names) will be converted to upper case. The script will use the following naming convention:
 ```
@@ -157,7 +157,7 @@ You have the ability to control verbosity level by using –v switch. The script
 create-splunk.sh –v3 
 ```
 
-Experiment with creating few hosts then point your browser to them. Push the server to the limits to see how many host can you create before your system crashes. I was able to create 80 hosts (4 site-2-site cluster 20IDX 3SH each) on a single Intel NUC Skull device (i7 32GB 1TB SSD). Load Avg shot to 20 during the build but went down to 6 once the cluster stabilized. Please be aware that it will take 10+ minutes (depending on the number of members in the cluster) to reach a stable cluster state.
+Experiment with creating few hosts then point your browser to them. Push the server to the limits to see how many hosts can you create before your system crashes. I was able to create 80 hosts (4 site-2-site cluster 20IDX 3SH each) on a single Intel NUC Skull device (i7 32GB 1TB SSD). Load Avg shot to 20 during the build but went down to 6 once the cluster stabilized. Please be aware that it will take 10+ minutes (depending on the number of members in the cluster) to reach a stable cluster state.
 
 ```
 Choose option C
