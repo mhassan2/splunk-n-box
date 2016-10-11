@@ -1,4 +1,4 @@
- :rainbow:  **__Scroll al the way down readme.md to sample screenshots__**
+ :rainbow:      **_Scroll al the way down readme.md for sample screenshots_**
 
 
 
