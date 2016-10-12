@@ -136,7 +136,7 @@ When you get comfortable navigating around the options you will soon discover th
 IDX : Indexer
 SH  : Search Head
 DS  : Deployment Server
-LM  : License Manager
+LM  : License Master
 CM  : Cluster Master
 DEP : Search Head Cluster Deployer
 HF  : Heavy Forwarder
