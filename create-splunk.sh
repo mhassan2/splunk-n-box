@@ -103,6 +103,7 @@ STD_IDXC_COUNT="3"	#default IDXC count
 STD_SHC_COUNT="3"	#default SHC count
 
 #Misc
+CMDLOGFILE="$PWD/cmd.log"
 LOGFILE="${0##*/}.log"   #log file will be this_script_name.log
 HOSTSFILE="$PWD/docker-hosts.dnsmasq"  #optional if dns caching is used
 
@@ -125,6 +126,7 @@ LightGray="\033[0;37m";         DarkGray="\033[1;30m"
 BoldYellowBlueBackground="\e[1;33;44m"
 
 PS4='$LINENO: '			#show line num when used bash -x ./script.sh
+FLIPFLOP=0			#used to toggle color value in logline().Needs to be global
 
 # *** Let the fun begin ***
 
@@ -144,8 +146,27 @@ return 0
 }    #end check_shell()
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-echo_logline() {    #### NOT USED YET ####
-    echo -e `date +'%b %e %R '` "$@"
+logline() { 
+#Log docker CMD string to logfile. Group event color by host
+cmd=$1; curr_host=$2
+#DATE=` date +'%b %e %R'`
+DATE=`date +%Y-%m-%d:%H:%M:%S`
+#echo "curr[$curr_host]  prev[$prev_host]" >> $CMDLOGFILE
+
+#change log entry color when the remote docker cmd executed in new host
+if [ "$FLIPFLOP" == 0 ] && [ "$curr_host" != "$prev_host" ]; then 
+	FLIPFLOP=1; COLOR="${LightBlue}"; echo > $CMDLOGFILE
+elif [ "$FLIPFLOP" == 1 ] && [ "$curr_host" != "$prev_host" ]; then
+	FLIPFLOP=2; COLOR="${Yellow}"; echo > $CMDLOGFILE
+elif [ "$FLIPFLOP" == 2 ] && [ "$curr_host" != "$prev_host" ]; then
+        FLIPFLOP=0; COLOR="${LightCyan}"; echo > $CMDLOGFILE
+fi
+
+printf "${White}[$DATE]:${NC}$COLOR $cmd${NC}\n" >> $CMDLOGFILE
+#echo "[$DATE]:$cmd\n" >> $CMDLOGFILE
+#sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" -i $CMDLOGFILE
+prev_host=$curr_host
+
 return 0
 }
 #---------------------------------------------------------------------------------------------------------------
@@ -587,6 +608,7 @@ printf "${LightRed}DEBUG:===> Starting =>${Yellow}$FUNCNAME args:[$#] (${LightGr
 CMD="docker cp $PROJ_DIR/$LIC_FILES_DIR  $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
 printf "\t->Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+logline "$CMD" "$1"
 
 if ( compare "$1" "LM" ); then
 	printf "\t->*LM* host! Forcing immidiate splunkd restart.Please wait " >&3
@@ -610,12 +632,14 @@ docker exec -ti $1 rm -fr /opt/splunk/etc/passwd	#remove any existing users (inc
 #reset password to "$USERADMIN:$USERPASS"
 CMD="docker exec -ti $1 /opt/splunk/bin/splunk edit user admin -password hello -roles admin -auth admin:changeme"
 printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4 ; OUT=`$CMD`
+logline "$CMD" "$1"
 printf "${Purple}$1${NC}: > $CMD\n"
 
 if ( compare "$CMD" "failed" ); then
    echo "\t->Trying default password "
    CMD="docker exec -ti $1 /opt/splunk/bin/splunk edit user admin -password changeme -roles admin -auth $USERADMIN:$USERPASS"
    printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4 ; OUT=`$CMD`
+   logline "$CMD" "$1"
    printf "${Purple}$1${NC}: $OUT\n"
 fi
 return 0
@@ -648,11 +672,13 @@ if [ "$2" == "b" ]; then
         CMD="docker exec -d $1 /opt/splunk/bin/splunk restart "
         OUT=`$CMD`; display_output "$OUT" "The Splunk web interface is at" "3"
    	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+	logline "$CMD" "$1"
 else
 	printf "\t->Restarting splunkd. Please wait! " >&3
 	CMD="docker exec -ti $1 /opt/splunk/bin/splunk restart "
         OUT=`$CMD`; display_output "$OUT" "The Splunk web interface is at" "3"
    	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+	logline "$CMD" "$1"
 fi
 
 return 0
@@ -731,6 +757,7 @@ if [ -n "$lm" ]; then
         	CMD="docker exec -ti $hostname /opt/splunk/bin/splunk edit licenser-localslave -master_uri https://$lm_ip:$MGMT_PORT -auth $USERADMIN:$USERPASS"
         	printf "\t->Making [$hostname] license-slave using LM:[$lm] " >&3 ; display_output "$OUT" "property has been edited" "3"
 		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4 ; OUT=`$CMD`
+		logline "$CMD" "$hostname"
         	fi
 fi
 
@@ -896,11 +923,14 @@ vip=$1;  fullhostname=$2
 #reset password to "$USERADMIN:$USERPASS"
 CMD="docker exec -ti $fullhostname touch /opt/splunk/etc/.ui_login"      #prevent first time changeme password screen
 OUT=`$CMD`;   #printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
+logline "$CMD" "$fullhostname"
 CMD="docker exec -ti $fullhostname rm -fr /opt/splunk/etc/passwd"        #remove any existing users (include admin)
 OUT=`$CMD`;   #printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
+logline "$CMD" "$fullhostname"
 CMD="docker exec -ti $fullhostname /opt/splunk/bin/splunk edit user admin -password $USERPASS -roles $USERADMIN -auth admin:changeme"
 OUT=`$CMD`;   display_output "$OUT" "user admin edited" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+logline "$CMD" "$fullhostname"
 
 if ( compare "$CMD" "failed" ); then
         echo "Trying default password"
@@ -908,11 +938,14 @@ if ( compare "$CMD" "failed" ); then
         CMD="docker exec -ti $fullhostname touch /opt/splunk/etc/.ui_login"      #prevent first time changeme password screen
 	OUT=`$CMD` ; display_output "$OUT" "user admin edited" "5"
 	#printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+	logline "$CMD" "$fullhostname"
 
         CMD="/opt/splunk/bin/splunk edit user $USERADMIN -password changeme -roles admin -auth $USERADMIN:$USERPASS"
 	OUT=`$CMD` ; #printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
+	logline "$CMD" "$fullhostname"
 	display_output "$OUT" "user admin edited" "5"
 	#printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
+	logline "$CMD" "$fullhostname"
 fi
 
 #set home screen banner in web.conf
@@ -1003,6 +1036,7 @@ if [ -n "$dmc" ]; then
         OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
         printf "\t->Adding [$host] to DMC:[$dmc] " >&3 ; display_output "$OUT" "Peer added" "3"
         printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+	logline "$CMD" "$dmc"
 fi
         
 return 0
@@ -1041,7 +1075,7 @@ START1=$(date +%s);
 	OUT=`$CMD` ; display_output "$OUT" "" "2"
 	#CMD=`echo $CMD | sed 's/\t//g' `; 
 	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
-	#echo_logline "[${Purple}$fullhostname${NC}:${Cyan}$vip${NC}] Creating new splunk container..." >> ${LOGFILE}
+	logline "$CMD" "$fullhostname"
 	
 	if [ "$os" == "Darwin" ]; then
 		pausing "30"
@@ -1312,6 +1346,7 @@ CMD=`docker exec -ti $dep  bash -c "cat /tmp/server.conf.append >> /opt/splunk/e
 
 printf "\t->Adding stanza [shclustering] to server.conf!" >&3 ; display_output "$OUT" "" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+logline "$CMD" "$dep"
 
 #make_dmc_search_peer $dmc $dep
 #make_lic_slave $lm $dep
@@ -1332,6 +1367,7 @@ for i in $members_list ; do
 	OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
 	printf "\t->Initiating shcluster-config " >&3 ; display_output "$OUT" "clustering has been initialized" "3"
 	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+	logline "$CMD" "$i"
 	#-------
 		
 	#-------
@@ -1346,6 +1382,7 @@ for i in $members_list ; do
 		OUT=`$CMD`
 		printf "\t->Integrating with Cluster Master (for idx auto discovery) [$cm] " >&3 ; display_output "$OUT" "property has been edited" "3"
 		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+		logline "$CMD" "$i"
         fi
 	#-------
 	
@@ -1371,6 +1408,7 @@ OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
 printf "\t->Captain bootstraping (may take time) " >&3 ; display_output "$OUT" "Successfully"  "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+logline "$CMD" "$i"
 printf "${LightBlue}___________ Finished STEP#3 __________________________${NC}\n" >&3
 
 printf "${LightBlue}___________ Starting STEP#4 (cluster status)__________${NC}\n" >&3
@@ -1380,6 +1418,7 @@ CMD="docker exec -ti $i /opt/splunk/bin/splunk show shcluster-status -auth $USER
 OUT=`$CMD`
 display_output "$OUT" "Captain" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4 
+logline "$CMD" "$i"
 printf "${LightBlue}___________ Finished STEP#4 (cluster status)__________${NC}\n" >&3
 
 END=$(date +%s);
@@ -1497,6 +1536,7 @@ bind_ip_cm=`docker inspect --format '{{ .HostConfig }}' $cm| $GREP -o '[0-9]\+[.
 CMD="docker exec $cm /opt/splunk/bin/splunk edit cluster-config  -mode master -replication_factor $RFACTOR -search_factor $SFACTOR -secret $MYSECRET -cluster_label $label -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
 printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4 
+logline "$CMD" "$cm"
 printf "\t->Configuring CM [RF:$RFACTOR SF:$SFACTOR] and cluster label[$label] " >&3 ; display_output "$OUT" "property has been edited" "3"
 #-------
 
@@ -1515,6 +1555,7 @@ for i in $members_list ; do
         CMD="docker exec $i /opt/splunk/bin/splunk edit cluster-config -mode slave -master_uri https://$bind_ip_cm:$MGMT_PORT -replication_port $REPL_PORT -register_replication_address $bind_ip_idx -cluster_label $label -secret $MYSECRET -auth $USERADMIN:$USERPASS "
 	OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 	printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
+	logline "$CMD" "$i"
 	printf "\t->Make a cluster member " >&3 ; display_output "$OUT" "property has been edited" "3"
 	#-------
 	
@@ -1532,6 +1573,7 @@ printf "[${Purple}$cm${NC}]${LightBlue}==> Checking IDXC status...${NC}"
 CMD="docker exec -ti $cm /opt/splunk/bin/splunk show cluster-status -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`; display_output "$OUT" "Replication factor" "2"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+logline "$CMD" "$cm"
 printf "${LightBlue}____________ Finished STEP#3 __________________________${NC}\n\n" >&3
 
 END=$(date +%s);
@@ -1706,12 +1748,14 @@ CMD="docker exec -ti $cm /opt/splunk/bin/splunk edit cluster-config -mode master
 OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+logline "$CMD" "$cm"
 printf "\t->Setting multisite to true... " >&3 ; display_output "$OUT" "property has been edited" "3"
 
 CMD="docker exec -ti $cm /opt/splunk/bin/splunk enable maintenance-mode --answer-yes -auth $USERADMIN:$USERPASS"
 OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+logline "$CMD" "$cm"
 printf "\t->Enabling maintenance-mode... " >&3 ; display_output "$OUT" "maintenance mode set" "3"
 
 restart_splunkd "$cm"
@@ -1731,6 +1775,7 @@ for str in $SITEnames; do
         	OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 
 		printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
+		logline "$CMD" "$i"
 		printf "\t->Configuring multisite clustering for [site:$site location:$str] " >&3 
 		display_output "$OUT" "property has been edited" "3"
 		restart_splunkd "$i" "b"
@@ -1744,6 +1789,7 @@ for str in $SITEnames; do
 		OUT=`$CMD`
                 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 		printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
+		logline "$CMD" "$i"
 		printf "\t->Pointing to CM[$cm] for [site:$site location:$str]" >&3 
 		display_output "$OUT" "property has been edited" "3"
 		restart_splunkd "$i" "b"
@@ -1759,6 +1805,7 @@ CMD="docker exec -ti $cm /opt/splunk/bin/splunk disable maintenance-mode -auth $
 OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
+logline "$CMD" "$cm"
 printf "\t->Disabling maintenance-mode..." >&3 ; display_output "$OUT" "No longer"  "3"
 #restart_splunkd "$i"
 printf "${Cyan}____________ Finished STEP#4 __________________________________________________${NC}\n" >&3
@@ -1901,6 +1948,8 @@ done
 #exit
 #------------------
 
+rm  -fr $CMDLOGFILE
+printf "\n--------------- Starting new script run. Color changes when hostname changes -------------------\n" > $CMDLOGFILE  #always start with new logfile
 clear
 #house keeping functions
 check_shell
