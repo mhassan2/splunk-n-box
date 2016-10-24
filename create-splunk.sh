@@ -38,13 +38,11 @@
 #	-DMC instance
 #################################################################################
 
-#Network stuff
-ETH_OSX="lo0"			#default interface to use with OSX laptop
-ETH_LINUX="eno1"		#default interface to use with Linux server
-GREP_OSX="/usr/local/bin/ggrep"	#you MUST install Gnu grep on OSX
-GREP_LINUX="/bin/grep"		#default grep for Linux
+#Network stuff --------
+ETH_OSX="lo0"			#default interface to use with OSX laptop (el captin)
+ETH_LINUX="eno1"		#default interface to use with Linux server (ubuntu 16.04
 
-#IP aliases range to create. Must use routed network if you want reach host from outside
+#IP aliases --------
 #LINUX is routed and hosts can be reached from anywhere in the network
 START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.254"
 
@@ -52,7 +50,8 @@ START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.254"
 START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.254"
 
 DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine IP
-
+#----------
+#----------PATHS
 #Full PATH is dynamic based on OS type, see detect_os()
 FILES_DIR="$PWD" 		#place anything needs to copy to container here
 LIC_FILES_DIR="NFR"		#place all your license file here
@@ -62,7 +61,9 @@ VOL_DIR="docker-volumes"	#directory name for volumes mount point.Full path is dy
 #MOUNTPOINT=
 #ETH=
 #GREP=
+#----------
 
+#----------Images
 #more can be found http://hub.docker.com
 SPLUNK_IMAGE="mhassan/splunk"		#my own built image 6.4.4
 #SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	#taken offline by outcoldman
@@ -70,7 +71,9 @@ SPLUNK_IMAGE="mhassan/splunk"		#my own built image 6.4.4
 #SPLUNK_IMAGE="splunk/splunk:6.5.0"	#official image 6.5.0
 #SPLUNK_IMAGE="btorresgil/splunk"	#untested
 #SPLUNK_IMAGE="xeor/splunk"		#unstested
+#----------
 
+#----------Cluster stuff
 BASEHOSTNAME="IDX"			#default hostname to create
 CM_BASE="CM"
 DMC_BASE="DMC"
@@ -79,11 +82,6 @@ DEP_BASE="DEP"
 IDX_BASE="IDX"
 SH_BASE="SH"
 SPLUNKNET="splunk-net"			#default name for splunk docker network (host-to-host comm)
-
-#Set the local splunkd path if you're running Splunk on this docker-host (ex laptop).
-#Used in validation_check() routine to detect local instance and kill it, otherwise it will interfere with this script operation
-LOCAL_SPLUNKD="/opt/splunk/bin/splunk"	#don't run local splunkd instance on docker-host
-
 #Splunk standard ports
 SSHD_PORT="8022"			#in case we need to enable sshd, not recommended
 SPLUNKWEB_PORT="8000"
@@ -95,9 +93,8 @@ HEC_PORT="8081"
 USERADMIN="admin"
 USERPASS="hello"
 
-#default cluster configurations
-RFACTOR="3"
-SFACTOR="2"
+RFACTOR="3"		#default replication factor
+SFACTOR="2"		#default seach factor
 
 SHCLUSTERLABEL="shcluster1"
 IDXCLUSTERLABEL="idxcluster1"
@@ -108,19 +105,24 @@ MYSECRET="mysecret"
 STD_IDXC_COUNT="3"	#default IDXC count
 STD_SHC_COUNT="3"	#default SHC count
 DEP_SHC_COUNT="1"	#default DEP count
+#----------
 
-#Misc
-CMDLOGFILE="$PWD/cmd.log"
-LOGFILE="${0##*/}.log"   #log file will be this_script_name.log
-HOSTSFILE="$PWD/docker-hosts.dnsmasq"  #optional if dns caching is used
+#---------Logs
+CMDLOGBIN="$PWD/cmds_capture.bin"	#capture all docker cmds (with color)
+CMDLOGTXT="$PWD/cmds_capture.log"	#capture all docker cmds (just ascii txt)
+#LOGFILE="${0##*/}.log"   #log file will be this_script_name.log
+SCREENLOGFILE="screens_capture.log"   	#capture all screen shots during execution
+HOSTSFILE="$PWD/docker-hosts.dnsmasq"  #local host file. optional if dns caching is used
+#--------
 
-#Load control
+#--------Load control
 MAXLOADTIME=10		#seconds increments for timer
 MAXLOADAVG=4		#Not used
 LOADFACTOR=3            #allow (3 x cores) of load on docker-host
 LOADFACTOR_OSX=1        #allow (1 x cores) for the MAC (testing..)
+#--------
 
-#Use colors to make it user friendly -:)
+#--------COLORES
 NC='\033[0m' # No Color
 Black="\033[0;30m";             White="\033[1;37m"
 Red="\033[0;31m";               LightRed="\033[1;31m"
@@ -131,15 +133,23 @@ Purple="\033[0;35m";            LightPurple="\033[1;35m"
 Cyan="\033[0;36m";              LightCyan="\033[1;36m"
 LightGray="\033[0;37m";         DarkGray="\033[1;30m"
 BoldYellowBlueBackground="\e[1;33;44m"
+#--------
 
+#-------Misc
+GREP_OSX="/usr/local/bin/ggrep" #you MUST install Gnu grep on OSX
+GREP_LINUX="/bin/grep"          #default grep for Linux
 PS4='$LINENO: '			#show line num when used bash -x ./script.sh
 FLIPFLOP=0			#used to toggle color value in logline().Needs to be global
+#Set the local splunkd path if you're running Splunk on this docker-host (ex laptop).
+#Used in validation_check() routine to detect local instance and kill it.
+LOCAL_SPLUNKD="/opt/splunk/bin/splunk"  #don't run local splunkd instance on docker-host
+#----------
 
 # *** Let the fun begin ***
 
 #Log level is controlled with I/O redirection. Must be first thing executed in a bash script
 # Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
-exec >> >(tee -i $LOGFILE)
+exec >> >(tee -i $SCREENLOGFILE)
 exec 2>&1
 
 #---------------------------------------------------------------------------------------------------------
@@ -158,20 +168,22 @@ logline() {
 cmd=$1; curr_host=$2
 #DATE=` date +'%b %e %R'`
 DATE=`date +%Y-%m-%d:%H:%M:%S`
-#echo "curr[$curr_host]  prev[$prev_host]" >> $CMDLOGFILE
+#echo "curr[$curr_host]  prev[$prev_host]" >> $CMDLOGBIN
 
 #change log entry color when the remote docker cmd executed in new host
 if [ "$FLIPFLOP" == 0 ] && [ "$curr_host" != "$prev_host" ]; then 
-	FLIPFLOP=1; COLOR="${LightBlue}"; echo > $CMDLOGFILE
+	FLIPFLOP=1; COLOR="${LightBlue}"; echo > $CMDLOGBIN
 elif [ "$FLIPFLOP" == 1 ] && [ "$curr_host" != "$prev_host" ]; then
-	FLIPFLOP=2; COLOR="${Yellow}"; echo > $CMDLOGFILE
+	FLIPFLOP=2; COLOR="${Yellow}"; echo > $CMDLOGBIN
 elif [ "$FLIPFLOP" == 2 ] && [ "$curr_host" != "$prev_host" ]; then
-        FLIPFLOP=0; COLOR="${LightCyan}"; echo > $CMDLOGFILE
+        FLIPFLOP=0; COLOR="${LightCyan}"; echo > $CMDLOGBIN
 fi
 
-printf "${White}[$DATE]:${NC}$COLOR $cmd${NC}\n" >> $CMDLOGFILE
-#echo "[$DATE]:$cmd\n" >> $CMDLOGFILE
-#sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" -i $CMDLOGFILE
+printf "${White}[$DATE]:${NC}$COLOR $cmd${NC}\n" >> $CMDLOGBIN
+printf "[$DATE]: $cmd$\n" >> $CMDLOGTXT
+
+#echo "[$DATE]:$cmd\n" >> $CMDLOGBIN
+#sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" -i $CMDLOGBIN
 prev_host=$curr_host
 
 return 0
@@ -269,7 +281,7 @@ do
 	load=${loadavg%.*}
 	MAXLOADAVG=`echo $cores \* $LOADFACTOR | bc -l `
 	c=`echo " $load > $MAXLOADAVG" | bc `;
-	printf "${LightRed}DEBUG:======> ${Yellow}In $FUNCNAME(): ${Purple} OS:[$os] MAX ALLOWED LOAD:[$MAXLOADAVG] current load:[$loadavg] cores[$cores]${NC}\n" >&5
+	printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} OS:[$os] MAX ALLOWED LOAD:[$MAXLOADAVG] current load:[$loadavg] cores[$cores]${NC}\n" >&5
 	if [  "$c" == "1" ]; then
 		echo
 		for c in $(seq 1 $t); do
@@ -368,7 +380,7 @@ if [ "$os" == "Darwin" ]; then
         fi
 fi
 
-#-----------
+#-----------memory check
 printf "${LightBlue}==>${NC} Checking if we have enough free memory..."
 if [ "$os" == "Linux" ]; then
         max_mem=`free -mg|grep -i mem|awk '{print $2}' `
@@ -415,7 +427,7 @@ elif [ "$os" == "Darwin" ]; then
 fi
 #-----------
 
-#-----------
+#-----------docker daemon check
 printf "${LightBlue}==>${NC} Checking if docker daemon is running..."
 is_running=`docker info|grep Images`
 if [ -z "$is_running" ]; then
@@ -431,7 +443,7 @@ else
 fi
 #-----------
 
-#-----------
+#-----------image check
 printf "${LightBlue}==>${NC} Checking if Splunk image is available [$SPLUNK_IMAGE]..."
 image_ok=`docker images|grep $SPLUNK_IMAGE`
 if [ -z "$image_ok" ]; then
@@ -471,7 +483,7 @@ else
 fi
 #-----------
 
-#-----------
+#-----------splunk-net check
 printf "${LightBlue}==>${NC} Checking if docker network is created [$SPLUNKNET]..."
 net=`docker network ls | grep $SPLUNKNET `
 if [ -z "$net" ]; then 
@@ -480,7 +492,7 @@ if [ -z "$net" ]; then
 else
        printf "${Green} OK!${NC}\n"
 fi
-#-----------
+#-----------license files/dir check
 printf "${LightBlue}==>${NC} Checking if we have license files *.lic in [$PROJ_DIR/$LIC_FILES_DIR]..."
 if [ ! -d $PROJ_DIR/$LIC_FILES_DIR ]; then
     		printf "${Red} DIR DOESN'T EXIST!${NC}\n"
@@ -496,7 +508,7 @@ elif  ls $PROJ_DIR/$LIC_FILES_DIR/*.lic 1> /dev/null 2>&1 ; then
 		printf "    Suggestions:\n"
 		printf "    -If *.lic exist, make sure they are readable.${NC}\n\n"
 fi
-#-----------
+#-----------local splunkd check
 #Little tricky, local splunkd process running on docker-host is different than splunkd inside a container!
 printf "${LightBlue}==>${NC} Checking if non-docker splunkd process is running [$LOCAL_SPLUNKD]..."
 PID=`ps aux | $GREP 'splunkd' | $GREP 'start' | head -1 | awk '{print $2}' `  	#works on OSX & Linux
@@ -581,10 +593,10 @@ display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
     if test "${string#*$substring}" != "$string"
     then
-	printf "${LightRed}DEBUG:======> ${Yellow}In $FUNCNAME(): ${Purple} strings matching${NC}\n"  >&5
+	printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} strings matching${NC}\n"  >&5
         return 0    # $substring is in $string
     else
-	printf "${LightRed}DEBUG:======> ${Yellow}In $FUNCNAME(): ${Purple} strings NOT matching!${NC}\n"  >&5
+	printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} strings NOT matching!${NC}\n"  >&5
         return 1    # $substring is not in $string
     fi
 return 0
@@ -689,7 +701,7 @@ outputmsg=`echo -n $outputmsg| tr '[a-z]' '[A-Z]' |sed -e 's/^M//g' | tr -d '\r'
 size=${#outputmsg}
 
 #also display returned msg if log level is high
-#printf "${LightRed}DEBUG:======> ${Yellow}In $FUNCNAME(): ${Purple} vars outputmsg:[$outputmsg] OKmsg:[$OKmsg]${NC}\n"  >&5
+#printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} vars outputmsg:[$outputmsg] OKmsg:[$OKmsg]${NC}\n"  >&5
 #echo "result[$1]"
         if ( compare "$outputmsg" "$OKmsg" ) || [ "$size" == 64 ] || [ "$size" == 0 ] ; then
                 printf "${Green} OK! ${NC}\n"  >&$loglevel
@@ -710,7 +722,7 @@ display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 hoststate=`docker ps -a --filter name=$1 --format "{{.Status}}" | awk '{print $1}'`
 splunkstate=`docker exec -ti $1 /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ print $3}'`
-printf "${LightRed}DEBUG:======> ${Yellow}In $FUNCNAME(): ${Purple} host:[$1] hoststate:[$hoststate] splunkstate:[$splunkstate] ${NC}\n" &>5
+printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} host:[$1] hoststate:[$hoststate] splunkstate:[$splunkstate] ${NC}\n" &>5
 
 if [ "$hoststate" == "" ];  then
         printf "${Purple}[$1]${NC}: ${Purple} Host state: Container does not exist!${NC} \n"
@@ -731,8 +743,8 @@ display_debug () {
 func_name=$1; arg_num=$2; param_list=$3; calls=$4
 calls_count=`echo $calls|wc -w|sed 's/ //g'`
 calls=`echo $calls| sed 's/ / <- /g'`;
-printf "\n${LightRed}DEBUG:======> CALLS($calls_count) =>${Yellow}[$calls]${NC}\n"  >&6
-printf "${LightRed}DEBUG:======> STARTED  =>${Yellow}$func_name(): ${Purple}args:[$arg_num] ${Yellow}(${LightGreen} $param_list ${Yellow})${NC}\n" >&6
+printf "\n${LightRed}DEBUG:=> CALLS($calls_count) =>${Yellow}[$calls]${NC}\n"  >&6
+printf "${LightRed}DEBUG:=> STARTED  =>${Yellow}$func_name(): ${Purple}args:[$arg_num] ${Yellow}(${LightGreen}$param_list${Yellow})${NC}\n" >&6
 
 return 0
 }
@@ -1063,7 +1075,9 @@ START1=$(date +%s);
 	add_license_file $fullhostname
 
 	#Misc OS stuff
-        CMD=`docker cp $PROJ_DIR/containers.bashrc $fullhostname:/root/.bashrc`
+	if [ -f "$PROJ_DIR/containers.bashrc" ]; then
+        	CMD=`docker cp $PROJ_DIR/containers.bashrc $fullhostname:/root/.bashrc`
+	fi
         #install stuff you will need in  background
         #CMD=`docker exec -it $fullhostname apt-get update > /dev/null >&1`
         #CMD=`docker exec -it $fullhostname apt-get install -y vim net-tools telnet dnsutils > /dev/null >&1`
@@ -1108,7 +1122,7 @@ gLIST=""   #build global list of hosts created by this session. Used somewhere e
 
 #Another method to figure out the starting octet4 
 # OCTET4FILE=`iptables -t nat -L |$GREP DNAT | awk '{print $5}'  | sort -u|tail -1|cut -d"." -f4`
-printf "${LightRed}DEBUG:======> ${Yellow}In $FUNCNAME(): ${Purple}  basename[$basename]  hostcount[$hostcount] ${NC}\n" >&5
+printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}  basename[$basename]  hostcount[$hostcount] ${NC}\n" >&5
 
 #---Prompt user for host basename (if not in auto mode) -----
 if [ -z "$1" ]; then
@@ -1167,12 +1181,12 @@ base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `;  #base_ip=$base_ip"."
 if [ $(docker ps -aq | wc -l) = 0 ]; then
         last_used_octet4=`echo $START_ALIAS | cut -d"." -f4 `
         last_ip_used="$base_ip.$start_octet4"
-        printf "${LightRed}DEBUG:======> ${Yellow}In $FUNCNAME(): ${Purple} No hosts exists [will start@$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
+        printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} No hosts exists [will start@$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
 
 else    #Find last container created IP
         last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aql)|$GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
         last_used_octet4=`echo $last_ip_used |cut -d"." -f4`
-        printf "${LightRed}DEBUG:======> ${Yellow}In $FUNCNAME(): ${Purple} Some hosts exists [last used:$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
+        printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}Some hosts exists [last used:$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
 fi
 #-------------------------------------------------------------------------
 
@@ -1191,7 +1205,7 @@ do
      	# VIP processing
      	octet4=`expr $octet4 + 1`       	#increment octet4
      	vip="$base_ip.$octet4"            	#build new IP to be assigned
-	printf "${LightRed}DEBUG:======> ${Yellow}In $FUNCNAME(): ${Purple}fulhostname:[$fullhostname] vip:[$vip] basename:[$basename] count[$count] ${NC}\n" >&5
+	printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}fulhostname:[$fullhostname] vip:[$vip] basename:[$basename] count[$count] ${NC}\n" >&5
 	
 	create_splunk_container $vip $fullhostname $lic_master $cluster_label
 	gLIST="$gLIST""$fullhostname "
@@ -1241,7 +1255,7 @@ if [ "$1" == "AUTO" ]; then
 	label="$SHCLUSTERLABEL"
 	printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
 	printf "${Yellow}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
-	printf "${BrownOrange}Using DMC[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:($DEP_SHC_COUNT)] SHC:[$SH_BASE:($STD_SHC_COUNT)]${NC}\n"
+	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:($DEP_SHC_COUNT)] SHC:[$SH_BASE:($STD_SHC_COUNT)]${NC}\n"
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
 	#Basic services. Sequence is very important!
@@ -1291,7 +1305,7 @@ else
         fi
 	printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
 	printf "${Yellow}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
-	printf "${BrownOrange}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:($DEP_SHC_COUNT)] SHC:[$SHname:($SHcount)]${NC}\n"
+	printf "${DarkGray}Using DM:C[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:($DEP_SHC_COUNT)] SHC:[$SHname:($SHcount)]${NC}\n"
         printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	 if [ "$build_dmc" == "1" ]; then
                 create_generic_splunk "$dmc" "1"; dmc=$gLIST
@@ -1335,7 +1349,7 @@ restart_splunkd "$dep"
 printf "${LightBlue}___________ Finished STEP#1 __________________________${NC}\n" >&3
 
 printf "${LightBlue}___________ Starting STEP#2 (members configs) ________${NC}\n" >&3
-printf "${LightRed}DEBUG:======> ${Yellow}In $FUNCNAME(): ${Purple}After members_list loop> parm2:[$2] members_list:[$members_list] sh_list:[$sh_list]${NC}\n" >&5
+printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}After members_list loop> parm2:[$2] members_list:[$members_list] sh_list:[$sh_list]${NC}\n" >&5
 for i in $members_list ; do
 	check_load	#throttle during SHC build
 
@@ -1353,6 +1367,7 @@ for i in $members_list ; do
 	#-------auto discovery---
 	# if cm exist (passed to us); configure search peers for idx auto discovery
 	if [ -n "$cm" ]; then
+		#another method of getting bind IP (showing published ports:IPs).Container must be RUNNING!
 		cm_ip=`docker port  $cm| awk '{print $3}'| cut -d":" -f1|head -1`
         	CMD="docker exec -ti $i /opt/splunk/bin/splunk edit cluster-config -mode searchhead -master_uri https://$cm_ip:$MGMT_PORT -secret $MYSECRET -auth $USERADMIN:$USERPASS"
 		OUT=`$CMD`
@@ -1371,7 +1386,7 @@ for i in $members_list ; do
 
 done
 server_list=`echo ${server_list%?}`  # remove last comma in string
-printf "${LightRed}DEBUG:======> ${Yellow}In $FUNCNAME(): ${Purple} server_list:[$server_list]________${NC}\n" >&5
+printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} server_list:[$server_list]________${NC}\n" >&5
 printf "${LightBlue}___________ Finished STEP#2 __________________________${NC}\n" >&3
  
 printf "${LightBlue}___________ Starting STEP#3 (configuring captain) ____${NC}\n" >&3
@@ -1395,11 +1410,13 @@ OUT=`$CMD`
 display_output "$OUT" "Captain" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4 
 logline "$CMD" "$i"
-printf "${LightBlue}___________ Finished STEP#4 (cluster status)__________${NC}\n" >&3
+printf "${LightBlue}___________ Finished STEP#4 (cluster status)__________${NC}\n\n" >&3
 
 END=$(date +%s);
 TIME=`echo $((END-START1)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "\n${LightGray}Total execution time for create_single_shc():  [$TIME] ${NC}\n\n"
+printf "${DarkGray}Total execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
+count=`wc -w $CMDLOGBIN| awk '{print $1}' `
+printf "${DarkGray}Total Splunk config commands executed [%s]\n\n" "$count"
 
 return 0
 }   #create_single_shc()
@@ -1436,7 +1453,7 @@ if [ "$1" == "AUTO" ]; then
 	label="$IDXCLUSTERLABEL"
 	printf "${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
 	printf "${Yellow}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
-	printf "${BrownOrange}Using basenames DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:($STD_IDXC_COUNT)]${NC}\n\n"
+	printf "${DarkGray}Using basenames DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:($STD_IDXC_COUNT)]${NC}\n\n"
         printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
 	#Basic services. Sequence is very important!
@@ -1471,7 +1488,7 @@ else
                 fi
         fi
         if [ -z "$cm" ]; then
-               	printf "Current list of CMs (used for auto discovery): [$cm_list]\n"
+               	printf "Current list of CMs: [$cm_list]\n"
                	read -p "Choose CM from existing list or hit <ENTER> to create new one (default $CM_BASE)? " cm ;
 		cm=`echo $cm| tr '[a-z]' '[A-Z]'`
                	if [ -z "$cm" ]; then
@@ -1491,7 +1508,7 @@ else
         fi
 	printf "\n${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
 	printf "${Yellow}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
-	printf "${BrownOrange}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:($IDXcount)]${NC}\n"
+	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:($IDXcount)]${NC}\n"
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	if [ "$build_dmc" == "1" ]; then
                 create_generic_splunk "$dmc" "1"; dmc=$gLIST
@@ -1517,9 +1534,9 @@ printf "${Yellow}==>Starting PHASE2: Converting generic IDX hosts into IDXC${NC}
 
 printf "${LightBlue}____________ Starting STEP#1 (Configuring IDX Cluster Master) __${NC}\n" >&3
 printf "[${Purple}$cm${NC}]${LightBlue} Configuring Cluster Master... ${NC}\n"
-bind_ip_cm=`docker inspect --format '{{ .HostConfig }}' $cm| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 
 #-------CM config---
+bind_ip_cm=`docker inspect --format '{{ .HostConfig }}' $cm| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 CMD="docker exec $cm /opt/splunk/bin/splunk edit cluster-config  -mode master -replication_factor $RFACTOR -search_factor $SFACTOR -secret $MYSECRET -cluster_label $label -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
 printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4 
@@ -1571,7 +1588,9 @@ printf "${LightBlue}____________ Finished STEP#3 __________________________${NC}
 
 END=$(date +%s);
 TIME=`echo $((END-START2)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${LightGray}Total execution time for create_single_idxc():  [$TIME] ${NC}\n\n"
+printf "${DarkGray}Total execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
+count=`wc -w $CMDLOGBIN| awk '{print $1}' `
+printf "${DarkGray}Total Splunk config commands executed [%s]\n\n" "$count"
 
 return 0
 }  #end create_single_idxc()
@@ -1620,9 +1639,10 @@ fi
 
 #assign_server_role "$lm" "dmc_group_license_master"
 echo
+
 printf "${Yellow}==>[$mode] Building single-site ($site)...${NC}\n\n"
 printf "${LightBlue}____________ Building basic services [LM, DMC, CM] ___________________${NC}\n" >&3
-
+#Basic services
 #Sequence is very important!
 create_generic_splunk "$site-DMC" "1" ; dmc=$gLIST
 create_generic_splunk "$site-LM" "1" ; lm=$gLIST
@@ -1636,12 +1656,14 @@ make_lic_slave $lm $hf ; make_dmc_search_peer $dmc $hf
 
 printf "${LightBlue}____________ Finished building basic serivces ___________________${NC}\n\n" >&3
 
-create_single_idxc "$site-IDX:$IDXcount $cm:1 $lm LABEL:$idxc_label"
-create_single_shc "$site-SH:$SHcount $site-DEP:1 $cm $lm LABEL:$shc_label"
+create_single_idxc "$site-IDX:$IDXcount $dmc $cm:1 $lm LABEL:$idxc_label"
+create_single_shc "$site-SH:$SHcount $site-DEP:1 $dmc $cm $lm LABEL:$shc_label"
 
 END=$(date +%s);
 TIME=`echo $((END-START2)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${LightGray}Total execution time for build_single_site():  [$TIME] ${NC}\n\n"
+printf "${DarkGray}Total execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
+count=`wc -w $CMDLOGBIN| awk '{print $1}' `
+printf "${DarkGray}Total Splunk config commands executed [%s]\n\n" "$count"
 
 
 return 0
@@ -1702,7 +1724,7 @@ fi
 #------- Finished capturing sites names/basic services names ------------------
 
 printf "\n\n${BoldYellowBlueBackground}[$mode] Building site-to-site cluster...${NC}\n"
-printf "${Yellow}Using Locations:[$SITEnames] sites_str:[$sites_str] CM:[$cm] First_site:[$first_site] ${NC}\n"
+printf "${DarkGray}Using Locations:[$SITEnames] sites_str:[$sites_str] CM:[$cm] First_site:[$first_site] ${NC}\n"
 
 printf "\n\n${Yellow}Creating cluster basic services [only in $first_site]${NC}\n"
 #Sequence is very important!
@@ -1712,12 +1734,12 @@ make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
 create_generic_splunk "$first_site-CM" "1" ; cm=$gLIST
 make_lic_slave $lm $cm ; make_dmc_search_peer $dmc $cm
 
-#Loop to build generic SH/IDX hosts on each site
-i=0
-for site  in $SITEnames; do
-	let i=i+1
-	printf "\n${BoldYellowBlueBackground}Building site$i >> $site ${NC}\n"
-	#create_single_idxc "$cm $lm $site-IDX:$IDXcount $site-SH:$SHcount $site-DEP:1"
+#Loop thru list of sites & build generic SH/IDX hosts on each site
+counter=0
+for site in $SITEnames; do
+	let counter++
+	#printf "counter=[$counter] [$SITEnames]\n"
+	printf "\n${BoldYellowBlueBackground}Building site$counter >> $site ${NC}\n"
 	create_single_idxc "$site-IDX:$IDXcount $cm $lm LABEL:$IDXCLUSTERLABEL"
 	create_single_shc "$site-SH:$SHcount $site-DEP:1 $cm $lm LABEL:$SHCLUSTERLABEL"
 done
@@ -1730,11 +1752,10 @@ site_list=`echo $cm_list | sed 's/\-[a-zA-Z0-9]*//g' `
 printf "${BoldYellowBlueBackground}Migrating existing IDXCs & SHCs to site-2-site cluster: LM[$lm] CM[$cm] sites[$SITEnames] sites_str[$sites_str]${NC}\n"
 
 #echo "list of sites[$SITEnames]   cm[$cm]"
-cm_ip=`docker port $cm| awk '{print $3}'| cut -d":" -f1|head -1 `
 
 printf "${Cyan}____________ Starting STEP#1 (Configuring one CM for all locations) _____________________${NC}\n" >&3
 printf "[${Purple}$cm${NC}]${Cyan} Configuring Cluster Master... ${NC}\n"
-
+cm_ip=`docker port $cm| awk '{print $3}'| cut -d":" -f1|head -1 `
 CMD="docker exec -ti $cm /opt/splunk/bin/splunk edit cluster-config -mode master -multisite true -available_sites $sites_str -site site1 -site_replication_factor origin:2,total:3 -site_search_factor origin:1,total:2 -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
@@ -1752,9 +1773,9 @@ printf "\t->Enabling maintenance-mode... " >&3 ; display_output "$OUT" "maintena
 restart_splunkd "$cm"
 printf "${Cyan}____________ Finished STEP#1 __________________________________________________${NC}\n" >&3
 
-seq=1
 printf "${Cyan}____________ Starting STEP#2 (Configuring search peers in [site:"$site""$seq" location:$str]) _____________________${NC}\n" >&3
 
+seq=1
 for str in $SITEnames; do
 	site="site""$seq"
 	site_idx_list=`echo $idx_list | $GREP -Po '('$str'-\w+\d+)' | tr -d '\r' | tr  '\n' ' '  `
@@ -1803,7 +1824,9 @@ printf "${Cyan}____________ Finished STEP#4 ____________________________________
 
 END=$(date +%s);
 TIME=`echo $((END-START3)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${LightGray}Total execution time for build_multi_site_cluster():  [$TIME] ${NC}\n\n"
+printf "${DarkGray}Total execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
+count=`wc -w $CMDLOGBIN| awk '{print $1}' `
+printf "${DarkGray}Total Splunk config commands executed [%s]\n\n" "$count"
 
 return 0
 }  #build_multi_site_cluster ()
@@ -1939,8 +1962,8 @@ done
 #exit
 #------------------
 
-rm  -fr $CMDLOGFILE
-printf "\n--------------- Starting new script run. Color changes when hostname changes -------------------\n" > $CMDLOGFILE  #always start with new logfile
+rm  -fr $CMDLOGBIN
+printf "\n--------------- Starting new script run. Color changes when hostname changes -------------------\n" > $CMDLOGBIN  #always start with new logfile
 clear
 #house keeping functions
 check_shell
