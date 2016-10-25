@@ -65,8 +65,8 @@ VOL_DIR="docker-volumes"	#directory name for volumes mount point.Full path is dy
 
 #----------Images
 #more can be found http://hub.docker.com
-#SPLUNK_IMAGE="mhassan/splunk"		#my own built image 6.4.4
-SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-  6.5.0
+SPLUNK_IMAGE="mhassan/splunk"		#my own built image 6.4.4
+#SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-  6.5.0
 #SPLUNK_IMAGE="splunk/splunk:6.5.0"	#official image 6.5.0
 
 #SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	#tested but taken offline by outcoldman
@@ -87,10 +87,12 @@ SPLUNKNET="splunk-net"			#default name for splunk docker network (host-to-host c
 SSHD_PORT="8022"			#in case we need to enable sshd, not recommended
 SPLUNKWEB_PORT="8000"
 MGMT_PORT="8089"
-KV_PORT="8191"
+#KV_PORT="8191"
 RECV_PORT="9997"
 REPL_PORT="9887"
 HEC_PORT="8081"
+APP_SERVER_PORT="8065"			#new to 6.5
+APP_KEY_VALUE_PORT="8191"		#new to 6.5
 USERADMIN="admin"
 USERPASS="hello"
 
@@ -1057,8 +1059,8 @@ START1=$(date +%s);
 	#echo "fullhostname[$fullhostname]"
 	#rm -fr $MOUNTPOINT/$fullhostname
 	mkdir -m 777 -p $MOUNTPOINT/$fullhostname
-
-        CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$KV_PORT:$KV_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $SPLUNK_IMAGE"
+        
+	CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $SPLUNK_IMAGE"
         
 	printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating new splunk docker container ${NC} " 
 	OUT=`$CMD` ; display_output "$OUT" "" "2"
@@ -1668,7 +1670,7 @@ make_lic_slave $lm $cm ; make_dmc_search_peer $dmc $cm
 
 #testing HF ****************************************
 create_generic_splunk "$site-HF" "1" ; hf=$gLIST
-make_lic_slave $lm $hf ; make_dmc_search_peer $dmc $hf
+make_lic_slave $lm $hf ; #make_dmc_search_peer $dmc $hf
 
 printf "${LightBlue}____________ Finished building basic serivces ___________________${NC}\n\n" >&3
 
