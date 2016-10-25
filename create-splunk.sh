@@ -65,10 +65,11 @@ VOL_DIR="docker-volumes"	#directory name for volumes mount point.Full path is dy
 
 #----------Images
 #more can be found http://hub.docker.com
-SPLUNK_IMAGE="mhassan/splunk"		#my own built image 6.4.4
-#SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	#taken offline by outcoldman
-#SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-  6.5.0
+#SPLUNK_IMAGE="mhassan/splunk"		#my own built image 6.4.4
+SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-  6.5.0
 #SPLUNK_IMAGE="splunk/splunk:6.5.0"	#official image 6.5.0
+
+#SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	#tested but taken offline by outcoldman
 #SPLUNK_IMAGE="btorresgil/splunk"	#untested
 #SPLUNK_IMAGE="xeor/splunk"		#unstested
 #----------
@@ -316,11 +317,11 @@ fi
 #rm -fr /usr/local/bin/ggrep
 #/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
 #sudo rm -rf /usr/local/Homebrew/
+
 printf "${LightBlue}==>${NC} Checking brew package management:${NC} "
 condition=$(which brew 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${Yellow}Running [/usr/bin/ruby -e \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\" ]${NC}\n"
-	#cd ~
 	printf "${LightGray}"
  	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 	printf "${NC}\n"
@@ -559,8 +560,9 @@ if [ "$(uname)" == "Darwin" ]; then
 	GREP=$GREP_OSX		#for Darwin http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html
 	MOUNTPOINT="/Users/${USER}/$VOL_DIR"
 	PROJ_DIR="/Users/${USER}"  #anything that needs to copied to container
-
-	printf "${LightBlue}==> ${White}Detected MAC OSX...${NC}\n"
+	sys_ver=`system_profiler SPSoftwareDataType|grep "System Version" |awk '{print $5}'`
+	kern_ver=`system_profiler SPSoftwareDataType|grep "Kernel Version" |awk '{print $3,$4}'`
+	printf "${LightBlue}==> ${White}Detected MAC OSX...[System:$sys_ver Kernel:$kern_ver]${NC}\n"
 	validation_check
 
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
@@ -571,8 +573,9 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	ETH=$ETH_LINUX
 	MOUNTPOINT="/home/${USER}/$VOL_DIR"
 	PROJ_DIR="/home/${USER}/"
-
-	printf "${LightBlue}==> ${White}Detected LINUX...${NC}\n"
+	release=`lsb_release -r |awk '{print $2}'`
+	kern_ver=`uname -r`
+	printf "${LightBlue}==> ${White}Detected LINUX...[Release:$release Kernel:$kern_ver]${NC}\n"
 	validation_check
 
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
@@ -1068,6 +1071,19 @@ START1=$(date +%s);
 	else
 		pausing "15"
 	fi
+
+	#check if bind IP is used by new container (indications its running)
+	ip=`docker port $fullhostname| awk '{print $3}'| cut -d":" -f1|head -1`
+	printf "\t->Verifying that container is running..." >&3
+	if [ -n "$ip" ]; then 
+		printf "${Green}OK!${NC}\n" >&3
+	else
+		printf "\t->{Red}Not runing. Attempting to restart [$fullhostname]!${NC}\n" >&3
+		CMD='docker start $fullhostname'; OUT=`CMD`
+		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+		logline "$CMD" "$fullhostname"
+	fi
+
         #set home screen banner in web.conf & change default admin password
 	printf "\t->Splunk initialization (pass change, licenses, login screen)..." >&3
 	custom_login_screen "$vip" "$fullhostname"
@@ -1250,7 +1266,7 @@ sh_list=`docker ps -a --filter name="$SHname" --format "{{.Names}}"|sort| tr '\n
 lm_list=`docker ps -a --filter name="LM|lm" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'` 
 cm_list=`docker ps -a --filter name="CM|cm" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'` 
 
-if [ "$1" == "AUTO" ]; then
+if [ "$mode" == "AUTO" ]; then
         #DEPname="DEP"; DEPcount="1"; SHname="SH"; SHcount="$STD_SHC_COUNT"; 
 	label="$SHCLUSTERLABEL"
 	printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
@@ -1305,7 +1321,7 @@ else
         fi
 	printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
 	printf "${Yellow}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
-	printf "${DarkGray}Using DM:C[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:($DEP_SHC_COUNT)] SHC:[$SHname:($SHcount)]${NC}\n"
+	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:($DEP_SHC_COUNT)] SHC:[$SHname:($SHcount)]${NC}\n"
         printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	 if [ "$build_dmc" == "1" ]; then
                 create_generic_splunk "$dmc" "1"; dmc=$gLIST
@@ -1452,7 +1468,7 @@ if [ "$1" == "AUTO" ]; then
 	#CMname="CM"; DMCname="DMC"; LMname="LM";  IDXname="IDX"; IDXcount="$STD_IDXC_COUNT"; 
 	label="$IDXCLUSTERLABEL"
 	printf "${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
-	printf "${Yellow}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
+	printf "${Yellow}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
 	printf "${DarkGray}Using basenames DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:($STD_IDXC_COUNT)]${NC}\n\n"
         printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
@@ -1507,7 +1523,7 @@ else
                 fi
         fi
 	printf "\n${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
-	printf "${Yellow}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
+	printf "${Yellow}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
 	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:($IDXcount)]${NC}\n"
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	if [ "$build_dmc" == "1" ]; then
@@ -1962,8 +1978,10 @@ done
 #exit
 #------------------
 
-rm  -fr $CMDLOGBIN
-printf "\n--------------- Starting new script run. Color changes when hostname changes -------------------\n" > $CMDLOGBIN  #always start with new logfile
+rm  -fr $CMDLOGBIN $CMDLOGTXT
+printf "\n--------------- Starting new script run. Color changes when hostname changes -------------------\n" > $CMDLOGBIN
+printf "\n--------------- Starting new script run. Color changes when hostname changes -------------------\n" > $CMDLOGTXT
+
 clear
 #house keeping functions
 check_shell
