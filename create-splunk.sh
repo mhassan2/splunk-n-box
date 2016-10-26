@@ -623,7 +623,7 @@ printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$1"
 
 if ( compare "$1" "LM" ); then
-	printf "\t->*LM* host! Forcing immidiate splunkd restart.Please wait " >&3
+	printf "\t->*LM* host! Forcing immediate splunkd restart.Please wait " >&3
 	docker exec -ti $1  /opt/splunk/bin/splunk restart > /dev/null >&1
 	printf "${Green} Done! ${NC}\n" >&3
 fi
