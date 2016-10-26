@@ -65,10 +65,11 @@ VOL_DIR="docker-volumes"	#directory name for volumes mount point.Full path is dy
 
 #----------Images
 #more can be found http://hub.docker.com
-SPLUNK_IMAGE="mhassan/splunk"		#my own built image 6.4.4
+SPLUNK_IMAGE="mhassan/splunk"		#my own built image 6.4.3
 #SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-  6.5.0
 #SPLUNK_IMAGE="splunk/splunk:6.5.0"	#official image 6.5.0
 
+#other possible options
 #SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	#tested but taken offline by outcoldman
 #SPLUNK_IMAGE="btorresgil/splunk"	#untested
 #SPLUNK_IMAGE="xeor/splunk"		#unstested
@@ -102,7 +103,7 @@ SFACTOR="2"		#default seach factor
 SHCLUSTERLABEL="shcluster1"
 IDXCLUSTERLABEL="idxcluster1"
 LABEL="label1"
-DEFAULT_SITES_NAMES="STL LON HKG"	#used in auto s-2-s
+DEFAULT_SITES_NAMES="STL LON HKG"	#used in auto-mode s-2-s
 
 MYSECRET="mysecret"
 STD_IDXC_COUNT="3"	#default IDXC count
@@ -811,11 +812,14 @@ if [ $count == 0 ]; then
 	echo "No containers to list"
 	return 0
 fi
+i=0
 for id in $(docker ps -aq); do
+    let i++
     internal_ip=`docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id`
     bind_ip=`docker inspect --format '{{ .HostConfig }}' $id| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
     hoststate=`docker ps -a --filter id=$id --format "{{.Status}}" | awk '{print $1}'`
     hostname=`docker ps -a --filter id=$id --format "{{.Names}}"`
+    host_line[$i]="$bind_ip"
     if [ $hoststate == "Up" ]; then
     	splunkstate=`docker exec -ti $id /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ print $3}'`
     else
@@ -832,15 +836,27 @@ for id in $(docker ps -aq); do
 		splunkstate="${Red}$splunkstate${NC}"
     fi
     if ( compare "$hostname" "DEP" ); then
-    	printf "${LightBlue}%-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+    	printf "${LightBlue}$i) %-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
     elif ( compare "$hostname" "CM" ); then
-    	printf "${LightBlue}%-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+    	printf "${LightBlue}$i) %-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
    else
-    	printf "${Purple}%-15s%-20b${NC} Splunkd:%-20b Bind:${LightGray}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+    	printf "${Purple}$i) %-15s%-20b${NC} Splunkd:%-20b Bind:${LightGray}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
    fi
 done
 
 echo  "count:$count"
+echo
+#only for the Mac
+if [ "$os" == "Darwin" ]; then
+	read -p 'Selet a host to launch in your default browser? '  choice
+	if [ -z "$choice" ]; then
+		continue
+	elif [ "$choice" -le "$i" ] && [ "$choice" -ne "0" ] ; then
+			open http://${host_line[$i]}:8000
+		else
+			printf "Invalid choice! Valid options [1..$i]\n"
+	fi
+fi
 return 0
 }  #end  show_all_containers()
 #---------------------------------------------------------------------------------------------------------------
@@ -1919,7 +1935,7 @@ display_menu () {
 	printf "${Red}R${NC}) REMOVE all volumes to recover diskspace ${DarkGray}[docker volume rm \$(docker volume ls -qf 'dangling=true')]${NC}\n"
 	printf "${Red}Q${NC}) Quit${NC}\n"
 	echo
-	printf "${Yellow}1${NC}) SHOW all containers details ${DarkGray}[custom view]${NC} \n"
+	printf "${Yellow}1${NC}) SHOW all containers OR launch in a browser ${DarkGray}[custom view]${NC} \n"
 	printf "${Yellow}2${NC}) START all stopped containers ${DarkGray}[docker start \$(docker ps -a --format \"{{.Names}}\")]${NC}\n"
 	printf "${Yellow}3${NC}) STOP all running containers ${DarkGray}[docker stop \$(docker ps -aq)]${NC}\n"
 	printf "${Yellow}4${NC}) Show hosts by hostname groups ${DarkGray}[works only if you followed the host naming rules]${NC}\n"
