@@ -20,7 +20,7 @@
 #
 # Licenses: 	Licensed under GPL v3 <link>
 # Author:    	mhassan@splunk.com
-# Version:	 $Id:$
+# Version:	 $Id:$  1.1
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
 #		v1-2	default setting (recommended for ongoing usage)
@@ -432,15 +432,18 @@ fi
 #-----------
 
 #-----------docker daemon check
-printf "${LightBlue}==>${NC} Checking if docker daemon is running..."
 is_running=`docker info|grep Images`
+printf "${LightBlue}==>${NC} Checking if docker daemon is running..."
 if [ -z "$is_running" ]; then
-	printf "${Red}NOT RUNNING!${NC}.\n"
+	printf "${Red}NOT RUNNING!${NC}\n"
+        printf "${DarkGray}    Suggestions:\n"
 	if [ "$os" == "Darwin" ]; then
-                printf "MAC OSX installation: https://docs.docker.com/v1.10/mac/step_one/ \n"
+                printf "    installation https://docs.docker.com/v1.10/mac/step_one/ \n"
 	elif [ "$os" == "Linux" ]; then
-                printf "Linux installation: https://docs.docker.com/engine/installation/ \n"
+                printf "    installation: https://docs.docker.com/engine/installation/ \n"
 	fi
+	printf "${NC}\n"
+        printf "Exiting...\n"
         exit
 else
         printf "${Green} OK!${NC}\n"
@@ -453,12 +456,12 @@ image_ok=`docker images|grep $SPLUNK_IMAGE`
 if [ -z "$image_ok" ]; then
 	printf "${Red}NOT FOUND!${NC}\n\n"
 	printf "${DarkGray}"
-        printf "I will attempt to download this image. If that doesn't work you can try: \n"
+        printf "  Will attempt to download this image. If that doesn't work; can try: \n"
 	printf "  1-link: https://github.com/outcoldman/docker-splunk \n"
 	printf "  2-link: https://github.com/splunk/docker-splunk/tree/master/enterprise \n"
 	printf "  3-Search for Splunk images https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=splunk&starCount=0\n\n"
 	printf "${NC}\n"
-	read -p "Pull [$SPLUNK_IMAGE] from docker hub (mayb take time)? [Y/n]? " answer
+	read -p "Pull [$SPLUNK_IMAGE] from docker hub (may take time)? [Y/n]? " answer
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		printf "${Yellow}Running [docker pull $SPLUNK_IMAGE]...${NC}\n"
 		docker pull $SPLUNK_IMAGE
@@ -491,7 +494,7 @@ fi
 printf "${LightBlue}==>${NC} Checking if docker network is created [$SPLUNKNET]..."
 net=`docker network ls | grep $SPLUNKNET `
 if [ -z "$net" ]; then 
-	printf "${Green} Creating...${NC}\n"
+	printf "${Green} Created!${NC}\n"
         docker network create -o --iptables=true -o --ip-masq -o --ip-forward=true $SPLUNKNET
 else
        printf "${Green} OK!${NC}\n"
@@ -613,7 +616,7 @@ add_license_file () {
 #This function will just copy the license file. Later on if the container get configured
 #as a license-slave; then this file become irrelevant
 # $1=fullhostname
-#Little tricky see: https://docs.docker.com/engine/reference/commandline/cp/
+#see: https://docs.docker.com/engine/reference/commandline/cp/
 
 display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
@@ -837,9 +840,14 @@ for id in $(docker ps -aq); do
     fi
     if ( compare "$hostname" "DEP" ); then
     	printf "${LightBlue}$i) %-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+
     elif ( compare "$hostname" "CM" ); then
     	printf "${LightBlue}$i) %-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
-   else
+
+    elif ( compare "$hostname" "DMC" ); then
+        printf "${LightBlue}$i) %-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+
+     else
     	printf "${Purple}$i) %-15s%-20b${NC} Splunkd:%-20b Bind:${LightGray}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
    fi
 done
@@ -1066,7 +1074,7 @@ create_splunk_container () {
 #        -configure container's OS related items if needed
 
 display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-START1=$(date +%s);
+START=$(date +%s);
 	vip=$1;  fullhostname=$2;lic_master=$3; cluster_label=$4; 
 	fullhostname=`echo $fullhostname| tr -d '[[:space:]]'`	#trim white space if they exist
 
@@ -1267,7 +1275,7 @@ display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
 server_list=""    #used by STEP#3
-START1=$(date +%s);
+START=$(date +%s);
 
 #Extract parms from $1, if not we will prompt user later
 lm=`echo $1| $GREP -Po '(\s*\w*-*LM\d+)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
@@ -1441,16 +1449,18 @@ printf "[${Purple}$i${NC}]${LightBlue}==> Checking SHC status (on captain)...${N
 
 CMD="docker exec -ti $i /opt/splunk/bin/splunk show shcluster-status -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`
-display_output "$OUT" "Captain" "3"
+display_output "$OUT" "Captain" "2"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4 
 logline "$CMD" "$i"
 printf "${LightBlue}___________ Finished STEP#4 (cluster status)__________${NC}\n\n" >&3
 
 END=$(date +%s);
-TIME=`echo $((END-START1)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${DarkGray}Total execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
+TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
+printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
 count=`wc -w $CMDLOGBIN| awk '{print $1}' `
-printf "${DarkGray}Total Splunk config commands executed [%s]\n\n" "$count"
+printf "${DarkGray}Splunk config commands [%s]${NC}\n" "$count"
+
+#print_stats $START ${FUNCNAME}
 
 return 0
 }   #create_single_shc()
@@ -1465,7 +1475,7 @@ display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
-START2=$(date +%s);
+START=$(date +%s);
 #$1 CMbasename:count   $2 IDXbasename:count  $3 LMbasename:count
 
 #Extract values from $1 if passed to us!
@@ -1571,7 +1581,7 @@ printf "[${Purple}$cm${NC}]${LightBlue} Configuring Cluster Master... ${NC}\n"
 
 #-------CM config---
 bind_ip_cm=`docker inspect --format '{{ .HostConfig }}' $cm| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-CMD="docker exec $cm /opt/splunk/bin/splunk edit cluster-config  -mode master -replication_factor $RFACTOR -search_factor $SFACTOR -secret $MYSECRET -cluster_label $label -auth $USERADMIN:$USERPASS "
+CMD="docker exec -ti $cm /opt/splunk/bin/splunk edit cluster-config  -mode master -replication_factor $RFACTOR -search_factor $SFACTOR -secret $MYSECRET -cluster_label $label -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
 printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4 
 logline "$CMD" "$cm"
@@ -1589,14 +1599,14 @@ for i in $members_list ; do
         bind_ip_idx=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 	
 	#-------member config----
-        CMD="docker exec $i /opt/splunk/bin/splunk edit cluster-config -mode slave -master_uri https://$bind_ip_cm:$MGMT_PORT -replication_port $REPL_PORT -register_replication_address $bind_ip_idx -cluster_label $label -secret $MYSECRET -auth $USERADMIN:$USERPASS "
+        CMD="docker exec -ti $i /opt/splunk/bin/splunk edit cluster-config -mode slave -master_uri https://$bind_ip_cm:$MGMT_PORT -replication_port $REPL_PORT -register_replication_address $bind_ip_idx -cluster_label $label -secret $MYSECRET -auth $USERADMIN:$USERPASS "
 	OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 	printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$i"
 	printf "\t->Make a cluster member " >&3 ; display_output "$OUT" "property has been edited" "3"
 	#-------
 	#-------tcp/9997---
-        CMD="docker exec $i /opt/splunk/bin/splunk enable listen $RECV_PORT -auth $USERADMIN:$USERPASS "
+        CMD="docker exec -ti $i /opt/splunk/bin/splunk enable listen $RECV_PORT -auth $USERADMIN:$USERPASS "
         OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
         printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
         logline "$CMD" "$i"
@@ -1621,10 +1631,12 @@ logline "$CMD" "$cm"
 printf "${LightBlue}____________ Finished STEP#3 __________________________${NC}\n\n" >&3
 
 END=$(date +%s);
-TIME=`echo $((END-START2)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${DarkGray}Total execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
+TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
+printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
 count=`wc -w $CMDLOGBIN| awk '{print $1}' `
-printf "${DarkGray}Total Splunk config commands executed [%s]\n\n" "$count"
+printf "${DarkGray}Splunk config commands [%s]${NC}\n" "$count"
+
+#print_stats $START ${FUNCNAME}
 
 return 0
 }  #end create_single_idxc()
@@ -1637,7 +1649,7 @@ build_single_site () {
 
 display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-START2=$(date +%s);
+START_TIME=$(date +%s);
 #extract these values from $1 if passed to us!
 lm=`echo $1| $GREP -Po '(\s*\w*-*LM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
 cm=`echo $1| $GREP -Po '(\s*\w*-*CM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
@@ -1693,11 +1705,7 @@ printf "${LightBlue}____________ Finished building basic serivces ______________
 create_single_idxc "$site-IDX:$IDXcount $dmc $cm:1 $lm LABEL:$idxc_label"
 create_single_shc "$site-SH:$SHcount $site-DEP:1 $dmc $cm $lm LABEL:$shc_label"
 
-END=$(date +%s);
-TIME=`echo $((END-START2)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${DarkGray}Total execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
-count=`wc -w $CMDLOGBIN| awk '{print $1}' `
-printf "${DarkGray}Total Splunk config commands executed [%s]\n\n" "$count"
+print_stats $START_TIME ${FUNCNAME}
 
 
 return 0
@@ -1710,7 +1718,7 @@ build_multi_site_cluster () {
 display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 mode=$1		#either "AUTO" or "MANUAL"
-START3=$(date +%s);
+START_TIME=$(date +%s);
 
 s=""; sites_str=""     			#used with "splunk edit cluster-config" on CM
 SITEnames=""
@@ -1856,15 +1864,47 @@ printf "\t->Disabling maintenance-mode..." >&3 ; display_output "$OUT" "No longe
 #restart_splunkd "$i"
 printf "${Cyan}____________ Finished STEP#4 __________________________________________________${NC}\n" >&3
 
-END=$(date +%s);
-TIME=`echo $((END-START3)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${DarkGray}Total execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
-count=`wc -w $CMDLOGBIN| awk '{print $1}' `
-printf "${DarkGray}Total Splunk config commands executed [%s]\n\n" "$count"
+print_stats $START_TIME ${FUNCNAME}
 
 return 0
 }  #build_multi_site_cluster ()
 #---------------------------------------------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------------------------------------------
+print_stats () {
+
+START=$1
+FUNC_NAME=$2
+
+END=$(date +%s);
+TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
+
+echo
+#get unique host list  (mpty lines removed)
+grep exec $CMDLOGTXT | awk '{print $5}'|grep -v -e '^[[:space:]]*$'|sort -u > tmp1
+
+printf "${LightBlue}   HOST         NUMBER OF CMDS${NC}\n"  >&3
+printf "${LightBlue}============    =============${NC}\n"   >&3
+for host_name in `cat tmp1`; do
+        count=`grep $host_name $CMDLOGTXT|grep exec|wc -l`;
+        cmd_list=`grep exec $CMDLOGTXT| grep $host_name| awk '{print $6,$7,$8}'| sed 's/\$//g'|sed 's/\/opt\/splunk\/bin\/splunk //g'| sort | uniq -c|sed 's/\r\n/ /g'|awk '{printf "[%s:%s %s]", $1,$2,$3}' `
+
+        printf "${LightBlue}%-15s %7s ${NC}\n" $host_name $count >&3
+        printf "${DarkGray}$cmd_list${NC}\n" >&4
+
+done #> tmp2
+#cat tmp2	#show results
+echo
+#awk '{total = total + int($2)}END {print "Total Splunk Commands Used to build the cluster = " total}' tmp2
+cmd_total=`awk '{total = total + int($2)}END {print total}' tmp2`
+printf "Number of Splunk Commands Used to Build The Cluster = ${LightBlue}$cmd_total${NC}\n"
+printf "Total execution time for $FUNC_NAME = ${Yellow}$TIME ${NC}minutes\n\n"
+
+#rm -fr tmp1 tmp2
+return 0
+}
+#---------------------------------------------------------------------------------------------------------------
+
 #---------------------------------------------------------------------------------------------------------------
 display_menu2 () {
 	clear
@@ -1891,6 +1931,7 @@ clustering_menu () {
 #This function captures user selection for clustering_menu
 while true;
 do
+	rm  -fr $CMDLOGTXT
         dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
         display_menu2
         choice=""
@@ -1996,9 +2037,9 @@ done
 #exit
 #------------------
 
+#delete log files on restart
 rm  -fr $CMDLOGBIN $CMDLOGTXT
-printf "\n--------------- Starting new script run. Color changes when hostname changes -------------------\n" > $CMDLOGBIN
-printf "\n--------------- Starting new script run. Color changes when hostname changes -------------------\n" > $CMDLOGTXT
+printf "\n--------------- Starting new script run. Hosts are grouped by color -------------------\n" > $CMDLOGBIN
 
 clear
 #house keeping functions
@@ -2007,6 +2048,7 @@ detect_os
 setup_ip_aliases
 while true;  
 do
+
 	dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
 	dockerinfo2=`docker info| $GREP -Po 'Server Version:\s+(\d+\.\d+\d+\.\d+).*|\n*CPUs:\s+(\d+).*|\n*Total Memory:\s+(\d+)'| sed 's/Server Version/Docker/'|sed 's/Total Memory/TotalMem/g'| sed 's/ //g' `
 	dockerinfo2=`echo $dockerinfo2 | tr -d '\n' `
@@ -2034,7 +2076,7 @@ do
 		3 ) echo "Stopping all containers (graceful): "; 
 		   for i in `docker ps --format "{{.Names}}"`; do
 			printf "${Purple}$i${NC} "
-                        docker exec $i /opt/splunk/bin/splunk stop ;
+                        docker exec -ti $i /opt/splunk/bin/splunk stop ;
 		    	docker stop -t30 $i;
                         done;;
 		4 ) show_groups ;;
