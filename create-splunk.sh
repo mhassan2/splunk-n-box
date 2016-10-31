@@ -1297,7 +1297,7 @@ if [ "$mode" == "AUTO" ]; then
 	label="$SHCLUSTERLABEL"
 	printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
 	printf "${Yellow}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
-	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:($DEP_SHC_COUNT)] SHC:[$SH_BASE:($STD_SHC_COUNT)]${NC}\n"
+	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:$DEP_SHC_COUNT] SHC:[$SH_BASE:$STD_SHC_COUNT]${NC}\n"
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
 	#Basic services. Sequence is very important!
@@ -1347,7 +1347,7 @@ else
         fi
 	printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
 	printf "${Yellow}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
-	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:($DEP_SHC_COUNT)] SHC:[$SHname:($SHcount)]${NC}\n"
+	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n"
         printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	 if [ "$build_dmc" == "1" ]; then
                 create_generic_splunk "$dmc" "1"; dmc=$gLIST
@@ -1497,7 +1497,7 @@ if [ "$1" == "AUTO" ]; then
 	label="$IDXCLUSTERLABEL"
 	printf "${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
 	printf "${Yellow}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
-	printf "${DarkGray}Using basenames DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:($STD_IDXC_COUNT)]${NC}\n\n"
+	printf "${DarkGray}Using basenames DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:$STD_IDXC_COUNT]${NC}\n\n"
         printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
 	#Basic services. Sequence is very important!
@@ -1552,7 +1552,7 @@ else
         fi
 	printf "\n${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
 	printf "${Yellow}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
-	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:($IDXcount)]${NC}\n"
+	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:$IDXcount]${NC}\n"
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	if [ "$build_dmc" == "1" ]; then
                 create_generic_splunk "$dmc" "1"; dmc=$gLIST
@@ -1766,7 +1766,7 @@ fi
 #------- Finished capturing sites names/basic services names ------------------
 
 printf "\n\n${BoldYellowBlueBackground}[$mode] Building site-to-site cluster...${NC}\n"
-printf "${DarkGray}Using Locations:[$SITEnames] sites_str:[$sites_str] CM:[$cm] First_site:[$first_site] ${NC}\n"
+printf "${DarkGray}Using Locations:[$SITEnames] CM:[$cm] First_site:[$first_site] ${NC}\n"
 
 printf "\n\n${Yellow}Creating cluster basic services [only in $first_site]${NC}\n"
 #Sequence is very important!
@@ -1791,7 +1791,8 @@ sh_list=`docker ps -a --filter name="SH|sh" --format "{{.Names}}"|sort | tr -d '
 cm_list=`docker ps -a --filter name="CM|cm" --format "{{.Names}}"|sort | tr -d '\r' | tr  '\n' ' ' `
 site_list=`echo $cm_list | sed 's/\-[a-zA-Z0-9]*//g' `
 
-printf "${BoldYellowBlueBackground}Migrating existing IDXCs & SHCs to site-2-site cluster: LM[$lm] CM[$cm] sites[$SITEnames] sites_str[$sites_str]${NC}\n"
+printf "${BoldYellowBlueBackground}Migrating existing IDXCs & SHCs to site-2-site cluster: \n${NC}"
+printf "${DarkGray}Using LM:[$lm] CM:[$cm] sites:[$SITEnames]${NC}\n"
 
 #echo "list of sites[$SITEnames]   cm[$cm]"
 
@@ -1873,8 +1874,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 print_stats () {
 
-START=$1
-FUNC_NAME=$2
+START=$1; FUNC_NAME=$2
 
 END=$(date +%s);
 TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
@@ -1889,12 +1889,13 @@ for host_name in `cat tmp1`; do
         count=`grep $host_name $CMDLOGTXT|grep exec|wc -l`;
         cmd_list=`grep exec $CMDLOGTXT| grep $host_name| awk '{print $6,$7,$8}'| sed 's/\$//g'|sed 's/\/opt\/splunk\/bin\/splunk //g'| sort | uniq -c|sed 's/\r\n/ /g'|awk '{printf "[%s:%s %s]", $1,$2,$3}' `
 
-        printf "${LightBlue}%-15s %7s ${NC}\n" $host_name $count >&3
-        printf "${DarkGray}$cmd_list${NC}\n" >&4
+        printf "${LightBlue}%-15s %7s ${NC}\n" $host_name $count 
+        printf "${DarkGray}$cmd_list${NC}\n" 
 
-done #> tmp2
-#cat tmp2	#show results
+done > tmp2
+cat tmp2  >&3	#show results
 echo
+
 #awk '{total = total + int($2)}END {print "Total Splunk Commands Used to build the cluster = " total}' tmp2
 cmd_total=`awk '{total = total + int($2)}END {print total}' tmp2`
 printf "Number of Splunk Commands Used to Build The Cluster = ${LightBlue}$cmd_total${NC}\n"
