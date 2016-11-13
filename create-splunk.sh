@@ -5,22 +5,23 @@
 # 	or testing purposes.
 #
 # List of capabilities:
-#	-Extensive Error checking
-#	-Load control (throttling) if exceeds 4screes
+#	-Extensive Error and integrity checks
+#	-Load control (throttling) if exceeds total vCPU
 #	-Built-in dynamic host names and IP allocation
 #	-Create and configure large number of Splunk hosts very fast
 #	-Different logging levels (show docker commands executed)
-#	-Complete multi and single site cluster builds including CM and DEP servers
+#	-Complete multi and single site cluster builds including CM,LM,DMC and DEP servers
 #	-Manual and auto modes (standard configurations)
 #	-Modular design that can easily be converted to a higher-level language like python
-#	-Custom login screen (helpful for lab & Search Parties scenarios)
+#	-Custom login-screen (helpful for lab & Search Parties scenarios)
 #	-Low resources requirements
 #	-Eliminate the need to learn docker (but you should)
-#	-OSX support
+#	-OSX & Linux support
 #
 # Licenses: 	Licensed under GPL v3 <link>
+# Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-# Version:	 $Id:$  1.1
+# Version:	 $Id:$  1.2
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
 #		v1-2	default setting (recommended for ongoing usage)
@@ -35,7 +36,6 @@
 #	-add DS containers with default serverclass.conf
 #	-ability to adjust RF and SF
 #	-abitllity to set seach affinity
-#	-DMC instance
 #################################################################################
 
 #Network stuff --------
@@ -289,7 +289,7 @@ do
 	if [  "$c" == "1" ]; then
 		echo
 		for c in $(seq 1 $t); do
-			echo -ne "${LightRed}High load avg [load:$loadavg max allowed:$MAXLOADAVG cores:$cores]. Pausing ${Yellow}$t${NC} seconds... ${Yellow}$c\033[0K\r"
+			echo -ne "${LightRed}High load avg [load:$loadavg max allowed:$MAXLOADAVG cores:$cores]. Pausing ${Yellow}$t${NC} seconds... ${Yellow}$c${NC}\033[0K\r"
         		sleep 1
 		done
 		t=`expr $t + $t`
@@ -823,33 +823,44 @@ for id in $(docker ps -aq); do
     hoststate=`docker ps -a --filter id=$id --format "{{.Status}}" | awk '{print $1}'`
     hostname=`docker ps -a --filter id=$id --format "{{.Names}}"`
     host_line[$i]="$bind_ip"
+    
     if [ $hoststate == "Up" ]; then
     	splunkstate=`docker exec -ti $id /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ print $3}'`
     else
 	splunkstate=""	
     fi	
+	
     case "$hoststate" in
 	Up)      hoststate="${Green}$hoststate ${NC}" ;;
 	Created) hoststate="${DarkGray}$hoststate ${NC}" ;;
 	Exited)  hoststate="${Red}$hoststate ${NC}" ;;
     esac
+
     if ( compare "$splunkstate" "running" ); then
 		splunkstate="${Green}$splunkstate${NC}"
     else
 		splunkstate="${Red}$splunkstate${NC}"
     fi
+
     if ( compare "$hostname" "DEP" ); then
-    	printf "${LightBlue}$i) %-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+    	printf "${LightBlue}$i) %-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightBlue}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
 
     elif ( compare "$hostname" "CM" ); then
-    	printf "${LightBlue}$i) %-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+    	printf "${LightBlue}$i) %-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightBlue}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
 
     elif ( compare "$hostname" "DMC" ); then
-        printf "${LightBlue}$i) %-15s%-20b${NC} Splunkd:%-20b Bind:${LightBlue}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+        printf "${LightBlue}$i) %-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightBlue}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
 
      else
-    	printf "${Purple}$i) %-15s%-20b${NC} Splunkd:%-20b Bind:${LightGray}%-10s${NC} Internal:${DarkGray}%-10s${NC}\n" "[$hostname]:" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+    	printf "${Purple}$i) %-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightGray}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
    fi
+
+  if [ -z "$bind_ip" ]; then
+       printf "${Red}<----- ** NOT BUILT BY THIS SCRIPT **${NC}\n"
+    else
+        printf "\n"
+    fi
+
 done
 
 echo  "count:$count"
@@ -1104,7 +1115,7 @@ START=$(date +%s);
 	if [ -n "$ip" ]; then 
 		printf "${Green}OK!${NC}\n" >&3
 	else
-		printf "\t->{Red}Not runing. Attempting to restart [$fullhostname]!${NC}\n" >&3
+		printf "${Red}Not runing! Attempting to restart container [$fullhostname]${NC}\n" >&3
 		CMD='docker start $fullhostname'; OUT=`CMD`
 		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$fullhostname"
@@ -1216,21 +1227,35 @@ printf "${DarkGray}Next sequence:${NC} [${Green}$basename${Yellow}$startx${NC} -
 
 #--generate fullhostname (w/ seq numbers) and VIP------------------------
 
-#--------Find last IP used. This is not hostname or site dependent-------
 base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `;  #base_ip=$base_ip"."
 
+#Find last container created IP (not hostname/sitename dependent). Returns value only if last container has an IP assigned (which excludes
+#containers not built by this script)
+containers_count=`docker ps -aq | wc -l|awk '{print $1}' `
+printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} last ip used:[$last_ip_used]\n" >&5
+printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} containers_count:[$containers_count]\n" >&5
+
 #get last octet4 used ----
-if [ $(docker ps -aq | wc -l) = 0 ]; then
+if [ "$containers_count" == 0 ]; then       #nothing created yet!
         last_used_octet4=`echo $START_ALIAS | cut -d"." -f4 `
         last_ip_used="$base_ip.$start_octet4"
-        printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} No hosts exists [will start@$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
+        printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} NO HOSTS EXIST! [containers_count:$containers_count] [last ip used:$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
 
-else    #Find last container created IP
-        last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aql)|$GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-        last_used_octet4=`echo $last_ip_used |cut -d"." -f4`
-        printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}Some hosts exists [last used:$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
+elif [ "$containers_count" -gt "0" ]; then
+	last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aql)|$GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+	if [ -n "$last_ip_used" ]; then
+        	last_used_octet4=`echo $last_ip_used |cut -d"." -f4`
+	else
+        	printf "${Red}\nDetected existing container(s) with no bind IP assignment! All containers on this docker-host must be created with this script.\n"
+		printf "Please delete all containers that are not managed by this script then restart.\n"
+		printf "Use option ${Yellow}1)${NC} SHOW all containers... ${Red}above to see the offending container(s). Existing...${NC}\n"
+		exit 
+	fi
+        printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}SOME HOSTS EXIST. [containers_count:$containers_count][last ip used:$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
 fi
+
 #-------------------------------------------------------------------------
+#exit
 
 octet4=$last_used_octet4
 #Loop to create $count total hosts ----
@@ -1297,7 +1322,7 @@ if [ "$mode" == "AUTO" ]; then
 	label="$SHCLUSTERLABEL"
 	printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
 	printf "${Yellow}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
-	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:$DEP_SHC_COUNT] SHC:[$SH_BASE:$STD_SHC_COUNT]${NC}\n"
+	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:$DEP_SHC_COUNT] SHC:[$SH_BASE:$STD_SHC_COUNT]${NC}\n\n"
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
 	#Basic services. Sequence is very important!
@@ -1347,7 +1372,7 @@ else
         fi
 	printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
 	printf "${Yellow}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
-	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n"
+	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n\n"
         printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	 if [ "$build_dmc" == "1" ]; then
                 create_generic_splunk "$dmc" "1"; dmc=$gLIST
@@ -1365,7 +1390,7 @@ else
 fi
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
 
-printf "${Yellow}==>Starting PHASE2: Converting generic SH hosts into SHC${NC}\n"
+printf "${Yellow}\n==>Starting PHASE2: Converting generic SH hosts into SHC${NC}\n"
 
 printf "${LightBlue}___________ Starting STEP#1 (deployer configuration) ____________________________${NC}\n" >&3
 
@@ -1458,7 +1483,7 @@ END=$(date +%s);
 TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
 printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
 count=`wc -w $CMDLOGBIN| awk '{print $1}' `
-printf "${DarkGray}Splunk config commands [%s]${NC}\n" "$count"
+printf "${DarkGray}Number of Splunk config commands issued: [%s]${NC}\n" "$count"
 
 #print_stats $START ${FUNCNAME}
 
@@ -1552,7 +1577,7 @@ else
         fi
 	printf "\n${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
 	printf "${Yellow}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
-	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:$IDXcount]${NC}\n"
+	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:$IDXcount]${NC}\n\n"
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	if [ "$build_dmc" == "1" ]; then
                 create_generic_splunk "$dmc" "1"; dmc=$gLIST
@@ -1574,7 +1599,7 @@ else
 fi
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
 
-printf "${Yellow}==>Starting PHASE2: Converting generic IDX hosts into IDXC${NC}\n"
+printf "${Yellow}\n==>Starting PHASE2: Converting generic IDX hosts into IDXC${NC}\n"
 
 printf "${LightBlue}____________ Starting STEP#1 (Configuring IDX Cluster Master) __${NC}\n" >&3
 printf "[${Purple}$cm${NC}]${LightBlue} Configuring Cluster Master... ${NC}\n"
@@ -1634,7 +1659,7 @@ END=$(date +%s);
 TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
 printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
 count=`wc -w $CMDLOGBIN| awk '{print $1}' `
-printf "${DarkGray}Splunk config commands [%s]${NC}\n" "$count"
+printf "${DarkGray}Number of Splunk config commands issued: [%s]${NC}\n" "$count"
 
 #print_stats $START ${FUNCNAME}
 
@@ -1766,7 +1791,7 @@ fi
 #------- Finished capturing sites names/basic services names ------------------
 
 printf "\n\n${BoldYellowBlueBackground}[$mode] Building site-to-site cluster...${NC}\n"
-printf "${DarkGray}Using Locations:[$SITEnames] CM:[$cm] First_site:[$first_site] ${NC}\n"
+printf "${DarkGray}Using Locations:[$SITEnames] CM:[$cm] First_site:[$first_site] ${NC}\n\n"
 
 printf "\n\n${Yellow}Creating cluster basic services [only in $first_site]${NC}\n"
 #Sequence is very important!
@@ -1791,8 +1816,8 @@ sh_list=`docker ps -a --filter name="SH|sh" --format "{{.Names}}"|sort | tr -d '
 cm_list=`docker ps -a --filter name="CM|cm" --format "{{.Names}}"|sort | tr -d '\r' | tr  '\n' ' ' `
 site_list=`echo $cm_list | sed 's/\-[a-zA-Z0-9]*//g' `
 
-printf "${BoldYellowBlueBackground}Migrating existing IDXCs & SHCs to site-2-site cluster: \n${NC}"
-printf "${DarkGray}Using LM:[$lm] CM:[$cm] sites:[$SITEnames]${NC}\n"
+printf "${BoldYellowBlueBackground}Migrating existing IDXCs & SHCs to site-2-site cluster: ${NC}\n"
+printf "${DarkGray}Using LM:[$lm] CM:[$cm] sites:[$SITEnames]\n\n${NC}"
 
 #echo "list of sites[$SITEnames]   cm[$cm]"
 
