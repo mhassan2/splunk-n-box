@@ -206,7 +206,7 @@ I have an extensive set of checks and validation routines that catch multiple is
 echo_logline()
 setup_ip_aliases ()
 check_load ()
-detect_os ()         ####### NOT USED YET ########
+detect_os () 
 contains()
 add_license_file ()
 reset_splunk_passwd ()
