@@ -241,6 +241,9 @@ There are few optional items (open source) not part of my work. I added them to 
 - screenfetch:       Run from .bashrc,  provides "hardware" info.
 - docker-ssh:        Small script to simulate ssh command with containers
 
+Excellent talk explaining clustering the bucket replication:
+http://conf.splunk.com/files/2016/recordings/indexer-clustering-internals-scaling-and-performance.mp4
+
 
 ##Screenshots:
 
