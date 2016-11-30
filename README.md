@@ -49,7 +49,7 @@ When you run the scripts for the first time, it will check to see if you have an
 My original work used outcoldman image. But for some reason, it was pulled out of docker registry website.  https://github.com/outcoldman/docker-splunk . I have cloned outcoldman image into my own so it's always available for download
 
 ```
-mhassan/splunk
+https://hub.docker.com/r/mhassan/splunk/
 ```
 There are multiple splunk images on docker hub https://hub.docker.com/  but I haven't verified them. 
 
