@@ -192,11 +192,11 @@ The rest of the options are self-explanatory
 
 ##Validation checks:
 
-I have an extensive set of validation routines that catch multiple issues. The validations are OS dependent. Here is the list:
+I have an extensive set of validation routines that handels multiple issues. The validations are OS dependent. Here is the list:
 
-- Check if all required package installed (ggrep, pcre, brew). If not offer the user the option of installing them.
+- Check if all required package installed (ggrep, pcre, brew). If not offer the user the option to installing them.
 - Check available memory at startup. Issue warnings and suggest remediation steps.
-- Check if docker daemon is installed/running exist if the condition is not met.
+- Check if docker daemon is installed/running. Exist if the condition is not met.
 - Check is required spunk image is installed. If not; install it (pull from docker hub).
 - Check if LICENSE directory (and \*.lic files) exist.
 - Check if required splunk-net is configured. This is for container-to-container communications.
