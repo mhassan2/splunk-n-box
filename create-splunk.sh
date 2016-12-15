@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-# Version:	 $Id:$  1.2
+# Version:	 $Id:$  1.3
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
 #		v1-2	default setting (recommended for ongoing usage)
@@ -76,7 +76,7 @@ SPLUNK_IMAGE="mhassan/splunk"		#my own built image 6.4.3
 #----------
 
 #----------Cluster stuff
-BASEHOSTNAME="IDX"			#default hostname to create
+BASEHOSTNAME="HOST"			#default hostname to create
 CM_BASE="CM"
 DMC_BASE="DMC"
 LM_BASE="LM"
@@ -868,10 +868,11 @@ echo
 #only for the Mac
 if [ "$os" == "Darwin" ]; then
 	read -p 'Selet a host to launch in your default browser? '  choice
+	#echo "Choice[$choice] i=[$i]"
 	if [ -z "$choice" ]; then
 		continue
 	elif [ "$choice" -le "$i" ] && [ "$choice" -ne "0" ] ; then
-			open http://${host_line[$i]}:8000
+			open http://${host_line[$choice]}:8000
 		else
 			printf "Invalid choice! Valid options [1..$i]\n"
 	fi
