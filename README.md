@@ -1,7 +1,7 @@
  &#x1F534;     **_Scroll all the way down to see sample screenshots_**
 
-Splunk n' boxk video:  https://youtu.be/k1WmnlWa4lo
-Learn docker in 10 minutes video: https://www.youtube.com/watch?v=YFl2mCHdv24
+Splunk n' boxk video: ``` https://youtu.be/k1WmnlWa4lo   ```
+Learn docker in 10 minutes video:``` https://www.youtube.com/watch?v=YFl2mCHdv24  ```
 
 ##Introduction:
 
