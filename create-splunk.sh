@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-# Version:	 $Id:$  1.3
+# Version:	 $Id:$  1.4
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
 #		v1-2	default setting (recommended for ongoing usage)
@@ -867,7 +867,7 @@ echo  "count:$count"
 echo
 #only for the Mac
 if [ "$os" == "Darwin" ]; then
-	read -p 'Selet a host to launch in your default browser? '  choice
+	read -p 'Selet a host to launch in your default browser <ENTER to continue>? '  choice
 	#echo "Choice[$choice] i=[$i]"
 	if [ -z "$choice" ]; then
 		continue
@@ -1095,9 +1095,19 @@ START=$(date +%s);
 	#echo "fullhostname[$fullhostname]"
 	#rm -fr $MOUNTPOINT/$fullhostname
 	mkdir -m 777 -p $MOUNTPOINT/$fullhostname
-        
-	CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $SPLUNK_IMAGE"
-        
+
+	if ( compare "$fullhostname" "DEMO" ); then	
+		#extract demo name from fullhostname  (ex: DEMO-OI02)
+		demo_name=$(printf '%s' "$fullhostname" | sed 's/[0-9]*//g')
+		demo_name=`echo $demo_name| tr '[A-Z]' '[a-z]'`		#conver to lower case
+ 
+		CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip registry.splunk.com/sales-engineering/$demo_name"
+
+	else
+		CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $SPLUNK_IMAGE"
+        fi
+
+
 	printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating new splunk docker container ${NC} " 
 	OUT=`$CMD` ; display_output "$OUT" "" "2"
 	#CMD=`echo $CMD | sed 's/\t//g' `; 
@@ -1126,7 +1136,11 @@ START=$(date +%s);
 	printf "\t->Splunk initialization (pass change, licenses, login screen)..." >&3
 	custom_login_screen "$vip" "$fullhostname"
 
-	add_license_file $fullhostname
+	if ( compare "$fullhostname" "DEMO" ); then	
+		true  #do nothing
+	else
+		add_license_file $fullhostname
+	fi
 
 	#Misc OS stuff
 	if [ -f "$PROJ_DIR/containers.bashrc" ]; then
@@ -1931,15 +1945,54 @@ printf "Total execution time for $FUNC_NAME = ${Yellow}$TIME ${NC}minutes\n\n"
 return 0
 }
 #---------------------------------------------------------------------------------------------------------------
-
+#---------------------------------------------------------------------------------------------------------------
+display_demos_menu () {
+        clear
+        printf "${Green}Docker Splunk Infrastructure Management -> DEMO Menu:${NC}${LightBlue}[$dockerinfo]${NC}\n"
+        printf "=====================[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxLoad:$MAXLOADAVG] [LogLevel:$loglevel]\n"
+	REP_DEMO_IMAGES="demo-oi demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-bleaf"
+	printf "${DarkGray}Please note the following:\n"
+        printf "${DarkGray}-If image is not cached; it may take up to 5 mintues to dowload (registry.splunk.com).\n"
+        printf "${DarkGray}-Some images are experimental. Please contact author for any issues.\n"
+        printf "${DarkGray}-Some images (ex: ITSI, MS, ES) requires extra resources.Limit concurrent demos.\n"
+        printf "${DarkGray}-Use MAIN MENU to run containers or see status of a container.${NC}\n\n"
+        printf "${Yellow}B${NC}) Go back to MAIN menu\n"
+        printf "${Yellow}R${NC}) REMOVE all demo images\n\n"
+        printf "${Purple}     IMAGE\t\t\t    CACHED\t\t\t\t AUTHOR \n"
+        printf "${Purple} -----------\t\t ---------------------------- \t\t ----------------------------- \n"
+	counter=1
+	for i in $REP_DEMO_IMAGES; do
+        	printf "${Purple}$counter${NC})${Purple} $i${DarkGray}\t\t" 
+		cache=`docker images|grep $i| awk '{print "created:"$4,$5,$6,"  Size:"$7,$8}'`
+		if [ -n "$cache" ]; then
+			author=`docker image inspect registry.splunk.com/sales-engineering/$i|grep -i author|cut -d":" -f2-3|sed 's/,//g'`
+			printf "$cache \t$author\n"
+		else
+			printf "\n"
+		
+		fi
+		let counter++
+		
+	done
+#	tLen=${#_REP_DEMO_IMAGES[@]}
+#        counter=1
+#        # use for loop read all images names
+#        for (( i=0; i<${tLen}; i++ )); do
+#        echo ${REP_DEMO_IMAGES[$i]}
+#        let counter++
+#        done
+        echo
+return 0
+} #display_demos_menu()
+#---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_menu2 () {
 	clear
 	printf "${Green}Docker Splunk Infrastructure Management -> Clustering Menu:${NC}${LightBlue}[$dockerinfo]${NC}\n"
-	printf "=====================[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxLoad:$MAXLOADAVG] [LogLevel:$loglevel]==\n\n"
+	printf "=====================[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxLoad:$MAXLOADAVG] [LogLevel:$loglevel]\n\n"
 	printf "${Yellow}B${NC}) Go back to MAIN menu\n\n"
 
-	printf "${Purple}AUTO BUILDS (fixed: R3/S2 1-CM 1-DEP 3-SHC 1-CM 3-IDXC):\n"
+	printf "${Purple}AUTO BUILDS (fixed: R3/S2 1-CM 1-DEP 3-SHC 3-IDXC):\n"
         printf "${Purple}1${NC}) Create Stand-alone Index Cluster (IDXC)\n";
         printf "${Purple}2${NC}) Create Stand-alone Search Head Cluster (SHC)\n"
         printf "${Purple}3${NC}) Build Single-site Cluster\n"
@@ -1952,6 +2005,47 @@ display_menu2 () {
         printf "${LightBlue}8${NC}) Build Manual Multi-site Cluster${NC} \n";echo 
 return 0
 } #display_menu2()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+demos_menu () {
+#This function captures user selection for demos_menu
+while true;
+do
+        rm  -fr $CMDLOGTXT
+        dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
+        display_demos_menu
+        choice=""
+        read -p "Select container to create (may include downloading) : " choice
+                case "$choice" in
+                B|b) return 0;;
+		r|R ) echo "Removing demo images only ";
+			docker rm -f  $(docker ps -a --format "{{.Names}}"|grep -i demo)
+			#docker images | grep "registry.splunk.com";
+			#docker rmi $(docker images | grep "demo" );
+			#docker rmi $(docker images | grep "^<none>" );
+		;;
+                1 ) create_generic_splunk "demo-oi" "1" ;;  
+                2 ) create_generic_splunk "demo-itsi" "1" ;;  
+                3 ) create_generic_splunk "demo-es" "1" ;;  
+                4 ) create_generic_splunk "demo-vmware" "1" ;;  
+                5 ) create_generic_splunk "demo-citrix" "1" ;;  
+                6 ) create_generic_splunk "demo-cisco" "1" ;;  
+                7 ) create_generic_splunk "demo-stream" "1" ;;  
+                8 ) create_generic_splunk "demo-pan" "1" ;;  
+                9 ) create_generic_splunk "demo-aws" "1" ;;  
+                10 ) create_generic_splunk "demo-ms" "1" ;;  
+                11 ) create_generic_splunk "demo-unix" "1" ;;  
+                12 ) create_generic_splunk "demo-bleaf" "1" ;;  
+
+
+                q|Q ) echo "Exit!" ;break ;;
+                *) read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
+        esac  #end case ---------------------------
+        echo "------------------------------------------------------";echo
+	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+done
+return 0
+}  #demos_menu()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 clustering_menu () {
@@ -1997,10 +2091,11 @@ display_menu () {
 #This function displays user options for the main menu
 	clear
 	printf "${Yellow}Docker Splunk Infrastructure Management Main Menu:${NC}${LightBlue}[$dockerinfo]${NC}\n"
-	printf "=====================[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxLoad:$MAXLOADAVG] [LogLevel:$loglevel]==\n\n"
+	printf "=====================[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxLoad:$MAXLOADAVG] [LogLevel:$loglevel]\n\n"
 	printf "${Red}C${NC}) CREATE containers ${DarkGray}[docker run ...]${NC}\n"
 	printf "${Red}D${NC}) DELETE all containers ${DarkGray}[docker rm -f \$(docker ps -aq)]${NC}\n"
 	printf "${Red}R${NC}) REMOVE all volumes to recover diskspace ${DarkGray}[docker volume rm \$(docker volume ls -qf 'dangling=true')]${NC}\n"
+	printf "${Red}I${NC}) REMOVE all images to recover diskspace(will extend build time) ${DarkGray}[docker rmi --force\$(docker images)]${NC}\n"
 	printf "${Red}Q${NC}) Quit${NC}\n"
 	echo
 	printf "${Yellow}1${NC}) SHOW all containers OR launch in a browser ${DarkGray}[custom view]${NC} \n"
@@ -2014,6 +2109,7 @@ display_menu () {
 	printf "${LightBlue}8${NC}) Remove IP aliases on the Ethernet interface${NC}\n"
 	printf "${LightBlue}9${NC}) RESTART all splunkd instances\n\n"
 	printf "${Green}10${NC}) Clustering Menu \n"
+	printf "${Green}11${NC}) Demos Menu ${DarkGray}[ **experimental & internal use only**]${NC}\n"
 	echo
 return 0
 }    #end display_menu()
@@ -2098,6 +2194,9 @@ do
 			rm -fr $HOSTSFILE
 			;;
 
+		i|I ) echo "Removing all images (to recover disk-space): "; 
+			docker rmi --force $(docker images);;
+
 		1 ) show_all_containers ;;
 		2 ) echo "Starting all containers: "; docker start $(docker ps -a --format "{{.Names}}") ;;
 		3 ) echo "Stopping all containers (graceful): "; 
@@ -2117,6 +2216,7 @@ do
 	        	done;;
 
 		10 ) clustering_menu ;;
+		11 ) demos_menu ;;
 
 		q|Q ) echo;
 		      echo -e "Quitting... Please send feedback to mhassan@splunk.com! \0360\0237\0230\0200";
