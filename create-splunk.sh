@@ -21,7 +21,8 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-# Version:	 $Id:$  2.1
+VERSION=2.2
+# Version:	 $Id:$  2.2
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
 #		v1-2	default setting (recommended for ongoing usage)
@@ -37,7 +38,6 @@
 #	-ability to adjust RF and SF
 #	-abitllity to set seach affinity
 #################################################################################
-VERSION=2.1
 #Network stuff --------
 ETH_OSX="lo0"			#default interface to use with OSX laptop (el captin)
 ETH_LINUX="eno1"		#default interface to use with Linux server (ubuntu 16.04
@@ -816,12 +816,24 @@ return 0
 add_os_utils() {
 #Add missing OS utils to all non-demo containers
 clear
-count=`docker ps -a|grep -v "DEMO"| wc -l`
-if [ $count == 0 ]; then
-        printf "\nNo running non-demo containers found!\n"
+printf "${BoldYellowBlueBackground}ADD OS UTILS MENU ${NC}\n"
+display_stats_banner
+printf "\n"
+printf "${BrownOrange}This option will add OS packages [vim net-tools telnet dnsutils] to all running non-demo containers...\n"
+printf "${BrownOrange}Might be useful if you will be doing a lot of manaul splunk configuration, however, it will increase container's size! ${NC}\n"
+printf "\n"
+read -p "Are you sure you want to proceed? [Y/n]? " answer
+if [ "$answer" == "y" ] || [ "$answer" == "y" ] || [ "$answer" == "" ]; then
+	true  #do nothing
+else
 	return 0
 fi
-printf "Adding OS [vim net-tools telnet dnsutils] to all running non-demo containers...\n\n"
+
+count=`docker ps -a|grep -v "DEMO"| grep -v "IMAGE"| wc -l`
+if [ $count == 0 ]; then
+        printf "\nNo running non-demo containers found!\n"; printf "\n"
+        return 0
+fi;
 for id in $(docker ps -a|grep -v "DEMO"|grep -v "PORTS"|awk '{print $1}'); do
     	hostname=`docker ps -a --filter id=$id --format "{{.Names}}"`
 	printf "${Purple}$hostname:${NC}\n"
@@ -1037,6 +1049,7 @@ dep_list=`docker ps -a --filter name="DEP|dep" --format "{{.Names}}"|sort`
 ds_list=`docker ps -a --filter name="DS|ds" --format "{{.Names}}"|sort`
 hf_list=`docker ps -a --filter name="HF|hf" --format "{{.Names}}"|sort`
 uf_list=`docker ps -a --filter name="UF|uf" --format "{{.Names}}"|sort`
+demo_list=`docker ps -a --filter name="DEMO|demo" --format "{{.Names}}"|sort`
 
 printf "Grouped by hostname (i.e. role):\n"
 printf "${Purple}LMs${NC}: " ;      printf "%-5s " $lm_list;echo
@@ -1047,6 +1060,7 @@ printf "${Cyan}DSs${NC}: ";         printf "%-5s " $ds_list;echo
 printf "${OrangeBrown}DEPs${NC}: "; printf "%-5s " $dep_list;echo
 printf "${Blue}HFs${NC}: ";         printf "%-5s " $hf_list;echo
 printf "${LightBlue}UFs${NC}: ";    printf "%-5s " $uf_list;echo
+printf "${Red}DEMOs${NC}: ";    printf "%-5s " $demo_list;echo
 echo
 
 printf "Currenly running IDXs:\n"
@@ -1315,7 +1329,11 @@ create_generic_splunk () {
 #	-calculate host number sequence
 #	 -calculate next IP sequence (octet4)
 
+clear
 display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+printf "${BoldYellowBlueBackground}CREATE GENERIC SPLUNK CONTAINER MENU ${NC}\n"
+display_stats_banner
+printf "\n"
 
 basename=$1; hostcount=$2; lic_master=$3; cluster_label=$4
 count=0;starting=0; ending=0;basename=$BASEHOSTNAME;  octet4=0
@@ -2097,7 +2115,7 @@ display_clustering_menu () {
         printf "${LightBlue}7${NC}) Build Manual Single-site Cluster\n"
         printf "${LightBlue}8${NC}) Build Manual Multi-site Cluster${NC} \n\n"
 
-        printf "${Yellow}G${NC}) GO back to MAIN menu\n\n"
+        printf "${Yellow}B${NC}) GO back to MAIN menu\n\n"
 return 0
 } #display_clustering_menu()
 #---------------------------------------------------------------------------------------------------------------
@@ -2131,7 +2149,7 @@ printf "${Red}S${NC}) SHOW all downloaded demo images ${NC} \n"
 printf "${Red}R${NC}) REMOVE demo image(s)\n"
 echo
 printf "Misc:\n"
-printf "${Yellow}G${NC}) GO back to MAIN menu\n"
+printf "${Yellow}B${NC}) GO back to MAIN menu\n"
 printf "${Yellow}?${NC}) Help!\n"
 
 return 0
@@ -2145,8 +2163,11 @@ clear
 printf "${BoldYellowBlueBackground}CREATE DEMO CONTAINER MENU ${NC}\n"
 display_stats_banner
 printf "\n"
+printf "${BrownOrange}This option requires access to splunk internal docker hub (registry.splunk.com)\n"
+printf "${BrownOrange}To login run this command before you run this script [docker login registry.splunk.com]\n"
+printf "${BrownOrange}Use your O2 credentials. Login is cached for 24 hours. ${NC}\n"
+printf "\n"
 printf "Demo images available on registry.splunk.com:\n"
-
 printf "${Purple}     IMAGE\t\t\t    CACHED INFO\t\t\t\t CREATED BY\n"
 printf "${Purple} -----------\t\t ---------------------------- \t\t ----------------------------- \n"
 counter=1
@@ -2209,7 +2230,7 @@ do
                 d|D) download_demo_image;;
                 s|S) show_all_demo_images;;
 		r|R ) delete_all_demo_images;;
-                g|G ) return 0;;
+                b|B ) return 0;;
 
         esac  #end case ---------------------------
 	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
@@ -2246,7 +2267,7 @@ do
 		    build_multi_site_cluster; 
 		    read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'  ;;
 
-	        g|G) return 0;;
+	        b|B) return 0;;
 		q|Q ) echo "Exit!" ;break ;;
                 *) read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
         esac  #end case ---------------------------
@@ -2266,12 +2287,15 @@ fi
 
 #load=${loadavg%.*}
 load=`echo "$loadavg/1" | bc `
+#load=8
 #MAXLOADAVG=`echo $cores \* $LOADFACTOR | bc -l `
 #echo $load : $MAXLOADAVG : $cores; exit
 
 #c=`echo " $load > $MAXLOADAVG" | bc `;
 #if [  "$c" == "1" ]; then
-if [[ "$load" -ge "$cores" ]]; then
+if [[ "$load" -ge "$cores/2" ]]; then
+	printf "${DarkGray}=>[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxAllowedLoad:$MAXLOADAVG LoadAvg:${BrownOrange}$loadavg${NC}] ${DarkGray}[LogLevel:$loglevel]${NC}\n"
+elif [[ "$load" -ge "$cores" ]]; then
 	printf "${DarkGray}=>[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxAllowedLoad:$MAXLOADAVG LoadAvg:${Red}$loadavg${NC}] ${DarkGray}[LogLevel:$loglevel]${NC}\n"
 else
 	printf "${DarkGray}=>[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxAllowedLoad:$MAXLOADAVG LoadAvg:$loadavg] [LogLevel:$loglevel]${NC}\n"
@@ -2384,7 +2408,7 @@ if [ -n "$choice" ]; then
         printf "Deleting ...\n"
 	for id in `echo $choice`; do
     		hostname=`docker ps -a --filter id=${list[$id - 1]} --format "{{.Names}}"`
-	#	echo "$id : ${list[$id - 1]} : $hostname"
+		#printf "${Purple}$hostname${NC}\n"
         	docker rm -f $hostname
 	done
        # docker stop $choice
@@ -2392,6 +2416,7 @@ else
         printf "Deleting all containers...\n"
 	docker rm -f $(docker ps -a --format "{{.Names}}");
 	rm -fr $HOSTSFILE
+	delete_all_volumes
 fi
 
 return 0
@@ -2440,7 +2465,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 delete_all_volumes () {
-clear
+#clear
 #count=`docker ps -aq|wc -l`
 #if [ $count == 0 ]; then
 #        printf "No container found!\n"
@@ -2546,6 +2571,40 @@ return 0
 }   #end show_all_demo_images
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
+wipe_entire_system() {
+clear
+printf "${BoldYellowBlueBackground}WIPE CLEAN ENTIRE SYSTEM MENU ${NC}\n"
+display_stats_banner
+printf "\n"
+printf "${Red}This option will remove IP aliases, delete all containers, delete all images and remove all volumes! ${NC}\n"
+printf "${Red}You must restart the script again! ${NC}\n"
+printf "\n"
+read -p "Are you sure you want to proceed? [y/N]? " answer
+        if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+                printf "${Yellow}Stopping all containers...${NC}\n"
+		docker stop $(docker ps -aq)
+                printf "\n"
+		printf "Deleting all containers...\n"
+        	docker rm -f $(docker ps -a --format "{{.Names}}");
+		printf "\n"
+                printf "${Yellow}Removing all images...${NC}\n"
+		docker rmi -f $(docker images -q)
+		printf "\n"
+		printf "${Yellow}Removing all volumes...${NC}\n"
+		docker volume rm $(docker volume ls -qf 'dangling=true')
+                printf "\n"
+
+                printf "${Yellow}Removing all IP aliases...${NC}\n"
+		remove_ip_aliases
+		printf "\n"
+                printf "${Yellow}Exiting...${NC}\n"
+		exit
+fi
+return 0
+}
+#---------------------------------------------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------------------------------------------
 display_main_menu () {
 #This function displays user options for the main menu
 	clear
@@ -2562,8 +2621,8 @@ display_main_menu () {
 	printf "${Yellow}Manage containers:${NC}\n"
 	printf "${Yellow}C${NC}) CREATE generic Splunk container(s) ${DarkGray}[docker run ...]${NC}\n"
 	printf "${Yellow}L${NC}) LIST all containers ${DarkGray}[custom view]${NC} \n"
-	printf "${Yellow}D${NC}) DELETE container(s) ${DarkGray}[docker rm -f \$(docker ps -aq)]${NC}\n"
-	printf "${Yellow}V${NC}) DELETE Volumes to recover diskspace ${DarkGray}[docker volume rm \$(docker volume ls -qf 'dangling=true')]${NC}\n"
+	printf "${Yellow}D${NC}) DELETE container(s) & Volumes(s)${DarkGray} [docker rm -f \$(docker ps -aq)]${NC}\n"
+#	printf "${Yellow}V${NC}) DELETE Volumes to recover diskspace ${DarkGray}[docker volume rm \$(docker volume ls -qf 'dangling=true')]${NC}\n"
 	printf "${Yellow}T${NC}) START all stopped containers ${DarkGray}[docker start \$(docker ps -a --format \"{{.Names}}\")]${NC}\n"
 	printf "${Yellow}P${NC}) STOP all running containers ${DarkGray}[docker stop \$(docker ps -aq)]${NC}\n"
 	printf "${Yellow}H${NC}) Show hosts by role ${DarkGray}[works only if you followed the host naming rules]${NC}\n"
@@ -2576,7 +2635,8 @@ display_main_menu () {
 	printf "\n"
 	printf "${Green}Manage system:${NC}\n"
         printf "${Green}A${NC}) Remove IP aliases on the Ethernet interface${NC}\n"
-        printf "${Green}O${NC}) Add common OS utils to container. Will take long time [not recommended]${NC}\n"
+        printf "${Green}O${NC}) Add common OS utils to container. Will take long time [${White}not recommended${NC}]${NC}\n"
+        printf "${Green}W${NC}) Wipe clean the entire system [${White}not recommended${NC}]${NC}\n"
         #printf "${Green}Q${NC}) Quit${NC}\n"
 return 0
 }    #end display_main_menu()
@@ -2670,6 +2730,7 @@ do
 		#SYSTEM
 		a|A ) remove_ip_aliases ;;
 		o|O ) add_os_utils ;;
+		w|W ) wipe_entire_system ;;
 		q|Q ) echo;
 		      echo -e "Quitting... Please send feedback to mhassan@splunk.com! \0360\0237\0230\0200";
 		      break ;;
