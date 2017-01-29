@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-# Version:	 $Id:$  2.0
+# Version:	 $Id:$  2.1
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
 #		v1-2	default setting (recommended for ongoing usage)
@@ -37,7 +37,7 @@
 #	-ability to adjust RF and SF
 #	-abitllity to set seach affinity
 #################################################################################
-VERSION=2.0
+VERSION=2.1
 #Network stuff --------
 ETH_OSX="lo0"			#default interface to use with OSX laptop (el captin)
 ETH_LINUX="eno1"		#default interface to use with Linux server (ubuntu 16.04
@@ -924,6 +924,9 @@ for id in $(docker ps -aq); do
 
     elif ( compare "$hostname" "DMC" ); then
         printf "${LightBlue}$i) %-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightBlue}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+ 
+   elif ( compare "$hostname" "DEMO" ); then
+        printf "${LightBlue}$i) \033[41m%-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightBlue}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
 
      else
     	printf "${Purple}$i) %-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightGray}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
@@ -2255,10 +2258,25 @@ return 0
 display_stats_banner () {
 if [ "$os" == "Darwin" ]; then
         loadavg=`sysctl -n vm.loadavg | awk '{print $2}'`
-else
+        cores=`sysctl -n hw.ncpu`
+elif [ "$os" == "Linux" ]; then
         loadavg=`cat /proc/loadavg |awk '{print $1}'|sed 's/,//g'`
+        cores=`$GREP -c ^processor /proc/cpuinfo`
 fi
-printf "${DarkGray}=>[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxAllowedLoad:$MAXLOADAVG LoadAvg:$loadavg] [LogLevel:$loglevel]${NC}\n"
+
+#load=${loadavg%.*}
+load=`echo "$loadavg/1" | bc `
+#MAXLOADAVG=`echo $cores \* $LOADFACTOR | bc -l `
+#echo $load : $MAXLOADAVG : $cores; exit
+
+#c=`echo " $load > $MAXLOADAVG" | bc `;
+#if [  "$c" == "1" ]; then
+if [[ "$load" -ge "$cores" ]]; then
+	printf "${DarkGray}=>[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxAllowedLoad:$MAXLOADAVG LoadAvg:${Red}$loadavg${NC}] ${DarkGray}[LogLevel:$loglevel]${NC}\n"
+else
+	printf "${DarkGray}=>[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxAllowedLoad:$MAXLOADAVG LoadAvg:$loadavg] [LogLevel:$loglevel]${NC}\n"
+fi
+
 return 0
 }
 #---------------------------------------------------------------------------------------------------------------
@@ -2423,11 +2441,11 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 delete_all_volumes () {
 clear
-count=`docker ps -aq|wc -l`
-if [ $count == 0 ]; then
-        printf "No container found!\n"
-        return 0;
-fi
+#count=`docker ps -aq|wc -l`
+#if [ $count == 0 ]; then
+#        printf "No container found!\n"
+#        return 0;
+#fi
 #disk1=`df -kh /var/lib/docker/| awk '{print $4}'| $GREP -v Avail|sed 's/G//g'`
 #disk1=`df -kh $MOUNTPOINT| awk '{print $4}'| $GREP -v Avail|sed 's/G//g'`
 printf "Deleting all volumes...\n"
