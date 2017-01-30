@@ -21,8 +21,8 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=2.2
-# Version:	 $Id:$  2.2
+VERSION=2.3
+# Version:	 $Id:$  2.3
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
 #		v1-2	default setting (recommended for ongoing usage)
@@ -849,9 +849,6 @@ return 0
 display_all_images () {
 #This function displays custom view all images downloaded.
 
-#build array of images list
-var=$(docker images -q | tr '\n' ' ')
-declare -a list=($var)
 i=0
 for id in $(docker images -q); do
         let i++
@@ -900,10 +897,19 @@ fi
 printf "${BoldYellowBlueBackground}SHOW ALL CONTAINERS MENU ${NC}\n"
 display_stats_banner
 printf "\n"
-printf "Current list of all running container on this system:\n"
+printf "Current list of all running containers on this system:\n"
+printf "   Host name%-3s Container%-3s Splunkd%-3s Bind IP%-2s Internal IP%-3s CPU%-4s MEM_USAGE%-3s MEM_LIMIT%-3s ${NC}\n"
+printf "   ---------%-3s ---------%-3s -------%-3s -------%-2s -----------%-3s ---%-4s ---------%-3s ---------%-3s ${NC}\n"
 i=0
 for id in $(docker ps -aq); do
     let i++
+    #These operations take long time execute	
+    #cpu_percent=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $2}'`
+    #mem_usage=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $3$4}'`
+    #mem_limit=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $6$7}'`
+    #mem_percent=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $8}'`
+
+
     internal_ip=`docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id`
     bind_ip=`docker inspect --format '{{ .HostConfig }}' $id| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
     hoststate=`docker ps -a --filter id=$id --format "{{.Status}}" | awk '{print $1}'`
@@ -923,29 +929,30 @@ for id in $(docker ps -aq); do
     esac
 
     if ( compare "$splunkstate" "running" ); then
-		splunkstate="${Green}$splunkstate${NC}"
+		splunkstate="${Green}Running${NC}"
     else
-		splunkstate="${Red}down${NC}"
+		splunkstate="${Red}Down${NC}"
     fi
 
     if ( compare "$hostname" "DEP" ); then
-    	printf "${LightBlue}$i) %-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightBlue}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+    	printf "${LightBlue}$i) %-15s ${NC}%-20b${NC} %-20b ${LightBlue}%-10s${NC} ${DarkGray}%-10s %-10s ${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip" "$cpu_percent"
 
     elif ( compare "$hostname" "CM" ); then
-    	printf "${LightBlue}$i) %-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightBlue}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+    	printf "${LightBlue}$i) %-15s ${NC}%-20b${NC} %-20b ${LightBlue}%-10s${NC} ${DarkGray}%-10s %-10s ${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip" "$cpu_percent"
 
     elif ( compare "$hostname" "DMC" ); then
-        printf "${LightBlue}$i) %-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightBlue}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+        printf "${LightBlue}$i) %-15s ${NC}%-20b${NC} %-20b ${LightBlue}%-10s${NC} ${DarkGray}%-10s %-10s ${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip" "$cpu_percent"
  
    elif ( compare "$hostname" "DEMO" ); then
-        printf "${LightBlue}$i) \033[41m%-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightBlue}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+        printf "${LightBlue}$i) \033[41m%-15s ${NC}%-20b${NC} %-20b ${LightBlue}%-10s${NC} ${DarkGray}%-10s %-10s ${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip" "$cpu_percent"
 
      else
-    	printf "${Purple}$i) %-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightGray}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+    	#printf "${Purple}$i) %-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightGray}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
+    	printf "${Purple}$i) %-15s ${NC}%-20b${NC} %-20b ${LightGray}%-10s${NC} ${DarkGray}%-10s %-10s ${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip" "$cpu_percent"
    fi
 
   if [ -z "$bind_ip" ]; then
-       printf "${Red}<----- ** NOT BUILT BY THIS SCRIPT **${NC}\n"
+       printf "${Red}<** NOT BUILT BY THIS SCRIPT **${NC}\n"
     else
         printf "\n"
     fi
@@ -2144,7 +2151,7 @@ printf "${Yellow}C${NC}) CREATE Splunk demo container from available list${NC}\n
 printf "${Yellow}L${NC}) LIST all demo containers ${NC}\n"
 echo
 printf "${Red}Magnage Splunk Demo images:${NC}\n"
-printf "${Red}D${NC}) Download single demo image ${NC} \n"
+printf "${Red}D${NC}) Download ONLY demo images ${NC} \n"
 printf "${Red}S${NC}) SHOW all downloaded demo images ${NC} \n"
 printf "${Red}R${NC}) REMOVE demo image(s)\n"
 echo
@@ -2156,18 +2163,19 @@ return 0
 } #display_demos_menu()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-create_demo_container() {
+download_demo_image() {
 
 clear
 #-----------show images details
-printf "${BoldYellowBlueBackground}CREATE DEMO CONTAINER MENU ${NC}\n"
+printf "${BoldYellowBlueBackground}DOWNLOAD DEMO IAMGES MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 printf "${BrownOrange}This option requires access to splunk internal docker hub (registry.splunk.com)\n"
-printf "${BrownOrange}To login run this command before you run this script [docker login registry.splunk.com]\n"
+printf "${BrownOrange}To login run this command[docker login registry.splunk.com] before you run this script.\n"
 printf "${BrownOrange}Use your O2 credentials. Login is cached for 24 hours. ${NC}\n"
+printf "${BrownOrange}*Depending on the time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
 printf "\n"
-printf "Demo images available on registry.splunk.com:\n"
+printf "Demo images available from registry.splunk.com:\n"
 printf "${Purple}     IMAGE\t\t\t    CACHED INFO\t\t\t\t CREATED BY\n"
 printf "${Purple} -----------\t\t ---------------------------- \t\t ----------------------------- \n"
 counter=1
@@ -2176,39 +2184,128 @@ for i in $REP_DEMO_IMAGES; do
         cache=`docker images|grep $i| awk '{print "created:"$4,$5,$6,"  Size:"$7,$8}'`
         if [ -n "$cache" ]; then
                 author=`docker inspect registry.splunk.com/sales-engineering/$i|grep -i author|cut -d":" -f1-3|sed 's/,//g'`
-                printf "$cache $author${NC}\n"
+                printf "${White}$cache $author${NC}\n"
         else
-                printf "\n"
+                printf "${DarkGray}NOT CACHED!${NC}\n"
         fi
         let counter++
 done
-#-----------
+#build array of images list
+declare -a list=($REP_DEMO_IMAGES)
 
-while true;
-do
-        choice=""
-	printf "\n"
-        read -p "Select demo container to create. Will download if not cached (? for help) : " choice
-                case "$choice" in
-                \?) display_demos_menu_help;;
-		
-                1 ) create_generic_splunk "demo-oi" "1" ;;
-                2 ) create_generic_splunk "demo-itsi" "1" ;;
-                3 ) create_generic_splunk "demo-es" "1" ;;
-                4 ) create_generic_splunk "demo-vmware" "1" ;;
-                5 ) create_generic_splunk "demo-citrix" "1" ;;
-                6 ) create_generic_splunk "demo-cisco" "1" ;;
-                7 ) create_generic_splunk "demo-stream" "1" ;;
-                8 ) create_generic_splunk "demo-pan" "1" ;;
-                9 ) create_generic_splunk "demo-aws" "1" ;;
-                10 ) create_generic_splunk "demo-ms" "1" ;;
-                11 ) create_generic_splunk "demo-unix" "1" ;;
-                12 ) create_generic_splunk "demo-fraud" "1" ;;
-                * ) break;;
-	esac  #end case --
+echo
+choice=""
+read -p "Choose number to download. You can select multiple numbers. <ENTER for all>: " choice
+if [ -n "$choice" ]; then
+        printf "Downloading selected demo image(s)...\n"
+        for id in `echo $choice`; do
+		image_name=(${list[$id - 1]})
+                printf "${Purple}$image_name:${NC}\n"
+	        docker pull registry.splunk.com/sales-engineering/$image_name
+        done
+       # docker stop $choice
+else
+        printf "${Red}WARNING! This operation may take a long time. Make sure you have enough diskspace...${NC}\n"
+	read -p "Are you sure? [Y/n]? " answer
+	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+        	printf "Downloading all demo image(s)...\n"
+		for i in $REP_DEMO_IMAGES; do
+                	printf "${Purple}$i:${NC}\n"
+                       	docker pull registry.splunk.com/sales-engineering/$i
+		done
+	fi
+fi
         #read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
-	break
+return 0
+
+}  #end download_demo_image() {
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+create_demo_container() {
+
+clear
+#-----------show images details
+printf "${BoldYellowBlueBackground}CREATE DEMO CONTAINER MENU ${NC}\n"
+display_stats_banner
+printf "\n"
+printf "${BrownOrange}This option requires access to splunk internal docker hub (registry.splunk.com)\n"
+printf "${BrownOrange}To login run this command[docker login registry.splunk.com] before you run this script.\n"
+printf "${BrownOrange}Use your O2 credentials. Login is cached for 24 hours. ${NC}\n"
+printf "${BrownOrange}*Depending on the time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
+printf "\n"
+printf "Demo images available from registry.splunk.com:\n"
+printf "${Purple}     IMAGE\t\t\t    CACHED INFO\t\t\t\t CREATED BY\n"
+printf "${Purple} -----------\t\t ---------------------------- \t\t ----------------------------- \n"
+
+#display all demos---------
+counter=1
+for i in $REP_DEMO_IMAGES; do
+        printf "${Purple}$counter${NC})${Purple} $i${DarkGray}\t\t"
+        cache=`docker images|grep $i| awk '{print "created:"$4,$5,$6,"  Size:"$7,$8}'`
+        if [ -n "$cache" ]; then
+                author=`docker inspect registry.splunk.com/sales-engineering/$i|grep -i author|cut -d":" -f1-3|sed 's/,//g'`
+                printf "${White}$cache $author${NC}\n"
+        else
+                printf "${DarkGray}NOT CACHED!${NC}\n"
+        fi
+        let counter++
 done
+#----------------------
+
+#build array of RUNNING demo containers
+#declare -a list=($(docker images  -a| grep -i "demo"|awk '{print $3}'| tr '\n' ' '))
+declare -a list=($REP_DEMO_IMAGES)
+
+echo
+choice=""
+read -p "Choose number to create. You can select multiple numbers. <ENTER for all>: " choice
+if [ -n "$choice" ]; then
+        printf "Creating selected demo containers(s)...\n"
+        for id in `echo $choice`; do
+		image_name=(${list[$id - 1]})
+               #echo "$id : ${list[$id - 1]}"
+                printf "${Purple}$i:${NC}\n"
+                create_generic_splunk "$image_name" "1"
+        done
+else
+	printf "${Red}WARNING! This operation may stress your system. Make sure you have enough resources...${NC}\n"
+        read -p "Are you sure? [y/N]? " answer
+        if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+        	printf "Creating all demo containers(s)...\n"
+                for i in $REP_DEMO_IMAGES; do
+                        printf "${Purple}$i:${NC}\n"
+                	create_generic_splunk "$i" "1"
+			pausing "30"
+                done
+	fi
+fi
+
+
+#while true;
+#do
+#        choice=""
+#	printf "\n"
+ #       read -p "Select demo container to create. Will download if not cached (? for help) : " choice
+  #              case "$choice" in
+#                \?) display_demos_menu_help;;
+#		
+#                1 ) create_generic_splunk "demo-oi" "1" ;;
+#                2 ) create_generic_splunk "demo-itsi" "1" ;;
+#                3 ) create_generic_splunk "demo-es" "1" ;;
+#                4 ) create_generic_splunk "demo-vmware" "1" ;;
+#                5 ) create_generic_splunk "demo-citrix" "1" ;;
+#                6 ) create_generic_splunk "demo-cisco" "1" ;;
+#                7 ) create_generic_splunk "demo-stream" "1" ;;
+#                8 ) create_generic_splunk "demo-pan" "1" ;;
+#                9 ) create_generic_splunk "demo-aws" "1" ;;
+#                10 ) create_generic_splunk "demo-ms" "1" ;;
+#                11 ) create_generic_splunk "demo-unix" "1" ;;
+#                12 ) create_generic_splunk "demo-fraud" "1" ;;
+#                * ) break;;
+#	esac  #end case --
+#        #read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+#	break
+#done
 return 0
 }  #end create_demo_container()
 #---------------------------------------------------------------------------------------------------------------
@@ -2293,16 +2390,16 @@ load=`echo "$loadavg/1" | bc `
 
 #c=`echo " $load > $MAXLOADAVG" | bc `;
 #if [  "$c" == "1" ]; then
-if [[ "$load" -ge "$cores/2" ]]; then
-	printf "${DarkGray}=>[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxAllowedLoad:$MAXLOADAVG LoadAvg:${BrownOrange}$loadavg${NC}] ${DarkGray}[LogLevel:$loglevel]${NC}\n"
-elif [[ "$load" -ge "$cores" ]]; then
+if [[ "$load" -ge "$cores" ]]; then
 	printf "${DarkGray}=>[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxAllowedLoad:$MAXLOADAVG LoadAvg:${Red}$loadavg${NC}] ${DarkGray}[LogLevel:$loglevel]${NC}\n"
+elif [[ "$load" -ge "$cores/2" ]]; then
+	printf "${DarkGray}=>[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxAllowedLoad:$MAXLOADAVG LoadAvg:${BrownOrange}$loadavg${NC}] ${DarkGray}[LogLevel:$loglevel]${NC}\n"
 else
 	printf "${DarkGray}=>[$dockerinfo2] [OS:$os FreeMem:$max_mem GB MaxAllowedLoad:$MAXLOADAVG LoadAvg:$loadavg] [LogLevel:$loglevel]${NC}\n"
 fi
 
 return 0
-}
+}   #end display_stats_banner()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 delete_all_images () {
@@ -2319,11 +2416,9 @@ if [ $count == 0 ]; then
         printf "No image found!\n"
         return 0;
 fi
-#--------------
 #build array of images list
-var=$(docker images --format "{{.Repository}}"| tr '\n' ' ')
-declare -a list=($var)
-#--------------
+declare -a list=($(docker images --format "{{.Repository}}"| tr '\n' ' '))
+
 echo
 choice=""
 read -p "Choose number to remove. You can select multiple numbers. <ENTER for all>: " choice
@@ -2331,10 +2426,9 @@ if [ -n "$choice" ]; then
         printf "Deleting selected image(s)...\n"
         for id in `echo $choice`; do
                #echo "$id : ${list[$id - 1]}"
-               	printf "{Purple} ${list[$id - 1]}:${NC}\n"
+               	printf "${Purple} ${list[$id - 1]}:${NC}\n"
                	docker rmi -f ${list[$id - 1]}
         done
-       # docker stop $choice
 else
 	printf "Deleting all images...\n"
 	docker stop $(docker ps -aq)
@@ -2360,11 +2454,9 @@ if [ $count == 0 ]; then
         return 0;
 fi
 
-#--------------
 #build array of images list
-var=$(docker images --format "{{.Repository}}"| grep registry.splunk.com | tr '\n' ' ')
-declare -a list=($var)
-#--------------
+declare -a list=($(docker images --format "{{.Repository}}"| grep registry.splunk.com | tr '\n' ' '))
+
 echo
 choice=""
 read -p "Choose number to remove. You can select multiple numbers. <ENTER for all>: " choice
@@ -2372,7 +2464,7 @@ if [ -n "$choice" ]; then
         printf "Deleting selected image(s)...\n"
         for id in `echo $choice`; do
                #echo "$id : ${list[$id - 1]}"
-                printf "{Purple} ${list[$id - 1]}:${NC}\n"
+                printf "${Purple} ${list[$id - 1]}:${NC}\n"
                 docker rmi -f ${list[$id - 1]}
         done
        # docker stop $choice
@@ -2398,8 +2490,7 @@ if [ $count == 0 ]; then
 fi
 #--------------
 #build array of containers list
-var=$(docker ps -aq | tr '\n' ' ')
-declare -a list=($var)
+declare -a list=($(docker ps -aq | tr '\n' ' '))
 #--------------
 echo
 choice=""
@@ -2409,7 +2500,7 @@ if [ -n "$choice" ]; then
 	for id in `echo $choice`; do
     		hostname=`docker ps -a --filter id=${list[$id - 1]} --format "{{.Names}}"`
 		#printf "${Purple}$hostname${NC}\n"
-        	docker rm -f $hostname
+        	docker rm -v -f $hostname
 	done
        # docker stop $choice
 else
@@ -2449,14 +2540,21 @@ if [ $count == 0 ]; then
 	printf "No container found!\n"
         return 0;
 fi
+#build array of containers list
+declare -a list=($(docker ps -aq | tr '\n' ' '))
+
 choice=""
-read -p "Choose number(s) to stop. You can select multiple numbers <default ALL>: " choice
+read -p "Choose number(s) to stop. You can select multiple numbers <ENTER for all>: " choice
 if [ -n "$choice" ]; then
-        printf "Stopping $choice...\n"
-        docker stop $choice
+        printf "Stopping containers...\n"
+        for id in `echo $choice`; do
+                #printf "${Purple} ${list[$id - 1]}:${NC}\n"
+    		hostname=`docker ps -a --filter id=${list[$id - 1]} --format "{{.Names}}"`
+        	docker stop $hostname
+	done
 else
         printf "Stopping all container...\n"
-        docker rm -f $(docker ps -a --format "{{.Names}}");
+        docker stop $(docker ps -aq);
         rm -fr $HOSTSFILE
 fi
 
@@ -2478,7 +2576,7 @@ docker volume rm $(docker volume ls -qf 'dangling=true')
 #rm -fr $MOUNTPOINT
 #disk2=`df -kh $MOUNTPOINT| awk '{print $4}'| $GREP -v Avail|sed 's/G//g'`
 #freed=`expr $disk2 - $disk1`
-#printf "Disk space freed [$freed] GB\n"
+#printf "Disk space recovered: [$freed] GB\n"
 rm -fr $HOSTSFILE
 
 return 0                        
