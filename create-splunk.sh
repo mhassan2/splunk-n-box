@@ -902,29 +902,21 @@ for id in $(docker ps -aq); do
     hostname=`docker ps -a --filter id=$id --format "{{.Names}}"`
     host_line[$i]="$bind_ip"
 
+    #check splunk state if container is UP	
     if [ $hoststate == "Up" ]; then
         splunkstate=`docker exec -ti $id /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ print $3}'`
     else
         splunkstate=""
     fi
 
+    #set host state color
     case "$hoststate" in
         Up)      hoststate="${Green}$hoststate ${NC}" ;;
         Created) hoststate="${DarkGray}$hoststate ${NC}" ;;
         Exited)  hoststate="${Red}$hoststate ${NC}" ;;
     esac
 
-    if ( compare "$splunkstate" "running" ); then
-                splunkstate="${Green}Running${NC}"
-    else
-                splunkstate="${Red}Down${NC}"
-    fi
-    case "$hoststate" in
-        Up)      hoststate="${Green}$hoststate ${NC}" ;;
-        Created) hoststate="${DarkGray}$hoststate ${NC}" ;;
-        Exited)  hoststate="${Red}$hoststate ${NC}" ;;
-    esac
-
+    #set splunk state color
     if ( compare "$splunkstate" "running" ); then
                 splunkstate="${Green}Running${NC}"
     else
@@ -2174,9 +2166,9 @@ echo
 printf "${Yellow}Magnage Splunk Demo containers:${NC}\n"
 printf "${Yellow}C${NC}) CREATE Splunk demo container from available list${NC}\n"
 printf "${Yellow}L${NC}) LIST all demo containers ${NC}\n"
-printf "${Yellow}D${NC}) DELETE demo container(s)${NC}\n"
-printf "${Yellow}T${NC}) START demo container(s) ${NC}\n"
 printf "${Yellow}P${NC}) STOP demo container(s) ${NC}\n"
+printf "${Yellow}T${NC}) START demo container(s) ${NC}\n"
+printf "${Yellow}D${NC}) DELETE demo container(s)${NC}\n"
 echo
 printf "${Red}Magnage Splunk Demo images:${NC}\n"
 printf "${Red}X${NC}) Download ONLY demo images ${NC} \n"
@@ -2516,7 +2508,7 @@ else
 	rm -fr $HOSTSFILE
 	delete_all_volumes
 fi
-read -p $'\033[1;32mHit <ENTER> to show new status...\e[0m'
+read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
 show_all_containers
 return 0
 }  #end delete_all_containers()
@@ -2551,7 +2543,7 @@ else
         printf "Starting all demo containers...\n"
         docker rm -v -f $(docker ps -a --format "{{.Names}}" |grep -i "demo")
 fi
-read -p $'\033[1;32mHit <ENTER> to show new status...\e[0m'
+read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
 show_all_demo_containers
 
 return 0
@@ -2587,7 +2579,7 @@ else
         printf "Starting all demo containers...\n"
         docker start $(docker ps -a --format "{{.Names}}" |grep -i "demo")
 fi
-read -p $'\033[1;32mHit <ENTER> to show new status...\e[0m'
+read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
 show_all_demo_containers
 
 return 0
@@ -2623,7 +2615,7 @@ else
         printf "Stopping all demo containers...\n"
         docker stop $(docker ps -a --format "{{.Names}}" |grep -i "demo")
 fi
-read -p $'\033[1;32mHit <ENTER> to show new status...\e[0m'
+read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
 show_all_demo_containers
 
 return 0
@@ -2660,7 +2652,7 @@ else
 	docker start $(docker ps -a --format "{{.Names}}") 
         rm -fr $HOSTSFILE
 fi
-read -p $'\033[1;32mHit <ENTER> to show new status...\e[0m'
+read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
 show_all_containers
 
 return 0
@@ -2694,10 +2686,10 @@ if [ -n "$choice" ]; then
 else
         printf "Stopping all containers...\n"
        # docker stop $(docker ps -aq);
-	docker sttop $(docker ps -a --format "{{.Names}}") 
+	docker stop $(docker ps -a --format "{{.Names}}") 
         rm -fr $HOSTSFILE
 fi
-read -p $'\033[1;32mHit <ENTER> to show new status...\e[0m'
+read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
 show_all_containers
 
 return 0
@@ -2865,9 +2857,9 @@ display_main_menu () {
 	printf "${Yellow}Manage containers:${NC}\n"
 	printf "${Yellow}C${NC}) CREATE generic Splunk container(s) ${DarkGray}[docker run ...]${NC}\n"
 	printf "${Yellow}L${NC}) LIST all containers ${DarkGray}[custom view]${NC} \n"
-	printf "${Yellow}D${NC}) DELETE container(s) & Volumes(s)${DarkGray} [docker rm -f \$(docker ps -aq)]${NC}\n"
-	printf "${Yellow}T${NC}) START container(s) ${DarkGray}[docker start \$(docker ps -a --format \"{{.Names}}\")]${NC}\n"
 	printf "${Yellow}P${NC}) STOP container(s) ${DarkGray}[docker stop \$(docker ps -aq)]${NC}\n"
+	printf "${Yellow}T${NC}) START container(s) ${DarkGray}[docker start \$(docker ps -a --format \"{{.Names}}\")]${NC}\n"
+	printf "${Yellow}D${NC}) DELETE container(s) & Volumes(s)${DarkGray} [docker rm -f \$(docker ps -aq)]${NC}\n"
 	printf "${Yellow}H${NC}) Show hosts by role ${DarkGray}[works only if you followed the host naming rules]${NC}\n"
 	printf "\n"
 	printf "${LightBlue}Manage Splunk:${NC}\n"
