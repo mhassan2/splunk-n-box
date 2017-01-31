@@ -2151,7 +2151,7 @@ printf "${DarkGray}-If image is not cached; it may take up to 5 mintues to dowlo
 printf "${DarkGray}-Some images are experimental. Please contact author for any issues.\n"
 printf "${DarkGray}-Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
 printf "${DarkGray}-Some images requires https://x.x.x.x:8000   (ex: ES)\n"
-printf "${DarkGray}-Use MAIN MENU to run containers or see status of a container.${NC}\n\n"
+#printf "${DarkGray}-Use MAIN MENU to run containers or see status of a container.${NC}\n\n"
 
 return 0
 } #display_demos_menu_help()
@@ -2171,13 +2171,13 @@ printf "${Yellow}T${NC}) START demo container(s) ${NC}\n"
 printf "${Yellow}D${NC}) DELETE demo container(s)${NC}\n"
 echo
 printf "${Red}Magnage Splunk Demo images:${NC}\n"
-printf "${Red}X${NC}) Download ONLY demo images ${NC} \n"
+printf "${Red}X${NC}) Download ONLY demo images [use this option to cache demo images] ${NC} \n"
 printf "${Red}S${NC}) SHOW all downloaded demo images ${NC} \n"
 printf "${Red}R${NC}) REMOVE demo image(s)\n"
 echo
-printf "Misc:\n"
-printf "${Yellow}B${NC}) GO back to MAIN menu\n"
-printf "${Yellow}?${NC}) Help!\n"
+printf "${Green}Manage system:${NC}\n"
+printf "${Green}B${NC}) GO back to MAIN menu\n"
+printf "${Green}?${NC}) Help!\n"
 
 return 0
 } #display_demos_menu()
@@ -2832,8 +2832,9 @@ read -p "Are you sure you want to proceed? [y/N]? " answer
 
                 printf "${Yellow}Removing all IP aliases...${NC}\n"
 		remove_ip_aliases
-		printf "\n"
-                printf "${Yellow}Exiting...${NC}\n"
+		printf "\n\n"
+                echo -e "Life is good! Thank you for using Splunk n' Box \0360\0237\0230\0200"
+		printf "Please send feedback to mhassan@splunk.com \n"
 		exit
 fi
 return 0
