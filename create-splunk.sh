@@ -2508,8 +2508,6 @@ if [ -n "$choice" ]; then
     		hostname=`docker ps -a --filter id=${list[$id - 1]} --format "{{.Names}}"`
 		#printf "${Purple}$hostname${NC}\n"
         	docker rm -v -f $hostname
-		sleep 2
-		show_all_containers
 	done
        # docker stop $choice
 else
@@ -2518,7 +2516,8 @@ else
 	rm -fr $HOSTSFILE
 	delete_all_volumes
 fi
-
+read -p $'\033[1;32mHit <ENTER> to show new status...\e[0m'
+show_all_containers
 return 0
 }  #end delete_all_containers()
 #---------------------------------------------------------------------------------------------------------------
@@ -2552,7 +2551,8 @@ else
         printf "Starting all demo containers...\n"
         docker rm -v -f $(docker ps -a --format "{{.Names}}" |grep -i "demo")
 fi
-#show_all_demo_containers
+read -p $'\033[1;32mHit <ENTER> to show new status...\e[0m'
+show_all_demo_containers
 
 return 0
 }  #end delete_demo_all_containers() {
@@ -2587,7 +2587,7 @@ else
         printf "Starting all demo containers...\n"
         docker start $(docker ps -a --format "{{.Names}}" |grep -i "demo")
 fi
-sleep 10
+read -p $'\033[1;32mHit <ENTER> to show new status...\e[0m'
 show_all_demo_containers
 
 return 0
@@ -2623,7 +2623,7 @@ else
         printf "Stopping all demo containers...\n"
         docker stop $(docker ps -a --format "{{.Names}}" |grep -i "demo")
 fi
-sleep 10
+read -p $'\033[1;32mHit <ENTER> to show new status...\e[0m'
 show_all_demo_containers
 
 return 0
@@ -2660,7 +2660,7 @@ else
 	docker start $(docker ps -a --format "{{.Names}}") 
         rm -fr $HOSTSFILE
 fi
-sleep 2
+read -p $'\033[1;32mHit <ENTER> to show new status...\e[0m'
 show_all_containers
 
 return 0
@@ -2697,7 +2697,7 @@ else
 	docker sttop $(docker ps -a --format "{{.Names}}") 
         rm -fr $HOSTSFILE
 fi
-sleep 2
+read -p $'\033[1;32mHit <ENTER> to show new status...\e[0m'
 show_all_containers
 
 return 0
