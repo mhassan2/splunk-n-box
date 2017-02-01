@@ -21,8 +21,8 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=2.4
-# Version:	 $Id:$  2.4
+VERSION=2.6
+# Version:	 $Id:$  2.5
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
 #		v1-2	default setting (recommended for ongoing usage)
@@ -128,6 +128,7 @@ LOADFACTOR_OSX=1        #allow (1 x cores) for the MAC (testing..)
 #--------
 
 #--------COLORES
+#for i in `seq 1 100`; do printf "\033[48;5;${i}m${i} "; done
 NC='\033[0m' # No Color
 Black="\033[0;30m";             White="\033[1;37m"
 Red="\033[0;31m";               LightRed="\033[1;31m"
@@ -138,7 +139,18 @@ Purple="\033[0;35m";            LightPurple="\033[1;35m"
 Cyan="\033[0;36m";              LightCyan="\033[1;36m"
 LightGray="\033[0;37m";         DarkGray="\033[1;30m"
 BlackOnGreen="\033[30;48;5;82m"
+WhiteOnBurg="\033[30;48;5;88m"
+WhiteOnBurg="\033[30;48;5;88m"
+
+BoldWhiteOnRed="\033[1;1;5;41m"
+BoldWhiteOnGreen="\033[1;1;5;42m"
+BoldWhiteOnYellow="\033[1;1;5;43m"
+BoldWhiteOnBlue="\033[1;1;5;44m"
+BoldWhiteOnPink="\033[1;1;5;45m"
+BoldWhiteOnTurquoise="\033[1;1;5;46m"
+
 BoldYellowBlueBackground="\033[1;33;44m"
+BoldYellowPurpleBackground="\033[1;33;44m"
 #--------
 
 #-------Misc
@@ -193,32 +205,54 @@ printf "[$DATE]: $cmd$\n" >> $CMDLOGTXT
 prev_host=$curr_host
 
 return 0
-}
+}  #end logline()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 remove_ip_aliases () {
 #Delete ip aliases on the interface (OS dependent)
+clear
+printf "${BoldWhiteOnGreen}REMOVE IP ALIASES MENU ${NC}\n"
+display_stats_banner
+printf "\n"
+#display_all_containers
+echo
+printf "${Red}You are about to remove IP aliases. This will kill any container already binded to IP ${NC}\n"
+echo
+read -p "Are you sure you want to proceed? [y/N]? " answer
+if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
+	base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `; # base_ip=$base_ip"."
+	start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
+	end_octet4=`echo $END_ALIAS | cut -d"." -f4 `
 
-base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `; # base_ip=$base_ip"."
-start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
-end_octet4=`echo $END_ALIAS | cut -d"." -f4 `
+	#---------
+	if [ "$os" == "Darwin" ]; then
+		read -p "Enter interface where IP aliases are binded to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_OSX"; fi
+		for i in `seq $start_octet4  $end_octet4`; do
+			sudo ifconfig  $eth  $base_ip.$i 255.255.255.0 -alias
+        		echo -ne "${NC}Removing: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
+			done
+			echo
+			printf "\n${Red}You must restart the script to regain functionality!${NC}\n"
+	elif  [ "$os" == "Linux" ]; then
+			read -p "Enter interface where IP aliases are binded to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_LINUX"
+ 			for  ((i=$start_octet4; i<=$end_octet4 ; i++))  do
+                		echo -ne "${NC}Removing: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
+                		sudo ifconfig $eth:$i "$base_ip.$i" down;
+        		done
+			echo
+			printf "\n${Red}You must restart the script to regain functionality!${NC}\n"
+	fi  #elif
+	fi
+	#---------
+	
+else
+	printf "${NC}\n"
+	return 0
+fi  # answer
+echo
 
-if [ "$os" == "Darwin" ]; then
-	read -p "Enter interface aliases binded to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_OSX"; fi
-	for i in `seq $start_octet4  $end_octet4`; do
-		sudo ifconfig  $eth  $base_ip.$i 255.255.255.0 -alias
-        	echo -ne "${NC}Removing: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
-	done
-elif  [ "$os" == "Linux" ]; then
-	read -p "Enter interface aliases binded to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_LINUX"; fi
- 	for  ((i=$start_octet4; i<=$end_octet4 ; i++))  do
-                echo -ne "${NC}Removing: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
-                sudo ifconfig $eth:$i "$base_ip.$i" down;
-        done
-fi
-printf "${NC}\n"
 return 0
-}
+} #end remove_ip_aliases ()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 setup_ip_aliases () {
@@ -816,7 +850,7 @@ return 0
 add_os_utils() {
 #Add missing OS utils to all non-demo containers
 clear
-printf "${BoldYellowBlueBackground}ADD OS UTILS MENU ${NC}\n"
+printf "${BoldWhiteOnGreen}ADD OS UTILS MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 printf "${BrownOrange}This option will add OS packages [vim net-tools telnet dnsutils] to all running non-demo containers...\n"
@@ -867,7 +901,7 @@ return 0
 show_all_images () {
 display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldYellowBlueBackground}SHOW IMAGES MENU ${NC}\n"
+printf "${BoldWhiteOnRed}SHOW IMAGES MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 printf "Current list of all images downloaded on this system:\n"
@@ -951,7 +985,8 @@ for id in $(docker ps -aq); do
 
 done
 
-printf "count: %s\n\n" $count
+printf "count: %s\n\n" $i
+
 #only for the Mac
 #if [ "$os" == "Darwin" ]; then
 #       read -p 'Select a host to launch in your default browser <ENTER to continue>? '  choice
@@ -972,15 +1007,17 @@ show_all_containers () {
 #This function displays containers groups by role (role is determined using hostname ex: SH, DS, IDX, CM,...etc)
 display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
+printf "${BoldWhiteOnYellow}SHOW ALL CONTAINERS MENU ${NC}\n"
+display_stats_banner
+printf "\n"
+display_all_containers
+echo
 count=`docker ps -aq|wc -l`
 if [ $count == 0 ]; then
         printf "\nNo containers to list!\n"
 	return 0
 fi
-printf "${BoldYellowBlueBackground}SHOW ALL CONTAINERS MENU ${NC}\n"
-display_stats_banner
-printf "\n"
-display_all_containers
+echo
 
 return 0
 }  #end  show_all_containers()
@@ -1074,6 +1111,11 @@ uf_list=`docker ps -a --filter name="UF|uf" --format "{{.Names}}"|sort`
 dmc_list=`docker ps -a --filter name="DMC|dmc" --format "{{.Names}}"|sort`
 demo_list=`docker ps -a --filter name="DEMO|demo" --format "{{.Names}}"|sort`
 
+printf "${BoldWhiteOnYellow}CONTAINERS GROUPS MENU ${NC}\n"
+display_stats_banner
+printf "\n"
+display_all_demo_containers
+echo
 printf "Grouped by hostname (i.e. role):\n"
 printf "${Purple}LMs${NC}: " ;      printf "%-5s " $lm_list;echo
 printf "${Purple}CMs${NC}: " ;      printf "%-5s " $cm_list;echo
@@ -1100,7 +1142,7 @@ prev_list=''
 for i in $sh_list; do
 	sh_cluster=`docker exec -ti $i /opt/splunk/bin/splunk show shcluster-status -auth $USERADMIN:$USERPASS | $GREP -i label |awk '{print $3}'| sed -e 's/^M//g' | tr -d '\r' | tr  '\n' ' ' `
 	if ( compare "$sh_cluster" "$prev_list" );  then
-		continue
+		true  #do nothing
 	else
         	printf "${Yellow}$i${NC}: %s" "$sh_cluster"
 		prev_list=$sh_cluster
@@ -2123,7 +2165,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_clustering_menu () {
         clear
-        printf "${BlackOnGreen}Splunk n' Box v2.0: -> CLUSTERING MENU :[$dockerinfo]${NC}\n"
+        printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION:[$dockerinfo] -> CLUSTERING MENU${NC}\n"
         display_stats_banner
 	printf "\n"
 	echo
@@ -2144,6 +2186,21 @@ return 0
 } #display_clustering_menu()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
+display_demos_stats_menu () {
+
+# run if user hits control-c
+  echo -en "\n*** Stopped ***\n"
+  exit $?
+#  return 0
+# trap keyboard interrupt (control-c)
+trap display_demos_stats_menu SIGINT
+printf "Display stats:\n"
+docker stats  --format "{{.Name}}:\t\tCPU={{.CPUPerc}}   MEM={{.MemPerc}}"
+
+return 0
+}  #end display_demos_stats_menu ()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
 display_demos_menu_help () {
 printf "${DarkGray}Please note the following:\n"
 printf "${DarkGray}-You must login before using this menu (run: docker login registry.splunk.com).\n"
@@ -2159,7 +2216,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu () {
 REP_DEMO_IMAGES="demo-oi demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud"
-printf "${BlackOnGreen}Splunk n' Box v2.0: -> DEMOS MENU: [$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION:[$dockerinfo] -> DEMOS MENU${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2184,6 +2241,26 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 download_demo_image() {
+
+#----------------
+#Modified version of spinner http://fitnr.com/showing-a-bash-spinner.html
+spinner()
+{
+    local pid=$1
+    local delay=5   #ex 0.75 second
+    local spinstr='|/-\'
+    while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+        local temp=${spinstr#?}
+       # printf " [%c]  " "$spinstr"
+        printf "▓"
+#       echo -en "\033[48;5;2m x\e[0m"
+        local spinstr=$temp${spinstr%"$temp"}
+        sleep $delay
+        #printf "\b\b\b\b\b\b"
+    done
+    #printf "    \b\b\b\b"
+}
+#-----------------------------
 clear
 #-----------show images details
 printf "${BoldYellowBlueBackground}DOWNLOAD DEMO IAMGES MENU ${NC}\n"
@@ -2216,26 +2293,34 @@ echo
 choice=""
 read -p "Choose number to download. You can select multiple numbers. <ENTER for all>: " choice
 if [ -n "$choice" ]; then
-        printf "Downloading selected demo image(s)...\n"
+        printf "${Yellow}Downloading selected demo image(s)...\n${NC}"
+	START=$(date +%s);
         for id in `echo $choice`; do
 		image_name=(${list[$id - 1]})
-                printf "${Purple}$image_name:${NC}\n"
-	        docker pull registry.splunk.com/sales-engineering/$image_name
+                printf "${Purple}$image_name:${NC}["
+		(docker pull registry.splunk.com/sales-engineering/$image_name >/dev/null) &
+		spinner $!
+		printf "]\n${NC}"
         done
        # docker stop $choice
 else
-        printf "${Red}WARNING! This operation may take a long time. Make sure you have enough diskspace...${NC}\n"
+        printf "${Red}WARNING! This operation may take a long time (~20 mins). Make sure you have enough diskspace...${NC}\n"
 	read -p "Are you sure? [Y/n]? " answer
 	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
-        	printf "Downloading all demo image(s)...\n"
+        	printf "${Yellow}Downloading all demo image(s)...\n${NC}"
+		START=$(date +%s);
 		for i in $REP_DEMO_IMAGES; do
-                	printf "${Purple}$i:${NC}\n"
-                       	docker pull registry.splunk.com/sales-engineering/$i
+                	printf "${Purple}$i:${NC}["
+			(docker pull registry.splunk.com/sales-engineering/$i >/dev/null) &
+			spinner $!
+                	printf "]\n${NC}"
 		done
 	fi
 fi
         #read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
-
+END=$(date +%s);
+TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
+printf "${DarkGray}Totla download time: [$TIME]${NC}\n"
 return 0
 }  #end download_demo_image() {
 #---------------------------------------------------------------------------------------------------------------
@@ -2324,6 +2409,16 @@ do
                 x|X) download_demo_image;;
                 s|S) show_all_demo_images;;
 		r|R ) delete_all_demo_images;;
+		#i|I ) display_demos_stats_menu;;
+		i|I ) clear
+		      printf "${Yellow}Continously display containers stats in 5 seconds:\n";
+		      printf "${Red}Control-C to stop\n${NC}";
+		      trap return SIGINT;
+		      sleep 5
+		      docker stats  --format "HOST={{.Name}}   CPU={{.CPUPerc}}   MEM={{.MemPerc}}";
+		      printf "${NC}\n"
+		;;
+
                 b|B ) return 0;;
 
         esac  #end case ---------------------------
@@ -2401,7 +2496,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 delete_all_images () {
 clear
-printf "${BoldYellowBlueBackground}DELETE IMAGES MENU ${NC}\n"
+printf "${BoldWhiteOnRed}DELETE IMAGES MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 printf "Current list of all images downloaded on this system:\n"
@@ -2419,14 +2514,14 @@ echo
 choice=""
 read -p "Choose number to remove. You can select multiple numbers. <ENTER for all>: " choice
 if [ -n "$choice" ]; then
-        printf "Deleting selected image(s)...\n"
+        printf "${Yellow}Deleting selected image(s)...\n${NC}"
         for id in `echo $choice`; do
                #echo "$id : ${list[$id - 1]}"
                	printf "${Purple} ${list[$id - 1]}:${NC}\n"
                	docker rmi -f ${list[$id - 1]}
         done
 else
-	printf "Deleting all images...\n"
+	printf "${Yellow}Deleting all images...\n${NC}"
 	docker stop $(docker ps -aq)
 	docker rmi -f $(docker images -q)
 fi
@@ -2457,7 +2552,7 @@ echo
 choice=""
 read -p "Choose number to remove. You can select multiple numbers. <ENTER for all>: " choice
 if [ -n "$choice" ]; then
-        printf "Deleting selected image(s)...\n"
+        printf "${Yellow}Deleting selected image(s)...\n${NC}"
         for id in `echo $choice`; do
                #echo "$id : ${list[$id - 1]}"
                 printf "${Purple} ${list[$id - 1]}:${NC}\n"
@@ -2465,7 +2560,7 @@ if [ -n "$choice" ]; then
         done
        # docker stop $choice
 else
-        printf "Deleting all demo images...\n"
+        printf "${Yellow}Deleting all demo images...\n${NC}"
 	if [ $(docker ps -a| grep "DEMO") ]; then  #kill running demo containers first
         	docker rm $(docker ps -a| awk '{print $1}')
 	fi
@@ -2477,7 +2572,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 delete_all_containers () {
 clear
-printf "${BoldYellowBlueBackground}DELETE CONTAINERS MENU ${NC}\n"
+printf "${BoldWhiteOnYellow}DELETE CONTAINERS MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 display_all_containers
@@ -2495,7 +2590,7 @@ echo
 choice=""
 read -p "Choose number to remove. You can select multiple numbers <default ALL>: " choice
 if [ -n "$choice" ]; then
-        printf "Deleting selected containers...\n"
+        printf "${Yellow}Deleting selected containers...\n${NC}"
 	for id in `echo $choice`; do
     		hostname=`docker ps -a --filter id=${list[$id - 1]} --format "{{.Names}}"`
 		#printf "${Purple}$hostname${NC}\n"
@@ -2503,7 +2598,7 @@ if [ -n "$choice" ]; then
 	done
        # docker stop $choice
 else
-        printf "Deleting all containers...\n"
+        printf "${Yellow}Deleting all containers...\n${NC}"
 	docker rm -f $(docker ps -a --format "{{.Names}}");
 	rm -fr $HOSTSFILE
 	delete_all_volumes
@@ -2515,7 +2610,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 delete_all_demo_containers() {
-clear
+cBlackOnGreeilear
 printf "${BoldYellowBlueBackground}DELETE DEMO CONTAINERS MENU ${NC}\n"
 display_stats_banner
 printf "\n"
@@ -2533,14 +2628,14 @@ declare -a list=($(docker ps -a --format "{{.Names}}" |grep -i "demo"| tr '\n' '
 choice=""
 read -p "Choose number to delete. You can select multiple numbers <ENTER for all>: " choice
 if [ -n "$choice" ]; then
-        printf "Starting selected demo containers...\n"
+        printf "${Yellow}Starting selected demo containers...\n${NC}"
         for id in `echo $choice`; do
                 #printf "${Purple} ${list[$id - 1]}:${NC}\n"
                 hostname=${list[$id - 1]}
         	docker rm -v -f $hostname
         done
 else
-        printf "Starting all demo containers...\n"
+        printf "${Yellow}Starting all demo containers...\n${NC}"
         docker rm -v -f $(docker ps -a --format "{{.Names}}" |grep -i "demo")
 fi
 read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
@@ -2569,14 +2664,14 @@ declare -a list=($(docker ps -a --format "{{.Names}}" |grep -i "demo"| tr '\n' '
 choice=""
 read -p "Choose number to start. You can select multiple numbers <ENTER for all>: " choice
 if [ -n "$choice" ]; then
-        printf "Starting selected demo containers...\n"
+        printf "${Yellow}Starting selected demo containers...\n${NC}"
         for id in `echo $choice`; do
                 #printf "${Purple} ${list[$id - 1]}:${NC}\n"
                 hostname=${list[$id - 1]}
                 docker start $hostname
         done
 else
-        printf "Starting all demo containers...\n"
+        printf "${Yellow}Starting all demo containers...\n${NC}"
         docker start $(docker ps -a --format "{{.Names}}" |grep -i "demo")
 fi
 read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
@@ -2605,14 +2700,14 @@ declare -a list=($(docker ps -a --format "{{.Names}}" |grep -i "demo"| tr '\n' '
 choice=""
 read -p "Choose number to stop. You can select multiple numbers <ENTER for all>: " choice
 if [ -n "$choice" ]; then
-        printf "Stopping selected demo containers...\n"
+        printf "${Yellow}Stopping selected demo containers...\n${NC}"
         for id in `echo $choice`; do
                 #printf "${Purple} ${list[$id - 1]}:${NC}\n"
                 hostname=${list[$id - 1]}
                 docker stop $hostname
         done
 else
-        printf "Stopping all demo containers...\n"
+        printf "${Yellow}Stopping all demo containers...\n${NC}"
         docker stop $(docker ps -a --format "{{.Names}}" |grep -i "demo")
 fi
 read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
@@ -2624,7 +2719,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 start_all_containers() {
 clear
-printf "${BoldYellowBlueBackground}START CONTAINERS MENU ${NC}\n"
+printf "${BoldWhiteOnYellow}START CONTAINERS MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 display_all_containers
@@ -2641,14 +2736,14 @@ declare -a list=($(docker ps -aq | tr '\n' ' '))
 choice=""
 read -p "Choose number to start. You can select multiple numbers <ENTER for all>: " choice
 if [ -n "$choice" ]; then
-        printf "Starting selected containers...\n"
+        printf "${Yellow}Starting selected containers...\n${NC}"
         for id in `echo $choice`; do
                 #printf "${Purple} ${list[$id - 1]}:${NC}\n"
                 hostname=`docker ps -a --filter id=${list[$id - 1]} --format "{{.Names}}"`
 		docker start $hostname
         done
 else
-        printf "Starting all containers...\n"
+        printf "${Yellow}Starting all containers...\n${NC}"
 	docker start $(docker ps -a --format "{{.Names}}") 
         rm -fr $HOSTSFILE
 fi
@@ -2661,7 +2756,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 stop_all_containers() {
 clear
-printf "${BoldYellowBlueBackground}STOP CONTAINERS MENU ${NC}\n"
+printf "${BoldWhiteOnYellow}STOP CONTAINERS MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 display_all_containers
@@ -2677,14 +2772,14 @@ declare -a list=($(docker ps -aq | tr '\n' ' '))
 choice=""
 read -p "Choose number to stop. You can select multiple numbers <ENTER for all>: " choice
 if [ -n "$choice" ]; then
-        printf "Stopping selected containers...\n"
+        printf "${Yellow}Stopping selected containers...\n${NC}"
         for id in `echo $choice`; do
                 #printf "${Purple} ${list[$id - 1]}:${NC}\n"
     		hostname=`docker ps -a --filter id=${list[$id - 1]} --format "{{.Names}}"`
         	docker stop $hostname
 	done
 else
-        printf "Stopping all containers...\n"
+        printf "${Yellow}Stopping all containers...\n${NC}"
        # docker stop $(docker ps -aq);
 	docker stop $(docker ps -a --format "{{.Names}}") 
         rm -fr $HOSTSFILE
@@ -2705,7 +2800,7 @@ delete_all_volumes () {
 #fi
 #disk1=`df -kh /var/lib/docker/| awk '{print $4}'| $GREP -v Avail|sed 's/G//g'`
 #disk1=`df -kh $MOUNTPOINT| awk '{print $4}'| $GREP -v Avail|sed 's/G//g'`
-printf "Deleting all volumes...\n"
+printf "${Yellow}Deleting all volumes...\n${NC}"
 docker volume rm $(docker volume ls -qf 'dangling=true')
 #rm -fr $MOUNTPOINT
 #disk2=`df -kh $MOUNTPOINT| awk '{print $4}'| $GREP -v Avail|sed 's/G//g'`
@@ -2719,6 +2814,11 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 reset_all_splunk_passwords() {
 clear
+printf "${BoldWhiteOnBlue}RESET SPLUNK INSTANCES PASSWORD MENU ${NC}\n"
+display_stats_banner
+printf "\n"
+display_all_containers
+
 count=`docker ps -aq|wc -l`
 if [ $count == 0 ]; then
         printf "No container found!\n"
@@ -2735,6 +2835,11 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 add_splunk_licenses() {
 clear
+printf "${BoldWhiteOnBlue}ADD SPLUNK LICENSE MENU ${NC}\n"
+display_stats_banner
+printf "\n"
+display_all_containers
+
 count=`docker ps -aq|wc -l`
 if [ $count == 0 ]; then
         printf "No container found!\n"
@@ -2751,6 +2856,11 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 restart_all_splunkd() {
 clear
+printf "${BoldWhiteOnBlue}RESTART SPLUNK MENU ${NC}\n"
+display_stats_banner
+printf "\n"
+display_all_containers
+
 count=`docker ps -aq|wc -l`
 if [ $count == 0 ]; then
         printf "No container found!\n"
@@ -2809,18 +2919,19 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 wipe_entire_system() {
 clear
-printf "${BoldYellowBlueBackground}WIPE CLEAN ENTIRE SYSTEM MENU ${NC}\n"
+printf "${BoldWhiteOnGreen}WIPE CLEAN ENTIRE SYSTEM MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 printf "${Red}This option will remove IP aliases, delete all containers, delete all images and remove all volumes! ${NC}\n"
-printf "${Red}You must restart the script again! ${NC}\n"
+printf "${Red}Use this option only if you want to return the system to clean state! ${NC}\n"
+printf "${Red}Restarting the script will recreate every thing again! ${NC}\n"
 printf "\n"
 read -p "Are you sure you want to proceed? [y/N]? " answer
         if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
                 printf "${Yellow}Stopping all containers...${NC}\n"
 		docker stop $(docker ps -aq)
                 printf "\n"
-		printf "Deleting all containers...\n"
+		printf "${Yellow}Deleting all containers...\n${NC}"
         	docker rm -f $(docker ps -a --format "{{.Names}}");
 		printf "\n"
                 printf "${Yellow}Removing all images...${NC}\n"
@@ -2833,29 +2944,77 @@ read -p "Are you sure you want to proceed? [y/N]? " answer
                 printf "${Yellow}Removing all IP aliases...${NC}\n"
 		remove_ip_aliases
 		printf "\n\n"
-                echo -e "Life is good! Thank you for using Splunk n' Box \0360\0237\0230\0200"
+                echo -e "Life is good! Thank you for using Splunk n' Box v$VERSION \0360\0237\0230\0200"
 		printf "Please send feedback to mhassan@splunk.com \n"
 		exit
 fi
 return 0
 }
 #---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+display_welcome_screen () {
 
+# Find out current screen width and hight
+# Set a trap to restore terminal on Ctrl-c (exit).
+# Reset character attributes, make cursor visible, and restore
+# previous screen contents (if possible).
+#trap 'tput sgr0; tput cnorm; tput rmcup || clear; exit 0' SIGINT
+# Save screen contents and make cursor invisible
+#tput smcup; tput civis
+tput clear
+COLUMNS=$(tput cols)
+LINES=$(tput lines)
+#echo "cols:$COLUMNS"
+#echo "lines:$LINES"
+
+# Set default message if $1 input not provided
+MESSAGE[1]="Welcome to Splunk n\' Box v$VERSION"
+MESSAGE[2]="Splunk SE essential tool"
+MESSAGE[4]="Please set your terminal to full mode"
+MESSAGE[10]="Licensed under GPL v3. All rights resevered 2017"
+
+# Calculate x and y coordinates so that we can display $MESSAGE
+# centered in the screen
+x=$(( $LINES / 2 ))                             #centered in the screen
+num_of_msgs=${#MESSAGE[@]}
+z=0
+for (( i=x; i <= (x + $num_of_msgs); i++)); do
+        let z++
+        y=$(( ( $COLUMNS - ${#MESSAGE[$z]} )  / 2 ))
+        tput cup $(($i - 4)) $y                 #set x and y position
+        tput bold   #set reverse video mode
+        # Alright display message stored in $MESSAGE
+        printf "\033[0;36m${MESSAGE[$z]}"
+
+done
+tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
+printf "\033[0;34m${MESSAGE[10]}"
+# Just wait for user input...
+read -p "" readKey
+# Start cleaning up our screen...
+tput clear
+tput sgr0	#reset terminal (doesnt always work)
+tput rc
+
+return 0
+}    #end display_welcome_screen () 
+#---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_main_menu () {
 #This function displays user options for the main menu
 	clear
-	printf "${BlackOnGreen}Splunk n' Box v$VERSION: MAIN MENU [$dockerinfo]${NC}\n"
+	printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION:[$dockerinfo] -> MAIN MENU${NC}\n"
 	display_stats_banner
 	printf "\n"
+	printf "${BoldWhiteOnTurquoise}Manage Infrastructure:${NC}\n"
 	printf "${LightCyan}1${NC}) ${LightCyan}Manage Clusters${NC}\n"
         printf "${LightCyan}2${NC}) ${LightCyan}Manage Splunk Demos ${DarkGray}[ **experimental & internal use only**]${NC}\n"
 	printf "\n"
-	printf "${Red}Manage images:${NC}\n"
+	printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
 	printf "${Red}S${NC}) SHOW all images details ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
 	printf "${Red}R${NC}) REMOVE image(s) to recover diskspace (will extend build times) ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
 	printf "\n"	
-	printf "${Yellow}Manage containers:${NC}\n"
+	printf "${BoldWhiteOnYellow}Manage Containers:${NC}\n"
 	printf "${Yellow}C${NC}) CREATE generic Splunk container(s) ${DarkGray}[docker run ...]${NC}\n"
 	printf "${Yellow}L${NC}) LIST all containers ${DarkGray}[custom view]${NC} \n"
 	printf "${Yellow}P${NC}) STOP container(s) ${DarkGray}[docker stop \$(docker ps -aq)]${NC}\n"
@@ -2863,15 +3022,15 @@ display_main_menu () {
 	printf "${Yellow}D${NC}) DELETE container(s) & Volumes(s)${DarkGray} [docker rm -f \$(docker ps -aq)]${NC}\n"
 	printf "${Yellow}H${NC}) Show hosts by role ${DarkGray}[works only if you followed the host naming rules]${NC}\n"
 	printf "\n"
-	printf "${LightBlue}Manage Splunk:${NC}\n"
+	printf "${BoldWhiteOnBlue}Manage Splunk:${NC}\n"
 	printf "${LightBlue}N${NC}) RESET all splunk passwords [changeme --> $USERPASS] ${DarkGray}[splunkd must be running]${NC}\n"
 	printf "${LightBlue}E${NC}) ADD splunk licenses ${DarkGray}[splunkd must be running]${NC}\n"
 	printf "${LightBlue}U${NC}) RESTART all splunkd instances\n"
 
 	printf "\n"
-	printf "${Green}Manage system:${NC}\n"
-        printf "${Green}A${NC}) Remove IP aliases on the Ethernet interface${NC}\n"
-        printf "${Green}O${NC}) Add common OS utils to container. Will take long time [${White}not recommended${NC}]${NC}\n"
+	printf "${BoldWhiteOnGreen}Manage System:${NC}\n"
+        printf "${Green}A${NC}) Remove IP aliases on the Ethernet interface [${White}not recommended${NC}]${NC}\n"
+        printf "${Green}O${NC}) Add common OS utils to container [${White}not recommended${NC}]${NC}\n"
         printf "${Green}W${NC}) Wipe clean the entire system [${White}not recommended${NC}]${NC}\n"
         #printf "${Green}Q${NC}) Quit${NC}\n"
 return 0
@@ -2927,6 +3086,7 @@ done
 #rm  -fr $CMDLOGBIN $CMDLOGTXT
 printf "\n--------------- Starting new script run. Hosts are grouped by color -------------------\n" > $CMDLOGBIN
 
+display_welcome_screen
 clear
 #house keeping functions
 check_shell
