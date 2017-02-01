@@ -2923,7 +2923,7 @@ clear
 printf "${BoldWhiteOnGreen}WIPE CLEAN ENTIRE SYSTEM MENU ${NC}\n"
 display_stats_banner
 printf "\n"
-print "{$Red}WARNING!${NC}\n"
+printf "${Red}WARNING!${NC}\n"
 printf "${Red}This option will remove IP aliases, delete all containers, delete all images and remove all volumes! ${NC}\n"
 printf "${Red}Use this option only if you want to return the system to clean state! ${NC}\n"
 printf "${Red}Restarting the script will recreate every thing again! ${NC}\n"
