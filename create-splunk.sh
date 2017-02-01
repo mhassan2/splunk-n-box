@@ -2240,9 +2240,6 @@ return 0
 } #display_demos_menu()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-download_demo_image() {
-
-#----------------
 #Modified version of spinner http://fitnr.com/showing-a-bash-spinner.html
 spinner()
 {
@@ -2259,8 +2256,12 @@ spinner()
         #printf "\b\b\b\b\b\b"
     done
     #printf "    \b\b\b\b"
-}
-#-----------------------------
+return 0
+}  #end spinner()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+download_demo_image() {
+
 clear
 #-----------show images details
 printf "${BoldYellowBlueBackground}DOWNLOAD DEMO IAMGES MENU ${NC}\n"
@@ -2610,7 +2611,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 delete_all_demo_containers() {
-cBlackOnGreeilear
+clear
 printf "${BoldYellowBlueBackground}DELETE DEMO CONTAINERS MENU ${NC}\n"
 display_stats_banner
 printf "\n"
