@@ -22,7 +22,7 @@
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
 VERSION=2.6
-# Version:	 $Id:$  2.5
+# Version:	 $Id:$  2.6
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
 #		v1-2	default setting (recommended for ongoing usage)
