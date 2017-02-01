@@ -216,7 +216,7 @@ display_stats_banner
 printf "\n"
 #display_all_containers
 echo
-printf "${Red}You are about to remove IP aliases. This will kill any container already binded to IP ${NC}\n"
+printf "${Red}WARNING! You are about to remove IP aliases. This will kill any container already binded to IP ${NC}\n"
 echo
 read -p "Are you sure you want to proceed? [y/N]? " answer
 if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
@@ -2320,7 +2320,7 @@ fi
         #read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
 END=$(date +%s);
 TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${DarkGray}Totla download time: [$TIME]${NC}\n"
+printf "${DarkGray}Total download time: [$TIME]${NC}\n"
 return 0
 }  #end download_demo_image() {
 #---------------------------------------------------------------------------------------------------------------
@@ -2922,6 +2922,7 @@ clear
 printf "${BoldWhiteOnGreen}WIPE CLEAN ENTIRE SYSTEM MENU ${NC}\n"
 display_stats_banner
 printf "\n"
+print "{$Red}WARNING!${NC}\n"
 printf "${Red}This option will remove IP aliases, delete all containers, delete all images and remove all volumes! ${NC}\n"
 printf "${Red}Use this option only if you want to return the system to clean state! ${NC}\n"
 printf "${Red}Restarting the script will recreate every thing again! ${NC}\n"
