@@ -1064,17 +1064,17 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 show_all_demo_containers() {
 clear
-count=`docker ps -a|grep -i "demo"|wc -l`
-if [ $count == 0 ]; then
-        printf "No DEMO containers to list!\n"
-        return 0
-fi
 printf "${BoldYellowBlueBackground}SHOW DEMO CONTAINERS MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 printf "Current list all of DEMO containers on this system:\n"
 display_all_demo_containers
 echo
+count=`docker ps -a|grep -i "demo"|wc -l`
+if [ $count == 0 ]; then
+        printf "No DEMO containers to list!\n"
+        return 0
+fi
 return 0
 }  #end show_all_demo_containers()
 #---------------------------------------------------------------------------------------------------------------
@@ -2187,7 +2187,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_demos_stats_menu () {
-
+clear
 # run if user hits control-c
   echo -en "\n*** Stopped ***\n"
   exit $?
@@ -2363,7 +2363,7 @@ choice=""
 read -p "Choose number to create. You can select multiple numbers. <ENTER for all>: " choice
 if [ -n "$choice" ]; then
         printf "**PLEASE WACH THE LOAD AVRAGE CLOSELY**\n\n"
-        printf "Creating selected demo containers(s)...\n"
+        printf "${Yellow}Creating selected demo containers(s)...${NC}\n"
         for id in `echo $choice`; do
 		image_name=(${list[$id - 1]})
                #echo "$id : ${list[$id - 1]}"
@@ -2378,7 +2378,7 @@ else
 #display_stats_banner
 #printf "\n"
         if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
-        	printf "Creating all demo containers(s)...\n"
+        	printf "${Yellow}Creating all demo containers(s)...\n${NC}"
                 for i in $REP_DEMO_IMAGES; do
                         printf "${Purple}Creating [$i${NC}]"; display_stats_banner
                 	create_generic_splunk "$i" "1"
