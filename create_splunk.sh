@@ -522,7 +522,7 @@ else
 fi
 
 printf "${LightBlue}==>${NC} Checking if docker has enough MEMORY allocated [Docker:%sGB  OS:%sGB]..." $dockerinfo_mem $os_total_mem
-if [ "$dockerinfo_mem" -lt "$(($os_total_mem - 1))" ]; then
+if [ "$dockerinfo_mem" -lt "$(($os_total_mem - 2))" ]; then
                 printf "${BrownOrange} WARNING!${NC}\n" $dockerinfo_mem $os_total_mem
                 printf "    >> Docker is configured to use %sGB of the avialable system %sGB memory\n" $dockerinfo_mem $os_total_mem
                 printf "    >> Please allocate all system memory to Docker (Prefrences->Advance)\n\n"
