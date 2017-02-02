@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=2.7
+VERSION=2.8
 # Version:	 see $VERSION above
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
@@ -161,7 +161,7 @@ FLIPFLOP=0			#used to toggle color value in logline().Needs to be global
 #Set the local splunkd path if you're running Splunk on this docker-host (ex laptop).
 #Used in validation_check() routine to detect local instance and kill it.
 LOCAL_SPLUNKD="/opt/splunk/bin/splunk"  #don't run local splunkd instance on docker-host
-LOW_MEM_THRESHOLD=6			#threshold of recommended free system memory in GB
+LOW_MEM_THRESHOLD=6.0			#threshold of recommended free system memory in GB
 #----------
 
 # *** Let the fun begin ***
@@ -402,7 +402,7 @@ return 0
 validation_check () {
 display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-#----------Gnu grep MacOS only
+#----------Gnu grep installed? MacOS only-------------
 if [ "$os" == "Darwin" ]; then
 	printf "${LightBlue}==>${NC} Checking if GNU grep is installed [$GREP]..."
         condition=$(which $GREP_OSX 2>/dev/null | grep -v "not found" | wc -l)
@@ -421,34 +421,35 @@ if [ "$os" == "Darwin" ]; then
                 printf "${Green} OK!${NC}\n"
         fi
 fi
-#---------------------------------
+#----------Gnu grep installed? MacOS only-------------
 
-#-----------other scripts running?
+#-----------other scripts running?---------
 printf "${LightBlue}==>${NC} Checking if we have instances of this script running...${NC}"
 this_script_name="${0##*/}"
 pid_list=`ps -efa | grep $this_script_name | grep "/bin/bash" |grep -v $$ |awk '{printf $2" " }'`
 #echo "running:  ps -efa | grep create-splunk.sh | grep \"/bin/bash\" |grep -v \$\$ |awk '{printf \$2\" \" }"
 if [ -n "$pid_list" ]; then
-        printf "\n${Red}    Detected running instances of $this_script_name [$pid_list]${NC}\n"
-        read -p "    This script doesn't support multiple instances. Kill them? [Y/n]? " answer
+	printf "\n"
+        printf "    ${Red}>>${NC} Detected running instance(s) of $this_script_name [$pid_list]${NC}\n"
+        read -p "    >> This script doesn't support multiple instances. Kill them? [Y/n]? " answer
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
                 sudo kill -9 $pid_list
-		printf "\n"
         fi
+	printf "\n"
 else
         printf "${Green} OK!${NC}\n"
 fi
-#-----------------------
+#-----------other scripts running?---------
 
-#-----------docker daemon running check
+#-----------docker daemon running check----
 is_running=`docker info|grep Images`
 printf "${LightBlue}==>${NC} Checking if docker daemon is running..."
 if [ -z "$is_running" ]; then
         printf "${Red}NOT RUNNING!${NC}\n"
         if [ "$os" == "Darwin" ]; then
-                printf "    ${White}installation https://docs.docker.com/v1.10/mac/step_one/ ${NC}\n"
+                printf "    ${Red}>>${NC} installation https://docs.docker.com/v1.10/mac/step_one/ ${NC}\n"
         elif [ "$os" == "Linux" ]; then
-                printf "    ${White}installation: https://docs.docker.com/engine/installation/ ${NC}\n"
+                printf "    ${Red}>>${NC} installation: https://docs.docker.com/engine/installation/ ${NC}\n"
         fi
         printf "${NC}\n"
         printf "Exiting...\n"
@@ -460,12 +461,10 @@ else
 	dockerinfo_mem1=`docker info| $GREP  'Total Memory'| awk '{printf $3}'| tr -d '\n' `
 	dockerinfo_mem=`echo "$dockerinfo_mem1 / 1" | bc `
 	#echo "DOCKER: ver:[$dockerinfo_ver]  cpu:[$dockerinfo_cpu]  totmem:[$dockerinfo_mem] ";exit
-
-
 fi
-#-----------
+#-----------docker daemon running check----
 
-#-----------gathering OS memory/cpu
+#-----------Gathering OS memory/cpu info---
 if [ "$os" == "Linux" ]; then
         cores=`$GREP -c ^processor /proc/cpuinfo`
         os_free_mem=`free -mg|grep -i mem|awk '{print $2}' `
@@ -475,108 +474,94 @@ if [ "$os" == "Linux" ]; then
 
 elif [ "$os" == "Darwin" ]; then
         cores=`sysctl -n hw.ncpu`
-        os_used_mem=`top -l 1 -s 0 | grep PhysMem |tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $1}' `    #extract used memory in G
-        os_wired_mem=`top -l 1 -s 0 | grep PhysMem | tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $2}' `     #extract wired mem in M
-        os_unused_mem=`top -l 1 -s 0 | grep PhysMem | tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $3}' `     #extract unused mem in M
-	#need fixing: values are in Meg and Gig???????
-        os_wired_mem=$(($os_wired_mem / 1024))
-	os_unused_mem=$(($os_unused_mem / 1024))
-       # os_used_mem=$(($os_used_mem / 1024)) 
+        os_used_mem=`top -l 1 -s 0|grep PhysMem|tr -d '[[:punct:]]'|awk '{print $2}' `    
+	if ( compare "$os_used_mem" "M" ); then 
+		os_used_mem=`echo $os_used_mem | tr -d '[[:alpha:]]'`  #strip M
+		os_used_mem=`printf "%0.1f\n" $(bc -q <<< scale=6\;$os_used_mem/1024)` #convert float from MB to GB
+	else
+		os_used_mem=`echo $os_used_mem | tr -d '[[:alpha:]]'`  #strip G
+	fi
+        os_wired_mem=`top -l 1 -s 0|grep PhysMem|tr -d '[[:punct:]]'|awk '{print $4}' `    
+	if ( compare "$os_wired_mem" "M" ); then
+                os_wired_mem=`echo $os_wired_mem | tr -d '[[:alpha:]]'`  #strip M
+		os_wired_mem=`printf "%0.1f\n" $(bc -q <<< scale=6\;$os_wired_mem/1024)` #convert float from MB to GB
+        else
+                os_wired_mem=`echo $os_wired_mem | tr -d '[[:alpha:]]'`  #strip G
+        fi
+        os_unused_mem=`top -l 1 -s 0|grep PhysMem|tr -d '[[:punct:]]'|awk '{print $6}' ` 
+	if ( compare "$os_unused_mem" "M" ); then
+                os_unused_mem=`echo $os_unused_mem | tr -d '[[:alpha:]]'`  #strip M
+		os_unused_mem=`printf "%0.1f\n" $(bc -q <<< scale=6\;$os_unused_mem/1024)` #convert float from MB to GB
+        else
+                os_unused_mem=`echo $os_unused_mem | tr -d '[[:alpha:]]'`  #strip G
+        fi
+        #echo "MEM: used:[$os_used_mem] wired:[$os_wired_mem]  unused:[$os_unused_mem]"
 	os_free_mem=$os_unused_mem
-        let os_total_mem=$(( $os_used_mem + $os_wired_mem + $os_unused_mem ))
-        os_free_mem_perct=$(( $os_free_mem * 100 / $os_total_mem))
-        echo "MEM: TOTAL:[$os_total_mem]  PRECT=[$os_free_mem_perct] USED:[$os_used_mem] WIRED:[$os_wired_mem]  UNUSED:[$os_unused_mem]"
+        os_total_mem=`echo $os_used_mem + $os_wired_mem + $os_unused_mem | bc`
+        os_free_mem_perct=`echo "($os_free_mem * 100) / $os_total_mem"| bc`
+      #  echo "MEM: TOTAL:[$os_total_mem] UNUSED:[$os_unused_mem] %=[$os_free_mem_perct]     USED:[$os_used_mem] wired:[$os_wired_mem]"
+	docker_total_mem_perct=`echo "($dockerinfo_mem * 100) / $os_total_mem"| bc`
 fi
-#-----------------------
+#exit
+#-----------Gathering OS memory/cpu info---
 
+#-----------OS memory check-------------------
+printf "${LightBlue}==>${NC} Checking if we have enough free OS memory [Free:%sgb Total:%sgb  %s%%]..." $os_free_mem $os_total_mem $os_free_mem_perct
+state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparision
+#os_free_mem=6.4; echo $state
+if [ "$os_free_mem_perct" -lt "90" ]; then
+	printf "${BrownOrange} WARNING!${NC}\n"
+	printf "    ${Red}>>${NC} Recommend %sGB+ for complete infrastructure or Splunk demos builds\n" $LOW_MEM_THRESHOLD
+	printf "    ${Red}>>${NC} Sometimes restarting Docker can free up memory\n\n" $os_free_mem $LOW_MEM_THRESHOLD
+	#printf "${White}    7-Change docker default settings! Docker-icon->Preferences->General->pick max CPU/MEM available${NC}\n\n" 
+else
+	printf "${Green}OK!${NC}\n"
+fi
+#-----------OS memory check-------------------
 
-#-----------memory check
-printf "${LightBlue}==>${NC} Checking if we have enough free system memory..."
-if [ "$os" == "Linux" ]; then
-	if [ "$os_free_mem" -le "$LOW_MEM_THRESHOLD" ]; then
-		printf "${BrownOrange} [$os_free_mem GB] WARNING!${NC}\n"
-		printf "${BrownOrange} [free:%sGB total:%sGB %s%%] WARNING!${NC}\n" $os_free_mem $os_total_mem $os_free_mem_perct
-		printf "    >> %sGB is Ok to run few containers. Recommend %sGB+ for complete infrastructure or Splunk demos\n\n" $os_free_mem $LOW_MEM_THRESHOLD
-	else
-		printf "[%sGB/%sGB %s%%] ${Green}OK!${NC}\n" $os_free_mem $os_total_mem $os_free_mem_perct
-	fi
-fi #Linux check
-
-if [ "$os" == "Darwin" ];then
-	if [ "$os_free_mem" -le "$LOW_MEM_THRESHOLD" ]; then
-		printf "${BrownOrange} [%sGB/%sGB %s%%] WARNING!${NC}\n" $os_free_mem $os_total_mem $os_free_mem_perct
-		printf "    >> %sGB is Ok to run few containers. Recommend %sGB+ for complete infrastructure or Splunk demos\n\n" $os_free_mem $LOW_MEM_THRESHOLD
-		#printf "${White}    7-Change docker default settings! Docker-icon->Preferences->General->pick max CPU/MEM available${NC}\n\n" 
-	else
-		printf "[%sGB/%sGB %s%%] ${Green}OK!${NC}\n" $os_free_mem $os_total_mem $os_free_mem_perct
-	fi
-fi #Darwin check
-#-----------
-#-----------docker preferences check 
-printf "${LightBlue}==>${NC} Checking if docker has enough CPU allocated [Docker:%s  OS:%s]..." $dockerinfo_cpu $cores
+#-----------docker preferences/config check-------
+printf "${LightBlue}==>${NC} Checking Docker configs for CPUs allocation [Docker:%s  OS:%s]..." $dockerinfo_cpu $cores
+#state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparision
 if [ "$dockerinfo_cpu" -lt "$cores" ]; then
-		printf "${BrownOrange} WARNING!${NC}\n"
-		printf "    >> Docker is configured to use %s of the avialable system %s CPUs\n" $dockerinfo_cpu $cores
-		printf "    >> Please allocate all system cpus to Docker (Prefrences->Advance)\n\n" 
+	printf "${BrownOrange} WARNING!${NC}\n"
+	printf "    ${Red}>>${NC} Docker is configured to use %s of the available system %s CPUs\n" $dockerinfo_cpu $cores
+	printf "    ${Red}>>${NC} Please allocate all available system cpus to Docker (Prefrences->Advance)\n\n" 
 else
-                printf " ${Green}OK!${NC}\n" 
+        printf " ${Green}OK!${NC}\n" 
 fi
-
-printf "${LightBlue}==>${NC} Checking if docker has enough MEMORY allocated [Docker:%sGB  OS:%sGB]..." $dockerinfo_mem $os_total_mem
-if [ "$dockerinfo_mem" -lt "$(($os_total_mem - 2))" ]; then
-                printf "${BrownOrange} WARNING!${NC}\n" $dockerinfo_mem $os_total_mem
-                printf "    >> Docker is configured to use %sGB of the avialable system %sGB memory\n" $dockerinfo_mem $os_total_mem
-                printf "    >> Please allocate all system memory to Docker (Prefrences->Advance)\n\n"
+printf "${LightBlue}==>${NC} Checking Docker configs for MEMORY allocation [Docker:%sgb OS:%sgb  %s%%]..." $dockerinfo_mem $os_total_mem $docker_total_mem_perct
+if [ "$docker_total_mem_perct" -lt "80" ]; then
+	printf "${BrownOrange} WARNING!${NC}\n" $dockerinfo_mem $os_total_mem
+       	printf "    ${Red}>>${NC} Docker is configured to use %sgb of the available system %sgb memory\n" $dockerinfo_mem $os_total_mem
+       	printf "    ${Red}>>${NC} Please allocate all available system memory to Docker (Prefrences->Advance)\n\n"
 else
-                printf " ${Green}OK!${NC}\n"
+        printf " ${Green}OK!${NC}\n"
 fi
+#-----------docker preferences check-------
 
-#-----------
-#-----------splunk image check
+#-----------splunk image check-------------
 printf "${LightBlue}==>${NC} Checking if Splunk image is available [$SPLUNK_IMAGE]..."
 image_ok=`docker images|grep $SPLUNK_IMAGE`
 if [ -z "$image_ok" ]; then
-	printf "${Red}NOT FOUND!${NC}\n\n"
-	#printf "${DarkGray}"
-        #printf "  Will attempt to download this image. If that doesn't work; can try: \n"
-	#printf "  1-link: https://github.com/outcoldman/docker-splunk \n"
-	#printf "  2-link: https://github.com/splunk/docker-splunk/tree/master/enterprise \n"
-	#printf "  3-Search for Splunk images https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=splunk&starCount=0\n\n"
-	#printf "${NC}\n"
-	read -p "Download image [$SPLUNK_IMAGE] (may take time)? [Y/n]? " answer
+	printf "${Red}NOT FOUND!${NC}\n"
+	read -p "    >> Download image [$SPLUNK_IMAGE]? [Y/n]? " answer
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
-		printf "Downloading from https://hub.docker.com/r/mhassan/splunk/\n"
-		printf "${Yellow}Running [docker pull $SPLUNK_IMAGE]...${NC}\n"
-                printf "${Purple}$SPLUNK_IMAGE:${NC}["
+		printf "    ${Red}>>${NC} Downloading from https://hub.docker.com/r/mhassan/splunk/\n"
+                printf "    ${Purple}$SPLUNK_IMAGE:${NC}["
                 (docker pull $SPLUNK_IMAGE >/dev/null) &
                 spinner $!
-                printf "]\n${NC}"
-		#printf "\n"
-		#printf "${Yellow}Running [docker images]...${NC}\n"
-        	#docker images
-		#printf "\n"
+                printf "]\n\n${NC}"
         else
                 printf "${Red}Cannot proceed with splunk image! Exiting...${NC}\n"
                 printf "See https://hub.docker.com/r/mhassan/splunk/ \n\n"
 		exit
         fi
-	#out="$(docker pull $SPLUNK_IMAGE 2>&1)"
-	#if ( compare "$out" "error" ); then
-	#	printf "Pull failed! Lets try searching for \"splunk\" image on the repository...."
-	#	#printf "${Yellow}Running [docker search splunk]...${NC}\n\n"
-	#	#docker search splunk
-	#else	
-	#	printf "${Yellow}Running [docker images]...${NC}\n\n"
-	#	docker images
-	#	printf "\n\n${Yellow}Please restart the script again!${NC}\n"
-        #exit
-	#fi
 else
         printf "${Green} OK!${NC}\n"
 fi
-#-----------
+#-----------splunk image check-------------
 
-#-----------splunk-net check
+#-----------splunk-net check---------------
 printf "${LightBlue}==>${NC} Checking if docker network is created [$SPLUNKNET]..."
 net=`docker network ls | grep $SPLUNKNET `
 if [ -z "$net" ]; then 
@@ -585,48 +570,51 @@ if [ -z "$net" ]; then
 else
        printf "${Green} OK!${NC}\n"
 fi
-#-----------license files/dir check
+#-----------splunk-net check---------------
+
+#-----------license files/dir check--------
 printf "${LightBlue}==>${NC} Checking if we have license files *.lic in [$PROJ_DIR/$LIC_FILES_DIR]..."
 if [ ! -d $PROJ_DIR/$LIC_FILES_DIR ]; then
     		printf "${Red} DIR DOESN'T EXIST!${NC}\n"
-		printf "    Suggestions:\n"
-		printf "    -Please create $PROJ_DIR/$LIC_FILES_DIR and place all *.lic files there.\n"
-		printf "    -Change the location of LICENSE dir in the config section of the script.${NC}\n\n"
+		printf "    ${Red}>>${NC} Please create $PROJ_DIR/$LIC_FILES_DIR and place all *.lic files there.\n"
+		printf "    ${Red}>>${NC} Change the location of LICENSE dir in the config section of the script.${NC}\n\n"
 elif  ls $PROJ_DIR/$LIC_FILES_DIR/*.lic 1> /dev/null 2>&1 ; then 
        		printf "${Green} OK!${NC}\n"
 	else
         	printf "${Red}NO LIC FILE(S) FOUND!${NC}\n"
-		printf "    Suggestions:\n"
-		printf "    -If *.lic exist, make sure they are readable.${NC}\n\n"
+		printf "    ${Red}>>${NC} If *.lic exist, make sure they are readable.${NC}\n\n"
 fi
-#-----------local splunkd check
+#-----------license files/dir check--------
+
+#-----------local splunkd check------------
 #Little tricky, local splunkd process running on docker-host is different than splunkd inside a container!
 printf "${LightBlue}==>${NC} Checking if non-docker splunkd process is running [$LOCAL_SPLUNKD]..."
 PID=`ps aux | $GREP 'splunkd' | $GREP 'start' | head -1 | awk '{print $2}' `  	#works on OSX & Linux
+
 if [ "$os" == "Darwin" ] && [ -n "$PID" ]; then
 	splunk_is_running="$PID"
 elif [ "$os" == "Linux" ] && [ -n "$PID" ]; then
 	splunk_is_running=`cat /proc/$PID/cgroup|head -n 1|grep -v docker`	#works on Linux only
 fi
-#echo "PID[$PID]"
-#echo "splunk_is_running[$splunk_is_running]"
 if [ -n "$splunk_is_running" ]; then
 	printf "${Red}Running [$PID]${NC}\n"
-	read -p "Kill it? [Y/n]? " answer
+	read -p "    >> Kill it? [Y/n]? " answer
        	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		sudo $LOCAL_SPLUNKD stop
 	else
-		printf "${Red}WARNING! Running local splunkd may prevent containers from binding to interfaces!${NC}\n\n"	
+		printf "    ${Red}WARNING!${NC}\n"
+		printf "    ${Red}>>${NC} Running local splunkd may prevent containers from binding to interfaces!${NC}\n\n"	
 	fi
 else
 	printf "${Green} OK!${NC}\n"
 fi
-#-----------
-#-----------discovering DNS setting for OSX. Used for container build
+#-----------local splunkd check------------
+
+#-----------discovering DNS setting for OSX. Used for container build--
 if [ "$os" == "Darwin" ]; then
         DNSSERVER=`scutil --dns|grep nameserver|awk '{print $3}'|sort -u|tail -1`
 fi
-#-----------
+#-----------discovering DNS setting for OSX. Used for container build--
 
 #TO DO:
 #check dnsmasq
