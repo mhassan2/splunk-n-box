@@ -160,7 +160,7 @@ ifconfig | more
 You have the ability to control verbosity level by using –v switch. The script uses I/O redirection to control verbosity (and logging level to the log file). 
 
 ```
-create-splunk.sh –v3 
+splunknbox.sh –v3 
 ```
 
 Experiment with creating few hosts then point your browser to them. Push the server to the limits to see how many hosts can you create before your system crashes. I was able to create 80 hosts (4 site-2-site cluster 20IDX 3SH each) on a single Intel NUC Skull device (i7 32GB 1TB SSD). Load Avg shot to 20 during the build but went down to 6 once the cluster stabilized. Please be aware that it will take 10+ minutes (depending on the number of members in the cluster) to reach a stable cluster state.
@@ -188,7 +188,7 @@ There are two menu screens the main menu and clustering menu. Here is a brief ex
 
 `R) Remove all volumes`: Docker does not remove any container artifact when deleted or shut down. You can clean and save disk space using                          this option.
 
-`4) Show hosts by group`:Useful for displaying categories of the environment by function. It will show all cluster-masters (CM) and possible                          members associated with it. The same goes for Deployer (DEP) servers.
+`H) Show hosts by group`:Useful for displaying categories of the environment by function. It will show all cluster-masters (CM) and possible                          members associated with it. The same goes for Deployer (DEP) servers.
 
 The rest of the options are self-explanatory
 
