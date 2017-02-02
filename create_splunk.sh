@@ -429,11 +429,11 @@ this_script_name="${0##*/}"
 pid_list=`ps -efa | grep $this_script_name | grep "/bin/bash" |grep -v $$ |awk '{printf $2" " }'`
 #echo "running:  ps -efa | grep create-splunk.sh | grep \"/bin/bash\" |grep -v \$\$ |awk '{printf \$2\" \" }"
 if [ -n "$pid_list" ]; then
-        #printf "${Red}This script name [$this_script_name]${NC}\n"
-        printf "${Red}Detected running instances of $this_script_name [$pid_list]${NC}\n\n"
-        read -p "This script doesn't support multiple instances. Kill them? [Y/n]? " answer
+        printf "\n${Red}    Detected running instances of $this_script_name [$pid_list]${NC}\n"
+        read -p "    This script doesn't support multiple instances. Kill them? [Y/n]? " answer
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
                 sudo kill -9 $pid_list
+		printf "\n"
         fi
 else
         printf "${Green} OK!${NC}\n"
@@ -478,12 +478,13 @@ elif [ "$os" == "Darwin" ]; then
         os_used_mem=`top -l 1 -s 0 | grep PhysMem |tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $1}' `    #extract used memory in G
         os_wired_mem=`top -l 1 -s 0 | grep PhysMem | tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $2}' `     #extract wired mem in M
         os_unused_mem=`top -l 1 -s 0 | grep PhysMem | tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $3}' `     #extract unused mem in M
-        os_wired_mem=$(($os_wired_mem / 1024)) ; os_unused_mem=$(($os_unused_mem / 1024)) ; 
-        os_used_mem=$(($os_used_mem / 1024)) 
+        os_wired_mem=$(($os_wired_mem / 1024))
+	os_unused_mem=$(($os_unused_mem / 1024)) ; 
+       # os_used_mem=$(($os_used_mem / 1024)) 
 	os_free_mem=$os_unused_mem
-        let os_total_mem=$os_used_mem+$os_wired_mem+$os_unused_mem
+        let os_total_mem=$(( $os_used_mem + $os_wired_mem + $os_unused_mem ))
         os_free_mem_perct=$(( $os_free_mem * 100 / $os_total_mem))
-        #echo "TOTAL:[$os_total_mem]  PRECT=[$os_free_mem_perct] USED:[$os_used_mem] WIRED:[$os_wired_mem]  UNUSED:[$os_unused_mem]"
+        echo "MEM: TOTAL:[$os_total_mem]  PRECT=[$os_free_mem_perct] USED:[$os_used_mem] WIRED:[$os_wired_mem]  UNUSED:[$os_unused_mem]"
 fi
 #-----------------------
 
@@ -493,7 +494,7 @@ printf "${LightBlue}==>${NC} Checking if we have enough free system memory..."
 if [ "$os" == "Linux" ]; then
 	if [ "$os_free_mem" -le "$LOW_MEM_THRESHOLD" ]; then
 		printf "${BrownOrange} [$os_free_mem GB] WARNING!${NC}\n"
-		printf "${BrownOrange} [%sGB/%sGB %s%%] WARNING!${NC}\n" $os_free_mem $os_total_mem $os_free_mem_perct
+		printf "${BrownOrange} [free:%sGB total:%sGB %s%%] WARNING!${NC}\n" $os_free_mem $os_total_mem $os_free_mem_perct
 		printf "    >> %sGB is Ok to run few containers. Recommend %sGB+ for complete infrastructure or Splunk demos\n\n" $os_free_mem $LOW_MEM_THRESHOLD
 	else
 		printf "[%sGB/%sGB %s%%] ${Green}OK!${NC}\n" $os_free_mem $os_total_mem $os_free_mem_perct
@@ -541,8 +542,9 @@ if [ -z "$image_ok" ]; then
 	#printf "  2-link: https://github.com/splunk/docker-splunk/tree/master/enterprise \n"
 	#printf "  3-Search for Splunk images https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=splunk&starCount=0\n\n"
 	#printf "${NC}\n"
-	read -p "Download image [$SPLUNK_IMAGE] from https://hub.docker.com/r/mhassan/splunk/ (may take time)? [Y/n]? " answer
+	read -p "Download image [$SPLUNK_IMAGE] (may take time)? [Y/n]? " answer
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+		printf "Downloading from https://hub.docker.com/r/mhassan/splunk/\n"
 		printf "${Yellow}Running [docker pull $SPLUNK_IMAGE]...${NC}\n"
                 printf "${Purple}$SPLUNK_IMAGE:${NC}["
                 (docker pull $SPLUNK_IMAGE >/dev/null) &
