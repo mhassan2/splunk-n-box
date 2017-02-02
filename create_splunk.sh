@@ -478,7 +478,9 @@ elif [ "$os" == "Darwin" ]; then
         os_used_mem=`top -l 1 -s 0 | grep PhysMem |tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $1}' `    #extract used memory in G
         os_wired_mem=`top -l 1 -s 0 | grep PhysMem | tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $2}' `     #extract wired mem in M
         os_unused_mem=`top -l 1 -s 0 | grep PhysMem | tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $3}' `     #extract unused mem in M
-        os_wired_mem=$(($os_wired_mem / 1024)) ; os_unused_mem=$(($os_unused_mem / 1024)) ; os_free_mem=$os_unused_mem
+        os_wired_mem=$(($os_wired_mem / 1024)) ; os_unused_mem=$(($os_unused_mem / 1024)) ; 
+        os_used_mem=$(($os_used_mem / 1024)) 
+	os_free_mem=$os_unused_mem
         let os_total_mem=$os_used_mem+$os_wired_mem+$os_unused_mem
         os_free_mem_perct=$(( $os_free_mem * 100 / $os_total_mem))
         #echo "TOTAL:[$os_total_mem]  PRECT=[$os_free_mem_perct] USED:[$os_used_mem] WIRED:[$os_wired_mem]  UNUSED:[$os_unused_mem]"
@@ -519,7 +521,7 @@ else
 fi
 
 printf "${LightBlue}==>${NC} Checking if docker has enough MEMORY allocated [Docker:%sGB  OS:%sGB]..." $dockerinfo_mem $os_total_mem
-if [ "$dockerinfo_mem" -lt "$os_total_mem" ]; then
+if [ "$dockerinfo_mem" -lt "$(($os_total_mem - 1))" ]; then
                 printf "${BrownOrange} WARNING!${NC}\n" $dockerinfo_mem $os_total_mem
                 printf "    >> Docker is configured to use %sGB of the avialable system %sGB memory\n" $dockerinfo_mem $os_total_mem
                 printf "    >> Please allocate all system memory to Docker (Prefrences->Advance)\n\n"
