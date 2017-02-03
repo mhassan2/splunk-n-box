@@ -2507,15 +2507,15 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_stats_banner () {
-os_used_mem=`top -l 1 -s 0 | grep PhysMem |tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $1}' `    #extract used memory in G
-os_wired_mem=`top -l 1 -s 0 | grep PhysMem | tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $2}' `     #extract wired mem in M
-os_unused_mem=`top -l 1 -s 0 | grep PhysMem | tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $3}' `     #extract unused mem in M
+#os_used_mem=`top -l 1 -s 0 | grep PhysMem |tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $1}' `    #extract used memory in G
+#os_wired_mem=`top -l 1 -s 0 | grep PhysMem | tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $2}' `     #extract wired mem in M
+#os_unused_mem=`top -l 1 -s 0 | grep PhysMem | tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $3}' `     #extract unused mem in M
 
 dockerinfo_ver=`docker info| $GREP 'Server Version'| awk '{printf $3}'| tr -d '\n' `
 dockerinfo_cpu=`docker info| $GREP 'CPU' | awk '{printf $2}'| tr -d '\n' `
 dockerinfo_mem1=`docker info| $GREP  'Total Memory'| awk '{printf $3}'| tr -d '\n' `
 dockerinfo_mem=`echo "$dockerinfo_mem1 / 1" | bc `
-#echo "DOCKER: ver:[$dockerinfo_ver]  cpu:[$dockerinfo_cpu]  totmem:[$dockerinfo_mem] ";exit
+#echo "DOCKER: ver:[$dockerinfo_ver]  cpu:[$dockerinfo_cpu]  totmem:[$dockerinfo_mem] "
 
 if [ "$os" == "Darwin" ]; then
         loadavg=`sysctl -n vm.loadavg | awk '{print $2}'`
@@ -3076,6 +3076,7 @@ return 0
 display_main_menu () {
 #This function displays user options for the main menu
 	clear
+	dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
 	printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION:[$dockerinfo] -> MAIN MENU${NC}\n"
 	display_stats_banner
 	printf "\n"
