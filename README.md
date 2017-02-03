@@ -79,9 +79,7 @@ Change DNSSERVER="192.168.2.100"  to point the caching DNS server. This does not
  
 Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-mavericks-10.9-configuration/
 ```
-
 xcode-select --install   (this is an optional step. You may NOT need it)
-
 ```
 
 Install docker & Tool box : https://docs.docker.com/engine/installation/mac/
