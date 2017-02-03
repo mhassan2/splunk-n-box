@@ -63,7 +63,7 @@ If you want the docker-host to be able to resolve host IPs (optional) install dn
 Change DNSSERVER="192.168.2.100"  to point the caching DNS server. This does not work on OSX yet!
 
 
-##MAC OSX installation (laptop):
+##MAC OSX installation (ALL STEPS ARE AUTOMATED EXCEPT DOCKER PKG INSTALL):
 
 &#x1F4D9;For Darwin installtions read this first: 
 
@@ -79,7 +79,9 @@ Change DNSSERVER="192.168.2.100"  to point the caching DNS server. This does not
  
 Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-mavericks-10.9-configuration/
 ```
+
 xcode-select --install   (this is an optional step. You may NOT need it)
+
 ```
 
 Install docker & Tool box : https://docs.docker.com/engine/installation/mac/
