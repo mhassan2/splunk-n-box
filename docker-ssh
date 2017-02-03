@@ -1,5 +1,7 @@
 #!/bin/bash -xe
 
+#optional script
+
 # docker id might be given as a parameter
 DID=$1
 DID=`echo $DID| tr '[a-z]' '[A-Z]'`
