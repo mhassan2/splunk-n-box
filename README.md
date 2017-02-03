@@ -12,6 +12,7 @@ Like with most people, you probably attempted to solve the problem by either thr
 
 In my small test environment, I was able to quickly bring upward of 40+ Splunk Docker containers for a classroom lab using low powered Intel NUC device (i3 16GB ram, 128G SSD). What’s impressive about Docker is the resource utilization on the docker-host is tiny compared to a VM based build. I need to emphasize the fact that I have not tested builds under heavy load (either user traffic or data ingestion). However, I believe it is just a matter of sizing the hardware appropriately.
 
+
 ##Script feature list:
 
 - Extensive error checking during startup & while building containers.
