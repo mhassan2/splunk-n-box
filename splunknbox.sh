@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=2.8
+VERSION=2.9
 # Version:	 see $VERSION above
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
@@ -68,11 +68,7 @@ VOL_DIR="docker-volumes"	#directory name for volumes mount point.Full path is dy
 SPLUNK_IMAGE="mhassan/splunk"		#my own built image 6.4.3
 #SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-  6.5.0
 #SPLUNK_IMAGE="splunk/splunk:6.5.0"	#official image 6.5.0
-
-#other possible options
-#SPLUNK_IMAGE="outcoldman/splunk:6.4.2"	#tested but taken offline by outcoldman
-#SPLUNK_IMAGE="btorresgil/splunk"	#untested
-#SPLUNK_IMAGE="xeor/splunk"		#unstested
+SPLUNK_DOCKER_HUB="registry.splunk.com"
 #----------
 
 #----------Cluster stuff
@@ -467,10 +463,10 @@ fi
 #-----------Gathering OS memory/cpu info---
 if [ "$os" == "Linux" ]; then
         cores=`$GREP -c ^processor /proc/cpuinfo`
-        os_free_mem=`free -mg|grep -i mem|awk '{print $2}' `
-	os_free_mem="" 
-	os_total_mem="" 
-	os_free_mem_perct=""
+	os_used_mem=`free -mg|grep -i mem|awk '{print $3}' `
+        os_free_mem=`free -mg|grep -i mem|awk '{print $4}' `
+        os_total_mem=`free -mg|grep -i mem|awk '{print $2}' `
+        os_free_mem_perct=`echo "($os_free_mem * 100) / $os_total_mem"| bc`
 
 elif [ "$os" == "Darwin" ]; then
         cores=`sysctl -n hw.ncpu`
@@ -500,19 +496,18 @@ elif [ "$os" == "Darwin" ]; then
         os_total_mem=`echo $os_used_mem + $os_wired_mem + $os_unused_mem | bc`
         os_free_mem_perct=`echo "($os_free_mem * 100) / $os_total_mem"| bc`
       #  echo "MEM: TOTAL:[$os_total_mem] UNUSED:[$os_unused_mem] %=[$os_free_mem_perct]     USED:[$os_used_mem] wired:[$os_wired_mem]"
-	docker_total_mem_perct=`echo "($dockerinfo_mem * 100) / $os_total_mem"| bc`
 fi
 #exit
 #-----------Gathering OS memory/cpu info---
 
 #-----------OS memory check-------------------
 printf "${LightBlue}==>${NC} Checking if we have enough free OS memory [Free:%sgb Total:%sgb  %s%%]..." $os_free_mem $os_total_mem $os_free_mem_perct
-state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparision
-#os_free_mem=6.4; echo $state
-if [ "$os_free_mem_perct" -lt "90" ]; then
+#state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparision
+#WARN if free mem is 20% or less of total mem
+if [ "$os_free_mem_perct" -le "20" ]; then
 	printf "${BrownOrange} WARNING!${NC}\n"
-	printf "    ${Red}>>${NC} Recommend %sGB+ for complete infrastructure or Splunk demos builds\n" $LOW_MEM_THRESHOLD
-	printf "    ${Red}>>${NC} Sometimes restarting Docker can free up memory\n\n" $os_free_mem $LOW_MEM_THRESHOLD
+	printf "    ${Red}>>${NC} Recommended %sGB+ of free memory for large builds\n" $LOW_MEM_THRESHOLD
+	printf "    ${Red}>>${NC} Unused memory is not always reported as free\n\n" $os_free_mem $LOW_MEM_THRESHOLD
 	#printf "${White}    7-Change docker default settings! Docker-icon->Preferences->General->pick max CPU/MEM available${NC}\n\n" 
 else
 	printf "${Green}OK!${NC}\n"
@@ -529,7 +524,9 @@ if [ "$dockerinfo_cpu" -lt "$cores" ]; then
 else
         printf " ${Green}OK!${NC}\n" 
 fi
+docker_total_mem_perct=`echo "($dockerinfo_mem * 100) / $os_total_mem"| bc`
 printf "${LightBlue}==>${NC} Checking Docker configs for MEMORY allocation [Docker:%sgb OS:%sgb  %s%%]..." $dockerinfo_mem $os_total_mem $docker_total_mem_perct
+#WARN if ration docker_configred_mem/os_total-mem < 80%
 if [ "$docker_total_mem_perct" -lt "80" ]; then
 	printf "${BrownOrange} WARNING!${NC}\n" $dockerinfo_mem $os_total_mem
        	printf "    ${Red}>>${NC} Docker is configured to use %sgb of the available system %sgb memory\n" $dockerinfo_mem $os_total_mem
@@ -546,11 +543,9 @@ if [ -z "$image_ok" ]; then
 	printf "${Red}NOT FOUND!${NC}\n"
 	read -p "    >> Download image [$SPLUNK_IMAGE]? [Y/n]? " answer
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
-		printf "    ${Red}>>${NC} Downloading from https://hub.docker.com/r/mhassan/splunk/\n"
-                printf "    ${Purple}$SPLUNK_IMAGE:${NC}["
-                (docker pull $SPLUNK_IMAGE >/dev/null) &
-                spinner $!
-                printf "]\n\n${NC}"
+		#printf "    ${Red}>>${NC} Downloading from https://hub.docker.com/r/mhassan/splunk/\n"
+		progress_bar_image_download "$SPLUNK_IMAGE"
+                printf "\n\n${NC}"
         else
                 printf "${Red}Cannot proceed with splunk image! Exiting...${NC}\n"
                 printf "See https://hub.docker.com/r/mhassan/splunk/ \n\n"
@@ -1344,7 +1339,7 @@ START=$(date +%s);
 		demo_name=$(printf '%s' "$fullhostname" | sed 's/[0-9]*//g')
 		demo_name=`echo $demo_name| tr '[A-Z]' '[a-z]'`		#conver to lower case
  
-		CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip registry.splunk.com/sales-engineering/$demo_name"
+		CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $SPLUNK_DOCKER_HUB/sales-engineering/$demo_name"
 
 	else
 		CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $SPLUNK_IMAGE"
@@ -2239,8 +2234,8 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_help () {
 printf "${DarkGray}Please note the following:\n"
-printf "${DarkGray}-You must login before using this menu (run: docker login registry.splunk.com).\n"
-printf "${DarkGray}-If image is not cached; it may take up to 5 mintues to dowload (registry.splunk.com).\n"
+printf "${DarkGray}-You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB).\n"
+printf "${DarkGray}-If image is not cached; it may take up to 5 mintues to dowload ($SPLUNK_DOCKER_HUB).\n"
 printf "${DarkGray}-Some images are experimental. Please contact author for any issues.\n"
 printf "${DarkGray}-Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
 printf "${DarkGray}-Some images requires https://x.x.x.x:8000   (ex: ES)\n"
@@ -2277,52 +2272,119 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 #Modified version of spinner http://fitnr.com/showing-a-bash-spinner.html
+#for i in `seq 1 100`; do printf "\033[48;5;${i}m${i} "; done
 spinner()
 {
     local pid=$1
     local delay=5   #ex 0.75 second
     local spinstr='|/-\'
+    i=0
     while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
         local temp=${spinstr#?}
        # printf " [%c]  " "$spinstr"
         printf "▓"
+	let i++
+	#printf "\033[48;5;${i}m\x41\\"
 #       echo -en "\033[48;5;2m x\e[0m"
         local spinstr=$temp${spinstr%"$temp"}
         sleep $delay
         #printf "\b\b\b\b\b\b"
     done
+	printf "${NC}"
     #printf "    \b\b\b\b"
 return 0
 }  #end spinner()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-download_demo_image() {
+progress_bar_image_download () {
+image_name=$1
+if ( compare "$image_name" "demo" );then
+	hub="$SPLUNK_DOCKER_HUB/sales-engineering/"
+	login_to_splunk_hub
+else
+	hub="hub.docker.com/r/"
+	hub=""
+fi
+#docker pull hub.docker.com/r/mhassan/splunk
+#echo "[docker pull $hub$image_name]"
 
+cached=`docker images | grep $1`
+START=$(date +%s)
+if [ -z "$cached" ]; then
+      printf "Downloading ${Purple}$image_name:${NC}["
+      (docker pull $hub$image_name >/dev/null) &
+      spinner $!
+      printf "]${NC}"
+else
+      printf "Downloading ${Purple}$image_name:${NC}[cached!]"
+	
+fi
+END=$(date +%s)
+TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
+printf "${DarkGray} $TIME${NC}\n"
+
+return 0
+}    #end progress_bar_image_download () {
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+login_to_splunk_hub () {
+username="mhassan"; passwd="wnmhgb500#"
+user=`echo $USER`	#use shell to determine user id
+
+#detect if already login to splunk registry
+loged_in=`$GREP $SPLUNK_DOCKER_HUB ~/.docker/config.json 2>/dev/null`
+if [ -n "$loged_in" ]; then
+	#printf "Already loged in..\n"
+	return 0
+else
+	read -p 'You are not connected to $SPLUNK_DOCKER_HUB. Would you like to login? [Y/n]? ' answer
+        if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+		read -p "Enter your username (default $user)? " username
+        	if [ -z "$username" ];then username=$USER; fi
+		read -s -p 'Enter your password (use O2 or HOD password)? ' passwd
+		CMD=`docker login -u $username -p $passwd $SPLUNK_DOCKER_HUB`
+        	if ( compare "$CMD" "Login Succeeded" );then
+               		printf "Login Succeeded!\n"
+		else
+               		printf "Login failed! Demo image download will fail\n"
+		fi
+	else
+               	printf "You still can use any cached images but further downloads will fail...\n"
+	fi
+fi
+read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+
+return 0
+} #end login_to_splunk_hub()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+download_demo_image() {
 clear
 #-----------show images details
 printf "${BoldYellowBlueBackground}Manage Images -> DOWNLOAD DEMO IAMGES MENU ${NC}\n"
 display_stats_banner
 printf "\n"
-printf "${BrownOrange}This option requires access to splunk internal docker hub (registry.splunk.com)\n"
-printf "${BrownOrange}To login run this command[docker login registry.splunk.com] before you run this script.\n"
-printf "${BrownOrange}Use your O2 credentials. Login is cached for 24 hours. ${NC}\n"
+printf "${BrownOrange}This option requires access to splunk internal docker hub ($SPLUNK_DOCKER_HUB)\n"
 printf "${BrownOrange}*Depending on time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
 printf "\n"
-printf "Demo images available from registry.splunk.com:\n"
-printf "${Purple}     IMAGE\t\t\t    CACHED INFO\t\t\t\t CREATED BY\n"
-printf "${Purple} -----------\t\t ---------------------------- \t\t ----------------------------- \n"
+printf "Demo images available from $SPLUNK_DOCKER_HUB:\n"
+printf "${Purple}     IMAGE\t\t\t${NC}    CACHED INFO\t\t\t\t CREATED BY\n"
+printf "${Purple} -----------\t\t ${NC}---------------------------- \t\t ----------------------------- \n"
 counter=1
 for i in $REP_DEMO_IMAGES; do
         printf "${Purple}$counter${NC})${Purple} $i${DarkGray}\t\t"
-        cache=`docker images|grep $i| awk '{print "created:"$4,$5,$6,"  Size:"$7,$8}'`
-        if [ -n "$cache" ]; then
-                author=`docker inspect registry.splunk.com/sales-engineering/$i|grep -i author|cut -d":" -f1-3|sed 's/,//g'`
-                printf "${White}$cache $author${NC}\n"
+        cached=`docker images|grep $i| awk '{print "created:"$4,$5,$6,"  Size:"$7,$8}'`
+        if [ -n "$cached" ]; then
+                author=`docker inspect $SPLUNK_DOCKER_HUB/sales-engineering/$i|grep -i author|cut -d":" -f1-3|sed 's/,//g'`
+                printf "${White}$cached $author${NC}\n"
         else
                 printf "${DarkGray}NOT CACHED!${NC}\n"
         fi
         let counter++
 done
+echo
+login_to_splunk_hub
+
 #build array of images list
 declare -a list=($REP_DEMO_IMAGES)
 
@@ -2333,13 +2395,10 @@ if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
         printf "${Yellow}Downloading selected demo image(s)...\n${NC}"
-	START=$(date +%s);
+	START=$(date +%s)
         for id in `echo $choice`; do
 		image_name=(${list[$id - 1]})
-                printf "${Purple}$image_name:${NC}["
-		(docker pull registry.splunk.com/sales-engineering/$image_name >/dev/null) &
-		spinner $!
-		printf "]\n${NC}"
+		progress_bar_image_download "$image_name"
         done
        # docker stop $choice
 else
@@ -2349,10 +2408,7 @@ else
         	printf "${Yellow}Downloading all demo image(s)...\n${NC}"
 		START=$(date +%s);
 		for i in $REP_DEMO_IMAGES; do
-                	printf "${Purple}$i:${NC}["
-			(docker pull registry.splunk.com/sales-engineering/$i >/dev/null) &
-			spinner $!
-                	printf "]\n${NC}"
+			progress_bar_image_download "$i"
 		done
 	fi
 fi
@@ -2370,28 +2426,30 @@ clear
 printf "${BoldYellowBlueBackground}Manage containers -> CREATE DEMO CONTAINER MENU ${NC}\n"
 display_stats_banner
 printf "\n"
-printf "${BrownOrange}This option requires access to splunk internal docker hub (registry.splunk.com)\n"
-printf "${BrownOrange}To login run this command[docker login registry.splunk.com] before you run this script.\n"
-printf "${BrownOrange}Use your O2 credentials. Login is cached for 24 hours. ${NC}\n"
+printf "${BrownOrange}This option requires access to splunk internal docker hub ($SPLUNK_DOCKER_HUB)\n"
 printf "${BrownOrange}*Depending on the time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
 printf "\n"
-printf "Demo images available from registry.splunk.com:\n"
-printf "${Purple}     IMAGE\t\t\t    CACHED INFO\t\t\t\t CREATED BY\n"
-printf "${Purple} -----------\t\t ---------------------------- \t\t ----------------------------- \n"
+printf "Demo images available from $SPLUNK_DOCKER_HUB:\n"
+printf "${Purple}     IMAGE\t\t\t${NC}    CACHED INFO\t\t\t\t CREATED BY\n"
+printf "${Purple} -----------\t\t ${NC}---------------------------- \t\t ----------------------------- \n"
 
 #display all demos---------
 counter=1
 for i in $REP_DEMO_IMAGES; do
         printf "${Purple}$counter${NC})${Purple} $i${DarkGray}\t\t"
-        cache=`docker images|grep $i| awk '{print "created:"$4,$5,$6,"  Size:"$7,$8}'`
-        if [ -n "$cache" ]; then
-                author=`docker inspect registry.splunk.com/sales-engineering/$i|grep -i author|cut -d":" -f1-3|sed 's/,//g'`
-                printf "${White}$cache $author${NC}\n"
+        cached=`docker images|grep $i| awk '{print "created:"$4,$5,$6,"  Size:"$7,$8}'`
+        if [ -n "$cached" ]; then
+                author=`docker inspect $SPLUNK_DOCKER_HUB/sales-engineering/$i|grep -i author|cut -d":" -f1-3|sed 's/,//g'`
+                printf "${White}$cached $author${NC}\n"
         else
                 printf "${DarkGray}NOT CACHED!${NC}\n"
         fi
         let counter++
 done
+
+
+
+
 #----------------------
 #build array of RUNNING demo containers
 declare -a list=($REP_DEMO_IMAGES)
@@ -2402,24 +2460,29 @@ read -p "Choose number to create. You can select multiple numbers. <ENTER:All B:
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
-        printf "**PLEASE WACH THE LOAD AVRAGE CLOSELY**\n\n"
+        printf "**PLEASE WACH THE LOAD AVERAGE CLOSELY**\n\n"
         printf "${Yellow}Creating selected demo containers(s)...${NC}\n"
         for id in `echo $choice`; do
 		image_name=(${list[$id - 1]})
-               #echo "$id : ${list[$id - 1]}"
-                printf "${Purple}Creating [$id:$image_name]:${NC}"; display_stats_banner
-                create_generic_splunk "$image_name" "1"
+		cached=`docker images|grep $image_name`
+        	if [ -z "$cached" ]; then
+			progress_bar_image_download "$image_name"
+        	fi
+        	#echo "$id : ${list[$id - 1]}"
+       		printf "${Purple}Creating [$id:$image_name]:${NC}"; display_stats_banner
+        	create_generic_splunk "$image_name" "1"
         done
 else
 	printf "${Red}WARNING! This operation will stress your system. Make sure you have enough resources...${NC}\n"
         read -p "Are you sure? [y/N]? " answer
-        printf "Please close eye on LOAD AVRAGE...\n\n"
+        printf "**PLEASE WACH THE LOAD AVERAGE CLOSELY**\n\n"
 #printf "${BoldYellowBlueBackground}CREATE GENERIC SPLUNK CONTAINER MENU ${NC}\n"
 #display_stats_banner
 #printf "\n"
         if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
         	printf "${Yellow}Creating all demo containers(s)...\n${NC}"
                 for i in $REP_DEMO_IMAGES; do
+			progress_bar_image_download "$i"
                         printf "${Purple}Creating [$i${NC}]"; display_stats_banner
                 	create_generic_splunk "$i" "1"
 			pausing "30"
@@ -2600,7 +2663,7 @@ if [ $count == 0 ]; then
 fi
 
 #build array of images list
-declare -a list=($(docker images --format "{{.Repository}}"| grep registry.splunk.com | tr '\n' ' '))
+declare -a list=($(docker images --format "{{.Repository}}"| grep $SPLUNK_DOCKER_HUB | tr '\n' ' '))
 
 echo
 choice=""
