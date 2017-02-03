@@ -357,7 +357,7 @@ fi
 printf "${LightBlue}==>${NC} Checking brew package management:${NC} "
 condition=$(which brew 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
-	printf "${Yellow}Running [/usr/bin/ruby -e \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\" ]${NC}\n"
+	printf "\n${Yellow}Running [/usr/bin/ruby -e \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\" ]${NC}\n"
 	printf "${LightGray}"
  	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 	printf "${NC}\n"
@@ -2253,7 +2253,7 @@ printf "\n"
 echo
 printf "${Yellow}Magnage Splunk Demo containers:${NC}\n"
 printf "${Yellow}C${NC}) CREATE Splunk demo container from available list${NC}\n"
-printf "${Yellow}L${NC}) LIST all demo containers ${NC}\n"
+printf "${Yellow}L${NC}) LIST demo container(s) ${NC}\n"
 printf "${Yellow}P${NC}) STOP demo container(s) ${NC}\n"
 printf "${Yellow}T${NC}) START demo container(s) ${NC}\n"
 printf "${Yellow}D${NC}) DELETE demo container(s)${NC}\n"
@@ -3145,30 +3145,30 @@ display_main_menu () {
 	printf "\n"
 	printf "${BoldWhiteOnTurquoise}Manage Infrastructure:${NC}\n"
 	printf "${LightCyan}1${NC}) ${LightCyan}Manage Clusters${NC}\n"
-        printf "${LightCyan}2${NC}) ${LightCyan}Manage Splunk Demos ${DarkGray}[ **experimental & internal use only**]${NC}\n"
+        printf "${LightCyan}2${NC}) ${LightCyan}Manage Splunk Demos ${DarkGray}[**experimental & internal use only**]${NC}\n"
 	printf "\n"
 	printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
-	printf "${Red}S${NC}) SHOW all images details ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
-	printf "${Red}R${NC}) REMOVE image(s) to recover diskspace (will extend build times) ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
+	printf "${Red}S${NC}) ${Red}S${NC}HOW all images details ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
+	printf "${Red}R${NC}) ${Red}R${NC}EMOVE image(s) to recover diskspace (will extend build times) ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
 	printf "\n"	
 	printf "${BoldWhiteOnYellow}Manage Containers:${NC}\n"
-	printf "${Yellow}C${NC}) CREATE generic Splunk container(s) ${DarkGray}[docker run ...]${NC}\n"
-	printf "${Yellow}L${NC}) LIST all containers ${DarkGray}[custom view]${NC} \n"
-	printf "${Yellow}P${NC}) STOP container(s) ${DarkGray}[docker stop \$(docker ps -aq)]${NC}\n"
-	printf "${Yellow}T${NC}) START container(s) ${DarkGray}[docker start \$(docker ps -a --format \"{{.Names}}\")]${NC}\n"
-	printf "${Yellow}D${NC}) DELETE container(s) & Volumes(s)${DarkGray} [docker rm -f \$(docker ps -aq)]${NC}\n"
-	printf "${Yellow}H${NC}) Show hosts by role ${DarkGray}[works only if you followed the host naming rules]${NC}\n"
+	printf "${Yellow}C${NC}) ${Yellow}C${NC}REATE generic Splunk container(s) ${DarkGray}[docker run ...]${NC}\n"
+	printf "${Yellow}L${NC}) ${Yellow}L${NC}IST all containers ${DarkGray}[custom view]${NC} \n"
+	printf "${Yellow}P${NC}) STO${Yellow}P${NC} container(s) ${DarkGray}[docker stop \$(docker ps -aq)]${NC}\n"
+	printf "${Yellow}T${NC}) S${Yellow}T${NC}ART container(s) ${DarkGray}[docker start \$(docker ps -a --format \"{{.Names}}\")]${NC}\n"
+	printf "${Yellow}D${NC}) ${Yellow}D${NC}ELETE container(s) & Volumes(s)${DarkGray} [docker rm -f \$(docker ps -aq)]${NC}\n"
+	printf "${Yellow}H${NC}) ${Yellow}H${NC}OSTS grouped by role ${DarkGray}[works only if you followed the host naming rules]${NC}\n"
 	printf "\n"
 	printf "${BoldWhiteOnBlue}Manage Splunk:${NC}\n"
-	printf "${LightBlue}N${NC}) RESET all splunk passwords [changeme --> $USERPASS] ${DarkGray}[splunkd must be running]${NC}\n"
-	printf "${LightBlue}E${NC}) ADD splunk licenses ${DarkGray}[splunkd must be running]${NC}\n"
+	printf "${LightBlue}E${NC}) R${LightBlue}E${NC}SET all splunk passwords [changeme --> $USERPASS] ${DarkGray}[splunkd must be running]${NC}\n"
+	printf "${LightBlue}N${NC}) LICE${LightBlue}N${NC}SES reset ${DarkGray}[copy license file to all instances]${NC}\n"
 	printf "${LightBlue}U${NC}) RESTART all splunkd instances\n"
 
 	printf "\n"
 	printf "${BoldWhiteOnGreen}Manage System:${NC}\n"
-        printf "${Green}A${NC}) Remove IP aliases on the Ethernet interface [${White}not recommended${NC}]${NC}\n"
-        printf "${Green}O${NC}) Add common OS utils to container [${White}not recommended${NC}]${NC}\n"
-        printf "${Green}W${NC}) Wipe clean the entire system [${White}not recommended${NC}]${NC}\n"
+        printf "${Green}I${NC}) Remove ${Green}I${NC}P aliases on the Ethernet interface [${White}not recommended${NC}]${NC}\n"
+        printf "${Green}O${NC}) Add common ${Green}O${NC}S utils to container [${White}not recommended${NC}]${NC}\n"
+        printf "${Green}W${NC}) ${Green}W${NC}ipe clean the entire system [${White}not recommended${NC}]${NC}\n"
         #printf "${Green}Q${NC}) Quit${NC}\n"
 return 0
 }    #end display_main_menu()
@@ -3201,7 +3201,7 @@ shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 #echo "loglevel='$loglevel'   output_file='$output_file'    Leftovers: $@"
 #echo "1------[$opt][$OPTARG] [${loglevel}]-----maxloglevel[$maxloglevel]"
-
+
 #Start counting at 2 so that any increase to this will result in a minimum of file descriptor 3.  You should leave this alone.
 #Start counting from 3 since 1 and 2 are standards (stdout/stderr).
 for v in $(seq 3 $loglevel); do
@@ -3255,12 +3255,12 @@ do
 		h|H ) show_all_hosts_by_role ;;
 
 		#SPLUNK ------
-		n|N ) reset_all_splunk_passwords ;;
-		e|E ) add_splunk_licenses ;;
+		e|E ) reset_all_splunk_passwords ;;
+		n|N ) add_splunk_licenses ;;
 		u|U ) restart_all_splunkd ;;
 
 		#SYSTEM
-		a|A ) remove_ip_aliases ;;
+		i|I ) remove_ip_aliases ;;
 		o|O ) add_os_utils ;;
 		w|W ) wipe_entire_system ;;
 		q|Q ) echo;
