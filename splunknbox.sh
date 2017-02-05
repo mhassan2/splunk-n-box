@@ -66,9 +66,9 @@ VOL_DIR="docker-volumes"	#directory name for volumes mount point.Full path is dy
 #----------Images
 #My builds posted in registry.docker.com/splunknbox/    -MyH
 #SPLUNK_IMAGE="mhassan/splunk"		#6.4.3
-#SPLUNK_IMAGE="splunknbox/splunk_6.5.2"		
+SPLUNK_IMAGE="splunknbox/splunk_6.5.2"		
 #SPLUNK_IMAGE="splunknbox/splunk_6.5.1"
-SPLUNK_IMAGE="splunknbox/splunk_6.4.4"
+#SPLUNK_IMAGE="splunknbox/splunk_6.4.4"
 #SPLUNK_IMAGE="splunknbox/splunk_6.4.3"
 
 #SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-  6.5.0
