@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=3.0
+VERSION=3.1
 # Version:	 see $VERSION above
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
@@ -513,7 +513,7 @@ printf "${LightBlue}==>${NC} Checking if we have enough free OS memory [Free:%sg
 if [ "$os_free_mem_perct" -le "20" ]; then
 	printf "${BrownOrange}WARNING, may not be a problem!${NC}\n"
 	printf "    ${Red}>>${NC} Recommended %sGB+ of free memory for large builds\n" $LOW_MEM_THRESHOLD
-	printf "    ${Red}>>${NC} Modern OSs do not always reported unused memory as free\n\n" $os_free_mem $LOW_MEM_THRESHOLD
+	printf "    ${Red}>>${NC} Modern OSs do not always report unused memory as free\n\n" $os_free_mem $LOW_MEM_THRESHOLD
 	#printf "${White}    7-Change docker default settings! Docker-icon->Preferences->General->pick max CPU/MEM available${NC}\n\n" 
 else
 	printf "${Green}OK!${NC}\n"
@@ -884,13 +884,13 @@ return 0
 }  #end check_host_exist ()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-add_os_utils() {
+add_os_utils_to_demos() {
 #Add missing OS utils to all non-demo containers
 clear
 printf "${BoldWhiteOnGreen}ADD OS UTILS MENU ${NC}\n"
 display_stats_banner
 printf "\n"
-printf "${BrownOrange}This option will add OS packages [vim net-tools telnet dnsutils] to all running non-demo containers...\n"
+printf "${BrownOrange}This option will add OS packages [vim net-tools telnet dnsutils] to all running demo containers only...\n"
 printf "${BrownOrange}Might be useful if you will be doing a lot of manaul splunk configuration, however, it will increase container's size! ${NC}\n"
 printf "\n"
 read -p "Are you sure you want to proceed? [Y/n]? " answer
@@ -900,12 +900,12 @@ else
 	return 0
 fi
 
-count=`docker ps -a|grep -v "DEMO"| grep -v "IMAGE"| wc -l`
+count=`docker ps -a|grep "DEMO"| grep -v "IMAGE"| wc -l`
 if [ $count == 0 ]; then
-        printf "\nNo running non-demo containers found!\n"; printf "\n"
+        printf "\nNo running demo containers found!\n"; printf "\n"
         return 0
 fi;
-for id in $(docker ps -a|grep -v "DEMO"|grep -v "PORTS"|awk '{print $1}'); do
+for id in $(docker ps -a|grep "DEMO"|grep -v "PORTS"|awk '{print $1}'); do
     	hostname=`docker ps -a --filter id=$id --format "{{.Names}}"`
 	printf "${Purple}$hostname:${NC}\n"
 	#install stuff you will need in  background
@@ -914,7 +914,7 @@ for id in $(docker ps -a|grep -v "DEMO"|grep -v "PORTS"|awk '{print $1}'); do
 done
 echo
 return 0
-}  #end add_os_utils
+}  #end add_os_utils_to_demos
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_all_images () {
@@ -2267,6 +2267,7 @@ printf "${Yellow}L${NC}) ${Yellow}L${NC}IST demo container(s) ${NC}\n"
 printf "${Yellow}P${NC}) STO${Yellow}P${NC} demo container(s) ${NC}\n"
 printf "${Yellow}T${NC}) S${Yellow}T${NC}ART demo container(s) ${NC}\n"
 printf "${Yellow}D${NC}) ${Yellow}D${NC}ELETE demo container(s)${NC}\n"
+printf "${Yellow}O${NC}) Add common ${Yellow}O${NC}S utils to demo container(s) [${White}not recommended${NC}]${NC}\n"
 echo
 printf "${Red}Magnage Splunk Demo images:${NC}\n"
 printf "${Red}X${NC}) Download ONLY demo images [use this option to cache demo images] ${NC} \n"
@@ -2519,6 +2520,7 @@ do
                 d|D ) delete_all_demo_containers;;
                 t|T ) start_all_demo_containers;;
                 p|P ) stop_all_demo_containers;;
+		o|O ) add_os_utils_to_demos ;;
 
                 x|X) download_demo_image;;
                 s|S) show_all_demo_images;;
@@ -3220,8 +3222,7 @@ display_main_menu () {
 	printf "\n"
 	printf "${BoldWhiteOnGreen}Manage System:${NC}\n"
         printf "${Green}I${NC}) Remove ${Green}I${NC}P aliases on the Ethernet interface [${White}not recommended${NC}]${NC}\n"
-       # printf "${Green}O${NC}) Add common ${Green}O${NC}S utils to container [${White}not recommended${NC}]${NC}\n"
-        printf "${Green}W${NC}) ${Green}W${NC}ipe clean any configurations/changes make by this script [${White}not recommended${NC}]${NC}\n"
+        printf "${Green}W${NC}) ${Green}W${NC}ipe clean any configurations/changes made by this script [${White}not recommended${NC}]${NC}\n"
         #printf "${Green}Q${NC}) Quit${NC}\n"
 return 0
 }    #end display_main_menu()
@@ -3315,7 +3316,6 @@ do
 
 		#SYSTEM
 		i|I ) remove_ip_aliases ;;
-		o|O ) add_os_utils ;;
 		w|W ) wipe_entire_system ;;
 		q|Q ) echo;
 		      echo -e "Quitting... Please send feedback to mhassan@splunk.com! \0360\0237\0230\0200";
