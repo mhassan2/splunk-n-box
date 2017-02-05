@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=2.9
+VERSION=3.0
 # Version:	 see $VERSION above
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
@@ -64,9 +64,15 @@ VOL_DIR="docker-volumes"	#directory name for volumes mount point.Full path is dy
 #----------
 
 #----------Images
-#more can be found http://hub.docker.com
-SPLUNK_IMAGE="mhassan/splunk"		#my own built image 6.4.3
+#My builds posted in registry.docker.com/splunknbox/    -MyH
+#SPLUNK_IMAGE="mhassan/splunk"		#6.4.3
+#SPLUNK_IMAGE="splunknbox/splunk_6.5.2"		
+#SPLUNK_IMAGE="splunknbox/splunk_6.5.1"
+SPLUNK_IMAGE="splunknbox/splunk_6.4.4"
+#SPLUNK_IMAGE="splunknbox/splunk_6.4.3"
+
 #SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-  6.5.0
+
 #SPLUNK_IMAGE="splunk/splunk:6.5.0"	#official image 6.5.0
 SPLUNK_DOCKER_HUB="registry.splunk.com"
 #----------
@@ -404,8 +410,8 @@ if [ "$os" == "Darwin" ]; then
         condition=$(which $GREP_OSX 2>/dev/null | grep -v "not found" | wc -l)
         if [ $condition -eq 0 ] ; then
                 printf "${Red} NOT FOUND!${NC}\n"
-                printf "GNU grep is needed for this script to work. We use PCRE regex in ggrep! \n"
-		read -p "Install Gnu grep ggrep? [Y/n]? " answer
+                printf "   ${Red}>>${NC} GNU grep is needed for this script to work. We use PCRE regex in ggrep! \n"
+		read -p "   >> Install Gnu grep ggrep? [Y/n]? " answer
         	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 			install_gnu_grep
 		else
@@ -505,9 +511,9 @@ printf "${LightBlue}==>${NC} Checking if we have enough free OS memory [Free:%sg
 #state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparision
 #WARN if free mem is 20% or less of total mem
 if [ "$os_free_mem_perct" -le "20" ]; then
-	printf "${BrownOrange} WARNING!${NC}\n"
+	printf "${BrownOrange}WARNING, may not be a problem!${NC}\n"
 	printf "    ${Red}>>${NC} Recommended %sGB+ of free memory for large builds\n" $LOW_MEM_THRESHOLD
-	printf "    ${Red}>>${NC} Unused memory is not always reported as free\n\n" $os_free_mem $LOW_MEM_THRESHOLD
+	printf "    ${Red}>>${NC} Modern OSs do not always reported unused memory as free\n\n" $os_free_mem $LOW_MEM_THRESHOLD
 	#printf "${White}    7-Change docker default settings! Docker-icon->Preferences->General->pick max CPU/MEM available${NC}\n\n" 
 else
 	printf "${Green}OK!${NC}\n"
@@ -538,7 +544,7 @@ fi
 
 #-----------splunk image check-------------
 printf "${LightBlue}==>${NC} Checking if Splunk image is available [$SPLUNK_IMAGE]..."
-image_ok=`docker images|grep $SPLUNK_IMAGE`
+image_ok=`docker images|grep "$SPLUNK_IMAGE"`
 if [ -z "$image_ok" ]; then
 	printf "${Red}NOT FOUND!${NC}\n"
 	read -p "    >> Download image [$SPLUNK_IMAGE]? [Y/n]? " answer
@@ -547,8 +553,8 @@ if [ -z "$image_ok" ]; then
 		progress_bar_image_download "$SPLUNK_IMAGE"
                 printf "\n\n${NC}"
         else
-                printf "${Red}Cannot proceed with splunk image! Exiting...${NC}\n"
-                printf "See https://hub.docker.com/r/mhassan/splunk/ \n\n"
+                printf "    ${Red}>> Cannot proceed without splunk image! Exiting...${NC}\n"
+                printf "    See https://hub.docker.com/r/mhassan/splunk/ \n\n"
 		exit
         fi
 else
@@ -918,10 +924,11 @@ i=0
 for id in $(docker images -q); do
         let i++
         imagename=`docker images|grep  $id | awk '{print $1}'`
+        imagetag=`docker images|grep  $id | awk '{print $2}'`
         created=`docker images|grep  $id | awk '{print $4,$5,$6}'`
         size=`docker images|grep  $id | awk '{print $7,$8}'`
         sizebytes=`docker images|grep  $id | awk '{print $7,$8}'`
-        printf "${LightBlue}$i) ${NC}Name:${LightBlue}%-50s ${NC}Size:${LightBlue}%-10s ${NC}Created:${LightBlue}%-15s ${NC}Id:${LightBlue}%-10s${NC}\n" "$imagename" "$size" "$created" "$id"
+        printf "${LightBlue}$i) ${NC}Name:${LightBlue}%-50s ${NC}Tag:${LightBlue}%-10s ${NC}Size:${LightBlue}%-10s ${NC}Created:${LightBlue}%-15s ${NC}\n" "$imagename" "$imagetag" "$size" "$created" 
 done
 printf "count: %s\n\n" $count
 
@@ -950,8 +957,8 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_all_containers () {
 printf "Current list of all running containers on this system:\n"
-printf "   Host name%-3s Container%-3s Splunkd%-3s Bind IP%-2s Internal IP%-3s CPU%-4s MEM_USAGE%-3s MEM_LIMIT%-3s ${NC}\n"
-printf "   ---------%-3s ---------%-3s -------%-3s -------%-2s -----------%-3s ---%-4s ---------%-3s ---------%-3s ${NC}\n"
+printf "   Host name%-3s Container%-3s Splunkd%-3s Splunk ver%-2s    Bind IP%-3s${NC}\n"   # CPU%-4s MEM_USAGE%-3s MEM_LIMIT%-3s ${NC}\n"
+printf "   ---------%-3s ---------%-3s -------%-3s ----------%-2s    -----------%-3s${NC}\n" #---%-4s ---------%-3s ---------%-3s ${NC}\n"
 i=0
 for id in $(docker ps -aq); do
     let i++
@@ -965,6 +972,8 @@ for id in $(docker ps -aq); do
     bind_ip=`docker inspect --format '{{ .HostConfig }}' $id| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
     hoststate=`docker ps -a --filter id=$id --format "{{.Status}}" | awk '{print $1}'`
     hostname=`docker ps -a --filter id=$id --format "{{.Names}}"`
+    splunkd_ver=`docker exec $hostname /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
+    if [ -z "$splunkd_ver" ]; then splunkd_ver="unknown" ; fi   
     host_line[$i]="$bind_ip"
 
     #check splunk state if container is UP	
@@ -974,7 +983,7 @@ for id in $(docker ps -aq); do
         splunkstate=""
     fi
 
-    #set host state color
+    #set host state color. Use printf "%b" to show interpreting backslash escapes in there
     case "$hoststate" in
         Up)      hoststate="${Green}$hoststate ${NC}" ;;
         Created) hoststate="${DarkGray}$hoststate ${NC}" ;;
@@ -989,29 +998,26 @@ for id in $(docker ps -aq); do
     fi
 
     if ( compare "$hostname" "DEP" ); then
-        printf "${LightBlue}$i) %-15s ${NC}%-20b${NC} %-20b ${LightBlue}%-10s${NC} ${DarkGray}%-10s %-10s ${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip" "$cpu_percent"
+        printf "${LightBlue}$i) %-15s ${NC}%-20b${NC} %-22b %-14s${NC} ${LightBlue}%-10s${NC} %-10s" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip"
 
     elif ( compare "$hostname" "CM" ); then
-        printf "${LightBlue}$i) %-15s ${NC}%-20b${NC} %-20b ${LightBlue}%-10s${NC} ${DarkGray}%-10s %-10s ${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip" "$cpu_percent"
+        printf "${LightBlue}$i) %-15s ${NC}%-20b${NC} %-22b %-14s${NC} ${LightBlue}%-10s${NC} %-10s" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip"
 
     elif ( compare "$hostname" "DMC" ); then
-        printf "${LightBlue}$i) %-15s ${NC}%-20b${NC} %-20b ${LightBlue}%-10s${NC} ${DarkGray}%-10s %-10s ${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip" "$cpu_percent"
-
-    elif ( compare "$hostname" "DMC" ); then
-        printf "${LightBlue}$i) %-15s ${NC}%-20b${NC} %-20b ${LightBlue}%-10s${NC} ${DarkGray}%-10s %-10s ${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip" "$cpu_percent"
+        printf "${LightBlue}$i) %-15s ${NC}%-20b${NC} %-22b %-14s${NC} ${LightBlue}%-10s ${NC}%-10s" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip"
 
    elif ( compare "$hostname" "DEMO" ); then
-        printf "${LightBlue}$i) \033[41m%-15s ${NC}%-20b${NC} %-20b ${LightBlue}%-10s${NC} ${DarkGray}%-10s %-10s ${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip" "$cpu_percent"
+        printf "${LightBlue}$i) \033[41m%-15s ${NC}%-20b${NC} %-22b %-14s${NC} ${LightBlue}%-10s ${NC}%-10s " "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip"
 
      else
         #printf "${Purple}$i) %-15s ${NC}Container:%-20b${NC} Splunkd:%-20b Bind IP:${LightGray}%-10s${NC} Internal IP:${DarkGray}%-10s${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip"
-        printf "${Purple}$i) %-15s ${NC}%-20b${NC} %-20b ${LightGray}%-10s${NC} ${DarkGray}%-10s %-10s ${NC}" "$hostname" "$hoststate" "$splunkstate" "$bind_ip" "$internal_ip" "$cpu_percent"
+        printf "${Purple}$i) %-15s${NC} %-20b %-22b %-14s %-10s %-10s ${NC}"  $hostname "$hoststate" "$splunkstate" $splunkd_ver $bind_ip
    fi
 
   if [ -z "$bind_ip" ]; then
        printf "${Red}<** NOT BUILT BY THIS SCRIPT **${NC}\n"
     else
-        printf "\n"
+        printf "${NC}\n"
     fi
 
 done
@@ -1229,15 +1235,18 @@ container_ip=`docker inspect $fullhostname| $GREP IPAddress |$GREP -o '[0-9]\+[.
 if [ -z "$cluster_label" ]; then
         cluster_label="--"
 fi
-#LINE1="<font color=\"#867979\">name:    </font><font color=\"#FF9033\"> $hosttxt</font><font color=\"#FFB833\">$hostnum</font>"
-LINE1="<font color=\"#867979\">name:    </font><font color=\"#FF9033\"> $fullhostname</font>"
-LINE2="<font color=\"#867979\">cluster: </font><font color=\"#FF9033\"> $cluster_label</font>"
-LINE3="<font color=\"#867979\">IP:      </font><font color=\"#FF9033\"> $vip</font>"
 
-LINE4="<font color=\"#867979\">User: </font> <font color=\"red\">$USERADMIN</font> &nbsp&nbsp<font color=\"#867979\">Password:</font> <font color=\"red\"> $USERPASS</font></H3><H2></font>"
-LINE5="<font color=\"green\">SPLUNK LAB (docker infrastructure )</font>"
+LINE1="<CENTER><H1><font color=\"blue\"> SPLUNK LAB   </font></H1><br/></CENTER>"
+#LINE1="<H1 style=\"text-align: left;\"><font color=\"#867979\"> SPLUNK LAB </font></H1>"
 
-custom_web_conf="[settings]\nlogin_content =<div align=\"right\" style=\"border:1px solid green\"><CENTER><H1> $LINE1 <BR> $LINE2<BR> $LINE3 </H1><H3> $LINE4 <BR><BR> $LINE5 </H2></CENTER> </div> <p>This data is auto-generated at reboot time  (container internal IP=$container_ip)  .</p>\n"
+LINE2="<H2 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Hostname: </font><font color=\"#FF9033\"> $fullhostname</font></H2>"
+LINE3="<H2 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Host IP: </font><font color=\"#FF9033\"> $vip</font></H2></CENTER>"
+LINE4="<H2 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Cluster label: </font><font color=\"#FF9033\"> $cluster_label</font></H2><BR/></CENTER>"
+
+LINE5="<H2><CENTER><font color=\"#867979\">User: </font> <font color=\"red\">$USERADMIN</font> &nbsp&nbsp<font color=\"#867979\">Password:</font> <font color=\"red\"> $USERPASS</font></H2></font></CENTER><BR/>"
+LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$VERSION<BR/> Docker image [$SPLUNK_IMAGE]</font></CENTER>"
+
+custom_web_conf="[settings]\nlogin_content=<div align=\"right\" style=\"border:1px solid blue;\"> $LINE1 $LINE2 $LINE3 $LINE4 $LINE5 $LINE6 </div> <p>This data is auto-generated at container build time (container internal IP=$container_ip)</p>\n"
 
 printf "$custom_web_conf" > $PROJ_DIR/web.conf
 CMD=`docker cp $PROJ_DIR/web.conf $fullhostname:/opt/splunk/etc/system/local/web.conf`
@@ -1510,9 +1519,10 @@ elif [ "$containers_count" -gt "0" ]; then
         	last_used_octet4=`echo $last_ip_used |cut -d"." -f4`
 	else
         	printf "${Red}\nDetected existing container(s) with no bind IP assignment! All containers on this docker-host must be created with this script.\n"
-		printf "Please delete all containers that are not managed by this script then restart.\n"
-		printf "Use option ${Yellow}1)${NC} SHOW all containers... ${Red}above to see the offending container(s). Exiting...${NC}\n"
-		exit 
+		printf "Please delete all containers that are not managed by this script\n"
+		printf "${NC}\n"
+		#printf "Use option ${Yellow}1)${NC} SHOW all containers... ${Red}above to see the offending container(s). Exiting...${NC}\n"
+	#	exit 
 	fi
         printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}SOME HOSTS EXIST. [containers_count:$containers_count][last ip used:$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
 fi
@@ -2176,11 +2186,11 @@ for host_name in `cat tmp1`; do
         count=`grep $host_name $CMDLOGTXT|grep exec|wc -l`;
         cmd_list=`grep exec $CMDLOGTXT| grep $host_name| awk '{print $6,$7,$8}'| sed 's/\$//g'|sed 's/\/opt\/splunk\/bin\/splunk //g'| sort | uniq -c|sed 's/\r\n/ /g'|awk '{printf "[%s:%s %s]", $1,$2,$3}' `
 
-        printf "${LightBlue}%-15s %7s ${NC}\n" $host_name $count 
-        printf "${DarkGray}$cmd_list${NC}\n" 
+        printf "${LightBlue}%-15s %7s ${NC}\n" $host_name $count >&3
+        printf "${DarkGray}$cmd_list${NC}\n" >&4
 
 done > tmp2
-cat tmp2  >&3	#show results
+#cat tmp2  >&3	#show results
 echo
 
 #awk '{total = total + int($2)}END {print "Total Splunk Commands Used to build the cluster = " total}' tmp2
@@ -2200,7 +2210,7 @@ display_clustering_menu () {
         display_stats_banner
 	printf "\n"
 	echo
-        printf "${Purple}AUTO BUILDS (components: R3/S2 1-CM 1-DEP 1-DMC 3-SHC 3-IDXC):\n"
+        printf "${Purple}AUTO BUILDS (components: R3/S2 1-CM 1-DEP 1-DMC 1-UF 3-SHC 3-IDXC):\n"
         printf "${Purple}1${NC}) Create Stand-alone Index Cluster (IDXC)\n";
         printf "${Purple}2${NC}) Create Stand-alone Search Head Cluster (SHC)\n"
         printf "${Purple}3${NC}) Build Single-site Cluster\n"
@@ -2212,7 +2222,7 @@ display_clustering_menu () {
         printf "${LightBlue}7${NC}) Build Manual Single-site Cluster\n"
         printf "${LightBlue}8${NC}) Build Manual Multi-site Cluster${NC} \n\n"
 
-        printf "${Yellow}B${NC}) GO back to MAIN menu\n\n"
+        printf "${Yellow}B${NC}) ${Yellow}B${NC}ACK to MAIN menu\n\n"
 return 0
 } #display_clustering_menu()
 #---------------------------------------------------------------------------------------------------------------
@@ -2252,20 +2262,20 @@ display_stats_banner
 printf "\n"
 echo
 printf "${Yellow}Magnage Splunk Demo containers:${NC}\n"
-printf "${Yellow}C${NC}) CREATE Splunk demo container from available list${NC}\n"
-printf "${Yellow}L${NC}) LIST demo container(s) ${NC}\n"
-printf "${Yellow}P${NC}) STOP demo container(s) ${NC}\n"
-printf "${Yellow}T${NC}) START demo container(s) ${NC}\n"
-printf "${Yellow}D${NC}) DELETE demo container(s)${NC}\n"
+printf "${Yellow}C${NC}) ${Yellow}C${NC}REATE Splunk demo container from available list${NC}\n"
+printf "${Yellow}L${NC}) ${Yellow}L${NC}IST demo container(s) ${NC}\n"
+printf "${Yellow}P${NC}) STO${Yellow}P${NC} demo container(s) ${NC}\n"
+printf "${Yellow}T${NC}) S${Yellow}T${NC}ART demo container(s) ${NC}\n"
+printf "${Yellow}D${NC}) ${Yellow}D${NC}ELETE demo container(s)${NC}\n"
 echo
 printf "${Red}Magnage Splunk Demo images:${NC}\n"
 printf "${Red}X${NC}) Download ONLY demo images [use this option to cache demo images] ${NC} \n"
-printf "${Red}S${NC}) SHOW all downloaded demo images ${NC} \n"
-printf "${Red}R${NC}) REMOVE demo image(s)\n"
+printf "${Red}S${NC}) ${Red}S${NC}HOW all downloaded demo images ${NC} \n"
+printf "${Red}R${NC}) ${Red}R${NC}EMOVE demo image(s)\n"
 echo
 printf "${Green}Manage system:${NC}\n"
-printf "${Green}B${NC}) GO back to MAIN menu\n"
-printf "${Green}?${NC}) Help!\n"
+printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
+printf "${Green}?${NC}) ${Green}H${NC}ELP!\n"
 
 return 0
 } #display_demos_menu()
@@ -2311,7 +2321,7 @@ fi
 cached=`docker images | grep $1`
 START=$(date +%s)
 if [ -z "$cached" ]; then
-      printf "Downloading ${Purple}$image_name:${NC}["
+      printf "    ${Purple}$image_name:${NC}["
       (docker pull $hub$image_name >/dev/null) &
       spinner $!
       printf "]${NC}"
@@ -2361,7 +2371,7 @@ return 0
 download_demo_image() {
 clear
 #-----------show images details
-printf "${BoldYellowBlueBackground}Manage Images -> DOWNLOAD DEMO IAMGES MENU ${NC}\n"
+printf "${BoldYellowBlueBackground}Manage Images -> DOWNLOAD DEMO IMAGES MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 printf "${BrownOrange}This option requires access to splunk internal docker hub ($SPLUNK_DOCKER_HUB)\n"
@@ -2415,7 +2425,7 @@ fi
         #read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
 END=$(date +%s);
 TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${DarkGray}Total download time: [$TIME]${NC}\n"
+printf "    ${DarkGray}Total download time: [$TIME]${NC}\n"
 return 0
 }  #end download_demo_image() {
 #---------------------------------------------------------------------------------------------------------------
@@ -3024,10 +3034,11 @@ i=0
 for id in $var; do
         let i++
         imagename=`docker images|grep  $id | awk '{print $1}'`
+        imagetag=`docker images|grep  $id | awk '{print $2}'`
         created=`docker images|grep  $id | awk '{print $4,$5,$6}'`
         size=`docker images|grep  $id | awk '{print $7,$8}'`
         sizebytes=`docker images|grep  $id | awk '{print $7,$8}'`
-        printf "${LightBlue}$i) ${NC}Name:${LightBlue}%-50s ${NC}Size:${LightBlue}%-10s ${NC}Created:${LightBlue}%-15s ${NC}Id:${LightBlue}%-10s${NC}\n" "$imagename" "$size" "$created" "$id"
+        printf "${LightBlue}$i) ${NC}Name:${LightBlue}%-50s ${NC}Tag:${LightBlue}%-10s ${NC}Size:${LightBlue}%-10s ${NC}Created:${LightBlue}%-15s ${NC}\n" "$imagename" "$imagetag" "$size" "$created"
 done
 printf "count: %s\n\n" $i
 }  #display_all_demo_images() {
@@ -3048,6 +3059,31 @@ echo
 return 0
 }   #end show_all_demo_images
 #---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+change_splunk_image() {
+#This function will set the splunk version to use for building containers.
+
+clear
+printf "${BoldYellowBlueBackground}Manage Images -> CHANGE SPLUNK IMAGE MENU ${NC}\n"
+display_stats_banner
+printf "\n"
+
+printf "Retreving list from [registry.docker.com/splunknbox]....\n" 
+echo
+CMD="docker search splunknbox"; OUT=`$CMD`
+printf "$OUT" #| awk '{printf $1}'
+#count=`wc -l $CMD`
+
+count=`docker images |grep -i "demo"|wc -l`
+if [ $count == 0 ]; then
+        printf "\nNo images to list!\n"
+        return 0
+fi
+#display_all_demo_images
+echo
+return 0
+}   #change_splunk_image()
+#---------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 wipe_entire_system() {
 clear
@@ -3076,11 +3112,25 @@ read -p "Are you sure you want to proceed? [y/N]? " answer
 
                 printf "${Yellow}Removing all IP aliases...${NC}\n"
 		remove_ip_aliases
-		printf "\n\n"
+		printf "\n"
+
+		printf "${Red}Removing all dependacy packages [brew ggrep pcre]? ${NC}\n"
+		read -p "Those packages are not a bad thing to have installed. Are you sure you want to proceed? [y/N]? " answer
+        	if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+			#remove ggrep, pcre
+			brew uninstall ggrep pcre
+
+			#remove brew
+			/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
+	#		sudo rm -rf /usr/local/Homebrew/
+		fi
+
+	 	printf "\n\n"		
                 echo -e "Life is good! Thank you for using Splunk n' Box v$VERSION \0360\0237\0230\0200"
 		printf "Please send feedback to mhassan@splunk.com \n"
 		exit
 fi
+
 return 0
 }
 #---------------------------------------------------------------------------------------------------------------
@@ -3103,11 +3153,13 @@ LINES=$(tput lines)
 # Set default message if $1 input not provided
 MESSAGE[1]="Welcome to Splunk n\' Box v$VERSION"
 MESSAGE[2]="Splunk SE essential tool"
+MESSAGE[3]=""
 MESSAGE[4]="Please set your terminal to full mode"
-#MESSAGE[5]="By continuing to use this script you agree to splunk license in link below"
+MESSAGE[5]="https://github.com/mhassan2/splunk-n-box"
+MESSAGE[6]="By continuing you accept Splunk software license agreement"
 #MESSAGE[6]="https://www.splunk.com/en_us/legal/splunk-software-license-agreement.html"
 #MESSAGE[7]=""
-MESSAGE[10]="Licensed under GPL v3. All rights reserved Splunk Inc 2005-2017"
+MESSAGE[10]="This script is licensed under GPL v3. All rights reserved Splunk Inc 2005-2017"
 
 # Calculate x and y coordinates so that we can display $MESSAGE
 # centered in the screen
@@ -3150,6 +3202,7 @@ display_main_menu () {
 	printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
 	printf "${Red}S${NC}) ${Red}S${NC}HOW all images details ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
 	printf "${Red}R${NC}) ${Red}R${NC}EMOVE image(s) to recover diskspace (will extend build times) ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
+	printf "${Red}f${NC}) DE{Red}F${NC}AULT Splunk images ${DarkGray}[currently: $SPLUNK_IMAGE]${NC}\n"
 	printf "\n"	
 	printf "${BoldWhiteOnYellow}Manage Containers:${NC}\n"
 	printf "${Yellow}C${NC}) ${Yellow}C${NC}REATE generic Splunk container(s) ${DarkGray}[docker run ...]${NC}\n"
@@ -3162,13 +3215,13 @@ display_main_menu () {
 	printf "${BoldWhiteOnBlue}Manage Splunk:${NC}\n"
 	printf "${LightBlue}E${NC}) R${LightBlue}E${NC}SET all splunk passwords [changeme --> $USERPASS] ${DarkGray}[splunkd must be running]${NC}\n"
 	printf "${LightBlue}N${NC}) LICE${LightBlue}N${NC}SES reset ${DarkGray}[copy license file to all instances]${NC}\n"
-	printf "${LightBlue}U${NC}) RESTART all splunkd instances\n"
+	printf "${LightBlue}U${NC}) SPL${LightBlue}U${NC}NK instance(s) restart\n"
 
 	printf "\n"
 	printf "${BoldWhiteOnGreen}Manage System:${NC}\n"
         printf "${Green}I${NC}) Remove ${Green}I${NC}P aliases on the Ethernet interface [${White}not recommended${NC}]${NC}\n"
-        printf "${Green}O${NC}) Add common ${Green}O${NC}S utils to container [${White}not recommended${NC}]${NC}\n"
-        printf "${Green}W${NC}) ${Green}W${NC}ipe clean the entire system [${White}not recommended${NC}]${NC}\n"
+       # printf "${Green}O${NC}) Add common ${Green}O${NC}S utils to container [${White}not recommended${NC}]${NC}\n"
+        printf "${Green}W${NC}) ${Green}W${NC}ipe clean any configurations/changes make by this script [${White}not recommended${NC}]${NC}\n"
         #printf "${Green}Q${NC}) Quit${NC}\n"
 return 0
 }    #end display_main_menu()
@@ -3201,7 +3254,7 @@ shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 #echo "loglevel='$loglevel'   output_file='$output_file'    Leftovers: $@"
 #echo "1------[$opt][$OPTARG] [${loglevel}]-----maxloglevel[$maxloglevel]"
-
+
 #Start counting at 2 so that any increase to this will result in a minimum of file descriptor 3.  You should leave this alone.
 #Start counting from 3 since 1 and 2 are standards (stdout/stderr).
 for v in $(seq 3 $loglevel); do
@@ -3244,6 +3297,7 @@ do
 		#IMAGES -----------
 		r|R ) delete_all_images;;
 		s|S ) show_all_images;;
+		f|F ) change_splunk_image;;
 
 		#CONTAINERS ------------
 		c|C) create_generic_splunk  ;;
