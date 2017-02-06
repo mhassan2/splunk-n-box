@@ -345,7 +345,7 @@ install_gnu_grep () {
 display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 #----------
-printf "${LightBlue}==>${NC} Checking Xcode commandline tools:${NC} "
+printf "${LightBlue}   >>${NC}Checking Xcode commandline tools:${NC} "
 cmd=$(xcode-select -p)
 if [ -n $cmd ]; then
 	printf "${Green}Already installed${NC}\n"
@@ -360,42 +360,43 @@ fi
 #/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
 #sudo rm -rf /usr/local/Homebrew/
 
-printf "${LightBlue}==>${NC} Checking brew package management:${NC} "
+printf "${LightBlue}   >>${NC}Checking brew package management:${NC} "
 condition=$(which brew 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
-	printf "\n${Yellow}Running [/usr/bin/ruby -e \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\" ]${NC}\n"
-	printf "${LightGray}"
- 	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-	printf "${NC}\n"
+	printf "${BrownOrange}Installing [brew]${NC}:"
+	#get brew ruby install script
+	curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install > install_brew.rb
+	sed -ie 's/c = getc/c = 13/g' install_brew.rb   #remove prompt in install.rb script
+	progress_bar_pkg_download "/usr/bin/ruby install_brew.rb"
 else
 	printf "${Green}Already installed${NC}\n"
 fi
 #----------
-printf "${LightBlue}==>${NC} Checking pcre package:${NC} "
+
+printf "${LightBlue}   >>${NC}Checking pcre package:${NC} "
 cmd=$(brew ls pcre --versions)
 if [ -n "$cmd" ]; then
 	printf "${Green}Already installed${NC}\n"
 else
-	printf "${Yellow}Running [brew install pcre]${NC}\n"
- 	brew install pcre
+	printf "${BrownOrange}Installing [pcre]${NC}:"
+	progress_bar_pkg_download "brew install pcre"
+ #	brew install pcre
 fi
+
 #----------
-printf "${LightBlue}==>${NC} Checking ggrep package:${NC} "
+printf "${LightBlue}   >>${NC}Checking ggrep package:${NC} "
 cmd=$(brew ls grep --versions|cut -d" " -f2)
 if [ -n "$cmd" ]; then
         printf "${Green}Already installed${NC}\n"
 else
-        printf "${Yellow}Running [brew install homebrew/dupes/grep]${NC}\n"
- 	brew tap homebrew/dupes
- 	brew install homebrew/dupes/grep
-        printf "${Yellow}Running [sudo ln -s /usr/local/Cellar/grep/$cmd/bin/ggrep /usr/local/bin/ggrep]${NC}\n"
- 	sudo ln -s /usr/local/Cellar/grep/$cmd/bin/ggrep /usr/local/bin/ggrep
+	printf "${BrownOrange}Installing [ggrep]${NC}:"
+	brew tap homebrew/dupes > /dev/null 2>&1
+	progress_bar_pkg_download "brew install homebrew/dupes/grep"
+#        printf "${BrownOrange}Running [sudo ln -s /usr/local/Cellar/grep/$cmd/bin/ggrep /usr/local/bin/ggrep]${NC}\n"
+# 	sudo ln -s /usr/local/Cellar/grep/$cmd/bin/ggrep /usr/local/bin/ggrep
 fi
-printf "${Yellow}Running [brew list]${NC}\n"
- brew list --versions
-
-printf "${Yellow}Installation done!${NC}\n\n"
-read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+#printf "${Yellow}Running [brew list]${NC}\n"
+# brew list --versions
 echo
 return 0
 }  #end install gnu_grep
@@ -410,8 +411,8 @@ if [ "$os" == "Darwin" ]; then
         condition=$(which $GREP_OSX 2>/dev/null | grep -v "not found" | wc -l)
         if [ $condition -eq 0 ] ; then
                 printf "${Red} NOT FOUND!${NC}\n"
-                printf "   ${Red}>>${NC} GNU grep is needed for this script to work. We use PCRE regex in ggrep! \n"
-		read -p "   >> Install Gnu grep ggrep? [Y/n]? " answer
+                #printf "   ${Red}>>${NC} GNU grep is needed for this script to work. We use PCRE regex in ggrep! \n"
+		read -p "   >> Missing Gnu grep! Install required packages? [Y/n]? " answer
         	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 			install_gnu_grep
 		else
@@ -551,7 +552,7 @@ if [ -z "$image_ok" ]; then
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		#printf "    ${Red}>>${NC} Downloading from https://hub.docker.com/r/mhassan/splunk/\n"
 		progress_bar_image_download "$SPLUNK_IMAGE"
-                printf "\n\n${NC}"
+                printf "\n${NC}"
         else
                 printf "    ${Red}>> Cannot proceed without splunk image! Exiting...${NC}\n"
                 printf "    See https://hub.docker.com/r/mhassan/splunk/ \n\n"
@@ -566,7 +567,7 @@ fi
 printf "${LightBlue}==>${NC} Checking if docker network is created [$SPLUNKNET]..."
 net=`docker network ls | grep $SPLUNKNET `
 if [ -z "$net" ]; then 
-	printf "${Green} Created!${NC}\n"
+	printf "${Green} Creating...${NC}\n"
         docker network create -o --iptables=true -o --ip-masq -o --ip-forward=true $SPLUNKNET
 else
        printf "${Green} OK!${NC}\n"
@@ -1319,7 +1320,32 @@ fi
 return 0
 } 	#make_dmc_search_peer()
 #---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+set_web_to_http () {
+#This function will reset splunkweb to http in case its https. Used with demos using https (ie ES)
+fullhostname="$1"
 
+custom_web_conf="[settings]\nenableSplunkWebSSL=0\n"
+
+printf "$custom_web_conf" > $PROJ_DIR/web.conf.demo
+CMD="docker cp $PROJ_DIR/web.conf.demo $fullhostname:/opt/splunk/etc/system/local/web.conf" ; OUT=`$CMD`
+printf "${DarkGray}CMD:[$CMD]${NC}>>[$OUT]\n" >&4
+printf "\t->Configuing demo to be viewed on http://$fullhostname:8000 ${Green} Done!${NC}\n" >&3
+
+#if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-ITSI" ) ;then
+#	USERPASS="changeme"
+#fi
+pausing "30"
+restart_splunkd "$fullhostname"
+
+#restarting splunkweb may not work with 6.5+
+#while splunkd is not running
+#CMD="docker exec -ti $fullhostname /opt/splunk/bin/splunk restart -auth $USERADMIN:$USERPASS" ; OUT=`$CMD`; display_output "$OUT" "has been restarted" "3"
+
+
+return 0
+}  #end set_web_to_http ()
+#---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
 create_splunk_container () {
 #This function creates single splunk container using $vip and $hostname
@@ -1374,23 +1400,21 @@ START=$(date +%s);
 		printf "${Green}OK!${NC}\n" >&3
 	else
 		printf "${Red}Not runing! Attempting to restart container [$fullhostname]${NC}\n" >&3
-		CMD='docker start $fullhostname'; OUT=`CMD`
+		CMD='docker start $fullhostname'; OUT=`$CMD`
 		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$fullhostname"
 	fi
 
-        #set home screen banner in web.conf & change default admin password
-	if ( compare "$fullhostname" "DEMO-ITSI" ); then	
-	  	 true  #do nothing
-        elif ( compare "$fullhostname" "DEMO-ES" ); then
-		true;
+        #set home screen banner in web.conf & change default admin password & http for ES,VMWARE
+	if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-VMWARE" ) ; then	
+		set_web_to_http "$fullhostname"
 	else
 		printf "\t->Splunk initialization (pass change, licenses, login screen)..." >&3
 		custom_login_screen "$vip" "$fullhostname"
 	fi
-
+	#set license file
 	if ( compare "$fullhostname" "DEMO" ); then	
-		true  #do nothing
+		true
 	else
 		add_license_file $fullhostname
 	fi
@@ -2229,15 +2253,26 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_stats_menu () {
 clear
-# run if user hits control-c
-  echo -en "\n*** Stopped ***\n"
-  exit $?
-#  return 0
-# trap keyboard interrupt (control-c)
-trap display_demos_stats_menu SIGINT
-printf "Display stats:\n"
-docker stats  --format "{{.Name}}:\t\tCPU={{.CPUPerc}}   MEM={{.MemPerc}}"
+printf "${Yellow}In 5 seconds we will enter a loop to continously display containers stats :\n";
+printf "${Red}Control-C to stop\n${NC}";
+#Trap the killer signals so that we can exit with a good message.
+trap "error_exit 'Received signal SIGHUP'" SIGHUP
+trap "error_exit 'Received signal SIGINT'" SIGINT
+trap "error_exit 'Received signal SIGTERM'" SIGTERM
+trap return
 
+sleep 5
+docker stats  --format "HOST={{.Name}}   CPU={{.CPUPerc}}   MEM={{.MemPerc}}";
+printf "${NC}\n"
+
+# Execute when user hits control-c
+  #printf "${Red} [dockker stats command] CRASH! "
+  #echo -en "\n*** Possibly due to a bug in [docker stats] command ***\n"
+  #printf "${NC}\n"
+  #return 1
+  #exit $?
+
+echo
 return 0
 }  #end display_demos_stats_menu ()
 #---------------------------------------------------------------------------------------------------------------
@@ -2337,6 +2372,25 @@ printf "${DarkGray} $TIME${NC}\n"
 return 0
 }    #end progress_bar_image_download () {
 #---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+progress_bar_pkg_download () {
+install_cmd1="$1"
+install_cmd2="$2"
+START=$(date +%s)
+printf "[${NC}"
+#printf "    ${Purple}Running [$install_cmd1 $install_cmd2]:${NC}["
+#( $install_cmd1 $install_cmd2 /dev/null 2>&1) &
+( $install_cmd1 $install_cmd2 > /dev/null 2>&1) &
+spinner $!
+printf "]${NC}"
+END=$(date +%s)
+TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
+printf "${DarkGray} $TIME${NC}\n"
+
+return 0
+}    #end progress_bar_pkg_download () {
+#---------------------------------------------------------------------------------------------------------------
+
 #---------------------------------------------------------------------------------------------------------------
 login_to_splunk_hub () {
 username="mhassan"; passwd="wnmhgb500#"
@@ -2525,15 +2579,6 @@ do
                 x|X) download_demo_image;;
                 s|S) show_all_demo_images;;
 		r|R ) delete_all_demo_images;;
-		#i|I ) display_demos_stats_menu;;
-		i|I ) clear
-		      printf "${Yellow}Continously display containers stats in 5 seconds:\n";
-		      printf "${Red}Control-C to stop\n${NC}";
-		      trap return SIGINT;
-		      sleep 5
-		      docker stats  --format "HOST={{.Name}}   CPU={{.CPUPerc}}   MEM={{.MemPerc}}";
-		      printf "${NC}\n"
-		;;
 
                 b|B ) return 0;;
 
@@ -2764,14 +2809,14 @@ read -p "Choose number to delete. You can select multiple numbers. <ENTER:All B:
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
-        printf "${Yellow}Starting selected demo containers...\n${NC}"
+        printf "${Yellow}Deleting selected demo containers...\n${NC}"
         for id in `echo $choice`; do
                 #printf "${Purple} ${list[$id - 1]}:${NC}\n"
                 hostname=${list[$id - 1]}
         	docker rm -v -f $hostname
         done
 else
-        printf "${Yellow}Starting all demo containers...\n${NC}"
+        printf "${Yellow}Deleting all demo containers...\n${NC}"
         docker rm -v -f $(docker ps -a --format "{{.Names}}" |grep -i "demo")
 fi
 read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
@@ -3070,7 +3115,7 @@ printf "${BoldYellowBlueBackground}Manage Images -> CHANGE SPLUNK IMAGE MENU ${N
 display_stats_banner
 printf "\n"
 
-printf "Retreving list from [registry.docker.com/splunknbox]....\n" 
+printf "Retreving list from [https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=splunknbox&starCount=0]....\n" 
 echo
 CMD="docker search splunknbox"; OUT=`$CMD`
 printf "$OUT" #| awk '{printf $1}'
@@ -3222,6 +3267,7 @@ display_main_menu () {
 	printf "\n"
 	printf "${BoldWhiteOnGreen}Manage System:${NC}\n"
         printf "${Green}I${NC}) Remove ${Green}I${NC}P aliases on the Ethernet interface [${White}not recommended${NC}]${NC}\n"
+        printf "${Green}Y${NC}) S${Green}Y${NC}STEM resources consumption [${White}CTRL-C to exit${NC}]${NC}\n"
         printf "${Green}W${NC}) ${Green}W${NC}ipe clean any configurations/changes made by this script [${White}not recommended${NC}]${NC}\n"
         #printf "${Green}Q${NC}) Quit${NC}\n"
 return 0
@@ -3317,6 +3363,7 @@ do
 		#SYSTEM
 		i|I ) remove_ip_aliases ;;
 		w|W ) wipe_entire_system ;;
+		y|Y ) display_demos_stats_menu;;
 		q|Q ) echo;
 		      echo -e "Quitting... Please send feedback to mhassan@splunk.com! \0360\0237\0230\0200";
 		      break ;;
