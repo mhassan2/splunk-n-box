@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=3.1
+VERSION=3.2
 # Version:	 see $VERSION above
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
@@ -802,30 +802,6 @@ return 0
 }  #end display_output()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-host_status () {     ####### NOT USED YET ########
-#$1=hostname
-#restart host and splunkd is not running
-
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-
-hoststate=`docker ps -a --filter name=$1 --format "{{.Status}}" | awk '{print $1}'`
-splunkstate=`docker exec -ti $1 /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ print $3}'`
-printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} host:[$1] hoststate:[$hoststate] splunkstate:[$splunkstate] ${NC}\n" &>5
-
-if [ "$hoststate" == "" ];  then
-        printf "${Purple}[$1]${NC}: ${Purple} Host state: Container does not exist!${NC} \n"
-        return 1
-elif [ "$hoststate" != "Up" ];  then
-        printf "${Purple}[$1]${NC} ${Purple} Host state: Container is not running. Restarting${NC} \n"
-        docker start $1
-        sleep 10
-elif [ "$splunkstate" != "running" ]; then
-        printf "${Purple}[$1]${NC}${Purple} Host state: Splunkd is not running. Restarting${NC}!\n"
-        restart_splunkd "$1"
-fi
-return 0
-}   #end host_status()
-#---------------------------------------------------------------------------------------------------------------
 display_debug () {
 
 func_name=$1; arg_num=$2; param_list=$3; calls=$4
@@ -1198,64 +1174,86 @@ custom_login_screen () {
 display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 vip=$1;  fullhostname=$2
 
-#reset password to "$USERADMIN:$USERPASS"
-CMD="docker exec -ti $fullhostname touch /opt/splunk/etc/.ui_login"      #prevent first time changeme password screen
-OUT=`$CMD`;   #printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
-logline "$CMD" "$fullhostname"
-CMD="docker exec -ti $fullhostname rm -fr /opt/splunk/etc/passwd"        #remove any existing users (include admin)
-OUT=`$CMD`;   #printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
-logline "$CMD" "$fullhostname"
-CMD="docker exec -ti $fullhostname /opt/splunk/bin/splunk edit user admin -password $USERPASS -roles $USERADMIN -auth admin:changeme"
-OUT=`$CMD`;   display_output "$OUT" "user admin edited" "3"
-printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
-logline "$CMD" "$fullhostname"
-
-if ( compare "$CMD" "failed" ); then
-        echo "Trying default password"
-   #     docker exec -ti $fullhostname rm -fr /opt/splunk/etc/passwd        #remove any existing users (include admin)
-        CMD="docker exec -ti $fullhostname touch /opt/splunk/etc/.ui_login"      #prevent first time changeme password screen
-	OUT=`$CMD` ; display_output "$OUT" "user admin edited" "5"
-	#printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+#----------- password stuff ----------
+if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-VMWARE" ) ; then
+	true #dont change pass for these 2 demo
+	USERPASS="changeme"
+        printf "${Green}OK${NC}\n"
+else
+	#reset password to "$USERADMIN:$USERPASS"
+	CMD="docker exec -ti $fullhostname touch /opt/splunk/etc/.ui_login"      #prevent first time changeme password screen
+	OUT=`$CMD`;   #printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
+	logline "$CMD" "$fullhostname"
+	CMD="docker exec -ti $fullhostname rm -fr /opt/splunk/etc/passwd"        #remove any existing users (include admin)
+	OUT=`$CMD`;   #printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
+	logline "$CMD" "$fullhostname"
+	CMD="docker exec -ti $fullhostname /opt/splunk/bin/splunk edit user admin -password $USERPASS -roles $USERADMIN -auth admin:changeme"
+	OUT=`$CMD`;   display_output "$OUT" "user admin edited" "3"
+	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$fullhostname"
 
-        CMD="/opt/splunk/bin/splunk edit user $USERADMIN -password changeme -roles admin -auth $USERADMIN:$USERPASS"
-	OUT=`$CMD` ; #printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
-	logline "$CMD" "$fullhostname"
-	display_output "$OUT" "user admin edited" "5"
-	#printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
-	logline "$CMD" "$fullhostname"
+	if ( compare "$CMD" "failed" ); then
+        	echo "Trying default password"
+   #     	docker exec -ti $fullhostname rm -fr /opt/splunk/etc/passwd        #remove any existing users (include admin)
+        	CMD="docker exec -ti $fullhostname touch /opt/splunk/etc/.ui_login"      #prevent first time changeme password screen
+		OUT=`$CMD` ; display_output "$OUT" "user admin edited" "5"
+		#printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+		logline "$CMD" "$fullhostname"
+
+        	CMD="/opt/splunk/bin/splunk edit user $USERADMIN -password changeme -roles admin -auth $USERADMIN:$USERPASS"
+		OUT=`$CMD` ; #printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
+		logline "$CMD" "$fullhostname"
+		display_output "$OUT" "user admin edited" "5"
+		#printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
+		logline "$CMD" "$fullhostname"
+	fi
 fi
+#----------- password stuff ----------
 
 #set home screen banner in web.conf
 hosttxt=`echo $fullhostname| $GREP -Po '\d+(?!.*\d)'  `        #extract string portion
 hostnum=`echo $fullhostname| $GREP -Po '\d+(?!.*\d)'  `        #extract digits portion
 
+#-------cluster label stuff-------
 container_ip=`docker inspect $fullhostname| $GREP IPAddress |$GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1  ` 
 #cluster_label=`docker exec -ti $fullhostname $GREP cluster_label /opt/splunk/etc/system/local/server.conf | awk '{print $3}' `
 #cluster_label=`cat $PROJ_DIR/web.conf.tmp | $GREP -Po 'cluster.* (.*_LABEL)'| cut -d">" -f3`
 if [ -z "$cluster_label" ]; then
         cluster_label="--"
 fi
+#-------cluster label stuff-------
 
+#-------web.conf stuff-------
 LINE1="<CENTER><H1><font color=\"blue\"> SPLUNK LAB   </font></H1><br/></CENTER>"
 #LINE1="<H1 style=\"text-align: left;\"><font color=\"#867979\"> SPLUNK LAB </font></H1>"
-
-LINE2="<H2 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Hostname: </font><font color=\"#FF9033\"> $fullhostname</font></H2>"
-LINE3="<H2 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Host IP: </font><font color=\"#FF9033\"> $vip</font></H2></CENTER>"
-LINE4="<H2 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Cluster label: </font><font color=\"#FF9033\"> $cluster_label</font></H2><BR/></CENTER>"
+#&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+LINE2="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Hostname: </font><font color=\"#FF9033\"> $fullhostname</font></H3>"
+LINE3="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Host IP: </font><font color=\"#FF9033\"> $vip</font></H3></CENTER>"
+LINE4="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Cluster label: </font><font color=\"#FF9033\"> $cluster_label</font></H3><BR/></CENTER>"
 
 LINE5="<H2><CENTER><font color=\"#867979\">User: </font> <font color=\"red\">$USERADMIN</font> &nbsp&nbsp<font color=\"#867979\">Password:</font> <font color=\"red\"> $USERPASS</font></H2></font></CENTER><BR/>"
 LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$VERSION<BR/> Docker image [$SPLUNK_IMAGE]</font></CENTER>"
 
-custom_web_conf="[settings]\nlogin_content=<div align=\"right\" style=\"border:1px solid blue;\"> $LINE1 $LINE2 $LINE3 $LINE4 $LINE5 $LINE6 </div> <p>This data is auto-generated at container build time (container internal IP=$container_ip)</p>\n"
+#configure the custom login screen and http access for ALL (no exception)
+custom_web_conf="[settings]\nlogin_content=<div align=\"right\" style=\"border:1px solid blue;\"> $LINE1 $LINE2 $LINE3 $LINE4 $LINE5 $LINE6 </div> <p>This data is auto-generated at container build time (container internal IP=$container_ip)</p>\n\nenableSplunkWebSSL=0\n"
 
 printf "$custom_web_conf" > $PROJ_DIR/web.conf
 CMD=`docker cp $PROJ_DIR/web.conf $fullhostname:/opt/splunk/etc/system/local/web.conf`
+#-------web.conf stuff-------
 
-#restarting splunkweb may not work with 6.5+
-CMD=`docker exec -ti $fullhostname /opt/splunk/bin/splunk restart splunkweb -auth $USERADMIN:$USERPASS`
+
+if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-VMWARE" ) ; then
+	#pausing "30"
+	restart_splunkd "$fullhostname"
+        #printf "${Green}OK${NC}\n"
+	#CMD=`docker exec -ti $fullhostname /opt/splunk/bin/splunk restart splunkweb -auth $USERADMIN:$USERPASS`
+else
+	#restarting splunkweb may not work with 6.5+
+	CMD=`docker exec -ti $fullhostname /opt/splunk/bin/splunk restart splunkweb -auth $USERADMIN:$USERPASS`
+fi
 
 printf "\t->Customizing web.conf!${Green} Done!${NC}\n" >&4
+USERPASS="hello" #rest in case we just processed ES or VMWARE DEMOS
 
 return 0
 }  #end custom_login_screen ()
@@ -1392,32 +1390,64 @@ START=$(date +%s);
 	else
 		pausing "15"
 	fi
-
+	
+	#-----check if container is running--------
 	#check if bind IP is used by new container (indications its running)
 	ip=`docker port $fullhostname| awk '{print $3}'| cut -d":" -f1|head -1`
 	printf "\t->Verifying that container is running..." >&3
 	if [ -n "$ip" ]; then 
 		printf "${Green}OK!${NC}\n" >&3
 	else
-		printf "${Red}Not runing! Attempting to restart container [$fullhostname]${NC}\n" >&3
-		CMD='docker start $fullhostname'; OUT=`$CMD`
+		printf "${Red}Not runing! Attempting to restart..${NC}\n" >&3
+		CMD="docker start $fullhostname"; OUT=`$CMD`; display_output "$OUT" "" "4"
 		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
-		logline "$CMD" "$fullhostname"
+		sleep 15
+		#logline "$CMD" "$fullhostname"
 	fi
-
-        #set home screen banner in web.conf & change default admin password & http for ES,VMWARE
-	if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-VMWARE" ) ; then	
-		set_web_to_http "$fullhostname"
+	#-----check if container is running--------
+	#-----check if splunkd is running--------
+	if ( compare "$fullhostname" "DEMO" ); then pausing 30 ; fi   #demo container take little long to start
+	i=1
+	splunkstate=`docker exec -ti $fullhostname /opt/splunk/bin/splunk status| $GREP -i "not running" `
+	#echo "splunkstate[$splunkstate]"
+#echo -ne "${LightGray}\t->Pausing $1 seconds... ${Yellow}$c\r"
+	echo -ne "\t->Verifying that splunkd is running...\r" >&3
+	if [ -z "$splunkstate" ]; then
+		true
+        #	printf "${Green}OK!${NC}\n" >&3
+		#echo -ne  "\t->->Verifying that splunkd is running...${Green}OK!${NC}\n" >&3
+	else	while [ -n "$splunkstate" ] && [ $i -le 3 ]; do
+        	#printf "\n\t->Verifying that splunkd is running...${Red}Not runing! Attemp $i to restart..${NC}\n" >&3
+        	echo -ne "${NC}\t->Verifying that splunkd is running..${Red}Not runing! Attemp ${Yellow}$i${Red} to restart\r${NC}" >&3
+        	CMD="docker exec -ti $fullhostname /opt/splunk/bin/splunk start "
+		#echo "cmd[$CMD]"
+        	OUT=`$CMD`; display_output "$OUT" "Splunk web interface is at" "4"
+        	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+        	#logline "$CMD" "$fullhostname"
+		#pausing "30"
+		sleep 30	#pause between attempts to restart
+		splunkstate=`docker exec -ti $fullhostname /opt/splunk/bin/splunk status| $GREP -i "not running" `
+		let i+=1
+		done
+	fi
+	if [ -z "$splunkstate" ]; then
+        #       printf "${Green}OK!${NC}\n" >&3
+                echo -ne  "\t->Verifying that splunkd is running...${Green}OK!${NC}                           \n" >&3
 	else
-		printf "\t->Splunk initialization (pass change, licenses, login screen)..." >&3
-		custom_login_screen "$vip" "$fullhostname"
+                echo -ne  "\t->Verifying that splunkd is running...${Red}NOT OK!${NC}                          \n" >&3
 	fi
-	#set license file
+		
+	#-----check if splunkd is running--------
+	
 	if ( compare "$fullhostname" "DEMO" ); then	
 		true
 	else
 		add_license_file $fullhostname
 	fi
+
+	#custom_login_screen() will not change pass for DEMO-ES* or DEMO-VMWARE*
+	printf "\t->Splunk initialization (password, licenses, custom screen, http)..." >&3
+	custom_login_screen "$vip" "$fullhostname"
 
 	#Misc OS stuff
 	if [ -f "$PROJ_DIR/containers.bashrc" ]; then
