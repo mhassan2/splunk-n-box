@@ -207,35 +207,95 @@ I have an extensive set of validation routines that handels multiple issues. The
 - Check if IP aliases are created, if not; create them. The user has a menu option to delete them.
 - During container builds and cluster builds check load Avg. Pause execution until it goes down. This will solve problems on hosts with limited resources (i.e., Mac laptop or 16GB ram devices).
 
-###List of functions:
+###LIST OF FUNCTIONS:
 ```
-echo_logline()
-setup_ip_aliases ()
-check_load ()
-detect_os () 
-contains()
-add_license_file ()
-reset_splunk_passwd ()
-pausing ()
-restart_splunkd ()
-display_output ()
-host_status ()     ####### NOT USED YET ########
-make_lic_slave ()
-check_host_exist ()         ####### NOT USED YET ########
-show_all_containers ()
-splunkd_status_all ()
-show_groups ()
-custom_login_screen ()
-assign_server_role ()         ####### NOT USED YET ########
-create_single_splunkhost ()
-create_generic_splunk ()
-create_single_shc ()
-create_single_idxc ()
-build_single_site ()
-build_multi_site_cluster ()
-display_menu2 ()
-clustering_menu ()
-display_menu ()
+mhassan:~/splunk_docker_script_github> grep  "() {" splunknbox.sh
+logline() {
+restart_docker_mac() {    ### NOT USED YET ####
+start_docker_mac() {
+start_docker_liunx() {
+check_shell() {
+remove_ip_aliases() {
+setup_ip_aliases() {
+check_load() {
+install_gnu_grep() {
+startup_checks() {
+detect_os() {
+change_loglevel() {
+compare() {
+pausing() {
+display_output() {
+display_debug() {
+is_splunkd_running() {
+change_default_splunk_image() {
+splunkd_status_all() {
+add_license_file() {
+reset_splunk_passwd() {
+reset_all_splunk_passwords() {
+add_splunk_licenses() {
+restart_all_splunkd() {
+restart_splunkd() {
+make_lic_slave() {
+check_host_exist() {		 ####### NOT USED YET ########
+add_os_utils_to_demos() {
+list_all_hosts_by_role() {
+custom_login_screen() {
+assign_server_role() {		 ####### NOT USED YET ########
+make_dmc_search_peer() {
+set_splunkweb_to_http() {
+is_container_running() {
+create_splunk_container() {
+build_splunk_container() {
+build_3rdparty_container() {
+create_demo_container() {
+build_3rdparty_container_input() {
+display_clustering_menu_help() {
+display_demos_menu_help() {
+display_3rdparty_menu_help() {
+display_splunk_menu_help() {
+display_system_menu_help() {
+display_main_menu_help() {
+display_main_menu_options2() {
+display_main_menu_options() {
+display_splunk_menu_options() {
+display_system_menu_options() {
+display_demos_menu_options() {
+display_3rdparty_menu_options() {
+display_clustering_menu_options() {
+main_menu_inputs() {
+splunk_menu_inputs() {
+system_menu_inputs() {
+demos_menu_inputs () {
+3rdparty_menu_inputs() {
+clustering_menu_inputs() {
+create_single_shc() {
+create_single_idxc() {
+build_single_site() {
+build_multi_site_cluster() {
+print_stats() {
+display_stats_banner() {
+display_docker_stats_menu() {
+login_to_splunk_hub() {
+spinner() {
+progress_bar_image_download() {
+progress_bar_pkg_download() {
+download_demo_image() {
+download_3rdparty_image() {
+list_all_containers() {
+start_containers() {
+stop_containers() {
+delete_containers() {
+display_all_containers() {
+remove_images() {
+show_all_images() {
+display_all_images() {
+delete_all_volumes() {
+wipe_entire_system() {
+display_welcome_screen() {
+display_goodbye_msg() {
+________________________________________________________________________________
+mhassan:~/splunk_docker_script_github> grep  "() {" splunknbox.sh|wc -l
+      83
 ```
 
 ##Misc stuff:
