@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=3.6
+VERSION=3.6.1
 # Version:	 see $VERSION above
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
@@ -797,11 +797,11 @@ display_output() {
 #This function displays the output from CMD (docker command executed)
 #$1  Actual message after executing docker command
 #$2  The expected "good" message returned if docker command executed OK. Otherwise everything would be an error
-#$3  The loglevel (I/O redirect) to display the message (good for verbosity settings)
+#$3  The logging (I/O redirect) to display the message (good for verbosity settings)
 
 display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-outputmsg=$1; OKmsg=$2; loglevel=$3
+outputmsg=$1; OKmsg=$2; logging=$3
 OKmsg=`echo $OKmsg| tr '[a-z]' '[A-Z]'`				#convert to upper case 
 outputmsg=`echo -n $outputmsg| tr '[a-z]' '[A-Z]' |sed -e 's/^M//g' | tr -d '\r' ` #cleanup & convert to upper case 
 size=${#outputmsg}
@@ -810,10 +810,10 @@ size=${#outputmsg}
 #printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} vars outputmsg:[$outputmsg] OKmsg:[$OKmsg]${NC}\n"  >&5
 #echo "result[$1]"
         if ( compare "$outputmsg" "$OKmsg" ) || [ "$size" == 64 ] || [ "$size" == 0 ] ; then
-                printf "${Green} OK! ${NC}\n"  >&$loglevel
+                printf "${Green} OK! ${NC}\n"  >&$logging
         else
                # printf "\n${DarkGray}[%s] ${NC}" "$1"
-                printf "${Red}[%s] ${NC}\n" "$1" >&$loglevel
+                printf "${Red}[%s] ${NC}\n" "$1" >&$logging
                 #restart_splunkd "$host"
         fi
 return 0
