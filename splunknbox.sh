@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=3.5
+VERSION=3.6
 # Version:	 see $VERSION above
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
@@ -727,6 +727,38 @@ return 0
 ###### UTILITIES ######
 
 #---------------------------------------------------------------------------------------------------------------
+change_loglevel() {
+
+#-------
+declare -a list=(1 2 3 4 5 6)
+#echo ${list[@]}
+i=1
+for id in ${list[@]}; do
+	let i++
+	if [ "${list[$id - 1]}" == "$loglevel" ]; then
+	#	echo "$i:${list[$id]}"
+		break
+	fi
+done
+list[$id - 1 ]="${Yellow}${list[$id - 1 ]}${NC}"
+var=${list[@]}
+tput cup 15 15
+echo -e -n "Enter new loglevel [$var] "   # Display prompt in red
+read  loglevel
+#-------
+
+for v in $(seq 3 $loglevel); do
+    (( "$v" <= "$maxloglevel" )) && eval exec "$v>&2"  #Don't change anything higher than the maximum loglevel allowed.
+done
+
+#From the loglevel level one higher than requested, through the maximum;
+for v in $(seq $(( loglevel+1 )) $maxloglevel ); do
+    (( "$v" > "2" )) && eval exec "$v>/dev/null" #Redirect these to bitbucket, provided that they don't match stdout and stderr.
+done
+return 0
+}	#end change_loglevel()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
 compare() {
 # String comparison routine.
 # usage:   compare(string, sub-string)
@@ -1113,14 +1145,12 @@ hf_list=`docker ps -a --filter name="HF|hf" --format "{{.Names}}"|sort`
 uf_list=`docker ps -a --filter name="UF|uf" --format "{{.Names}}"|sort`
 dmc_list=`docker ps -a --filter name="DMC|dmc" --format "{{.Names}}"|sort`
 demo_list=`docker ps -a --filter name="DEMO|demo" --format "{{.Names}}"|sort`
-3rdparty_list=`docker ps -a --filter name="3RDPARTY|3rdparty" --format "{{.Names}}"|sort`
+rdparty_list=`docker ps -a --filter name="3RDPARTY|3rdparty" --format "{{.Names}}"|sort`
 
-printf "${BoldWhiteOnYellow}CONTAINERS GROUPS MENU ${NC}\n"
+printf "${BoldWhiteOnYellow}ALL CONTAINERS GROUPED BY ROLE MENU ${NC}\n"
 display_stats_banner
 printf "\n"
-display_all_containers "DEMO"
-echo
-printf "Grouped by hostname (i.e. role):\n"
+#display_all_containers "DEMO"
 printf "${Purple}LMs${NC}: " ;      printf "%-5s " $lm_list;echo
 printf "${Purple}CMs${NC}: " ;      printf "%-5s " $cm_list;echo
 printf "${Yellow}IDXs${NC}: ";      printf "%-5s " $idx_list;echo
@@ -1131,7 +1161,7 @@ printf "${Blue}HFs${NC}: ";         printf "%-5s " $hf_list;echo
 printf "${LightBlue}UFs${NC}: ";    printf "%-5s " $uf_list;echo
 printf "${LightBlue}DMCs${NC}: ";    printf "%-5s " $dmc_list;echo
 printf "${Red}DEMOs${NC}: ";    printf "%-5s " $demo_list;echo
-printf "${Purple}DEMOs${NC}: ";    printf "%-5s " $3rdpary_list;echo
+printf "${Purple}3RDPARTYs${NC}: ";    printf "%-5s " $rdparty_list;echo
 echo
 
 printf "Currenly Running Index clusters (Cluster Master in yellow):\n"
@@ -1772,6 +1802,40 @@ return 0
 #### DISPLAY MENU OPTIONS #####
 
 #---------------------------------------------------------------------------------------------------------------
+display_main_menu_options2() {
+#This function displays user options for the main menu
+clear
+dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU [$dockerinfo]${NC}\n"
+display_stats_banner
+
+tput cup 5 25
+tput rev  # Set reverse video mode
+#echo "M A I N - M E N U"
+printf "${BoldYellowBlueBackground} M A I N - M E N U ${NC}\n"
+tput sgr0
+
+tput cup 7 15; printf "${LightCyan}1${NC}) ${LightCyan}Manage Splunk Clusters${NC}\n"
+tput cup 8 15; printf "${LightCyan}2${NC}) ${LightCyan}Manage Splunk Demos ${DarkGray}[**internal use only**]${NC}\n"
+tput cup 9 15; printf "${LightCyan}3${NC}) ${LightCyan}Manage 3Rd Party Containers & Images ${DarkGray}[**under construction**]${NC}\n"
+tput cup 10 15; printf "${LightCyan}4${NC}) ${LightCyan}Manage Splunk Images & Containers ${NC}\n"
+tput cup 11 15; printf "${LightCyan}5${NC}) ${LightCyan}Manage System ${NC}\n"
+tput cup 12 15; printf "${LightCyan}6${NC}) ${LightCyan}Change Log Level ${NC}\n"
+tput cup 13 15; printf "${LightCyan}Q${NC}) ${LightCyan}Quit ${NC}\n"
+# Set bold mode
+tput bold
+tput cup 15 15
+#read -p "Enter your choice [1-5] " choice
+#printf "Enter your choice [1-5] "
+
+#tput clear
+tput sgr0
+tput rc
+
+return 0
+}	#end display_main_menu_options2()
+#---------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
 display_main_menu_options() {
 #This function displays user options for the main menu
 clear
@@ -1831,8 +1895,8 @@ display_stats_banner
 printf "\n\n"
 
 printf "${BoldWhiteOnGreen}Manage System:${NC}\n"
-printf "${Green}I${NC}) Remove ${Green}I${NC}P aliases on the Ethernet interface [${White}not recommended${NC}]${NC}\n"
-printf "${Green}Y${NC}) S${Green}Y${NC}STEM resources monitor [${White}CTRL-C to exit${NC}]${NC}\n"
+printf "${Green}R${NC}) ${Green}R${NC}emove IP aliases on the Ethernet interface [${White}not recommended${NC}]${NC}\n"
+printf "${Green}M${NC}) ${Green}M${NC}ONITOR SYSTEM resources [${White}CTRL-C to exit${NC}]${NC}\n"
 printf "${Green}W${NC}) ${Green}W${NC}ipe clean any configurations/changes made by this script [${White}not recommended${NC}]${NC}\n"
 #printf "${Green}Q${NC}) Quit${NC}\n"
 printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
@@ -1871,7 +1935,7 @@ printf "${Yellow}L${NC}) ${Yellow}L${NC}IST demo container(s) ${NC}\n"
 printf "${Yellow}P${NC}) STO${Yellow}P${NC} demo container(s) ${NC}\n"
 printf "${Yellow}T${NC}) S${Yellow}T${NC}ART demo container(s) ${NC}\n"
 printf "${Yellow}D${NC}) ${Yellow}D${NC}ELETE demo container(s)${NC}\n"
-printf "${Yellow}O${NC}) Add common ${Yellow}O${NC}S utils to demo container(s) [${White}not recommended${NC}]${NC}\n"
+printf "${Yellow}A${NC}) ${Yellow}A${NC}DD common  utils to demo container(s) [${White}not recommended${NC}]${NC}\n"
 echo
 printf "${BoldWhiteOnGreen}Manage system:${NC}\n"
 printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
@@ -1898,7 +1962,7 @@ printf "${Yellow}L${NC}) ${Yellow}L${NC}IST 3rd party container(s) ${NC}\n"
 printf "${Yellow}P${NC}) STO${Yellow}P${NC} 3rd party container(s) ${NC}\n"
 printf "${Yellow}T${NC}) S${Yellow}T${NC}ART 3rd party container(s) ${NC}\n"
 printf "${Yellow}D${NC}) ${Yellow}D${NC}ELETE 3rd party container(s)${NC}\n"
-printf "${Yellow}O${NC}) Add common ${Yellow}O${NC}S utils to 3rd party container(s) [${White}not recommended${NC}]${NC}\n"
+printf "${Yellow}A${NC}) ${Yellow}A${NC}DD common utils to 3rd party container(s) [${White}not recommended${NC}]${NC}\n"
 echo
 printf "${BoldWhiteOnGreen}Manage system:${NC}\n"
 printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
@@ -1907,6 +1971,31 @@ printf "${Green}?${NC}) ${Green}H${NC}ELP!\n"
 return 0
 }	#end display_3rd party_menu_options()
 #---------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+display_clustering_menu_options() {
+clear
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> CLUSTERING MENU       ${White}[$dockerinfo]${NC}\n"
+display_stats_banner
+printf "\n"
+echo
+printf "${BoldWhiteOnBlue}AUTOMATIC BUILDS (components: R3/S2 1-CM 1-DEP 1-DMC 1-UF 3-SHC 3-IDXC): ${NC}\n"
+printf "${LightBlue}1${NC}) Create Stand-alone Index Cluster (IDXC)${NC}\n"
+printf "${LightBlue}2${NC}) Create Stand-alone Search Head Cluster (SHC)${NC}\n"
+printf "${LightBlue}3${NC}) Build Single-site Cluster${NC}\n"
+printf "${LightBlue}4${NC}) Build Multi-site Cluster (3 sites)${NC} \n";echo
+
+printf "${BoldWhiteOnYellow}MANUAL BUILDS (specify base hostnames and counts): ${NC}\n"
+printf "${Yellow}5${NC}) Create Manual Stand-alone Index cluster (IDXC)${NC}\n"
+printf "${Yellow}6${NC}) Create Manual Stand-alone Search Head Cluster (SHC)${NC}\n"
+printf "${Yellow}7${NC}) Build Manual Single-site Cluster${NC}\n"
+printf "${Yellow}8${NC}) Build Manual Multi-site Cluster${NC} \n"
+echo
+printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
+printf "${Green}?${NC}) ${Green}H${NC}ELP!\n"
+echo
+return 0
+}	#end display_clustering_menu_options()
+#---------------------------------------------------------------------------------------------------------------
 
 #### MENU INPUTS ####
 
@@ -1915,20 +2004,26 @@ main_menu_inputs() {
 while true;
 do
 	clear
-        display_main_menu_options
+        display_main_menu_options2
         choice=""
 	echo
-	read -p "Enter choice: " choice
+	tput bold
+	tput cup 15 15
+	read -p "Enter your choice [1-6] " choice
+#	read -p "Enter choice: " choice
  	case "$choice" in
 		1 ) clustering_menu_inputs ;;
         	2 ) demos_menu_inputs ;;
         	3 ) 3rdparty_menu_inputs ;;
         	4 ) splunk_menu_inputs ;;
         	5 ) system_menu_inputs ;;
+        	6 ) change_loglevel ;;
 
-		q|Q ) echo;
-	      		echo -e "Quitting... Please send feedback to mhassan@splunk.com! \0360\0237\0230\0200";
-	      		break ;;
+		q|Q ) 	clear;
+			display_goodbye_msg;
+			echo;
+	      		echo -e "Please send feedback to mhassan@splunk.com  \0360\0237\0230\0200";echo
+	      		exit ;;
 	esac  #end case ---------------------------
 done
 return 0
@@ -1953,7 +2048,7 @@ do
                 f|F ) change_default_splunk_image;;
 
                 #CONTAINERS ------------
-                c|C) create_generic_container  ;;
+                c|C) create_splunk_container  ;;
                 d|D ) delete_containers;;
                 v|V ) delete_all_volumes;;
                 l|L ) list_all_containers ;;
@@ -1991,9 +2086,10 @@ do
                 case "$choice" in
 		#SYSTEM
                 \? ) display_demos_menu_help;;
-		i|I ) remove_ip_aliases ;;
+		r|R ) remove_ip_aliases ;;
 		w|W ) wipe_entire_system ;;
-		y|Y ) display_docker_stats_menu;;
+		m|M ) display_docker_stats_menu;;
+		l|L ) change_loglevel ;;
 
                 b|B ) return 0;;
 
@@ -2072,7 +2168,7 @@ while true;
 do
 	rm  -fr $CMDLOGTXT
         dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-        display_clustering_menu
+        display_clustering_menu_options
         choice=""
         read -p "Enter choice: " choice
                 case "$choice" in
@@ -2803,29 +2899,6 @@ return 0
 }	#end display_stats_banner()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-display_clustering_menu() {
-clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> CLUSTERING MENU       ${White}[$dockerinfo]${NC}\n"
-display_stats_banner
-printf "\n"
-echo
-printf "${Purple}AUTO BUILDS (components: R3/S2 1-CM 1-DEP 1-DMC 1-UF 3-SHC 3-IDXC):\n"
-printf "${Purple}1${NC}) Create Stand-alone Index Cluster (IDXC)\n";
-printf "${Purple}2${NC}) Create Stand-alone Search Head Cluster (SHC)\n"
-printf "${Purple}3${NC}) Build Single-site Cluster\n"
-printf "${Purple}4${NC}) Build Multi-site Cluster (3 sites)${NC} \n";echo
-
-printf "${LightBlue}MANUAL BUILDS (specify base hostnames and counts)\n"
-printf "${LightBlue}5${NC}) Create Manual Stand-alone Index cluster (IDXC)\n";
-printf "${LightBlue}6${NC}) Create Manual Stand-alone Search Head Cluster (SHC)\n"
-printf "${LightBlue}7${NC}) Build Manual Single-site Cluster\n"
-printf "${LightBlue}8${NC}) Build Manual Multi-site Cluster${NC} \n\n"
-
-printf "${Yellow}B${NC}) ${Yellow}B${NC}ACK to MAIN menu\n\n"
-return 0
-}	#display_clustering_menu()
-#---------------------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------------------
 display_docker_stats_menu() {
 clear
 printf "${Yellow}In 5 seconds we will enter a loop to continously display containers stats :\n";
@@ -3542,7 +3615,15 @@ tput rc
 return 0
 }	#end display_welcome_screen()
 #---------------------------------------------------------------------------------------------------------------
-
+#---------------------------------------------------------------------------------------------------------------
+display_goodbye_msg() {
+echo
+printf "\033[31m           0000\033[0m_____________0000________0000000000000000__000000000000000000+\n\033[31m         00000000\033[0m_________00000000______000000000000000__0000000000000000000+\n\033[31m        000\033[0m____000_______000____000_____000_______0000__00______0+\n\033[31m       000\033[0m______000_____000______000_____________0000___00______0+\n\033[31m      0000\033[0m______0000___0000______0000___________0000_____0_____0+\n\033[31m      0000\033[0m______0000___0000______0000__________0000___________0+\n\033[31m      0000\033[0m______0000___0000______0000_________000___0000000000+\n\033[31m      0000\033[0m______0000___0000______0000________0000+\n\033[31m       000\033[0m______000_____000______000________0000+\n\033[31m        000\033[0m____000_______000____000_______00000+\n\033[31m         00000000\033[0m_________00000000_______0000000+\n\033[31m           0000\033[0m_____________0000________000000007;\n"
+echo
+echo
+return 0
+}	#display_goodbye_msg()
+#---------------------------------------------------------------------------------------------------------------
 ###############################    MAIN BEGINS     ######################
 
 #---------------------------------------------------------------------------------------------------------
