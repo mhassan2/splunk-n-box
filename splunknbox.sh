@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=3.4
+VERSION=3.5
 # Version:	 see $VERSION above
 #
 #Usage :  create-slunk.sh -v[3 4 5] 
@@ -704,7 +704,6 @@ if [ "$(uname)" == "Darwin" ]; then
 	sys_ver=`system_profiler SPSoftwareDataType|grep "System Version" |awk '{print $5}'`
 	kern_ver=`system_profiler SPSoftwareDataType|grep "Kernel Version" |awk '{print $3,$4}'`
 	printf "${LightBlue}==> ${NC}Detected MacOS [System:$sys_ver Kernel:$kern_ver]${NC}\n"
-	startup_checks
 
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
     	os="Linux"
@@ -717,7 +716,6 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	release=`lsb_release -r |awk '{print $2}'`
 	kern_ver=`uname -r`
 	printf "${LightBlue}==> ${NC}Detected LINUX [Release:$release Kernel:$kern_ver]${NC}\n"
-	startup_checks
 
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
     	os="Windows"
@@ -940,14 +938,13 @@ display_stats_banner
 printf "\n"
 display_all_containers
 
-count=`docker ps -aq|wc -l`
-if [ $count == 0 ]; then
-        printf "No container found!\n"
-        return 0;
-fi
-for i in `docker ps --format "{{.Names}}"`; do 
-	printf "${Purple}$i${NC}: Admin password reset to [hello]\n"
-	reset_splunk_passwd $i
+for image_name in `docker ps --format "{{.Names}}"`; do
+        if ( compare "$image_name" "DEMO" ) || ( compare "$image_name" "3RDPARTY" ); then
+                true
+        else
+                printf "${Purple}$image_name${NC}: Admin password reset to [hello]\n"
+                reset_splunk_passwd $image_name
+        fi
 done
 echo
 return 0
@@ -961,16 +958,14 @@ display_stats_banner
 printf "\n"
 display_all_containers
 
-count=`docker ps -aq|wc -l`
-if [ $count == 0 ]; then
-        printf "No container found!\n"
-        return 0;
-fi
-for i in `docker ps --format "{{.Names}}"`; do 
-	printf "${Purple}$i${NC}: License file copied\n"
-	add_license_file $i
+for image_name in `docker ps --format "{{.Names}}"`; do
+        if ( compare "$image_name" "DEMO" ) || ( compare "$image_name" "3RDPARTY" ); then
+                true
+        else
+		printf "${Purple}$image_name${NC}:"
+		add_license_file $image_name
+        fi
 done
-echo
 return 0
 }	#end add_splunk_licenses()
 #---------------------------------------------------------------------------------------------------------------
@@ -982,16 +977,14 @@ display_stats_banner
 printf "\n"
 display_all_containers
 
-count=`docker ps -aq|wc -l`
-if [ $count == 0 ]; then
-        printf "No container found!\n"
-        return 0;
-fi
-for i in `docker ps --format "{{.Names}}"`; do
-	printf "${Purple}$i${NC}: Restarting splunkd\n"
-     	restart_splunkd "$i"
+for image_name in `docker ps --format "{{.Names}}"`; do
+        if ( compare "$image_name" "DEMO" ) || ( compare "$image_name" "3RDPARTY" ); then
+                true
+        else
+		printf "${Purple}$image_name${NC}:"
+     		restart_splunkd "$image_name"
+        fi
 done
-echo
 return 0
 }	#end restart_all_splunkd()
 #---------------------------------------------------------------------------------------------------------------
@@ -1056,13 +1049,13 @@ printf "${Purple}[$1] Host check >>> "
 basename=$(printf '%s' "$1" | tr -d '0123456789')  #strip numbers
 if [ -z "$2" ]; then
         printf "${LightPurple}Group is empty >>> creating host ${NC}\n";
-        create_generic_container $basename 1
+        create_splunk_container $basename 1
 else if ( compare "$2" "$1" ); then
                 printf "${Purple}Found in group. No action. ${NC}\n";
                 return 0
         else
                 printf "${LightPurple}Not found in group >>> Using basename to create next in sequence ${NC}\n";
-                create_generic_container $basename 1
+                create_splunk_container $basename 1
                 num=`echo $?`    #last host seq number created
                 return $num
         fi
@@ -1368,6 +1361,144 @@ return 0
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
 create_splunk_container() {
+#This function creates generic splunk containers. Role is assigned later
+#inputs: $1:basehostname: (ex IDX, SH,HF) just the base (no numbers)
+#	 $2:hostcount:     how many containers to create from this host type (ie name)
+#	 $3:lic_master		if provided dont copy license, make host license-slave	
+# 	 $4:cluster_label	cluster label in web.conf, use if provided
+#outputs: $gLIST:  global var compare the list of hostname just got created
+#	  $host_num :  last host number sequence just got created
+#	-calculate host number sequence
+#	 -calculate next IP sequence (octet4)
+
+#clear
+display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+#printf "${BoldYellowBlueBackground}CREATE GENERIC SPLUNK CONTAINER MENU ${NC}\n"
+#display_stats_banner
+#printf "\n"
+
+basename=$1; hostcount=$2; lic_master=$3; cluster_label=$4
+count=0;starting=0; ending=0;basename=$BASEHOSTNAME;  octet4=0
+gLIST=""   #build global list of hosts created by this session. Used somewhere else
+
+#Another method to figure out the starting octet4 
+# OCTET4FILE=`iptables -t nat -L |$GREP DNAT | awk '{print $5}'  | sort -u|tail -1|cut -d"." -f4`
+printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}  basename[$basename]  hostcount[$hostcount] ${NC}\n" >&5
+
+#---If not passed; prompt user to get basename and count ----
+if [ -z "$1" ]; then
+        read -p ">>>> Enter BASE HOSTNAME (default: $BASEHOSTNAME)?: " basename
+else
+        basename=$1
+fi
+if [ -z "$basename" ]; then
+        basename=$BASEHOSTNAME
+        last_host_name=""
+        #printf "First time to use this host_base_name ${Green}[$basename]${NC}\n"
+fi
+#always convert to upper case before creating
+basename=`echo $basename| tr '[a-z]' '[A-Z]'`	
+
+if [ -z "$2" ]; then
+        read -p ">>>> How many hosts to create (default 1)? " count
+else
+        count=$2
+fi
+if [ -z "$count" ]; then count=1;  fi
+#---If not passed; prompt user to get basename and count ----
+
+#---- calculate sequence numbers -----------[in:basename out: startx, endx]
+#get last seq used by last host created
+last_host_num=`docker ps -a --format "{{.Names}}"|$GREP "^$basename"|head -1| $GREP -P '\d+(?!.*\d)' -o`; 
+if [ -z "$last_host_num" ]; then    					#no previous hosts with this name exists
+        printf "${DarkGray}[$basename] New basename. ${NC}" >&4
+	starting=1
+        ending=$count
+	last_host_num=0
+else
+       	starting=`expr $last_host_num + 1`
+       	ending=`expr $starting + $count - 1`
+       	printf "${DarkGray}Last hostname created:${NC}[${Green}$basename${NC}${Yellow}$last_host_num${NC}] " >&4
+fi
+
+#fix single digit issue if < 2-digits
+if [ "$starting" -lt "10" ]; then
+                startx="0"$starting
+        else
+                startx=$starting
+        fi
+        if [ "$ending" -lt "10" ]; then
+                endx="0"$ending
+        else
+                endx=$ending
+        fi
+printf "${DarkGray}Next sequence:${NC} [${Green}$basename${Yellow}$startx${NC} --> ${Green}$basename${Yellow}$endx${NC}]\n"  >&4
+#---- end calculate sequence numbers -----------
+
+#---- calculate VIP numbers -----------
+base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `;  #base_ip=$base_ip"."
+
+#Find last container created IP (not hostname/sitename dependent). Returns value only if last container has an IP assigned (which excludes
+#containers not built by this script)
+containers_count=`docker ps -aq | wc -l|awk '{print $1}' `
+printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} last ip used:[$last_ip_used]\n" >&5
+printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} containers_count:[$containers_count]\n" >&5
+
+#get last octet4 used ----
+if [ "$containers_count" == 0 ]; then       #nothing created yet!
+        last_used_octet4=`echo $START_ALIAS | cut -d"." -f4 `
+        last_ip_used="$base_ip.$start_octet4"
+        printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} NO HOSTS EXIST! [containers_count:$containers_count] [last ip used:$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
+
+elif [ "$containers_count" -gt "0" ]; then
+	last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aql)|$GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+	if [ -n "$last_ip_used" ]; then
+        	last_used_octet4=`echo $last_ip_used |cut -d"." -f4`
+	else
+		printf "${NC}\n"
+		#printf "Use option ${Yellow}1)${NC} SHOW all containers... ${Red}above to see the offending container(s). Exiting...${NC}\n"
+	#	exit 
+	fi
+        printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}SOME HOSTS EXIST. [containers_count:$containers_count][last ip used:$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
+fi
+#---- calculate VIP numbers -----------
+
+#---- build fullhostname (Base+seq & VIP) -----------
+#---Loop for number of hosts to create----
+octet4=$last_used_octet4
+for (( x=${starting}; x <= ${ending}; x++)) ; do
+	#fix the digits size first
+     	if [ "$x" -lt "10" ]; then
+      		host_num="0"$x         		 #always reformat number to 2-digits if less than 2-digits
+     	else
+                host_num=$x             	#do nothing
+     	fi
+     	fullhostname="$basename"$host_num  	#create full hostname (base + 2-digits)
+
+     	#------ VIP processing ------
+     	octet4=`expr $octet4 + 1`       	#increment octet4
+     	vip="$base_ip.$octet4"            	#build new IP to be assigned
+	printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}fulhostname:[$fullhostname] vip:[$vip] basename:[$basename] count[$count] ${NC}\n" >&5
+	#---- build fullhostname (Base+seq & VIP) -----------
+
+	if ( compare "$fullhostname" "3RDPARTY" ); then
+		build_3rdparty_container $vip $fullhostname
+	else
+		build_splunk_container $vip $fullhostname $lic_master $cluster_label
+	fi
+	gLIST="$gLIST""$fullhostname "
+
+	done  #end for loop
+#---Loop for number of hosts to create----
+
+	gLIST=`echo $gLIST |sed 's/;$//'`	#GLOBAL! remove last space (causing host to look like "SH "
+#--------------------------
+
+return $host_num
+}	#end of create_splunk_container()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
+build_splunk_container() {
 #This function creates single splunk container using $vip and $hostname
 #inputs: $1: container's IP to use (nated IP aka as bind IP)
 #	 $2: fullhostname:  container name (may include site and host number sequence)
@@ -1451,145 +1582,10 @@ fi
 #fi
 
 return 0
-}	#end create_splunk_container()
+}	#end build_splunk_container()
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
-create_generic_container() {
-#This function creates generic splunk containers. Role is assigned later
-#inputs: $1:basehostname: (ex IDX, SH,HF) just the base (no numbers)
-#	 $2:hostcount:     how many containers to create from this host type (ie name)
-#	 $3:lic_master		if provided dont copy license, make host license-slave	
-# 	 $4:cluster_label	cluster label in web.conf, use if provided
-#outputs: $gLIST:  global var compare the list of hostname just got created
-#	  $host_num :  last host number sequence just got created
-#	-calculate host number sequence
-#	 -calculate next IP sequence (octet4)
-
-#clear
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-#printf "${BoldYellowBlueBackground}CREATE GENERIC SPLUNK CONTAINER MENU ${NC}\n"
-#display_stats_banner
-#printf "\n"
-
-basename=$1; hostcount=$2; lic_master=$3; cluster_label=$4
-count=0;starting=0; ending=0;basename=$BASEHOSTNAME;  octet4=0
-gLIST=""   #build global list of hosts created by this session. Used somewhere else
-
-#Another method to figure out the starting octet4 
-# OCTET4FILE=`iptables -t nat -L |$GREP DNAT | awk '{print $5}'  | sort -u|tail -1|cut -d"." -f4`
-printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}  basename[$basename]  hostcount[$hostcount] ${NC}\n" >&5
-
-#---Prompt user for host basename (if not in auto mode) -----
-if [ -z "$1" ]; then
-        read -p ">>>> Enter BASE HOSTNAME (default: $BASEHOSTNAME)?: " basename
-else
-        basename=$1
-fi
-if [ -z "$basename" ]; then
-        basename=$BASEHOSTNAME
-        last_host_name=""
-        #printf "First time to use this host_base_name ${Green}[$basename]${NC}\n"
-fi
-#always convert to upper case before creating
-basename=`echo $basename| tr '[a-z]' '[A-Z]'`	
-
-#---Prompt user for host count (if not in auto mode) -----
-if [ -z "$2" ]; then
-        read -p ">>>> How many hosts to create (default 1)? " count
-else
-        count=$2
-fi
-if [ -z "$count" ]; then count=1;  fi
-#----------------------------------------
-
-#---- calculate count range -----------
-last_host_num=`docker ps -a --format "{{.Names}}"|$GREP "^$basename"|head -1| $GREP -P '\d+(?!.*\d)' -o`;  #last digit from last created
-if [ -z "$last_host_num" ]; then    					#no previous hosts with this name exists
-        printf "${DarkGray}[$basename] New basename. ${NC}" >&4
-	starting=1
-        ending=$count
-	last_host_num=0
-else
-       	starting=`expr $last_host_num + 1`
-       	ending=`expr $starting + $count - 1`
-       	printf "${DarkGray}Last hostname created:${NC}[${Green}$basename${NC}${Yellow}$last_host_num${NC}] " >&4
-fi
-#fix single digit issue if < 2-digits
-if [ "$starting" -lt "10" ]; then
-                startx="0"$starting
-        else
-                startx=$starting
-        fi
-        if [ "$ending" -lt "10" ]; then
-                endx="0"$ending
-        else
-                endx=$ending
-        fi
-printf "${DarkGray}Next sequence:${NC} [${Green}$basename${Yellow}$startx${NC} --> ${Green}$basename${Yellow}$endx${NC}]\n"  >&4
-
-#--generate fullhostname (w/ seq numbers) and VIP------------------------
-
-base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `;  #base_ip=$base_ip"."
-
-#Find last container created IP (not hostname/sitename dependent). Returns value only if last container has an IP assigned (which excludes
-#containers not built by this script)
-containers_count=`docker ps -aq | wc -l|awk '{print $1}' `
-printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} last ip used:[$last_ip_used]\n" >&5
-printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} containers_count:[$containers_count]\n" >&5
-
-#get last octet4 used ----
-if [ "$containers_count" == 0 ]; then       #nothing created yet!
-        last_used_octet4=`echo $START_ALIAS | cut -d"." -f4 `
-        last_ip_used="$base_ip.$start_octet4"
-        printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} NO HOSTS EXIST! [containers_count:$containers_count] [last ip used:$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
-
-elif [ "$containers_count" -gt "0" ]; then
-	last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aql)|$GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-	if [ -n "$last_ip_used" ]; then
-        	last_used_octet4=`echo $last_ip_used |cut -d"." -f4`
-	else
-        	printf "${Red}\nDetected existing container(s) with no bind IP assignment! All containers on this docker-host must be created with this script.\n"
-		printf "Please delete all containers that are not managed by this script\n"
-		printf "${NC}\n"
-		#printf "Use option ${Yellow}1)${NC} SHOW all containers... ${Red}above to see the offending container(s). Exiting...${NC}\n"
-	#	exit 
-	fi
-        printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}SOME HOSTS EXIST. [containers_count:$containers_count][last ip used:$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
-fi
-#----------------------------------------------------
-
-octet4=$last_used_octet4
-#Loop to create $count total hosts ----
-for (( x=${starting}; x <= ${ending}; x++)) 
-do
-	#fix the digits size first
-     	if [ "$x" -lt "10" ]; then
-      		host_num="0"$x         		 #always reformat number to 2-digits if less than 2-digits
-     	else
-                host_num=$x             	#do nothing
-     	fi
-     	fullhostname="$basename"$host_num  	#create full hostname (base + 2-digits)
-
-     	# VIP processing
-     	octet4=`expr $octet4 + 1`       	#increment octet4
-     	vip="$base_ip.$octet4"            	#build new IP to be assigned
-	printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}fulhostname:[$fullhostname] vip:[$vip] basename:[$basename] count[$count] ${NC}\n" >&5
-	if ( compare "$fullhostname" "3RDPARTY" ); then
-		create_3rdparty_container $vip $fullhostname
-	else
-		create_splunk_container $vip $fullhostname $lic_master $cluster_label
-	fi
-	gLIST="$gLIST""$fullhostname "
-
-done  #end for loop
-	gLIST=`echo $gLIST |sed 's/;$//'`	#remove last space (causing host to look like "SH "
-#--------------------------
-
-return $host_num
-}	#end of create_generic_container()
-#---------------------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------
-create_3rdparty_container() {
+build_3rdparty_container() {
 #This function creates single 3rd party container using $vip and $hostname
 #inputs: $1: container's IP to use (nated IP aka as bind IP)
 #        $2: fullhostname:  container name (may include site and host number sequence)
@@ -1610,6 +1606,11 @@ n=2
 #extract image  name from fullhostname only  (ex: 3RDPARTY-ELK02)
 image_name=`echo $fullhostname | sed "s/\(.*\).\{$n\}/\1/" `
 image_name=`echo $image_name| tr '[A-Z]' '[a-z]'`         	#conver to lower case (just incase)
+
+cached=`docker images|grep $image_name`
+if [ -z "$cached" ]; then
+        progress_bar_image_download "$image_name"
+fi
 
 #MySQL : https://hub.docker.com/_/mysql/
 if ( compare "$fullhostname" "MYSQL" ); then
@@ -1636,7 +1637,7 @@ fi
 is_container_running "$fullhostname"
 
 return 0
-}	#end create_3rdparty_container()
+}	#end build_3rdparty_container()
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 create_demo_container() {
@@ -1685,7 +1686,7 @@ if [ -n "$choice" ]; then
         	fi
         	#echo "$id : ${list[$id - 1]}"
        		printf "${Purple}Creating [$id:$image_name]:${NC}"; display_stats_banner
-        	create_generic_container "$image_name" "1"
+        	create_splunk_container "$image_name" "1"
         done
 else
 	printf "${Red}WARNING! This operation will stress your system. Make sure you have enough resources...${NC}\n"
@@ -1696,7 +1697,7 @@ else
                 for i in $REPO_DEMO_IMAGES; do
 			progress_bar_image_download "$i"
                         printf "${Purple}Creating [$i${NC}]"; display_stats_banner
-                	create_generic_container "$i" "1"
+                	create_splunk_container "$i" "1"
 			pausing "30"
                 done
 	fi
@@ -1705,7 +1706,7 @@ return 0
 }	#end create_demo_container()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-create_3rdparty_container_input() {
+build_3rdparty_container_input() {
 clear
 #-----------show images details
 printf "${BoldYellowBlueBackground}Manage containers -> CREATE 3RD PARTY CONTAINER MENU ${NC}\n"
@@ -1748,7 +1749,7 @@ if [ -n "$choice" ]; then
                 fi
                 #echo "$id : ${list[$id - 1]}"
                 printf "${Purple}Creating [$id:$image_name]:${NC}"; display_stats_banner
-                create_generic_container "$image_name" "1"
+                create_splunk_container "$image_name" "1"
         done
 else
         printf "${Red}WARNING! This operation will stress your system. Make sure you have enough resources...${NC}\n"
@@ -1759,57 +1760,87 @@ else
                 for image_name in $REPO_3RDPARTY_IMAGES; do
                        # progress_bar_image_download "$image_name"
                         printf "${Purple}Creating [$image_name${NC}]"; display_stats_banner
-                        create_generic_container "$image_name" "1"
+                        create_splunk_container "$image_name" "1"
                 done
         fi
 fi
 return 0
-}	#end create_3rdparty_container_input()
+}	#end build_3rdparty_container_input()
 #---------------------------------------------------------------------------------------------------------------
 
 
 #### DISPLAY MENU OPTIONS #####
 
 #---------------------------------------------------------------------------------------------------------------
-display_main_menu() {
+display_main_menu_options() {
 #This function displays user options for the main menu
-	clear
-	dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-	printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU                        [$dockerinfo]${NC}\n"
-	display_stats_banner
-	printf "\n"
-	printf "${BoldWhiteOnTurquoise}Manage Infrastructure:${NC}\n"
-	printf "${LightCyan}1${NC}) ${LightCyan}Manage Clusters${NC}\n"
-        printf "${LightCyan}2${NC}) ${LightCyan}Manage Splunk Demos ${DarkGray}[**experimental & internal use only**]${NC}\n"
-        printf "${LightCyan}3${NC}) ${LightCyan}Manage 3Rd party ${DarkGray}[**under construction**]${NC}\n"
-	printf "\n"
-	printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
-	printf "${Red}S${NC}) ${Red}S${NC}HOW all images details ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
-	printf "${Red}R${NC}) ${Red}R${NC}EMOVE image(s) to recover diskspace (will extend build times) ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
-	printf "${Red}F${NC}) DE${Red}F${NC}AULT Splunk images ${DarkGray}[currently: $SPLUNK_IMAGE]${NC}\n"
-	printf "\n"	
-	printf "${BoldWhiteOnYellow}Manage Containers:${NC}\n"
-	printf "${Yellow}C${NC}) ${Yellow}C${NC}REATE generic Splunk container(s) ${DarkGray}[docker run ...]${NC}\n"
-	printf "${Yellow}L${NC}) ${Yellow}L${NC}IST all containers ${DarkGray}[custom view]${NC} \n"
-	printf "${Yellow}P${NC}) STO${Yellow}P${NC} container(s) ${DarkGray}[docker stop \$(docker ps -aq)]${NC}\n"
-	printf "${Yellow}T${NC}) S${Yellow}T${NC}ART container(s) ${DarkGray}[docker start \$(docker ps -a --format \"{{.Names}}\")]${NC}\n"
-	printf "${Yellow}D${NC}) ${Yellow}D${NC}ELETE container(s) & Volumes(s)${DarkGray} [docker rm -vf \$(docker ps -aq)]${NC}\n"
-	printf "${Yellow}H${NC}) ${Yellow}H${NC}OSTS grouped by role ${DarkGray}[works only if you followed the host naming rules]${NC}\n"
-	printf "\n"
-	printf "${BoldWhiteOnBlue}Manage Splunk:${NC}\n"
-	printf "${LightBlue}E${NC}) R${LightBlue}E${NC}SET all splunk passwords [changeme --> $USERPASS] ${DarkGray}[splunkd must be running]${NC}\n"
-	printf "${LightBlue}N${NC}) LICE${LightBlue}N${NC}SES reset ${DarkGray}[copy license file to all instances]${NC}\n"
-	printf "${LightBlue}U${NC}) SPL${LightBlue}U${NC}NK instance(s) restart\n"
+clear
+dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU                        [$dockerinfo]${NC}\n"
+display_stats_banner
+printf "\n\n\n\n"
+printf "${BoldWhiteOnTurquoise}Manage Infrastructure:${NC}\n"
+printf "${LightCyan}1${NC}) ${LightCyan}Manage Splunk Clusters${NC}\n"
+printf "${LightCyan}2${NC}) ${LightCyan}Manage Splunk Demos ${DarkGray}[**internal use only**]${NC}\n"
+printf "${LightCyan}3${NC}) ${LightCyan}Manage 3Rd Party Containers & Images ${DarkGray}[**under construction**]${NC}\n"
+printf "${LightCyan}4${NC}) ${LightCyan}Manage Splunk Images & Container ${NC}\n"
+printf "${LightCyan}5${NC}) ${LightCyan}Manage System ${NC}\n"
 
-	printf "\n"
-	printf "${BoldWhiteOnGreen}Manage System:${NC}\n"
-       # printf "${Green}I${NC}) Remove ${Green}I${NC}P aliases on the Ethernet interface [${White}not recommended${NC}]${NC}\n"
-        printf "${Green}Y${NC}) S${Green}Y${NC}STEM resources consumption [${White}CTRL-C to exit${NC}]${NC}\n"
-        printf "${Green}W${NC}) ${Green}W${NC}ipe clean any configurations/changes made by this script [${White}not recommended${NC}]${NC}\n"
-        #printf "${Green}Q${NC}) Quit${NC}\n"
+printf "\n"
 return 0
-}	#end display_main_menu()
+}	#end display_main_menu_options()
 #---------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------
+display_splunk_menu_options() {
+clear
+dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}SPLUNK MENU                        [$dockerinfo]${NC}\n"
+display_stats_banner
+printf "\n\n"
+printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
+printf "${Red}S${NC}) ${Red}S${NC}HOW all images details ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
+printf "${Red}R${NC}) ${Red}R${NC}EMOVE image(s) to recover diskspace (will extend build times) ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
+printf "${Red}F${NC}) DE${Red}F${NC}AULT Splunk images ${DarkGray}[currently: $SPLUNK_IMAGE]${NC}\n"
+printf "\n"	
+printf "${BoldWhiteOnYellow}Manage Containers:${NC}\n"
+printf "${Yellow}C${NC}) ${Yellow}C${NC}REATE generic Splunk container(s) ${DarkGray}[docker run ...]${NC}\n"
+printf "${Yellow}L${NC}) ${Yellow}L${NC}IST all containers ${DarkGray}[custom view]${NC} \n"
+printf "${Yellow}P${NC}) STO${Yellow}P${NC} container(s) ${DarkGray}[docker stop \$(docker ps -aq)]${NC}\n"
+printf "${Yellow}T${NC}) S${Yellow}T${NC}ART container(s) ${DarkGray}[docker start \$(docker ps -a --format \"{{.Names}}\")]${NC}\n"
+printf "${Yellow}D${NC}) ${Yellow}D${NC}ELETE container(s) & Volumes(s)${DarkGray} [docker rm -vf \$(docker ps -aq)]${NC}\n"
+printf "${Yellow}H${NC}) ${Yellow}H${NC}OSTS grouped by role ${DarkGray}[works only if you followed the host naming rules]${NC}\n"
+printf "\n"
+printf "${BoldWhiteOnBlue}Manage Splunk:${NC}\n"
+printf "${LightBlue}E${NC}) R${LightBlue}E${NC}SET all splunk passwords [changeme --> $USERPASS] ${DarkGray}[splunkd must be running]${NC}\n"
+printf "${LightBlue}N${NC}) LICE${LightBlue}N${NC}SES reset ${DarkGray}[copy license file to all instances]${NC}\n"
+printf "${LightBlue}U${NC}) SPL${LightBlue}U${NC}NK instance(s) restart\n"
+echo
+printf "${BoldWhiteOnGreen}Manage system:${NC}\n"
+printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
+printf "${Green}?${NC}) ${Green}H${NC}ELP!\n"
+
+return 0
+}	#end display_splunk_menu_options()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+display_system_menu_options() {
+clear
+dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}SYSTEM MENU                        [$dockerinfo]${NC}\n"
+display_stats_banner
+printf "\n\n"
+
+printf "${BoldWhiteOnGreen}Manage System:${NC}\n"
+printf "${Green}I${NC}) Remove ${Green}I${NC}P aliases on the Ethernet interface [${White}not recommended${NC}]${NC}\n"
+printf "${Green}Y${NC}) S${Green}Y${NC}STEM resources monitor [${White}CTRL-C to exit${NC}]${NC}\n"
+printf "${Green}W${NC}) ${Green}W${NC}ipe clean any configurations/changes made by this script [${White}not recommended${NC}]${NC}\n"
+#printf "${Green}Q${NC}) Quit${NC}\n"
+printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
+printf "${Green}?${NC}) ${Green}H${NC}ELP!\n"
+
+return 0
+}	#end display_system_menu_options()
+#---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_help() {
 printf "${DarkGray}Please note the following:\n"
@@ -1829,7 +1860,12 @@ printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> DE
 display_stats_banner
 printf "\n"
 echo
-printf "${Yellow}Magnage Splunk Demo containers:${NC}\n"
+printf "${BoldWhiteOnRed}Manage Demo Images:${NC}\n"
+printf "${Red}X${NC}) Download ONLY demo images [use this option to cache demo images] ${NC} \n"
+printf "${Red}S${NC}) ${Red}S${NC}HOW all downloaded demo images ${NC} \n"
+printf "${Red}R${NC}) ${Red}R${NC}EMOVE demo image(s)\n"
+printf "\n"
+printf "${BoldWhiteOnYellow}Manage Demo Containers:${NC}\n"
 printf "${Yellow}C${NC}) ${Yellow}C${NC}REATE Splunk demo container from available list${NC}\n"
 printf "${Yellow}L${NC}) ${Yellow}L${NC}IST demo container(s) ${NC}\n"
 printf "${Yellow}P${NC}) STO${Yellow}P${NC} demo container(s) ${NC}\n"
@@ -1837,12 +1873,7 @@ printf "${Yellow}T${NC}) S${Yellow}T${NC}ART demo container(s) ${NC}\n"
 printf "${Yellow}D${NC}) ${Yellow}D${NC}ELETE demo container(s)${NC}\n"
 printf "${Yellow}O${NC}) Add common ${Yellow}O${NC}S utils to demo container(s) [${White}not recommended${NC}]${NC}\n"
 echo
-printf "${Red}Magnage Splunk Demo images:${NC}\n"
-printf "${Red}X${NC}) Download ONLY demo images [use this option to cache demo images] ${NC} \n"
-printf "${Red}S${NC}) ${Red}S${NC}HOW all downloaded demo images ${NC} \n"
-printf "${Red}R${NC}) ${Red}R${NC}EMOVE demo image(s)\n"
-echo
-printf "${Green}Manage system:${NC}\n"
+printf "${BoldWhiteOnGreen}Manage system:${NC}\n"
 printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
 printf "${Green}?${NC}) ${Green}H${NC}ELP!\n"
 
@@ -1856,7 +1887,12 @@ printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> 3R
 display_stats_banner
 printf "\n"
 echo
-printf "${Yellow}Magnage Splunk 3rd party containers:${NC}\n"
+printf "${BoldWhiteOnRed}Manage 3rd Party Images:${NC}\n"
+printf "${Red}X${NC}) Download ONLY 3rd party images [use this option to cache demo images] ${NC} \n"
+printf "${Red}S${NC}) ${Red}S${NC}HOW all downloaded 3rd party images ${NC} \n"
+printf "${Red}R${NC}) ${Red}R${NC}EMOVE 3rd party image(s)\n"
+echo
+printf "${BoldWhiteOnYellow}Magnage 3rd Party containers:${NC}\n"
 printf "${Yellow}C${NC}) ${Yellow}C${NC}REATE Splunk 3rd party container from available list${NC}\n"
 printf "${Yellow}L${NC}) ${Yellow}L${NC}IST 3rd party container(s) ${NC}\n"
 printf "${Yellow}P${NC}) STO${Yellow}P${NC} 3rd party container(s) ${NC}\n"
@@ -1864,18 +1900,209 @@ printf "${Yellow}T${NC}) S${Yellow}T${NC}ART 3rd party container(s) ${NC}\n"
 printf "${Yellow}D${NC}) ${Yellow}D${NC}ELETE 3rd party container(s)${NC}\n"
 printf "${Yellow}O${NC}) Add common ${Yellow}O${NC}S utils to 3rd party container(s) [${White}not recommended${NC}]${NC}\n"
 echo
-printf "${Red}Magnage Splunk 3rd party images:${NC}\n"
-printf "${Red}X${NC}) Download ONLY 3rd party images [use this option to cache demo images] ${NC} \n"
-printf "${Red}S${NC}) ${Red}S${NC}HOW all downloaded 3rd party images ${NC} \n"
-printf "${Red}R${NC}) ${Red}R${NC}EMOVE 3rd party image(s)\n"
-echo
-printf "${Green}Manage system:${NC}\n"
+printf "${BoldWhiteOnGreen}Manage system:${NC}\n"
 printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
 printf "${Green}?${NC}) ${Green}H${NC}ELP!\n"
 
 return 0
 }	#end display_3rd party_menu_options()
 #---------------------------------------------------------------------------------
+
+#### MENU INPUTS ####
+
+#---------------------------------------------------------------------------------
+main_menu_inputs() {
+while true;
+do
+	clear
+        display_main_menu_options
+        choice=""
+	echo
+	read -p "Enter choice: " choice
+ 	case "$choice" in
+		1 ) clustering_menu_inputs ;;
+        	2 ) demos_menu_inputs ;;
+        	3 ) 3rdparty_menu_inputs ;;
+        	4 ) splunk_menu_inputs ;;
+        	5 ) system_menu_inputs ;;
+
+		q|Q ) echo;
+	      		echo -e "Quitting... Please send feedback to mhassan@splunk.com! \0360\0237\0230\0200";
+	      		break ;;
+	esac  #end case ---------------------------
+done
+return 0
+}	#end main_menu_inputs()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+splunk_menu_inputs() {
+#This function captures user selection for splunk_menu
+while true;
+do
+	clear
+        display_splunk_menu_options
+        choice=""
+	echo
+        read -p "Enter choice (? for help) : " choice
+                case "$choice" in
+                \? ) display_demos_menu_help;;
+
+               #IMAGES -----------
+                r|R ) remove_images;;
+                s|S ) show_all_images;;
+                f|F ) change_default_splunk_image;;
+
+                #CONTAINERS ------------
+                c|C) create_generic_container  ;;
+                d|D ) delete_containers;;
+                v|V ) delete_all_volumes;;
+                l|L ) list_all_containers ;;
+                t|T ) start_containers;;
+                p|P ) stop_containers;;
+                h|H ) list_all_hosts_by_role ;;
+
+                #SPLUNK ------
+                e|E ) reset_all_splunk_passwords ;;
+                n|N ) add_splunk_licenses ;;
+                u|U ) restart_all_splunkd ;;
+
+                #SYSTEM
+                i|I ) remove_ip_aliases ;;
+                w|W ) wipe_entire_system ;;
+                y|Y ) display_docker_stats_menu;;
+		b|B) return 0;;
+
+        esac  #end case ---------------------------
+	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+done
+return 0
+}	#end splunk_menu_inputs()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+system_menu_inputs() {
+#This function captures user selection for splunk_menu
+while true;
+do
+	clear
+        display_system_menu_options
+        choice=""
+	echo
+        read -p "Enter choice (? for help) : " choice
+                case "$choice" in
+		#SYSTEM
+                \? ) display_demos_menu_help;;
+		i|I ) remove_ip_aliases ;;
+		w|W ) wipe_entire_system ;;
+		y|Y ) display_docker_stats_menu;;
+
+                b|B ) return 0;;
+
+        esac  #end case ---------------------------
+	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+done
+return 0
+}	#end system_menu_inputs()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+demos_menu_inputs () {
+#This function captures user selection for demos_menu
+while true;
+do
+	clear
+        display_demos_menu_options
+        choice=""
+	echo
+        read -p "Enter choice (? for help) : " choice
+                case "$choice" in
+                \? ) display_demos_menu_help;;
+                c|C ) create_demo_container;;
+                l|L ) list_all_containers "DEMO";;
+                d|D ) delete_containers "DEMO"s;;
+                t|T ) start_containers "DEMO";;
+                p|P ) stop_containers "DEMO";;
+		o|O ) add_os_utils_to_demos ;;
+
+                x|X) download_demo_image;;
+                s|S) show_all_images "DEMO";;
+		r|R ) remove_images "DEMO" ;;
+
+                b|B ) return 0;;
+
+        esac  #end case ---------------------------
+	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+done
+return 0
+}	#end demos_menu_inputs()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+3rdparty_menu_inputs() {
+#This function captures user selection for 3rdparty_menu
+while true;
+do
+        clear
+        display_3rdparty_menu_options
+        choice=""
+        echo
+        read -p "Enter choice (? for help) : " choice
+                case "$choice" in
+                \? ) display_3rdparty_menu_help;;
+                c|C ) build_3rdparty_container_input;;
+                l|L ) list_all_containers "3RDPARTY";;
+                d|D ) delete_containers "3RDPARTY";;
+                t|T ) start_containers "3RDPARTY";;
+                p|P ) stop_containers "3RDPARTY";;
+                o|O ) add_os_utils_to_3rdparty ;;
+
+                x|X) download_3rdparty_image;;
+                s|S) show_all_images "3RDPARTY";;
+                r|R ) remove_images "3RDPART";;
+
+                b|B ) return 0;;
+
+        esac  #end case ---------------------------
+        read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+done
+return 0
+}	#end 3rdparty_menu_inputs()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+clustering_menu_inputs() {
+#This function captures user selection for clustering_menu
+while true;
+do
+	rm  -fr $CMDLOGTXT
+        dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
+        display_clustering_menu
+        choice=""
+        read -p "Enter choice: " choice
+                case "$choice" in
+		1 ) create_single_idxc "AUTO"; read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
+                2 ) create_single_shc  "AUTO"; read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
+                3 ) build_single_site "AUTO"; read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
+                4 ) build_multi_site_cluster "AUTO"; read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
+
+                5 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
+		    create_single_idxc; 
+		    read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
+		6 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
+		    create_single_shc; 
+		    read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
+                7 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
+		    build_single_site; 
+		    read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'  ;;
+                8 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
+		    build_multi_site_cluster; 
+		    read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'  ;;
+
+	        b|B) return 0;;
+		q|Q ) echo "Exit!" ;break ;;
+                *) read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
+        esac  #end case ---------------------------
+done
+return 0
+}	#end clustering_menu_inputs()
+#---------------------------------------------------------------------------------------------------------------
+
 
 
 #### CLUSTERS ######
@@ -1922,14 +2149,14 @@ if [ "$mode" == "AUTO" ]; then
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
 	#Basic services. Sequence is very important!
-        create_generic_container "$DMC_BASE" "1" ; dmc=$gLIST
-        create_generic_container "$LM_BASE" "1" ; lm=$gLIST
+        create_splunk_container "$DMC_BASE" "1" ; dmc=$gLIST
+        create_splunk_container "$LM_BASE" "1" ; lm=$gLIST
         make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
-        create_generic_container "$DEP_BASE" "$DEP_SHC_COUNT" ; dep="$gLIST"
+        create_splunk_container "$DEP_BASE" "$DEP_SHC_COUNT" ; dep="$gLIST"
         make_lic_slave $lm $dep ; make_dmc_search_peer $dmc $dep
 
 	#The rest of SHs
-        create_generic_container "$SH_BASE" "$STD_SHC_COUNT" ; members_list="$gLIST"
+        create_splunk_container "$SH_BASE" "$STD_SHC_COUNT" ; members_list="$gLIST"
 else
 	#Error checking (values should already have been passed at this point)
 	if [ -z "$label" ]; then
@@ -1971,18 +2198,18 @@ else
 	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n\n"
         printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	 if [ "$build_dmc" == "1" ]; then
-                create_generic_container "$dmc" "1"; dmc=$gLIST
+                create_splunk_container "$dmc" "1"; dmc=$gLIST
         fi
 	if [ "$build_lm" == "1" ]; then	
-        	create_generic_container "$lm" "1" ; lm="$gLIST"
+        	create_splunk_container "$lm" "1" ; lm="$gLIST"
 		make_lic_slave $lm $dmc  #for previous step since lm was not ready yet
                 make_dmc_search_peer $dmc $lm
 	fi
 	
-        create_generic_container "$DEPname" "$DEP_SHC_COUNT" ; dep="$gLIST"
+        create_splunk_container "$DEPname" "$DEP_SHC_COUNT" ; dep="$gLIST"
 	make_lic_slave $lm $dep
         make_dmc_search_peer $dmc $dep
-        create_generic_container "$SHname" "$SHcount" ; members_list="$gLIST"
+        create_splunk_container "$SHname" "$SHcount" ; members_list="$gLIST"
 fi
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
 
@@ -2122,14 +2349,14 @@ if [ "$1" == "AUTO" ]; then
         printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
 	#Basic services. Sequence is very important!
-	create_generic_container "$DMC_BASE" "1" ; dmc=$gLIST
-	create_generic_container "$LM_BASE" "1" ; lm=$gLIST
+	create_splunk_container "$DMC_BASE" "1" ; dmc=$gLIST
+	create_splunk_container "$LM_BASE" "1" ; lm=$gLIST
 	make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
-	create_generic_container "$CM_BASE" "1" ; cm=$gLIST
+	create_splunk_container "$CM_BASE" "1" ; cm=$gLIST
 	make_lic_slave $lm $cm ; make_dmc_search_peer $dmc $cm
 
 	#The rest of IDXs
-        create_generic_container "$IDX_BASE" "$STD_IDXC_COUNT" ; members_list="$gLIST"
+        create_splunk_container "$IDX_BASE" "$STD_IDXC_COUNT" ; members_list="$gLIST"
 else
 	#Anything passed to function; user will NOT be prompted for it!
 	if [ -z "$label" ]; then
@@ -2176,21 +2403,21 @@ else
 	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:$IDXcount]${NC}\n\n"
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	if [ "$build_dmc" == "1" ]; then
-                create_generic_container "$dmc" "1"; dmc=$gLIST
+                create_splunk_container "$dmc" "1"; dmc=$gLIST
         fi
         if [ "$build_lm" == "1" ]; then
-                create_generic_container "$lm" "1" ; lm=$gLIST
+                create_splunk_container "$lm" "1" ; lm=$gLIST
 		make_lic_slave $lm $dmc  #for previous step since lm was not ready yet
 		make_dmc_search_peer $dmc $lm
         fi
        	if [ "$build_cm" == "1" ]; then
-                create_generic_container "$cm" "1"; cm=$gLIST
+                create_splunk_container "$cm" "1"; cm=$gLIST
 		make_lic_slave $lm $cm
 		make_dmc_search_peer $dmc $cm
         fi
 	
 	#create the remaining IDXs 
-        create_generic_container "$IDXname" "$IDXcount" ; members_list="$gLIST"
+        create_splunk_container "$IDXname" "$IDXcount" ; members_list="$gLIST"
 
 fi
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
@@ -2267,7 +2494,7 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------------
 build_single_site() {
-#This function will build 1 CM and 1 LM then calls create_generic_container()
+#This function will build 1 CM and 1 LM then calls create_splunk_container()
 # Expected parameters: "$cm $lm $site-IDX:$IDXcount $site-SH:$SHcount $site-DEP:1"
 #$1 AUTO or MANUAL mode
 
@@ -2314,14 +2541,14 @@ printf "${Yellow}==>[$mode] Building single-site ($site)...${NC}\n\n"
 printf "${LightBlue}____________ Building basic services [LM, DMC, CM] ___________________${NC}\n" >&3
 #Basic services
 #Sequence is very important!
-create_generic_container "$site-DMC" "1" ; dmc=$gLIST
-create_generic_container "$site-LM" "1" ; lm=$gLIST
+create_splunk_container "$site-DMC" "1" ; dmc=$gLIST
+create_splunk_container "$site-LM" "1" ; lm=$gLIST
 make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
-create_generic_container "$site-CM" "1" ; cm=$gLIST
+create_splunk_container "$site-CM" "1" ; cm=$gLIST
 make_lic_slave $lm $cm ; make_dmc_search_peer $dmc $cm
 
 #testing HF ****************************************
-create_generic_container "$site-HF" "1" ; hf=$gLIST
+create_splunk_container "$site-HF" "1" ; hf=$gLIST
 make_lic_slave $lm $hf ; #make_dmc_search_peer $dmc $hf
 
 printf "${LightBlue}____________ Finished building basic serivces ___________________${NC}\n\n" >&3
@@ -2394,10 +2621,10 @@ printf "${DarkGray}Using Locations:[$SITEnames] CM:[$cm] First_site:[$first_site
 
 printf "\n\n${Yellow}Creating cluster basic services [only in $first_site]${NC}\n"
 #Sequence is very important!
-create_generic_container "$first_site-DMC" "1" ; dmc=$gLIST
-create_generic_container "$first_site-LM" "1" ; lm=$gLIST
+create_splunk_container "$first_site-DMC" "1" ; dmc=$gLIST
+create_splunk_container "$first_site-LM" "1" ; lm=$gLIST
 make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
-create_generic_container "$first_site-CM" "1" ; cm=$gLIST
+create_splunk_container "$first_site-CM" "1" ; cm=$gLIST
 make_lic_slave $lm $cm ; make_dmc_search_peer $dmc $cm
 
 #Loop thru list of sites & build generic SH/IDX hosts on each site
@@ -2865,108 +3092,6 @@ return 0
 }	#end download_3rdparty_image()
 #---------------------------------------------------------------------------------------------------------------
 
-#### MENU INPUTS ####
-
-#---------------------------------------------------------------------------------------------------------------
-demos_menu_inputs () {
-#This function captures user selection for demos_menu
-while true;
-do
-	clear
-        display_demos_menu_options
-        choice=""
-	echo
-        read -p "Enter choice (? for help) : " choice
-                case "$choice" in
-                \? ) display_demos_menu_help;;
-                c|C ) create_demo_container;;
-                l|L ) list_all_containers "DEMO";;
-                d|D ) delete_containers "DEMO"s;;
-                t|T ) start_containers "DEMO";;
-                p|P ) stop_containers "DEMO";;
-		o|O ) add_os_utils_to_demos ;;
-
-                x|X) download_demo_image;;
-                s|S) show_all_images "DEMO";;
-		r|R ) remove_images "DEMO" ;;
-
-                b|B ) return 0;;
-
-        esac  #end case ---------------------------
-	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
-done
-return 0
-}	#end demos_menu_inputs()
-#---------------------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------------------
-3rdparty_menu_inputs() {
-#This function captures user selection for 3rdparty_menu
-while true;
-do
-        clear
-        display_3rdparty_menu_options
-        choice=""
-        echo
-        read -p "Enter choice (? for help) : " choice
-                case "$choice" in
-                \? ) display_3rdparty_menu_help;;
-                c|C ) create_3rdparty_container_input;;
-                l|L ) list_all_containers "3RDPARTY";;
-                d|D ) delete_containers "3RDPARTY";;
-                t|T ) start_containers "3RDPARTY";;
-                p|P ) stop_containers "3RDPARTY";;
-                o|O ) add_os_utils_to_3rdparty ;;
-
-                x|X) download_3rdparty_image;;
-                s|S) show_all_images "3RDPARTY";;
-                r|R ) remove_images "3RDPART";;
-
-                b|B ) return 0;;
-
-        esac  #end case ---------------------------
-        read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
-done
-return 0
-}	#end 3rdparty_menu_inputs()
-#---------------------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------------------
-clustering_menu_inputs() {
-#This function captures user selection for clustering_menu
-while true;
-do
-	rm  -fr $CMDLOGTXT
-        dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-        display_clustering_menu
-        choice=""
-        read -p "Enter choice: " choice
-                case "$choice" in
-		1 ) create_single_idxc "AUTO"; read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
-                2 ) create_single_shc  "AUTO"; read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
-                3 ) build_single_site "AUTO"; read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
-                4 ) build_multi_site_cluster "AUTO"; read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
-
-                5 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    create_single_idxc; 
-		    read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
-		6 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    create_single_shc; 
-		    read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
-                7 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    build_single_site; 
-		    read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'  ;;
-                8 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    build_multi_site_cluster; 
-		    read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'  ;;
-
-	        b|B) return 0;;
-		q|Q ) echo "Exit!" ;break ;;
-                *) read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
-        esac  #end case ---------------------------
-done
-return 0
-}	#end clustering_menu_inputs()
-#---------------------------------------------------------------------------------------------------------------
-
 
 #### CONTAINERS ######
 
@@ -3122,7 +3247,7 @@ return 0
 display_all_containers() {
 type=$1		#container type (ex DEMO, 3RDPARTY, empty for ALL)
 
-printf "Current list all of $type containers on this system:\n"
+printf "Current list of all $type containers on this system:\n"
 printf "   Host name%-3s Container%-3s Splunkd%-3s Splunk ver%-2s    Bind IP%-3s${NC}\n"   # CPU%-4s MEM_USAGE%-3s MEM_LIMIT%-3s ${NC}\n"
 printf "   ---------%-3s ---------%-3s -------%-3s ----------%-2s    -----------%-3s${NC}\n" #---%-4s ---------%-3s ---------%-3s ${NC}\n"
 i=0
@@ -3475,49 +3600,13 @@ printf "\n"
 #house keeping functions
 check_shell
 detect_os
+startup_checks
 setup_ip_aliases
-while true;  
-do
 
-	display_main_menu 
-	choice=""
-	read -p "Enter choice: " choice
-       		case "$choice" in
-		1 ) clustering_menu_inputs ;;
-                2 ) demos_menu_inputs ;;
-                3 ) 3rdparty_menu_inputs ;;
-
-		#IMAGES -----------
-		r|R ) remove_images;;
-		s|S ) show_all_images;;
-		f|F ) change_default_splunk_image;;
-
-		#CONTAINERS ------------
-		c|C) create_generic_container  ;;
-		d|D ) delete_containers;;
-		v|V ) delete_all_volumes;;
-		l|L ) list_all_containers ;;
-		t|T ) start_containers;;
-		p|P ) stop_containers;;
-		h|H ) list_all_hosts_by_role ;;
-
-		#SPLUNK ------
-		e|E ) reset_all_splunk_passwords ;;
-		n|N ) add_splunk_licenses ;;
-		u|U ) restart_all_splunkd ;;
-
-		#SYSTEM
-		i|I ) remove_ip_aliases ;;
-		w|W ) wipe_entire_system ;;
-		y|Y ) display_docker_stats_menu;;
-		q|Q ) echo;
-		      echo -e "Quitting... Please send feedback to mhassan@splunk.com! \0360\0237\0230\0200";
-		      break ;;
-	esac  #end case ---------------------------
+main_menu_inputs
 	
-	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
 
-done  #end of while(true) loop
 
 ##### EOF #######
 
