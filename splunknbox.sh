@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=3.7
+VERSION=3.8
 # Version:	 see $VERSION above
 #
 #Usage :  splunknbox -v[2 3 4 5 6] 
@@ -36,13 +36,13 @@ VERSION=3.7
 # TO-DO: -add routines for UF and HF containers with eventgen.py
 #	-add DS containers with default serverclass.conf
 #	-ability to adjust RF and SF
-#	-abitllity to set seach affinity
+#	-ability to set search affinity
 #################################################################################
 
 
 #-------------Network stuff --------
-ETH_OSX="lo0"			#default interface to use with OSX laptop (el captin)
-ETH_LINUX="eno1"		#default interface to use with Linux server (ubuntu 16.04
+ETH_OSX="lo0"			#default interface to use with OSX laptop (el captain)
+ETH_LINUX="eno1"		#default interface to use with Linux server (Ubuntu 16.04
 
 #-------------IP aliases --------
 #LINUX is routed and hosts can be reached from anywhere in the network
@@ -73,13 +73,14 @@ SPLUNK_IMAGE="splunknbox/splunk_6.5.2"
 #SPLUNK_IMAGE="splunknbox/splunk_6.4.3"
 
 #SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-
-SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Require login
+SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
 
 #Available splunk demos registry.splunk.com
 REPO_DEMO_IMAGES="demo-oi demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud"
 
-#3rd party images will be renamed to 3rdparty-* after each docker pull
-REPO_3RDPARTY_IMAGES="3rdparty-mysql 3rdparty-oraclelinux"
+#3rd party images will be renamed to 3rd-* after each docker pull
+#REPO_3RDPARTY_IMAGES="3rd-mysql 3rd-oraclelinux"
+REPO_3RDPARTY_IMAGES="mysql oraclelinux sebp/elk sequenceiq/hadoop-docker caioquirino/docker-cloudera-quickstart"
 MYSQL_PORT="3306"
 #---------------------------------------
 #----------Cluster stuff----------------
@@ -105,7 +106,7 @@ USERADMIN="admin"
 USERPASS="hello"
 
 RFACTOR="3"			#default replication factor
-SFACTOR="2"			#default seach factor
+SFACTOR="2"			#default search factor
 
 SHCLUSTERLABEL="shcluster1"
 IDXCLUSTERLABEL="idxcluster1"
@@ -178,7 +179,7 @@ exec 2>&1
 
 #---------------------------------------------------------------------------------------------------------------
 logline() { 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #Log docker CMD string to logfile. Group event color by host
 cmd=$1; curr_host=$2
 #DATE=` date +'%b %e %R'`
@@ -209,9 +210,9 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------
 show_docker_system_prune() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 echo
-printf "${Red}WARNING! This is a distructive command. May need to restart the script...${NC}\n"
+printf "${Red}WARNING! This is a destructive command. May need to restart the script...${NC}\n"
 docker system prune
 echo
 return
@@ -219,7 +220,7 @@ return
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
 show_docker_system_df() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 echo
 docker system df
 echo
@@ -228,7 +229,7 @@ return
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
 restart_docker_mac() {    ### NOT USED YET ####
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 osascript -e 'quit app "Docker.app"'		#quit
 open -a /Applications/Docker.app		#start
 return 0
@@ -236,7 +237,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 start_docker_mac() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 read -p "    >> Should I attempt to start [may not work with all MacOS versions]? [Y/n]? " answer
 if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
@@ -256,7 +257,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 start_docker_liunx() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 read -p "    >> Should I attempt to start [may not work with all MacOS versions]? [Y/n]? " answer
 if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
@@ -276,7 +277,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
 check_shell() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 # Check that we're in a BASH shell
 
 if test -z "$BASH" ; then
@@ -288,7 +289,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 remove_ip_aliases() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #Delete ip aliases on the interface (OS dependent)
 
 clear
@@ -337,7 +338,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 setup_ip_aliases() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #Check if ip aliases created, if not them bring up (tested on Ubuntu 16.04). Quick and dirty method. May need to change
 
 base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `; # base_ip=$base_ip"."
@@ -375,7 +376,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 check_load() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #We need to throttle back host creation if running on low powered server. Set to 4 x numb of cores
 
 if [ "$os" == "Darwin" ]; then
@@ -419,7 +420,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 install_gnu_grep() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 #----------
 printf "${LightBlue}   >>${NC}Checking Xcode commandline tools:${NC} "
@@ -480,7 +481,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 startup_checks() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 #----------Gnu grep installed? MacOS only-------------
 if [ "$os" == "Darwin" ]; then
@@ -507,13 +508,15 @@ fi
 printf "${LightBlue}==>${NC} Checking if we have instances of this script running...${NC}"
 this_script_name="${0##*/}"
 pid_list=`ps -efa | grep $this_script_name | grep "/bin/bash" |grep -v $$ |awk '{printf $2" " }'`
-#echo "running:  ps -efa | grep create-splunk.sh | grep \"/bin/bash\" |grep -v \$\$ |awk '{printf \$2\" \" }"
+#echo "running:  ps -efa | grep splunknbox.sh | grep \"/bin/bash\" |grep -v \$\$ |awk '{printf \$2\" \" }"
 if [ -n "$pid_list" ]; then
 	printf "\n"
         printf "    ${Red}>>${NC} Detected running instance(s) of $this_script_name [$pid_list]${NC}\n"
         read -p "    >> This script doesn't support multiple instances. Kill them? [Y/n]? " answer
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
                 sudo kill -9 $pid_list
+		#kill any stray docker pull requests
+		kill $(ps -ax|grep "docker pull"|grep -v "grep"|awk '{print $1}') >/dev/null 2>&1
         fi
 	printf "\n"
 else
@@ -522,7 +525,7 @@ fi
 #-----------other scripts running?---------
 
 #-----------docker daemon running check----
-printf "${LightBlue}==>${NC} Checking if docker daemon is running "
+printf "${LightBlue}==>${NC} Checking if docker daemon is running & version "
 
 is_running=`docker info|grep Images 2>/dev/null `
 if [ -z "$is_running" ] && [ "$os" == "Darwin" ]; then
@@ -588,7 +591,7 @@ fi
 
 #-----------OS memory check-------------------
 printf "${LightBlue}==>${NC} Checking if we have enough free OS memory [Free:%sgb Total:%sgb  %s%%]..." $os_free_mem $os_total_mem $os_free_mem_perct
-#state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparision
+#state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparison
 #WARN if free mem is 20% or less of total mem
 if [ "$os_free_mem_perct" -le "20" ]; then
 	printf "${BrownOrange}WARNING, may not be a problem!${NC}\n"
@@ -602,11 +605,11 @@ fi
 
 #-----------docker preferences/config check-------
 printf "${LightBlue}==>${NC} Checking Docker configs for CPUs allocation [Docker:%s  OS:%s]..." $dockerinfo_cpu $cores
-#state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparision
+#state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparison
 if [ "$dockerinfo_cpu" -lt "$cores" ]; then
 	printf "${BrownOrange} WARNING!${NC}\n"
 	printf "    ${Red}>>${NC} Docker is configured to use %s of the available system %s CPUs\n" $dockerinfo_cpu $cores
-	printf "    ${Red}>>${NC} Please allocate all available system cpus to Docker (Prefrences->Advance)\n\n" 
+	printf "    ${Red}>>${NC} Please allocate all available system cpus to Docker (Preferences->Advance)\n\n" 
 else
         printf " ${Green}OK!${NC}\n" 
 fi
@@ -616,7 +619,7 @@ printf "${LightBlue}==>${NC} Checking Docker configs for MEMORY allocation [Dock
 if [ "$docker_total_mem_perct" -lt "80" ]; then
 	printf "${BrownOrange} WARNING!${NC}\n" $dockerinfo_mem $os_total_mem
        	printf "    ${Red}>>${NC} Docker is configured to use %sgb of the available system %sgb memory\n" $dockerinfo_mem $os_total_mem
-       	printf "    ${Red}>>${NC} Please allocate all available system memory to Docker (Prefrences->Advance)\n\n"
+       	printf "    ${Red}>>${NC} Please allocate all available system memory to Docker (Preferences->Advance)\n\n"
 else
         printf " ${Green}OK!${NC}\n"
 fi
@@ -715,7 +718,7 @@ detect_os() {
 # GREP command. Must install ggrep utility on OSX 
 # MOUNTPOINT   (OSX is strict about permissions)
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 uname=`uname -a | awk '{print $1}'`	
 if [ "$(uname)" == "Darwin" ]; then
@@ -753,13 +756,13 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------------
 change_loglevel() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 #-------
 declare -a list=(2 3 4 5 6)
 #echo ${list[@]}
 i=0
-#higlight the current loglevel number
+#highlight the current loglevel number
 for id in ${list[@]}; do
 	#echo "$i:${list[$i]}"
 	if [ "${list[$i]}" == "$loglevel" ]; then
@@ -783,7 +786,7 @@ while [[ ! ${get_num} =~ ^[2-6]+$ ]]; do
         ! [[ ${get_num} -ge 2 && ${get_num} -le 6  ]] && unset get_num
 done
 loglevel="${get_num}"
-#echo This is a number withn a range :  ${get_num}
+#echo This is a number within a range :  ${get_num}
 
 #-------
 
@@ -793,14 +796,14 @@ done
 
 #From the loglevel level one higher than requested, through the maximum;
 for v in $(seq $(( loglevel+1 )) $maxloglevel ); do
-    (( "$v" > "2" )) && eval exec "$v>/dev/null" #Redirect these to bitbucket, provided that they don't match stdout and stderr.
+    (( "$v" > "2" )) && eval exec "$v>/dev/null" #Redirect these to bit bucket, provided that they don't match stdout and stderr.
 done
 return 0
 }	#end change_loglevel()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 compare() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 # String comparison routine.
 # usage:   compare(string, sub-string)
 # Returns 0 if the specified string compare the specified sub-string,otherwise return 1
@@ -821,7 +824,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
 pausing() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #$1=seconds
 
 for c in $(seq 1 $1); do  
@@ -840,7 +843,7 @@ display_output() {
 #$2  The expected "good" message returned if docker command executed OK. Otherwise everything would be an error
 #$3  The logging (I/O redirect) to display the message (good for verbosity settings)
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 outputmsg=$1; OKmsg=$2; logging=$3
 OKmsg=`echo $OKmsg| tr '[a-z]' '[A-Z]'`				#convert to upper case 
@@ -861,7 +864,7 @@ return 0
 }	#end display_output()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-display_debug() {
+_debug_function_inputs() {
 
 func_name=$1; arg_num=$2; param_list=$3; calls=$4
 calls_count=`echo $calls|wc -w|sed 's/ //g'`
@@ -870,7 +873,7 @@ printf "\n${LightRed}DEBUG:=> CALLS($calls_count) =>${Yellow}[$calls]${NC}\n"  >
 printf "${LightRed}DEBUG:=> STARTED  =>${Yellow}$func_name(): ${Purple}args:[$arg_num] ${Yellow}(${LightGreen}$param_list${Yellow})${NC}\n" >&6
 
 return 0
-}	#end display_debug()
+}	#end _debug_function_inputs()
 #---------------------------------------------------------------------------------------------------------------
 
 
@@ -878,7 +881,7 @@ return 0
 
 #---------------------------------------------------------------------------------
 is_splunkd_running() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 fullhostname=$1
 
@@ -893,8 +896,8 @@ if [ -z "$splunkstate" ]; then
 	#printf "${Green}OK!${NC}\n" >&3
 	#echo -ne  "\t->->Verifying that splunkd is running...${Green}OK!${NC}\n" >&3
 else	while [ -n "$splunkstate" ] && [ $i -le 3 ]; do
-        	#printf "\n\t->Verifying that splunkd is running...${Red}Not runing! Attemp $i to restart..${NC}\n" >&3
-        	echo -ne "${NC}\t->Verifying that splunkd is running..${Red}Not runing! Attemp ${Yellow}$i${Red} to restart\r${NC}" >&3
+        	#printf "\n\t->Verifying that splunkd is running...${Red}Not running! Attempt $i to restart..${NC}\n" >&3
+        	echo -ne "${NC}\t->Verifying that splunkd is running..${Red}Not running! Attempt ${Yellow}$i${Red} to restart\r${NC}" >&3
         	CMD="docker exec -ti $fullhostname /opt/splunk/bin/splunk start "
         	#echo "cmd[$CMD]"
         	OUT=`$CMD`; display_output "$OUT" "Splunk web interface is at" "4"
@@ -919,27 +922,67 @@ return 0
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 change_default_splunk_image() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function will set the splunk version to use for building containers.
 
 clear
-printf "${BoldYellowOnBlue}Manage Images -> CHANGE SPLUNK IMAGE MENU ${NC}\n"
+printf "${BoldYellowOnBlue}Manage Images -> CHANGE DEFAULT SPLUNK IMAGE MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 
-printf "Retreving list from [https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=splunknbox&starCount=0]....\n" 
-echo
-CMD="docker search splunknbox"; OUT=`$CMD`
-printf "$OUT" #| awk '{printf $1}'
 #count=`wc -l $CMD`
 
-count=`docker images |grep -i "demo"|wc -l`
-if [ $count == 0 ]; then
-        printf "\nNo images to list!\n"
-        return 0
-fi
+printf "Retrieving list from: [https://hub.docker.com/u/splunknbox/]...\n\n"
+CMD="docker search splunknbox"; OUT=`$CMD`
+#printf "$OUT" #| awk '{printf $1}'
+
+retrieved_images_list=`printf "$OUT"|grep -v NAME|awk '{print $1" "}'| tr -d '\n' `
+declare -a list=($retrieved_images_list)
+printf "${Purple}     		IMAGE NAME${NC}		    CREATED	SIZE			AUTHOR\n"
+printf "${Purple} -------------------------------------${NC}   ------------  --------   ---------------------------------------\n"
+counter=1
+#count=`docker images --format "{{.ID}}" | wc -l`
+for image_name in $retrieved_images_list; do
+        printf "${Purple}%-2s${NC}) ${Purple}%-40s${NC}" "$counter" "$image_name"
+	created=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $4,$5,$6}'`
+	size=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $7,$8}'`
+        if [ -n "$created" ]; then
+        	author=`docker inspect $image_name |grep -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
+                printf "%-12s %-7s %-10s ${NC}\n" "$created" "$size" "$author"
+        else
+                printf "${DarkGray}NOT CACHED! ${NC}\n"
+        fi
+        let counter++
+done
+
+
+#count=`docker images |grep -i "splunk_"|wc -l`
+#if [ $count == 0 ]; then
+#        printf "\nNo images to list!\n"
+#        return 0
+#fi
 #display_all_images "DEMO"
-echo
+count=0
+echo;echo
+echo;printf "Current default image is [$SPLUNK_IMAGE]\n"; echo
+printf "${BrownOrange}WARNING! Changing the default image means any subequent container's builds (except DEMOs) will use the new image!${NC}\n"
+read -p "Are you sure you want to continue? [Y/n]? " answer
+if [ "$answer" == "Y" ] || [ "$answer" == "y" ] || [ "$answer" == "" ] ; then
+	choice=""
+	read -p "Select number [downloaded if not cached]: " choice
+	if [ -n "$choice" ]; then
+		START=$(date +%s)
+		image_name=(${list[$choice - 1]})
+		progress_bar_image_download "$image_name"	
+       		printf "Changing default image from [$SPLUNK_IMAGE] to [${Yellow}$image_name${NC}]\n"
+		SPLUNK_IMAGE="$image_name"
+		echo
+	fi
+else
+	echo
+	return 0
+fi
+
 return 0
 }	#end change_default_splunk_image()
 #---------------------------------------------------------------------------------------------------------------
@@ -947,7 +990,7 @@ return 0
 splunkd_status_all() {
 #This functions displays splunkd status on all containers
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 for i in `docker ps --format "{{.Names}}"`; do
         printf "${Purple}$i${NC}: "
         docker exec -ti $i /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ \
@@ -965,7 +1008,7 @@ add_license_file() {
 # $1=fullhostname
 #see: https://docs.docker.com/engine/reference/commandline/cp/
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 CMD="docker cp $PROJ_DIR/$LIC_FILES_DIR  $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
 printf "\t->Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "" "3"
@@ -984,7 +1027,7 @@ return 0
 reset_splunk_passwd() {
 fullhostname=$1
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 docker exec -ti $fullhostname touch /opt/splunk/etc/.ui_login	#prevent first time changeme password screen
 docker exec -ti $fullhostname rm -fr /opt/splunk/etc/passwd	#remove any existing users (include admin)
@@ -1007,19 +1050,19 @@ return 0
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 reset_all_splunk_passwords() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${BoldWhiteOnBlue}RESET SPLUNK INSTANCES PASSWORD MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 display_all_containers
 
-for image_name in `docker ps --format "{{.Names}}"`; do
-        if ( compare "$image_name" "DEMO" ) || ( compare "$image_name" "3RDPARTY" ); then
+for host_name in `docker ps --format "{{.Names}}"`; do
+        if ( compare "$host_name" "DEMO" ) || ( compare "$host_name" "3RDP" ); then
                 true
         else
-                printf "${Purple}$image_name${NC}: Admin password reset to [hello]\n"
-                reset_splunk_passwd $image_name
+                printf "${Purple}$host_name${NC}: Admin password reset to [hello]\n"
+                reset_splunk_passwd $host_name
         fi
 done
 echo
@@ -1028,19 +1071,19 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 add_splunk_licenses() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${BoldWhiteOnBlue}ADD SPLUNK LICENSE MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 display_all_containers
 
-for image_name in `docker ps --format "{{.Names}}"`; do
-        if ( compare "$image_name" "DEMO" ) || ( compare "$image_name" "3RDPARTY" ); then
+for host_name in `docker ps --format "{{.Names}}"`; do
+        if ( compare "$host_name" "DEMO" ) || ( compare "$host_name" "3RDP" ); then
                 true
         else
-		printf "${Purple}$image_name${NC}:"
-		add_license_file $image_name
+		printf "${Purple}$host_name${NC}:"
+		add_license_file $host_name
         fi
 done
 return 0
@@ -1048,19 +1091,19 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 restart_all_splunkd() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${BoldWhiteOnBlue}RESTART SPLUNK MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 display_all_containers
 
-for image_name in `docker ps --format "{{.Names}}"`; do
-        if ( compare "$image_name" "DEMO" ) || ( compare "$image_name" "3RDPARTY" ); then
+for host_name in `docker ps --format "{{.Names}}"`; do
+        if ( compare "$host_name" "DEMO" ) || ( compare "$host_name" "3RDP" ); then
                 true
         else
-		printf "${Purple}$image_name${NC}:"
-     		restart_splunkd "$image_name"
+		printf "${Purple}$host_name${NC}:"
+     		restart_splunkd "$host_name"
         fi
 done
 return 0
@@ -1071,7 +1114,7 @@ restart_splunkd() {
 fullhostname=$1 
 #$2=b Execute in the background and don't wait to return.This will speed up everything but load the CPU
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 if [ "$2" == "b" ]; then
 	printf "\t->Restarting splunkd in the ${White}background${NC} " >&3
@@ -1097,7 +1140,7 @@ make_lic_slave() {
 # This function designate $hostname as license-slave using LM (License Manager)
 #Always check if $lm exist before processing
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 lm=$1; hostname=$2; 
 if [ -n "$lm" ]; then
@@ -1120,7 +1163,7 @@ check_host_exist() {		 ####### NOT USED YET ########
 #$1=hostname (may include digits sequence)   $2=list_to_check_against
 #Check if host exist in list; if not create it using basename only . The new host seq is returned by function
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 printf "${Purple}[$1] Host check >>> "
 basename=$(printf '%s' "$1" | tr -d '0123456789')  #strip numbers
@@ -1142,14 +1185,14 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 add_os_utils_to_demos() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #Add missing OS utils to all non-demo containers
 clear
 printf "${BoldWhiteOnGreen}ADD OS UTILS MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 printf "${BrownOrange}This option will add OS packages [vim net-tools telnet dnsutils] to all running demo containers only...\n"
-printf "${BrownOrange}Might be useful if you will be doing a lot of manaul splunk configuration, however, it will increase container's size! ${NC}\n"
+printf "${BrownOrange}Might be useful if you will be doing a lot of manual splunk configuration, however, it will increase container's size! ${NC}\n"
 printf "\n"
 read -p "Are you sure you want to proceed? [Y/n]? " answer
 if [ "$answer" == "y" ] || [ "$answer" == "y" ] || [ "$answer" == "" ]; then
@@ -1179,7 +1222,7 @@ list_all_hosts_by_role() {
 #This functions shows all containers grouped by role (using base hostname)
 #captain=`docker exec -ti $i /opt/splunk/bin/splunk show shcluster-status|head -10 | $GREP -i label |awk '{print $3}'| sed -e 's/^M//g' | tr -d '\r' | tr  '\n' ' '`
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 idx_list=`docker ps -a --filter name="IDX|idx" --format "{{.Names}}"|sort `
 sh_list=`docker ps -a --filter name="SH|sh" --format "{{.Names}}"|sort`
@@ -1191,7 +1234,7 @@ hf_list=`docker ps -a --filter name="HF|hf" --format "{{.Names}}"|sort`
 uf_list=`docker ps -a --filter name="UF|uf" --format "{{.Names}}"|sort`
 dmc_list=`docker ps -a --filter name="DMC|dmc" --format "{{.Names}}"|sort`
 demo_list=`docker ps -a --filter name="DEMO|demo" --format "{{.Names}}"|sort`
-rdparty_list=`docker ps -a --filter name="3RDPARTY|3rdparty" --format "{{.Names}}"|sort`
+rdparty_list=`docker ps -a --filter name="3RDP|3rdp" --format "{{.Names}}"|sort`
 
 printf "${BoldWhiteOnYellow}ALL CONTAINERS GROUPED BY ROLE MENU ${NC}\n"
 display_stats_banner
@@ -1236,9 +1279,9 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 custom_login_screen() {
-#This function creates custom login screen with some useful data (hostnam, IP, cluster label)
+#This function creates custom login screen with some useful data (hostname, IP, cluster label)
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 vip=$1;  fullhostname=$2
 
 #----------- password stuff ----------
@@ -1328,23 +1371,23 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 assign_server_role() {		 ####### NOT USED YET ########
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #EXAMPLE:
 #mhassan:~> docker exec -ti SITE01-DMC01 cat /opt/splunk/etc/apps/splunk_management_console/lookups/assets.csv
 #peerURI,serverName,host,machine,"search_group","_mkv_child","_timediff","__mv_peerURI","__mv_serverName","__mv_host","__mv_machine","__mv_search_group","__mv__mkv_child","__mv__timediff"
-#"10.0.0.101:8089","SITE01-LM01","SITE01-LM01","SITE01-LM01","dmc_group_license_master",0,,,,,,,,
-#"10.0.0.102:8089","SITE01-CM01","SITE01-CM01","SITE01-CM01","dmc_group_cluster_master",0,,,,,,,,
-#"10.0.0.102:8089","SITE01-CM01","SITE01-CM01","SITE01-CM01","dmc_indexerclustergroup_LABEL1",1,,,,,,,,
-#"10.0.0.107:8089","SITE01-DEP01","SITE01-DEP01","SITE01-DEP01","dmc_group_deployment_server",0,,,,,,,,
-#"10.0.0.108:8089","SITE01-SH01","SITE01-SH01","SITE01-SH01","dmc_group_search_head",0,,,,,,,,
-#"10.0.0.108:8089","SITE01-SH01","SITE01-SH01","SITE01-SH01","dmc_indexerclustergroup_LABEL1",1,,,,,,,,
-#"10.0.0.108:8089","SITE01-SH01","SITE01-SH01","SITE01-SH01","dmc_searchheadclustergroup_LABEL1",2,,,,,,,,
-#"10.0.0.109:8089","SITE01-SH02","SITE01-SH02","SITE01-SH02","dmc_group_search_head",0,,,,,,,,
-#"10.0.0.109:8089","SITE01-SH02","SITE01-SH02","SITE01-SH02","dmc_indexerclustergroup_LABEL1",1,,,,,,,,
-#"10.0.0.109:8089","SITE01-SH02","SITE01-SH02","SITE01-SH02","dmc_searchheadclustergroup_LABEL1",2,,,,,,,,
-#"10.0.0.110:8089","SITE01-SH03","SITE01-SH03","SITE01-SH03","dmc_group_search_head",0,,,,,,,,
-#"10.0.0.110:8089","SITE01-SH03","SITE01-SH03","SITE01-SH03","dmc_indexerclustergroup_LABEL1",1,,,,,,,,
-#"10.0.0.110:8089","SITE01-SH03","SITE01-SH03","SITE01-SH03","dmc_searchheadclustergroup_LABEL1",2,,,,,,,,
+#"10.0.0.101:$MGMT_PORT","SITE01-LM01","SITE01-LM01","SITE01-LM01","dmc_group_license_master",0,,,,,,,,
+#"10.0.0.102:$MGMT_PORT","SITE01-CM01","SITE01-CM01","SITE01-CM01","dmc_group_cluster_master",0,,,,,,,,
+#"10.0.0.102:$MGMT_PORT","SITE01-CM01","SITE01-CM01","SITE01-CM01","dmc_indexerclustergroup_LABEL1",1,,,,,,,,
+#"10.0.0.107:$MGMT_PORT","SITE01-DEP01","SITE01-DEP01","SITE01-DEP01","dmc_group_deployment_server",0,,,,,,,,
+#"10.0.0.108:$MGMT_PORT","SITE01-SH01","SITE01-SH01","SITE01-SH01","dmc_group_search_head",0,,,,,,,,
+#"10.0.0.108:$MGMT_PORT","SITE01-SH01","SITE01-SH01","SITE01-SH01","dmc_indexerclustergroup_LABEL1",1,,,,,,,,
+#"10.0.0.108:$MGMT_PORT","SITE01-SH01","SITE01-SH01","SITE01-SH01","dmc_searchheadclustergroup_LABEL1",2,,,,,,,,
+#"10.0.0.109:$MGMT_PORT","SITE01-SH02","SITE01-SH02","SITE01-SH02","dmc_group_search_head",0,,,,,,,,
+#"10.0.0.109:$MGMT_PORT","SITE01-SH02","SITE01-SH02","SITE01-SH02","dmc_indexerclustergroup_LABEL1",1,,,,,,,,
+#"10.0.0.109:$MGMT_PORT","SITE01-SH02","SITE01-SH02","SITE01-SH02","dmc_searchheadclustergroup_LABEL1",2,,,,,,,,
+#"10.0.0.110:$MGMT_PORT","SITE01-SH03","SITE01-SH03","SITE01-SH03","dmc_group_search_head",0,,,,,,,,
+#"10.0.0.110:$MGMT_PORT","SITE01-SH03","SITE01-SH03","SITE01-SH03","dmc_indexerclustergroup_LABEL1",1,,,,,,,,
+#"10.0.0.110:$MGMT_PORT","SITE01-SH03","SITE01-SH03","SITE01-SH03","dmc_searchheadclustergroup_LABEL1",2,,,,,,,,
 #localhost,"SITE01-DMC01","SITE01-DMC01","SITE01-DMC01","dmc_group_search_head",0,,,,,,,,
 
 #docker exec -ti SITE01-DEP01 cat /opt/splunk/etc/apps/splunk_management_console/lookups/assets.csv
@@ -1368,14 +1411,14 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 make_dmc_search_peer() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #Always check if $dmc exist before processing
 
 dmc=$1; host=$2
 #adding search peer in DMC
 if [ -n "$dmc" ]; then
 	bind_ip_host=`docker inspect --format '{{ .HostConfig }}' $host| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-	CMD="docker exec -ti $dmc /opt/splunk/bin/splunk add search-server -host $bind_ip_host:8089 -auth $USERADMIN:$USERPASS -remoteUsername $USERADMIN -remotePassword $USERPASS"
+	CMD="docker exec -ti $dmc /opt/splunk/bin/splunk add search-server -host $bind_ip_host:$MGMT_PORT -auth $USERADMIN:$USERPASS -remoteUsername $USERADMIN -remotePassword $USERPASS"
         OUT=`$CMD`
         OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
         printf "\t->Adding [$host] to DMC:[$dmc] " >&3 ; display_output "$OUT" "Peer added" "3"
@@ -1392,7 +1435,7 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------------
 set_splunkweb_to_http() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function will reset splunkweb to http in case its https. Used with demos using https (ie ES)
 fullhostname="$1"
 
@@ -1401,7 +1444,7 @@ custom_web_conf="[settings]\nenableSplunkWebSSL=0\n"
 printf "$custom_web_conf" > $PROJ_DIR/web.conf.demo
 CMD="docker cp $PROJ_DIR/web.conf.demo $fullhostname:/opt/splunk/etc/system/local/web.conf" ; OUT=`$CMD`
 printf "${DarkGray}CMD:[$CMD]${NC}>>[$OUT]\n" >&4
-printf "\t->Configuing demo to be viewed on http://$fullhostname:8000 ${Green} Done!${NC}\n" >&3
+printf "\t->Configuring demo to be viewed on http://$fullhostname:8000 ${Green} Done!${NC}\n" >&3
 
 #if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-ITSI" ) ;then
 #	USERPASS="changeme"
@@ -1419,7 +1462,7 @@ return 0
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
 is_container_running() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 fullhostname=$1
 
 #-----check if container is running--------
@@ -1429,7 +1472,7 @@ printf "\t->Verifying that container is running..." >&3
 if [ -n "$ip" ]; then
 	printf "${Green}OK!${NC}\n" >&3
 else
-        printf "${Red}Not runing! Attempting to restart..${NC}\n" >&3
+        printf "${Red}Not running! Attempting to restart..${NC}\n" >&3
         CMD="docker start $fullhostname"; OUT=`$CMD`; display_output "$OUT" "" "4"
         printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
         sleep 15
@@ -1439,52 +1482,13 @@ return 0
 }	#end is_container_running()
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
-create_splunk_container() {
-#This function creates generic splunk containers. Role is assigned later
-#inputs: $1:basehostname: (ex IDX, SH,HF) just the base (no numbers)
-#	 $2:hostcount:     how many containers to create from this host type (ie name)
-#	 $3:lic_master		if provided dont copy license, make host license-slave	
-# 	 $4:cluster_label	cluster label in web.conf, use if provided
-#outputs: $gLIST:  global var compare the list of hostname just got created
-#	  $host_num :  last host number sequence just got created
-#	-calculate host number sequence
-#	 -calculate next IP sequence (octet4)
+next_seq_fullhostname_ip() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-#clear
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-#printf "${BoldYellowOnBlue}CREATE GENERIC SPLUNK CONTAINER MENU ${NC}\n"
-#display_stats_banner
-#printf "\n"
-
-basename=$1; hostcount=$2; lic_master=$3; cluster_label=$4
-count=0;starting=0; ending=0;basename=$BASEHOSTNAME;  octet4=0
-gLIST=""   #build global list of hosts created by this session. Used somewhere else
-
-#Another method to figure out the starting octet4 
-# OCTET4FILE=`iptables -t nat -L |$GREP DNAT | awk '{print $5}'  | sort -u|tail -1|cut -d"." -f4`
-printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}  basename[$basename]  hostcount[$hostcount] ${NC}\n" >&5
-
-#---If not passed; prompt user to get basename and count ----
-if [ -z "$1" ]; then
-        read -p ">>>> Enter BASE HOSTNAME (default: $BASEHOSTNAME)?: " basename
-else
-        basename=$1
-fi
-if [ -z "$basename" ]; then
-        basename=$BASEHOSTNAME
-        last_host_name=""
-        #printf "First time to use this host_base_name ${Green}[$basename]${NC}\n"
-fi
-#always convert to upper case before creating
-basename=`echo $basename| tr '[a-z]' '[A-Z]'`	
-
-if [ -z "$2" ]; then
-        read -p ">>>> How many hosts to create (default 1)? " count
-else
-        count=$2
-fi
-if [ -z "$count" ]; then count=1;  fi
-#---If not passed; prompt user to get basename and count ----
+basename=$1		#input
+count=$2		#input
+#vip			#output global
+#fullhostname		#output global
 
 #---- calculate sequence numbers -----------[in:basename out: startx, endx]
 #get last seq used by last host created
@@ -1499,18 +1503,10 @@ else
        	ending=`expr $starting + $count - 1`
        	printf "${DarkGray}Last hostname created:${NC}[${Green}$basename${NC}${Yellow}$last_host_num${NC}] " >&4
 fi
-
 #fix single digit issue if < 2-digits
-if [ "$starting" -lt "10" ]; then
-                startx="0"$starting
-        else
-                startx=$starting
-        fi
-        if [ "$ending" -lt "10" ]; then
-                endx="0"$ending
-        else
-                endx=$ending
-        fi
+if [ "$starting" -lt "10" ]; then  startx="0$starting"; else  startx="$starting";  fi
+if [ "$ending" -lt "10" ]; then endx="0$ending"; else endx=$ending; fi
+
 printf "${DarkGray}Next sequence:${NC} [${Green}$basename${Yellow}$startx${NC} --> ${Green}$basename${Yellow}$endx${NC}]\n"  >&4
 #---- end calculate sequence numbers -----------
 
@@ -1545,7 +1541,8 @@ fi
 #---- build fullhostname (Base+seq & VIP) -----------
 #---Loop for number of hosts to create----
 octet4=$last_used_octet4
-for (( x=${starting}; x <= ${ending}; x++)) ; do
+x=${starting}
+#for (( x=${starting}; x <= ${ending}; x++)) ; do
 	#fix the digits size first
      	if [ "$x" -lt "10" ]; then
       		host_num="0"$x         		 #always reformat number to 2-digits if less than 2-digits
@@ -1559,25 +1556,71 @@ for (( x=${starting}; x <= ${ending}; x++)) ; do
      	vip="$base_ip.$octet4"            	#build new IP to be assigned
 	printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}fulhostname:[$fullhostname] vip:[$vip] basename:[$basename] count[$count] ${NC}\n" >&5
 	#---- build fullhostname (Base+seq & VIP) -----------
+#done  #end for loop
 
-	if ( compare "$fullhostname" "3RDPARTY" ); then
-		build_3rdparty_container $vip $fullhostname
-	else
-		build_splunk_container $vip $fullhostname $lic_master $cluster_label
-	fi
-	gLIST="$gLIST""$fullhostname "
+return 0
+}	#next_seq_fullname_ip
+#---------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
+create_splunk_container() {
+#This function creates generic splunk containers. Role is assigned later
+#inputs: $1:basehostname: (ex IDX, SH,HF) just the base (no numbers)
+#	 $2:hostcount:     how many containers to create from this host type (ie name)
+#	 $3:lic_master		if provided dont copy license, make host license-slave	
+# 	 $4:cluster_label	cluster label in web.conf, use if provided
+#outputs: $gLIST:  global var compare the list of hostname just got created
 
-	done  #end for loop
-#---Loop for number of hosts to create----
+#clear
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+#printf "${BoldYellowOnBlue}CREATE GENERIC SPLUNK CONTAINER MENU ${NC}\n"
+#display_stats_banner
+#printf "\n"
 
-	gLIST=`echo $gLIST |sed 's/;$//'`	#GLOBAL! remove last space (causing host to look like "SH "
-#--------------------------
+basename=$1; hostcount=$2; lic_master=$3; cluster_label=$4
+count=0;starting=0; ending=0;basename=$BASEHOSTNAME;  octet4=0
+gLIST=""   #build global list of hosts created by this session. Used somewhere else
+
+#Another method to figure out the starting octet4 
+# OCTET4FILE=`iptables -t nat -L |$GREP DNAT | awk '{print $5}'  | sort -u|tail -1|cut -d"." -f4`
+printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}  basename[$basename]  hostcount[$hostcount] ${NC}\n" >&5
+
+#---If not passed; prompt user to get basename and count ----
+if [ -z "$1" ]; then
+        read -p ">>>> Enter BASE HOSTNAME (default: $BASEHOSTNAME)?: " basename
+else
+        basename=$1
+fi
+if [ -z "$basename" ]; then
+        basename=$BASEHOSTNAME
+        last_host_name=""
+        #printf "First time to use this host_base_name ${Green}[$basename]${NC}\n"
+fi
+#always convert to upper case before creating
+basename=`echo $basename| tr '[a-z]' '[A-Z]'`	
+
+if [ -z "$2" ]; then
+        read -p ">>>> How many hosts to create (default 1)? " count
+else
+        count=$2
+fi
+if [ -z "$count" ]; then count=1;  fi
+#---If not passed; prompt user to get basename and count ----
+
+
+for (( a = 1; a <= count; a++ ))  ; do
+	next_seq_fullhostname_ip "$basename" "$count"
+	construct_splunk_container $vip $fullhostname $lic_master $cluster_label
+	gLIST="$gLIST""$fullhostname "		#append last host create to the global LIST
+done
+
+gLIST=`echo $gLIST |sed 's/;$//'`	#GLOBAL! remove last space (causing host to look like "SH "
+#echo "gLIST[$gLIST]"; exit
 
 return $host_num
 }	#end of create_splunk_container()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
-build_splunk_container() {
+construct_splunk_container() {
 #This function creates single splunk container using $vip and $hostname
 #inputs: $1: container's IP to use (nated IP aka as bind IP)
 #	 $2: fullhostname:  container name (may include site and host number sequence)
@@ -1588,7 +1631,7 @@ build_splunk_container() {
 #	 -reset password and setup splunk's login screen
 #        -configure container's OS related items if needed
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 START=$(date +%s);
 vip=$1;  fullhostname=$2;lic_master=$3; cluster_label=$4; 
 fullhostname=`echo $fullhostname| tr -d '[[:space:]]'`	#trim white space if they exist
@@ -1628,7 +1671,7 @@ is_container_running "$fullhostname"
 #-----check if splunkd is running--------
 is_splunkd_running "$fullhostname"	
 
-#adding lincense unless demo; then leave it alone	
+#adding license unless demo; then leave it alone	
 if ( compare "$fullhostname" "DEMO" ); then	
 	true
 else
@@ -1661,66 +1704,11 @@ fi
 #fi
 
 return 0
-}	#end build_splunk_container()
-#---------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------
-build_3rdparty_container() {
-#This function creates single 3rd party container using $vip and $hostname
-#inputs: $1: container's IP to use (nated IP aka as bind IP)
-#        $2: fullhostname:  container name (may include site and host number sequence)
-#
-#output: -create single host. will not prompt user for any input data
-
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-START=$(date +%s);
-vip=$1;  fullhostname=$2
-fullhostname=`echo $fullhostname| tr -d '[[:space:]]'`  #trim white space if they exist
-
-check_load              #throttle back if high load
-#echo "fullhostname[$fullhostname]"
-#rm -fr $MOUNTPOINT/$fullhostname
-mkdir -m 777 -p $MOUNTPOINT/$fullhostname
-
-n=2
-#extract image  name from fullhostname only  (ex: 3RDPARTY-ELK02)
-image_name=`echo $fullhostname | sed "s/\(.*\).\{$n\}/\1/" `
-image_name=`echo $image_name| tr '[A-Z]' '[a-z]'`         	#conver to lower case (just incase)
-
-cached=`docker images|grep $image_name`
-if [ -z "$cached" ]; then
-        progress_bar_image_download "$image_name"
-fi
-
-#MySQL : https://hub.docker.com/_/mysql/
-if ( compare "$fullhostname" "MYSQL" ); then
-#docker run --name some-mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:tag
-
-	CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER -p $vip:$MYSQL_PORT:$MYSQL_PORT --env MYSQL_DATABASE="mydatabase" --env MYSQL_USER="guest" --env MYSQL_PASSWORD="my-secret-pw" --env MYSQL_ROOT_PASSWORD="my-secret-pw" $image_name"
-else
-	printf "${Red}*** No configuration for this 3rd party container yet ***${NC}\n"
-	return 0
-fi
-printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating new 3rd party docker container ${NC} "
-OUT=`$CMD` ; display_output "$OUT" "" "2"
-#CMD=`echo $CMD | sed 's/\t//g' `;
-printf "${DarkGray}CMD:[$CMD]${NC}\n" >&2	#always show how 3rd party created. They are not not same
-logline "$CMD" "$fullhostname"
-
-if [ "$os" == "Darwin" ]; then
-        pausing "30"
-else
-        pausing "15"
-fi
-
-#-----check if container is running--------
-is_container_running "$fullhostname"
-
-return 0
-}	#end build_3rdparty_container()
+}	#end construct_splunk_container()
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-create_demo_container() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+create_demo_container_from_list() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
 printf "${BoldYellowOnBlue}Manage containers -> CREATE DEMO CONTAINER MENU ${NC}\n"
@@ -1760,12 +1748,11 @@ if [ -n "$choice" ]; then
         printf "${Yellow}Creating selected demo containers(s)...${NC}\n"
         for id in `echo $choice`; do
 		image_name=(${list[$id - 1]})
-		cached=`docker images|grep $image_name`
         	if [ -z "$cached" ]; then
 			progress_bar_image_download "$image_name"
         	fi
         	#echo "$id : ${list[$id - 1]}"
-       		printf "${Purple}Creating [$id:$image_name]:${NC}"; display_stats_banner
+       		printf "${NC}Using ${Purple}[$id:$image_name]:${NC}"; display_stats_banner
         	create_splunk_container "$image_name" "1"
         done
 else
@@ -1776,18 +1763,92 @@ else
         	printf "${Yellow}Creating all demo containers(s)...\n${NC}"
                 for i in $REPO_DEMO_IMAGES; do
 			progress_bar_image_download "$i"
-                        printf "${Purple}Creating [$i${NC}]"; display_stats_banner
+                        printf "${NC}Using ${Purple}[$i${NC}]"; display_stats_banner
                 	create_splunk_container "$i" "1"
 			pausing "30"
                 done
 	fi
 fi
 return 0
-}	#end create_demo_container()
+}	#end create_demo_container_from_list()
 #---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
+construct_3rdp_container_from_image() {
+#This function creates single 3rd party container using $vip and $hostname
+image_name=$1      #example  johndoe/mysql
+
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+START=$(date +%s);
+
+check_load              #throttle back if high load
+mkdir -m 777 -p $MOUNTPOINT/$fullhostname
+
+#extract basename from full image name
+basename=`echo $image_name | sed 's/^.*\///g' | tr '[a-z]' '[A-Z]' `
+basename="3RDP-$basename" 
+
+cached=`docker images|grep $image_name`
+if [ -z "$cached" ]; then
+        progress_bar_image_download "$image_name"
+fi
+
+next_seq_fullhostname_ip "$basename" "1"	#returns fullhostname & vip
+echo "image:[$image_name]   base:[$basename]   full:[$fullhostname]   vip:[$vip]"
+
+if ( compare "$basename" "MYSQL" ); then
+#https://hub.docker.com/_/mysql/
+	CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname \
+	--dns=$DNSSERVER -p $vip:$MYSQL_PORT:$MYSQL_PORT \
+	--env MYSQL_DATABASE="mydatabase" --env MYSQL_USER="guest" --env MYSQL_PASSWORD="my-secret-pw" \
+	--env MYSQL_ROOT_PASSWORD="my-secret-pw" $image_name"
+
+#https://github.com/sequenceiq/hadoop-docker/blob/master/Dockerfile
+elif ( compare "$basename" "HADOOP-DOCKER" ); then
+	CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER \
+	-p $vip:50010:50010 -p $vip:50020:50020 -p $vip:50070:50070 -p $vip:50075:50075 -p $vip:50090:50090 \
+	-p $vip:8020:8020 -p $vip:9000:9000 -p $vip:10020:10020 -p $vip:19888:19888 -p $vip:8030:8030 \
+	-p $vip:8031:8031 -p $vip:8032:8032 -p $vip:8033:8033 -p $vip:8040:8040 -p $vip:8042:8042 \
+	-p $vip:8088:8088 -p $vip:49707:49707 -p $vip:2122:2122
+	 $image_name"
+	HTTP_PORTS="Hadoop:50090 Hadoop:8042  Hadoop:8088"
+#https://github.com/caioquirino/docker-cloudera-quickstart/blob/master/Dockerfile
+elif ( compare "$basename" "DOCKER-CLOUDERA-QUICKSTART" ); then
+	CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER \
+	 -p $vip:2181:2181 -p $vip:8020:8020 -p $vip:8888:8888 -p $vip:11000:11000 -p $vip:11443:11443 \
+	 -p $vip:9090:9090 -p $vip:8088:8088 -p $vip:19888:19888 -p $vip:9092:9092 -p $vip:8983:8983 \
+	 -p $vip:16000:16000 -p $vip:16001:16001 -p $vip:42222:22 -p $vip:8042:8042 -p $vip:60010:60010 \
+	 -p $vip:8080:8080 -p $vip:7077:7077	
+	 $image_name"
+	HTTP_PORTS="Hue:8888 Hadoop:8088 Cluster:8042 HBase:60010 Spark:8080"
+
+elif ( compare "$basename" "ORACLE" ); then
+	printf "${Red}*** not yet ***${NC}\n"
+	#CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER -p $vip:$MYSQL_PORT:$MYSQL_PORT --env MYSQL_DATABASE="mydatabase" --env MYSQL_USER="guest" --env MYSQL_PASSWORD="my-secret-pw" --env MYSQL_ROOT_PASSWORD="my-secret-pw" $image_name"
+else	
+	printf "${Red}*** No configuration for this 3rd party container yet ***${NC}\n"
+	return 0
+fi
+printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating new 3rd party docker container ${NC} "
+OUT=`$CMD` ; display_output "$OUT" "" "2"
+#CMD=`echo $CMD | sed 's/\t//g' `;
+printf "${DarkGray}CMD:[$CMD]${NC}\n" >&2	#always show how 3rd party created. They are not not same
+logline "$CMD" "$fullhostname"
+
+if [ "$os" == "Darwin" ]; then
+        pausing "30"
+else
+        pausing "15"
+fi
+
+#-----check if container is running--------
+is_container_running "$fullhostname"
+
+return 0
+}	#end construct_3rdp_container_from_image()
+#---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-create_3rdparty_container() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+create_3rdp_container_from_list() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
 printf "${BoldYellowOnBlue}Manage containers -> CREATE 3RD PARTY CONTAINER MENU ${NC}\n"
@@ -1802,7 +1863,7 @@ printf "${Purple} -----------\t\t ${NC}---------------------------- \t\t -------
 counter=1
 for i in `echo $REPO_3RDPARTY_IMAGES ` ; do
         printf "${Purple}$counter${NC})${Purple} $i${DarkGray}\t\t"
-        cached=`docker images|grep $i| awk '{print "created:"$4,$5,$6,"  Size:"$7,$8}'`
+        cached=`docker images|grep $i| awk '{print $4,$5,$6" "$7,$8}'`
         if [ -n "$cached" ]; then
                 author=`docker inspect $i|grep -i author|cut -d":" -f1-3|sed 's/,//g'`
                 printf "${White}$cached $author${NC}\n"
@@ -1812,7 +1873,7 @@ for i in `echo $REPO_3RDPARTY_IMAGES ` ; do
         let counter++
 done
 
-#build array of 3rd party images from disk [3rdparty-mysql 3rdparty-orcale 3rdparty-elk]
+#build array of 3rd party images from disk [3rd-mysql 3rd-orcale 3rd-elk]
 declare -a list=($REPO_3RDPARTY_IMAGES)
 echo
 choice=""
@@ -1826,12 +1887,12 @@ if [ -n "$choice" ]; then
                 image_name=(${list[$id - 1]})
                 cached=`docker images|grep $image_name`
                 if [ -z "$cached" ]; then
-                printf "${Purple}Creating [$id:$image_name]:${NC}\n"
-                        progress_bar_image_download "$image_name"  #will renmae image viewed (docker images)
+                printf "${NC}Using ${Purple}[$id:$image_name]:${NC}\n"
+                        progress_bar_image_download "$image_name"  
                 fi
                 #echo "$id : ${list[$id - 1]}"
-                printf "${Purple}Creating [$id:$image_name]:${NC}"; display_stats_banner
-                create_splunk_container "$image_name" "1"
+                printf "${NC}Using ${Purple}[$id:$image_name]:${NC}"; display_stats_banner
+                construct_3rdp_container_from_image "$image_name" "1"
         done
 else
         printf "${Red}WARNING! This operation will stress your system. Make sure you have enough resources...${NC}\n"
@@ -1841,13 +1902,13 @@ else
                 printf "${Yellow}Creating all 3rd party containers(s)...\n${NC}"
                 for image_name in $REPO_3RDPARTY_IMAGES; do
                        # progress_bar_image_download "$image_name"
-                        printf "${Purple}Creating [$image_name${NC}]"; display_stats_banner
-                        create_splunk_container "$image_name" "1"
+                        printf "${NC}Using ${Purple}[$image_name${NC}]"; display_stats_banner
+                	construct_3rdp_container_from_image "$image_name" "1"
                 done
         fi
 fi
 return 0
-}	#end create_3rdparty_container()
+}	#end create_3rdp_container_from_list()
 #---------------------------------------------------------------------------------------------------------------
 
 
@@ -1855,13 +1916,13 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------------
 display_clustering_menu_help() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${White}CLUSTERING MENU HELP:\n\n${NC}"
 printf "\n"
 printf "Under construction!\n";echo; return 0
-printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be promped to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
-printf ">>If image is not cached; it may take up to 5 mintues to dowload ($SPLUNK_DOCKER_HUB).\n"
+printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be prompted to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
+printf ">>If image is not cached; it may take up to 5 minutes to download ($SPLUNK_DOCKER_HUB).\n"
 printf ">>Some images are experimental. Please contact author for any issues.\n"
 printf ">>Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
 echo
@@ -1870,12 +1931,12 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_help() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${White}DEMO MENU HELP:\n\n${NC}"
 printf "\n"
-printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be promped to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
-printf ">>If image is not cached; it may take up to 5 mintues to dowload ($SPLUNK_DOCKER_HUB).\n"
+printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be prompted to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
+printf ">>If image is not cached; it may take up to 5 minutes to download ($SPLUNK_DOCKER_HUB).\n"
 printf ">>Some images are experimental. Please contact author for any issues.\n"
 printf ">>Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
 echo
@@ -1884,13 +1945,13 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_3rdparty_menu_help() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${White}3RD PARTY MENU HELP:\n\n${NC}"
 printf "\n"
 printf "Under construction!\n";echo; return 0
-printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be promped to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
-printf ">>If image is not cached; it may take up to 5 mintues to dowload ($SPLUNK_DOCKER_HUB).\n"
+printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be prompted to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
+printf ">>If image is not cached; it may take up to 5 minutes to download ($SPLUNK_DOCKER_HUB).\n"
 printf ">>Some images are experimental. Please contact author for any issues.\n"
 printf ">>Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
 echo
@@ -1899,15 +1960,15 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_splunk_menu_help() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${White}SPLUNK MENU HELP:\n\n${NC}"
 printf "\n"
 printf "Under construction!\n";echo
 return 0
 
-printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be promped to login. To remove cashed credentials remove ~/.Docker/json.config file \n"
-printf ">>If image is not cached; it may take up to 5 mintues to dowload ($SPLUNK_DOCKER_HUB).\n"
+printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be prompted to login. To remove cashed credentials remove ~/.Docker/json.config file \n"
+printf ">>If image is not cached; it may take up to 5 minutes to download ($SPLUNK_DOCKER_HUB).\n"
 printf ">>Some images are experimental. Please contact author for any issues.\n"
 printf ">>Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
 echo
@@ -1916,13 +1977,13 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_system_menu_help() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${White}SYSTEM MENU HELP:\n\n${NC}"
 printf "\n"
 printf "Under construction!\n";echo; return 0
-printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be promped to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
-printf ">>If image is not cached; it may take up to 5 mintues to dowload ($SPLUNK_DOCKER_HUB).\n"
+printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be prompted to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
+printf ">>If image is not cached; it may take up to 5 minutes to download ($SPLUNK_DOCKER_HUB).\n"
 printf ">>Some images are experimental. Please contact author for any issues.\n"
 printf ">>Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
 echo
@@ -1931,15 +1992,15 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_main_menu_help() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${White}MAIN MENU HELP:\n\n${NC}"
 printf "\n"
 printf "Under construction!\n";echo;
         read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
 return 0
-printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be promped to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
-printf ">>If image is not cached; it may take up to 5 mintues to dowload ($SPLUNK_DOCKER_HUB).\n"
+printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be prompted to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
+printf ">>If image is not cached; it may take up to 5 minutes to download ($SPLUNK_DOCKER_HUB).\n"
 printf ">>Some images are experimental. Please contact author for any issues.\n"
 printf ">>Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
 echo
@@ -1951,7 +2012,7 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------------
 display_main_menu_options2() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function displays user options for the main menu
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
@@ -1987,7 +2048,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_main_menu_options() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function displays user options for the main menu
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
@@ -2010,7 +2071,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
 display_splunk_menu_options() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
 printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}SPLUNK MENU                       ${DarkGray}[$dockerinfo]${NC}\n"
@@ -2018,7 +2079,7 @@ display_stats_banner
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
 printf "${Red}S${NC}) ${Red}S${NC}HOW all images details ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
-printf "${Red}R${NC}) ${Red}R${NC}EMOVE image(s) to recover diskspace (will extend build times) ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
+printf "${Red}R${NC}) ${Red}R${NC}EMOVE image(s) to recover disk-space (will extend build times) ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
 printf "${Red}F${NC}) DE${Red}F${NC}AULT Splunk images ${DarkGray}[currently: $SPLUNK_IMAGE]${NC}\n"
 printf "\n"	
 printf "${BoldWhiteOnYellow}Manage Containers:${NC}\n"
@@ -2043,7 +2104,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_system_menu_options() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
 printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}SYSTEM MENU                       ${DarkGray}[$dockerinfo]${NC}\n"
@@ -2054,8 +2115,8 @@ printf "${BoldWhiteOnGreen}Manage System:${NC}\n"
 printf "${Green}R${NC}) ${Green}R${NC}emove IP aliases on the Ethernet interface [${White}not recommended${NC}]${NC}\n"
 printf "${Green}M${NC}) ${Green}M${NC}ONITOR SYSTEM resources [${White}CTRL-C to exit${NC}]${NC}\n"
 printf "${Green}W${NC}) ${Green}W${NC}ipe clean any configurations/changes made by this script [${White}not recommended${NC}]${NC}\n"
-printf "${Green}S${NC}) ${Green}S${NC}HOW docker disk space usage${NC}\n"
-printf "${Green}C${NC}) ${Green}C${NC}LEAN docker disk space${NC}\n"
+printf "${Green}S${NC}) ${Green}S${NC}HOW docker disk space usage [need v1.13.1+]${NC}\n"
+printf "${Green}C${NC}) ${Green}C${NC}LEAN docker disk space [need v1.13.1+]${NC}\n"
 printf "\n"
 printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
 printf "${Green}?${NC}) ${Green}H${NC}ELP!\n"
@@ -2065,7 +2126,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_options() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> DEMOS MENU          ${DarkGray}[$dockerinfo]${NC}\n"
 display_stats_banner
 printf "\n"
@@ -2081,7 +2142,7 @@ printf "${Yellow}L${NC}) ${Yellow}L${NC}IST demo container(s) ${NC}\n"
 printf "${Yellow}P${NC}) STO${Yellow}P${NC} demo container(s) ${NC}\n"
 printf "${Yellow}T${NC}) S${Yellow}T${NC}ART demo container(s) ${NC}\n"
 printf "${Yellow}D${NC}) ${Yellow}D${NC}ELETE demo container(s)${NC}\n"
-printf "${Yellow}A${NC}) ${Yellow}A${NC}DD common  utils to demo container(s) [${White}not recommended${NC}]${NC}\n"
+printf "${Yellow}A${NC}) ${Yellow}A${NC}DD common utils to demo container(s) [${White}not recommended${NC}]${NC}\n"
 echo
 printf "${BoldWhiteOnGreen}Manage system:${NC}\n"
 printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
@@ -2092,7 +2153,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
 display_3rdparty_menu_options() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> 3RD PARTY MENU      ${DarkGray}[$dockerinfo]${NC}\n"
 display_stats_banner
@@ -2103,7 +2164,7 @@ printf "${Red}X${NC}) Download ONLY 3rd party images [use this option to cache d
 printf "${Red}S${NC}) ${Red}S${NC}HOW all downloaded 3rd party images ${NC} \n"
 printf "${Red}R${NC}) ${Red}R${NC}EMOVE 3rd party image(s)\n"
 echo
-printf "${BoldWhiteOnYellow}Magnage 3rd Party containers:${NC}\n"
+printf "${BoldWhiteOnYellow}Manage 3rd Party containers:${NC}\n"
 printf "${Yellow}C${NC}) ${Yellow}C${NC}REATE 3rd party container from available list${NC}\n"
 printf "${Yellow}L${NC}) ${Yellow}L${NC}IST 3rd party container(s) ${NC}\n"
 printf "${Yellow}P${NC}) STO${Yellow}P${NC} 3rd party container(s) ${NC}\n"
@@ -2120,7 +2181,7 @@ return 0
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_clustering_menu_options() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> CLUSTERING MENU       ${DarkGray}[$dockerinfo]${NC}\n"
 display_stats_banner
@@ -2132,7 +2193,7 @@ printf "${LightBlue}2${NC}) Create Stand-alone Search Head Cluster (SHC)${NC}\n"
 printf "${LightBlue}3${NC}) Build Single-site Cluster${NC}\n"
 printf "${LightBlue}4${NC}) Build Multi-site Cluster (3 sites)${NC} \n";echo
 
-printf "${BoldWhiteOnYellow}MANUAL BUILDS (specify base hostnames and counts): ${NC}\n"
+printf "${BoldWhiteOnYellow}MANUAL BUILDS (specify base host-names and counts): ${NC}\n"
 printf "${Yellow}5${NC}) Create Manual Stand-alone Index cluster (IDXC)${NC}\n"
 printf "${Yellow}6${NC}) Create Manual Stand-alone Search Head Cluster (SHC)${NC}\n"
 printf "${Yellow}7${NC}) Build Manual Single-site Cluster${NC}\n"
@@ -2149,7 +2210,7 @@ return 0
 
 #---------------------------------------------------------------------------------
 main_menu_inputs() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 while true;
 do
 	clear
@@ -2181,7 +2242,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 splunk_menu_inputs() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function captures user selection for splunk_menu
 while true;
 do
@@ -2222,7 +2283,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 system_menu_inputs() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function captures user selection for splunk_menu
 while true;
 do
@@ -2250,7 +2311,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 demos_menu_inputs () {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function captures user selection for demos_menu
 while true;
 do
@@ -2261,7 +2322,7 @@ do
         read -p "Enter choice (? for help) : " choice
                 case "$choice" in
                 \? ) display_demos_menu_help;;
-                c|C ) create_demo_container;;
+                c|C ) create_demo_container_from_list;;
                 l|L ) list_all_containers "DEMO";;
                 d|D ) delete_containers "DEMO"s;;
                 t|T ) start_containers "DEMO";;
@@ -2282,7 +2343,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 3rdparty_menu_inputs() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function captures user selection for 3rdparty_menu
 while true;
 do
@@ -2293,16 +2354,16 @@ do
         read -p "Enter choice (? for help) : " choice
                 case "$choice" in
                 \? ) display_3rdparty_menu_help;;
-                c|C ) create_3rdparty_container;;
-                l|L ) list_all_containers "3RDPARTY";;
-                d|D ) delete_containers "3RDPARTY";;
-                t|T ) start_containers "3RDPARTY";;
-                p|P ) stop_containers "3RDPARTY";;
+                c|C ) create_3rdp_container_from_list;;
+                l|L ) list_all_containers "3RDP";;
+                d|D ) delete_containers "3RDP";;
+                t|T ) start_containers "3RDP";;
+                p|P ) stop_containers "3RDP";;
                 o|O ) add_os_utils_to_3rdparty ;;
 
                 x|X) download_3rdparty_image;;
-                s|S) show_all_images "3RDPARTY";;
-                r|R ) remove_images "3RDPART";;
+                s|S) show_all_images "3RDP";;
+                r|R ) remove_images "3RDP";;
 
                 b|B ) return 0;;
 
@@ -2314,38 +2375,32 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 clustering_menu_inputs() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function captures user selection for clustering_menu
 while true;
 do
-	rm  -fr $CMDLOGTXT
         dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
         display_clustering_menu_options
         choice=""
         read -p "Enter choice: " choice
                 case "$choice" in
-		1 ) create_single_idxc "AUTO"; read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
-                2 ) create_single_shc  "AUTO"; read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
-                3 ) build_single_site "AUTO"; read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
-                4 ) build_multi_site_cluster "AUTO"; read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
+                \? ) display_clustering_menu_help;;
+
+		1 ) create_single_idxc "AUTO" ;;
+                2 ) create_single_shc  "AUTO" ;;
+                3 ) build_single_site "AUTO" ;;
+                4 ) build_multi_site_cluster "AUTO" ;;
 
                 5 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    create_single_idxc; 
-		    read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
+		    create_single_idxc;;
 		6 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    create_single_shc; 
-		    read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
+		    create_single_shc;;
                 7 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    build_single_site; 
-		    read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'  ;;
+		    build_single_site;;
                 8 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    build_multi_site_cluster; 
-		    read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'  ;;
+		    build_multi_site_cluster;;
 
 	        b|B) return 0;;
-                \? ) display_clustering_menu_help;;
-		q|Q ) echo "Exit!" ;break ;;
-                #*) read -p $'\033[1;32mHit <ENTER> to continue...\e[0m' ;;
         esac  #end case ---------------------------
         read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
 done
@@ -2368,7 +2423,7 @@ create_single_shc() {
 #	  -if param $1 is "AUTO" skip all user prompts and create standard cluster 3SH/1DEP
 #-----------------------------------------------------------------------------------------------------
 #$1 AUTO or MANUAL mode
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
@@ -2489,7 +2544,7 @@ restart_splunkd "$dep"
 printf "${LightBlue}___________ Finished STEP#1 __________________________${NC}\n" >&3
 
 printf "${LightBlue}___________ Starting STEP#2 (members configs) ________${NC}\n" >&3
-printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}After members_list loop> parm2:[$2] members_list:[$members_list] sh_list:[$sh_list]${NC}\n" >&5
+printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}After members_list loop> param2:[$2] members_list:[$members_list] sh_list:[$sh_list]${NC}\n" >&5
 for i in $members_list ; do
 	check_load	#throttle during SHC build
 
@@ -2537,7 +2592,7 @@ restart_splunkd "$i"  #last SH (captain) may not be ready yet, so force restart 
 CMD="docker exec -ti $i /opt/splunk/bin/splunk bootstrap shcluster-captain -servers_list "$server_list" -auth $USERADMIN:$USERPASS"
 OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
-printf "\t->Captain bootstraping (may take time) " >&3 ; display_output "$OUT" "Successfully"  "3"
+printf "\t->Captain bootstrapping (may take time) " >&3 ; display_output "$OUT" "Successfully"  "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$i"
 printf "${LightBlue}___________ Finished STEP#3 __________________________${NC}\n" >&3
@@ -2569,7 +2624,7 @@ create_single_idxc() {
 #example call: create_single_idxc "$site-IDX:$IDXcount $cm:1 $lm $label"
 #$1 AUTO or MANUAL mode
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
@@ -2595,7 +2650,7 @@ if [ "$1" == "AUTO" ]; then
 	label="$IDXCLUSTERLABEL"
 	printf "${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
 	printf "${Yellow}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
-	printf "${DarkGray}Using basenames DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:$STD_IDXC_COUNT]${NC}\n\n"
+	printf "${DarkGray}Using base-names DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:$STD_IDXC_COUNT]${NC}\n\n"
         printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
 	#Basic services. Sequence is very important!
@@ -2703,12 +2758,12 @@ for i in $members_list ; do
 	logline "$CMD" "$i"
 	printf "\t->Make a cluster member " >&3 ; display_output "$OUT" "property has been edited" "3"
 	#-------
-	#-------tcp/9997---
-        CMD="docker exec -ti $i /opt/splunk/bin/splunk enable listen $RECV_PORT -auth $USERADMIN:$USERPASS "
-        OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
-        printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
-        logline "$CMD" "$i"
-        printf "\t->Enabling recieving port [$RECV_PORT] " >&3 ; display_output "$OUT" "Listening for" "3"
+	#-------tcp/9997--- disabled 2/15/17 Already in 6.5 image build
+        #CMD="docker exec -ti $i /opt/splunk/bin/splunk enable listen $RECV_PORT -auth $USERADMIN:$USERPASS "
+        #OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
+        #printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
+        #logline "$CMD" "$i"
+        #printf "\t->Enabling receiving port [$RECV_PORT] " >&3 ; display_output "$OUT" "Listening for" "3"
         #-------
 	
 	#We dont need to add IDXCs to DMC, just add their CM (which is already done)
@@ -2748,7 +2803,7 @@ build_single_site() {
 # Expected parameters: "$cm $lm $site-IDX:$IDXcount $site-SH:$SHcount $site-DEP:1"
 #$1 AUTO or MANUAL mode
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 START_TIME=$(date +%s);
 #extract these values from $1 if passed to us!
@@ -2801,7 +2856,7 @@ make_lic_slave $lm $cm ; make_dmc_search_peer $dmc $cm
 create_splunk_container "$site-HF" "1" ; hf=$gLIST
 make_lic_slave $lm $hf ; #make_dmc_search_peer $dmc $hf
 
-printf "${LightBlue}____________ Finished building basic serivces ___________________${NC}\n\n" >&3
+printf "${LightBlue}____________ Finished building basic services ___________________${NC}\n\n" >&3
 
 create_single_idxc "$site-IDX:$IDXcount $dmc $cm:1 $lm LABEL:$idxc_label"
 create_single_shc "$site-SH:$SHcount $site-DEP:1 $dmc $cm $lm LABEL:$shc_label"
@@ -2816,7 +2871,7 @@ return 0
 build_multi_site_cluster() {
 #This function creates site-2-site cluster
 #http://docs.splunk.com/Documentation/Splunk/6.4.3/Indexer/Migratetomultisite
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 mode=$1		#either "AUTO" or "MANUAL"
 START_TIME=$(date +%s);
@@ -2905,16 +2960,18 @@ OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$cm"
-printf "\t->Setting multisite to true... " >&3 ; display_output "$OUT" "property has been edited" "3"
+printf "\t->Setting multi-site to true... " >&3 ; display_output "$OUT" "property has been edited" "3"
+
+restart_splunkd "$cm"
+is_splunkd_running "$cm"
 
 CMD="docker exec -ti $cm /opt/splunk/bin/splunk enable maintenance-mode --answer-yes -auth $USERADMIN:$USERPASS"
 OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$cm"
-printf "\t->Enabling maintenance-mode... " >&3 ; display_output "$OUT" "maintenance mode set" "3"
+printf "\t->Enabling maintenance-mode... " >&3 ; display_output "$OUT" "aintenance mode set" "3"
 
-restart_splunkd "$cm"
 printf "${Cyan}____________ Finished STEP#1 __________________________________________________${NC}\n" >&3
 
 printf "${Cyan}____________ Starting STEP#2 (Configuring search peers in [site:"$site""$seq" location:$str]) _____________________${NC}\n" >&3
@@ -2926,13 +2983,13 @@ for str in $SITEnames; do
 	site_sh_list=`echo $sh_list | $GREP -Po '('$str'-\w+\d+)' | tr -d '\r' | tr  '\n' ' '  `
 	for i in $site_idx_list; do
 		printf "[${Purple}$i${NC}]${Cyan} Migrating Indexer (restarting takes time)... ${NC}\n"
-		CMD="docker exec -ti $i /opt/splunk/bin/splunk edit cluster-config -site $site -master_uri https://$cm_ip:$MGMT_PORT -replication_port $REPL_PORT  -auth $USERADMIN:$USERPASS "
+		CMD="docker exec -ti $i /opt/splunk/bin/splunk edit cluster-config  -mode slave -site $site -master_uri https://$cm_ip:$MGMT_PORT -replication_port $REPL_PORT  -auth $USERADMIN:$USERPASS "
 		OUT=`$CMD`
         	OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 
 		printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$i"
-		printf "\t->Configuring multisite clustering for [site:$site location:$str] " >&3 
+		printf "\t->Configuring multi-site clustering for [site:$site location:$str] " >&3 
 		display_output "$OUT" "property has been edited" "3"
 		restart_splunkd "$i" "b"
 	done
@@ -2976,7 +3033,7 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------------
 print_stats() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 START=$1; FUNC_NAME=$2
 
@@ -3015,7 +3072,7 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------------
 display_stats_banner() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #os_used_mem=`top -l 1 -s 0 | grep PhysMem |tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $1}' `    #extract used memory in G
 #os_wired_mem=`top -l 1 -s 0 | grep PhysMem | tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $2}' `     #extract wired mem in M
 #os_unused_mem=`top -l 1 -s 0 | grep PhysMem | tr -d '[[:alpha:]]' |tr -d '[[:punct:]]'|awk '{print $3}' `     #extract unused mem in M
@@ -3050,15 +3107,15 @@ else
 	loadavg="${NC}$loadavg${NC}"
 fi
 
-printf "=>${White}Docker:${NC}[VER:$dockerinfo_ver CPUs:$dockerinfo_cpu MEM:$dockerinfo_mem GB] ${White}$os:${NC}[FreeMem:$os_free_mem GB MaxAllowedLoad:$MAXLOADAVG CurrLoadAvg:$loadavg]  ${White}LogLevel:${NC}[$loglevel]${NC}\n"
+printf "=>${White}DOCKER:${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg] ${White}Image:${NC}[$SPLUNK_IMAGE] ${White}LogLevel:${NC}[$loglevel]${NC}\n"
 return 0
 }	#end display_stats_banner()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_docker_stats() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${Yellow}In 5 seconds we will enter a loop to continously display containers stats :\n";
+printf "${Yellow}In 5 seconds we will enter a loop to continuously display containers stats :\n";
 printf "${Red}Control-C to stop\n${NC}";
 #Trap the killer signals so that we can exit with a good message.
 trap "error_exit 'Received signal SIGHUP'" SIGHUP
@@ -3067,11 +3124,11 @@ trap "error_exit 'Received signal SIGTERM'" SIGTERM
 trap return
 
 sleep 5
-docker stats  --format "HOST={{.Name}}   CPU={{.CPUPerc}}   MEM={{.MemPerc}}";
+docker stats  --format "HOST{{.Name}}   CPU:{{.CPUPerc}}   MEM:{{.MemPerc}}";
 printf "${NC}\n"
 
 # Execute when user hits control-c
-  #printf "${Red} [dockker stats command] CRASH! "
+  #printf "${Red} [docker stats command] CRASH! "
   #echo -en "\n*** Possibly due to a bug in [docker stats] command ***\n"
   #printf "${NC}\n"
   #return 1
@@ -3086,25 +3143,25 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------------
 login_to_splunk_hub() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 user=`echo $USER`	#use shell to determine user id
 
 #detect if already login to splunk registry
 loged_in=`$GREP $SPLUNK_DOCKER_HUB ~/.docker/config.json 2>/dev/null`
 if [ -n "$loged_in" ]; then
-	#printf "Already loged in..\n"
+	#printf "Already logged in..\n"
 	return 0
 else
-	read -p 'You are not connected to $SPLUNK_DOCKER_HUB. Would you like to login? [Y/n]? ' answer
+	read -p "You are not connected to [$SPLUNK_DOCKER_HUB]. Would you like to login? [Y/n]? " answer
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		read -p "Enter your username (default $user)? " username
         	if [ -z "$username" ];then username=$USER; fi
 		read -s -p 'Enter your password (use O2 or HOD password)? ' passwd
 		CMD=`docker login -u $username -p $passwd $SPLUNK_DOCKER_HUB`
         	if ( compare "$CMD" "Login Succeeded" );then
-               		printf "Login Succeeded!\n"
+               		printf "${Green}Login Succeeded!\n"
 		else
-               		printf "Login failed! Demo image download will fail\n"
+               		printf "${LightRed}Login failed! Demo image download will fail\n"
 		fi
 	else
                	printf "You still can use any cached images but further downloads will fail...\n"
@@ -3120,7 +3177,7 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------------
 spinner() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #Modified version of spinner http://fitnr.com/showing-a-bash-spinner.html
 #for i in `seq 1 100`; do printf "\033[48;5;${i}m${i} "; done
 
@@ -3146,37 +3203,34 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 progress_bar_image_download() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 image_name=$1
-if ( compare "$image_name" "demo" );then
+if ( compare "$image_name" "demo" );then		#detect demo images
 	hub="$SPLUNK_DOCKER_HUB/sales-engineering/"
 	login_to_splunk_hub
-elif ( compare "$image_name" "3rdparty" ); then
+elif ( compare "$image_name" "splunk" ); then		#detect splunk images
+	#hub="hub.docker.com/r/"
+	hub=""
+else							#detect 3rd party images (can be any name)
 	original_name=$image_name	#save it
-	image_name=`echo $image_name| sed 's/3rdparty-//g' `   #real images on docker hub dont have "3rdparty-"
-else
-	hub="hub.docker.com/r/"
+#	image_name=`echo $image_name| sed 's/3rd-//g' `   #real images on docker hub don't have "3rd-"
 	hub=""
 fi
+#echo "imagename:[$image_name]";exit
+
 #docker pull hub.docker.com/r/mhassan/splunk
 #echo "[docker pull $hub$image_name]"
 
 cached=`docker images | grep $image_name`
 START=$(date +%s)
 if [ -z "$cached" ]; then
-      	printf "    ${Purple}$image_name:${NC}["
+      	#printf "    ${Purple}$image_name:${NC}["
+      	printf "Downloading ${Purple}$image_name:${NC}["
       	(docker pull $hub$image_name >/dev/null) &
       	spinner $!
-	if ( compare "$original_name" "3rdparty" ); then
-      		docker tag $image_name $original_name   > /dev/null 2>&1	#rename with "3rdparty-*"
-		docker rmi $image_name > /dev/null 2>&1
-      		printf "] ${Red} Changing image name=>${Purple}[$original_name]${NC}"
-		image_name=$original_name
-	else
-      		printf "]${NC}"
-	fi
+      	printf "]${NC}"
 else
-      	printf "Downloading ${Purple}$image_name:${NC}[cached!]"
+      	printf "Downloading ${Purple}$image_name:${NC}[*cached*]"
 	
 fi
 original_name=""  #initialize for next round in case of consecutive downloads
@@ -3189,7 +3243,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 progress_bar_pkg_download() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 install_cmd1="$1"
 install_cmd2="$2"
 START=$(date +%s)
@@ -3206,7 +3260,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 download_demo_image() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
 printf "${BoldYellowOnBlue}Manage Images -> DOWNLOAD DEMO IMAGES MENU ${NC}\n"
@@ -3216,17 +3270,21 @@ printf "${BrownOrange}This option requires access to splunk internal docker hub 
 printf "${BrownOrange}*Depending on time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
 printf "\n"
 printf "Demo images available from $SPLUNK_DOCKER_HUB:\n"
-printf "${Purple}     IMAGE\t\t\t${NC}    CACHED INFO\t\t\t\t CREATED BY\n"
-printf "${Purple} -----------\t\t ${NC}---------------------------- \t\t ----------------------------- \n"
+printf "${Purple}     		IMAGE NAME${NC}		    CREATED	SIZE			AUTHOR\n"
+printf "${Purple} -------------------------------------${NC}   ------------  --------   ---------------------------------------\n"
 counter=1
-for i in $REPO_DEMO_IMAGES; do
-        printf "${Purple}$counter${NC})${Purple} $i${DarkGray}\t\t"
-        cached=`docker images|grep $i| awk '{print "created:"$4,$5,$6,"  Size:"$7,$8}'`
-        if [ -n "$cached" ]; then
-                author=`docker inspect $SPLUNK_DOCKER_HUB/sales-engineering/$i|grep -i author|cut -d":" -f1-3|sed 's/,//g'`
-                printf "${White}$cached $author${NC}\n"
+#count=`docker images --format "{{.ID}}" | wc -l`
+for image_name in $REPO_DEMO_IMAGES; do
+        printf "${Purple}%-2s${NC}) ${Purple}%-40s${NC}" "$counter" "$image_name"
+	image_name="$SPLUNK_DOCKER_HUB/sales-engineering/$image_name"
+#	echo "cached[$cached]\n"
+	created=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $4,$5,$6}'`
+	size=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $7,$8}'`
+        if [ -n "$created" ]; then
+        	author=`docker inspect $image_name |grep -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
+                printf "%-12s %-7s %-10s ${NC}\n" "$created" "$size" "$author"
         else
-                printf "${DarkGray}NOT CACHED!${NC}\n"
+                printf "${DarkGray}NOT CACHED! ${NC}\n"
         fi
         let counter++
 done
@@ -3250,7 +3308,7 @@ if [ -n "$choice" ]; then
         done
        # docker stop $choice
 else
-        printf "${Red}WARNING! This operation may take a long time (~20 mins). Make sure you have enough diskspace...${NC}\n"
+        printf "${Red}WARNING! This operation may take a long time (~20 mins). Make sure you have enough disk-space...${NC}\n"
 	read -p "Are you sure? [Y/n]? " answer
 	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
         	printf "${Yellow}Downloading all demo image(s)...\n${NC}"
@@ -3269,7 +3327,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 download_3rdparty_image() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
 printf "${BoldYellowOnBlue}Manage Images -> DOWNLOAD 3RD PARTY IMAGES MENU ${NC}\n"
@@ -3278,22 +3336,23 @@ printf "\n"
 printf "${BrownOrange}*Depending on time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
 printf "\n"
 printf "3rd party images available from docker hub:\n"
-printf "${Purple}     IMAGE\t\t\t${NC}    CACHED INFO\t\t\t\t CREATED BY\n"
-printf "${Purple} -----------\t\t ${NC}---------------------------- \t\t ----------------------------- \n"
+printf "${Purple}     		IMAGE NAME${NC}		    CREATED	SIZE			AUTHOR\n"
+printf "${Purple} -------------------------------------${NC}   ------------  --------   ---------------------------------------\n"
 counter=1
-for i in $REPO_3RDPARTY_IMAGES; do
-        printf "${Purple}$counter${NC})${Purple} $i${DarkGray}\t\t"
-        cached=`docker images|grep -i "$i"| awk '{print "created:"$4,$5,$6,"  Size:"$7,$8}'`
-        if [ -n "$cached" ]; then
-                author=`docker inspect "$i"|grep -i author|cut -d":" -f1-3|sed 's/,//g'`
-                printf "${White}$cached $author${NC}\n"
+#count=`docker images --format "{{.ID}}" | wc -l`
+for image_name in $REPO_3RDPARTY_IMAGES; do
+        printf "${Purple}%-2s${NC}) ${Purple}%-40s${NC}" "$counter" "$image_name"
+	created=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $4,$5,$6}'`
+	size=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $7,$8}'`
+        if [ -n "$created" ]; then
+        	author=`docker inspect "$image_name" |grep -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
+                printf "%-12s %-7s %-10s ${NC}\n" "$created" "$size" "$author"
         else
-                printf "${DarkGray}NOT CACHED!${NC}\n"
+                printf "${DarkGray}NOT CACHED! ${NC}\n"
         fi
         let counter++
 done
 echo
-
 #build array of images list
 declare -a list=($REPO_3RDPARTY_IMAGES)
 
@@ -3310,7 +3369,7 @@ if [ -n "$choice" ]; then
         done
        # docker stop $choice
 else
-        #printf "${Red}WARNING! This operation may take time. Make sure you have enough diskspace...${NC}\n"
+        #printf "${Red}WARNING! This operation may take time. Make sure you have enough disk-space...${NC}\n"
         read -p "Are you sure? [Y/n]? " answer
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
                 printf "${Yellow}Downloading all 3rd party image(s)...\n${NC}"
@@ -3333,10 +3392,9 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------------
 list_all_containers() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type=$1         #container type (ex DEMO, 3RDPARTY, empty for ALL)
 
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${BoldWhiteOnYellow}LIST $type CONTAINERS MENU ${NC}\n"
 display_stats_banner
@@ -3355,7 +3413,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 start_containers() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type=$1
 clear
 printf "${BoldWhiteOnYellow}START $type CONTAINERS MENU ${NC}\n"
@@ -3397,7 +3455,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 stop_containers() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type=$1
 clear
 printf "${BoldWhiteOnYellow}STOP $type CONTAINERS MENU ${NC}\n"
@@ -3439,7 +3497,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 delete_containers() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type=$1
 
 clear
@@ -3485,12 +3543,12 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_all_containers() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type=$1		#container type (ex DEMO, 3RDPARTY, empty for ALL)
 
 printf "Current list of all $type containers on this system:\n"
-printf "   Host name%-3s Container%-3s Splunkd%-3s Splunk ver%-2s    Bind IP%-3s     Image used%-3s${NC}\n"   # CPU%-4s MEM_USAGE%-3s MEM_LIMIT%-3s ${NC}\n"
-printf "   ---------%-3s ---------%-3s -------%-3s ----------%-2s    ----------%-3s ------------------%-3s${NC}\n" #---%-4s ---------%-3s ---------%-3s ${NC}\n"
+printf "   Host name%-10s Container%-2s Splunkd%-3s Splunk ver%-2s    Bind IP%-3s     Image used%-3s${NC}\n"   # CPU%-4s MEM_USAGE%-3s MEM_LIMIT%-3s ${NC}\n"
+printf "   ---------------%-3s ---------%-3s -------%-3s ----------%-2s    ----------%-3s ------------------%-3s${NC}\n" #---%-4s ---------%-3s ---------%-3s ${NC}\n"
 i=0
 for id in $(docker ps -a --filter name="$type" --format "{{.ID}}" ) ; do
     let i++
@@ -3513,48 +3571,47 @@ for id in $(docker ps -a --filter name="$type" --format "{{.ID}}" ) ; do
 	#check splunkstate
         splunkstate=`docker exec -ti $id /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ print $3}'`
     else
-        splunkstate="Unknow"
-	splunkd_ver="Uknown"
+        splunkstate="Unknown"
+	splunkd_ver="Unknown"
     fi
 	
     #set host state color. Use printf "%b" to show interpreting backslash escapes in there
     case "$hoststate" in
-        Up)      hoststate="${Green}$hoststate ${NC}" ;;
-        Created) hoststate="${DarkGray}$hoststate ${NC}" ;;
-        Exited)  hoststate="${Red}$hoststate ${NC}" ;;
+        Up)      hoststate="${Green}UP${NC}" ;;
+        Created) hoststate="${DarkGray}CREATED${NC}" ;;
+        Exited)  hoststate="${Red}EXISTED${NC}" ;;
     esac
 
     #set splunk state color
     if ( compare "$splunkstate" "running" ); then
                 splunkstate="${Green}Running${NC}"
     else
-                splunkstate="${Red}Down${NC}"
+                splunkstate="${Red}Down${NC}   "
     fi
 
-    #3rd party dont have splunk 
-    if ( compare "$hostname" "3RDPARTY" ); then
+    #3rd party don't have splunk 
+    if ( compare "$hostname" "3RDP" ); then
         splunkd_ver="N/A"
         splunkstate="N/A"
     fi
 
-    if ( compare "$hostname" "DEP" ); then
-        printf "${LightBlue}$i) %-15s ${NC}%-20b${NC} %-22b %-14s${NC} ${LightBlue}%-13s${NC} %-10s" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+	if ( compare "$hostname" "DEMO" ); then
+        	printf "${LightCyan}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC} " $i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+   	elif ( compare "$hostname" "3RDP" ); then
+        	printf "${LightPurple}%-2s) %-20s %-20b %-11s %-14s %-13s %-10s${NC}" $i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
 
-    elif ( compare "$hostname" "CM" ); then
-        printf "${LightBlue}$i) %-15s ${NC}%-20b${NC} %-22b %-14s${NC} ${LightBlue}%-13s${NC} %-10s" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+    	elif ( compare "$hostname" "DEP" ); then
+        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" $i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
 
-    elif ( compare "$hostname" "DMC" ); then
-        printf "${LightBlue}$i) %-15s ${NC}%-20b${NC} %-22b %-14s${NC} ${LightBlue}%-13s ${NC}%-10s" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+    	elif ( compare "$hostname" "CM" ); then
+        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" $i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
 
-   elif ( compare "$hostname" "DEMO" ); then
-        printf "${LightBlue}$i) \033[41m%-15s ${NC}%-20b${NC} %-22b %-14s${NC} ${LightBlue}%-13s ${NC}%-10s " "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+    	elif ( compare "$hostname" "DMC" ); then
+        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" $i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
 
-   elif ( compare "$hostname" "3RDPARTY" ); then
-        printf "${LightBlue}$i) \033[45m%-15s ${NC}%-20b${NC} %-10b %-14s${NC} ${LightBlue}%-13s ${NC}%-10s " "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
-
-     else
-        printf "${Purple}$i) %-15s${NC} %-20b %-22b %-14s %-13s %-10s ${NC}"  $hostname "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
-   fi
+     	else 	###generic
+        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s ${NC}" $i $hostname "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+   	fi
 
   if [ -z "$bind_ip" ]; then
        printf "${Red}<** NOT BUILT BY THIS SCRIPT **${NC}\n"
@@ -3586,7 +3643,7 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------------
 remove_images() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 type=$1
 printf "${BoldWhiteOnRed}REMOVE $type IMAGES MENU ${NC}\n"
@@ -3629,7 +3686,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 show_all_images() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type=$1
 clear
 printf "${BoldWhiteOnRed}SHOW $type IMAGES MENU ${NC}\n"
@@ -3644,7 +3701,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_all_images() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function displays custom view all images downloaded.
 
 type=$1
@@ -3653,8 +3710,14 @@ if [ $count == 0 ]; then
         printf "\nNo $type images to list!\n"
         return 0
 fi
+if [ "$type" == "3RDP" ]; then
+	id_list=$(docker images  -a| grep -v "REPOSITORY" | grep -iv "demo"| grep -iv "splunk"| awk '{print $3}'| tr '\n' ' ')
 
-id_list=$(docker images  -a| grep -v "REPOSITORY" | grep -i "$type" | awk '{print $3}'| tr '\n' ' ')
+elif [ "$type" == "DEMO" ]; then
+	id_list=$(docker images  -a| grep -v "REPOSITORY" | grep -i "demo" | awk '{print $3}'| tr '\n' ' ')
+else
+	id_list=$(docker images  -a| grep -v "REPOSITORY" | awk '{print $3}'| tr '\n' ' ')
+fi
 count=0
 for id in $id_list; do
         let count++
@@ -3675,7 +3738,7 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------------
 delete_all_volumes() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #disk1=`df -kh /var/lib/docker/| awk '{print $4}'| $GREP -v Avail|sed 's/G//g'`
 #disk1=`df -kh $MOUNTPOINT| awk '{print $4}'| $GREP -v Avail|sed 's/G//g'`
 printf "${Yellow}Deleting all volumes...\n${NC}"
@@ -3691,7 +3754,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 wipe_entire_system() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${BoldWhiteOnGreen}WIPE CLEAN ENTIRE SYSTEM MENU ${NC}\n"
 display_stats_banner
@@ -3720,7 +3783,7 @@ read -p "Are you sure you want to proceed? [y/N]? " answer
 		remove_ip_aliases
 		printf "\n"
 
-		printf "${Red}Removing all dependacy packages [brew ggrep pcre]? ${NC}\n"
+		printf "${Red}Removing all dependency packages [brew ggrep pcre]? ${NC}\n"
 		read -p "Those packages are not a bad thing to have installed. Are you sure you want to proceed? [y/N]? " answer
         	if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 			#remove ggrep, pcre
@@ -3742,7 +3805,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_welcome_screen() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 # Find out current screen width and hight
 # Set a trap to restore terminal on Ctrl-c (exit).
@@ -3788,7 +3851,7 @@ printf "\033[0;34m${MESSAGE[10]}"
 read -p "" readKey
 # Start cleaning up our screen...
 tput clear
-tput sgr0	#reset terminal (doesnt always work)
+tput sgr0	#reset terminal (doesn't always work)
 tput rc
 
 return 0
@@ -3796,7 +3859,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 display_goodbye_msg() {
-display_debug  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 echo;echo;echo
 printf "\033[31m           0000\033[0m_____________0000________0000000000000000__000000000000000000+\n\033[31m         00000000\033[0m_________00000000______000000000000000__0000000000000000000+\n\033[31m        000\033[0m____000_______000____000_____000_______0000__00______0+\n\033[31m       000\033[0m______000_____000______000_____________0000___00______0+\n\033[31m      0000\033[0m______0000___0000______0000___________0000_____0_____0+\n\033[31m      0000\033[0m______0000___0000______0000__________0000___________0+\n\033[31m      0000\033[0m______0000___0000______0000_________000___0000000000+\n\033[31m      0000\033[0m______0000___0000______0000________0000+\n\033[31m       000\033[0m______000_____000______000________0000+\n\033[31m        000\033[0m____000_______000____000_______00000+\n\033[31m         00000000\033[0m_________00000000_______0000000+\n\033[31m           0000\033[0m_____________0000________000000007;\n"
 echo
@@ -3867,8 +3930,9 @@ startup_checks
 setup_ip_aliases
 main_menu_inputs
 	
-read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+#read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
 
+#<<<<<<<<<<<<<----------   MAIN BEGINS     ---------->>>>>>>>>>>>
 
 ##### EOF #######
 
