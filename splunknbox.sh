@@ -76,12 +76,13 @@ SPLUNK_IMAGE="splunknbox/splunk_6.5.2"
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
 
 #Available splunk demos registry.splunk.com
-REPO_DEMO_IMAGES="demo-oi demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud"
+REPO_DEMO_IMAGES="demo-oi demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-pci"
 
 #3rd party images will be renamed to 3rd-* after each docker pull
 #REPO_3RDPARTY_IMAGES="3rd-mysql 3rd-oraclelinux"
 REPO_3RDPARTY_IMAGES="mysql oraclelinux sebp/elk sequenceiq/hadoop-docker caioquirino/docker-cloudera-quickstart"
 MYSQL_PORT="3306"
+DOWNLOAD_TIMEOUT="400"	#how long before the progress_bar timeout (seconds)
 #---------------------------------------
 #----------Cluster stuff----------------
 BASEHOSTNAME="HOST"		#default hostname to create
@@ -167,6 +168,8 @@ BoldWhiteOnTurquoise="\033[1;1;5;46m"
 
 BoldYellowOnBlue="\033[1;33;44m"
 BoldYellowOnPurple="\033[1;33;44m"
+DEFAULT_YES="\033[1;37mY\033[0m/n"
+DEFAULT_NO="y/\033[1;37mN\033[0m"
 #---------------------------------------
 
 
@@ -965,11 +968,11 @@ done
 count=0
 echo;echo
 echo;printf "Current default image is [$SPLUNK_IMAGE]\n"; echo
-printf "${BrownOrange}WARNING! Changing the default image means any subequent container's builds (except DEMOs) will use the new image!${NC}\n"
+printf "${BrownOrange}WARNING! Changing the default image means any subsequent container's builds (except DEMOs) will use the new splunk image!${NC}\n"
 read -p "Are you sure you want to continue? [Y/n]? " answer
 if [ "$answer" == "Y" ] || [ "$answer" == "y" ] || [ "$answer" == "" ] ; then
 	choice=""
-	read -p "Select number [downloaded if not cached]: " choice
+	read -p "Select number: " choice
 	if [ -n "$choice" ]; then
 		START=$(date +%s)
 		image_name=(${list[$choice - 1]})
@@ -2448,9 +2451,11 @@ cm_list=`docker ps -a --filter name="CM|cm" --format "{{.Names}}"|sort| tr '\n' 
 if [ "$mode" == "AUTO" ]; then
         #DEPname="DEP"; DEPcount="1"; SHname="SH"; SHcount="$STD_SHC_COUNT"; 
 	label="$SHCLUSTERLABEL"
-	printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
-	printf "${Yellow}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
-	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:$DEP_SHC_COUNT] SHC:[$SH_BASE:$STD_SHC_COUNT]${NC}\n\n"
+	#printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
+	printf  "\n"
+	printf "${LightPurple}>>BUILDING INDEX CLUSTER${NC}\n"
+	printf "${LightPurple}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
+	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:$DEP_SHC_COUNT] SHC:[$SH_BASE:$STD_SHC_COUNT]${NC}\n\n" >&4
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
 	#Basic services. Sequence is very important!
@@ -2498,9 +2503,11 @@ else
                        build_dmc=0;
                 fi
         fi
-	printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
-	printf "${Yellow}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
-	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n\n"
+	printf "\n"
+	#printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
+	printf "${LightPurple}>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
+	printf "${LightPurple}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
+	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n\n" >&4
         printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	 if [ "$build_dmc" == "1" ]; then
                 create_splunk_container "$dmc" "1"; dmc=$gLIST
@@ -2518,7 +2525,7 @@ else
 fi
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
 
-printf "${Yellow}\n==>Starting PHASE2: Converting generic SH hosts into SHC${NC}\n"
+printf "${LightPurple}==>Starting PHASE2: Converting generic SH hosts into SHC${NC}\n"
 
 printf "${LightBlue}___________ Starting STEP#1 (deployer configuration) ____________________________${NC}\n" >&3
 
@@ -2648,9 +2655,10 @@ idx_list=`docker ps -a --filter name="$IDXname" --format "{{.Names}}"|sort| tr '
 if [ "$1" == "AUTO" ]; then
 	#CMname="CM"; DMCname="DMC"; LMname="LM";  IDXname="IDX"; IDXcount="$STD_IDXC_COUNT"; 
 	label="$IDXCLUSTERLABEL"
-	printf "${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
-	printf "${Yellow}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
-	printf "${DarkGray}Using base-names DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:$STD_IDXC_COUNT]${NC}\n\n"
+	#printf "${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
+	printf "${LightPurple}>>BUILDING INDEX CLUSTER${NC}\n"
+	printf "${LightPurple}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
+	printf "${DarkGray}Using base-names DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:$STD_IDXC_COUNT]${NC}\n\n" >&4
         printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
 	#Basic services. Sequence is very important!
@@ -2703,9 +2711,11 @@ else
                        build_dmc=0;
                 fi
         fi
-	printf "\n${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
-	printf "${Yellow}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
-	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:$IDXcount]${NC}\n\n"
+	printf "\n"
+	#printf "\n${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
+	printf "${LightPurple}>>BUILDING INDEX CLUSTER${NC}\n"
+	printf "${LightPurple}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
+	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:$IDXcount]${NC}\n\n" >&4
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	if [ "$build_dmc" == "1" ]; then
                 create_splunk_container "$dmc" "1"; dmc=$gLIST
@@ -2726,8 +2736,8 @@ else
 
 fi
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
-
-printf "${Yellow}\n==>Starting PHASE2: Converting generic IDX hosts into IDXC${NC}\n"
+printf "\n"
+printf "${LightPurple}==>Starting PHASE2: Converting generic IDX hosts into IDXC${NC}\n"
 
 printf "${LightBlue}____________ Starting STEP#1 (Configuring IDX Cluster Master) __${NC}\n" >&3
 printf "[${Purple}$cm${NC}]${LightBlue} Configuring Cluster Master... ${NC}\n"
@@ -2842,7 +2852,8 @@ fi
 #assign_server_role "$lm" "dmc_group_license_master"
 echo
 
-printf "${Yellow}==>[$mode] Building single-site ($site)...${NC}\n\n"
+#printf "${Yellow}==>[$mode] Building single-site ($site)...${NC}\n\n"
+printf "${LightPurple}==>Building single-site ($site)...${NC}\n\n"
 printf "${LightBlue}____________ Building basic services [LM, DMC, CM] ___________________${NC}\n" >&3
 #Basic services
 #Sequence is very important!
@@ -2922,7 +2933,7 @@ fi
 #------- Finished capturing sites names/basic services names ------------------
 
 printf "\n\n${BoldYellowOnBlue}[$mode] Building site-to-site cluster...${NC}\n"
-printf "${DarkGray}Using Locations:[$SITEnames] CM:[$cm] First_site:[$first_site] ${NC}\n\n"
+printf "${DarkGray}Using Locations:[$SITEnames] CM:[$cm] First_site:[$first_site] ${NC}\n\n" >&4
 
 printf "\n\n${Yellow}Creating cluster basic services [only in $first_site]${NC}\n"
 #Sequence is very important!
@@ -3180,24 +3191,37 @@ spinner() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #Modified version of spinner http://fitnr.com/showing-a-bash-spinner.html
 #for i in `seq 1 100`; do printf "\033[48;5;${i}m${i} "; done
+#echo "spinner(): pid:$1"
 
-    local pid=$1
-    local delay=5   #ex 0.75 second
-    local spinstr='|/-\'
-    i=0
-    while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
-        local temp=${spinstr#?}
+local pid=$1
+local delay=5   #ex 0.75 second
+local spinstr='|/-\'
+i=0;  gTIMEOUT=""
+SECONDS=0	#bash built-in function
+#loop until spawn process exists (assuming job is completed)
+while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+	local temp=${spinstr#?}
        # printf " [%c]  " "$spinstr"
-        printf "▓"
-	let i++
 	#printf "\033[48;5;${i}m\x41\\"
 #       echo -en "\033[48;5;2m x\e[0m"
         local spinstr=$temp${spinstr%"$temp"}
+	if [ "$i" -gt "10" ]; then i=0; printf "${Blue}▓${NC}"; fi  #blue block roughly every 1 min
+
+	printf "▓"
+
         sleep $delay
+	let i++
+	elapsedseconds=$SECONDS
+	if [ "$elapsedseconds"  -gt "$DOWNLOAD_TIMEOUT" ]; then
+		gTIMEOUT="1"
+	#	printf "TIMEOUT[$elapsedseconds]! Killing [$pid]${NC}\n"
+	(kill -9 $pid > /dev/null ) &	#dont show the output, just do it
+	fi	
         #printf "\b\b\b\b\b\b"
-    done
-	printf "${NC}"
-    #printf "    \b\b\b\b"
+done
+
+printf "${NC}"
+#printf "    \b\b\b\b"
 return 0
 }	#end spinner()
 #---------------------------------------------------------------------------------------------------------------
@@ -3220,24 +3244,38 @@ fi
 
 #docker pull hub.docker.com/r/mhassan/splunk
 #echo "[docker pull $hub$image_name]"
-
 cached=`docker images | grep $image_name`
-START=$(date +%s)
 if [ -z "$cached" ]; then
+	t_start=$(date +%s)
       	#printf "    ${Purple}$image_name:${NC}["
       	printf "Downloading ${Purple}$image_name:${NC}["
-      	(docker pull $hub$image_name >/dev/null) &
-      	spinner $!
-      	printf "]${NC}"
+	check_status=""
+      	#(docker pull $hub$image_name >/dev/null) &
+      	(docker pull $hub$image_name > "tmp.$$") &
+	background_pid=`ps xa|grep "docker pull $hub$image"| awk '{print $1}'`
+	spinner $background_pid
+	check_status=`grep -i "Digest" tmp.$$`
+
+	t_end=$(date +%s)
+	t_total=`echo $((t_end-t_start))|awk '{print int($1/60)":"int($1%60)}'`
+
+	#fall back on verbose mode if progress_bar_download failed
+	if [ -z "$TIMEOUT" ] && [ -z "$check_status" ];then
+		printf "${Red} Timed out!${NC}]\n"
+		printf "${Red}Terminating background download process [exceeded $DOWNLOAD_TIMEOUT sec].If download problem persists; try restarting docker daemon first!${NC}\n"
+		printf ">>Retrying download in foreground with verbose mode...\n"
+		printf ">>Running${BrownOrange} [docker pull $hub$image_name] ${NC}\n"
+		sleep 5
+      		time docker pull $hub$image_name
+	else		
+		printf "] ${DarkGray} $t_total ${NC}\n"
+	fi	
 else
       	printf "Downloading ${Purple}$image_name:${NC}[*cached*]"
 	
 fi
 original_name=""  #initialize for next round in case of consecutive downloads
-END=$(date +%s)
-TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${DarkGray} $TIME${NC}\n"
-
+rm -fr tmp.$$
 return 0
 }	#end progress_bar_image_download()
 #---------------------------------------------------------------------------------------------------------------
@@ -3370,7 +3408,7 @@ if [ -n "$choice" ]; then
        # docker stop $choice
 else
         #printf "${Red}WARNING! This operation may take time. Make sure you have enough disk-space...${NC}\n"
-        read -p "Are you sure? [Y/n]? " answer
+        read -p $'Are you sure? [\033[1;37mY\033[0m/n]? ' answer
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
                 printf "${Yellow}Downloading all 3rd party image(s)...\n${NC}"
                 START=$(date +%s);
