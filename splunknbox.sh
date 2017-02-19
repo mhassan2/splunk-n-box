@@ -76,13 +76,13 @@ SPLUNK_IMAGE="splunknbox/splunk_6.5.2"
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
 
 #Available splunk demos registry.splunk.com
-REPO_DEMO_IMAGES="demo-oi demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-pci"
+REPO_DEMO_IMAGES="demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi"
 
 #3rd party images will be renamed to 3rd-* after each docker pull
 #REPO_3RDPARTY_IMAGES="3rd-mysql 3rd-oraclelinux"
 REPO_3RDPARTY_IMAGES="mysql oraclelinux sebp/elk sequenceiq/hadoop-docker caioquirino/docker-cloudera-quickstart"
 MYSQL_PORT="3306"
-DOWNLOAD_TIMEOUT="400"	#how long before the progress_bar timeout (seconds)
+DOWNLOAD_TIMEOUT="480"	#how long before the progress_bar timeout (seconds)
 #---------------------------------------
 #----------Cluster stuff----------------
 BASEHOSTNAME="HOST"		#default hostname to create
@@ -1354,8 +1354,8 @@ printf "$custom_web_conf" > $PROJ_DIR/web.conf
 CMD=`docker cp $PROJ_DIR/web.conf $fullhostname:/opt/splunk/etc/system/local/web.conf`
 #-------web.conf stuff-------
 
-
-if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-VMWARE" ) ; then
+#make web.conf changes take effect!
+if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-VMWARE" ) || ( compare "$fullhostname" "DEMO-PCI" ) ; then
 	#pausing "30"
 	restart_splunkd "$fullhostname"
         #printf "${Green}OK${NC}\n"
@@ -1624,6 +1624,7 @@ return $host_num
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
 construct_splunk_container() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function creates single splunk container using $vip and $hostname
 #inputs: $1: container's IP to use (nated IP aka as bind IP)
 #	 $2: fullhostname:  container name (may include site and host number sequence)
@@ -1634,7 +1635,6 @@ construct_splunk_container() {
 #	 -reset password and setup splunk's login screen
 #        -configure container's OS related items if needed
 
-_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 START=$(date +%s);
 vip=$1;  fullhostname=$2;lic_master=$3; cluster_label=$4; 
 fullhostname=`echo $fullhostname| tr -d '[[:space:]]'`	#trim white space if they exist
@@ -2327,7 +2327,7 @@ do
                 \? ) display_demos_menu_help;;
                 c|C ) create_demo_container_from_list;;
                 l|L ) list_all_containers "DEMO";;
-                d|D ) delete_containers "DEMO"s;;
+                d|D ) delete_containers "DEMO";;
                 t|T ) start_containers "DEMO";;
                 p|P ) stop_containers "DEMO";;
 		o|O ) add_os_utils_to_demos ;;
@@ -3271,7 +3271,7 @@ if [ -z "$cached" ]; then
 		printf "] ${DarkGray} $t_total ${NC}\n"
 	fi	
 else
-      	printf "Downloading ${Purple}$image_name:${NC}[*cached*]"
+      	printf "Downloading ${Purple}$image_name:${NC}[*cached*]\n"
 	
 fi
 original_name=""  #initialize for next round in case of consecutive downloads
@@ -3549,7 +3549,6 @@ if [ $count == 0 ]; then
         printf "No $type containers found!\n"
         return 0;
 fi
-
 #build array of containers list
 #declare -a list=($(docker ps -a --format "{{.Names}}" |grep -i "$type"| tr '\n' ' '))
 declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' '))
