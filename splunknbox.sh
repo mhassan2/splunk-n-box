@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=3.8
+VERSION=3.9.1
 # Version:	 see $VERSION above
 #
 #Usage :  splunknbox -v[2 3 4 5 6] 
