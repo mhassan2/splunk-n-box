@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=3.9.1
+VERSION=3.9.3
 # Version:	 see $VERSION above
 #
 #Usage :  splunknbox -v[2 3 4 5 6] 
@@ -76,7 +76,7 @@ SPLUNK_IMAGE="splunknbox/splunk_6.5.2"
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
 
 #Available splunk demos registry.splunk.com
-REPO_DEMO_IMAGES="demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi"
+REPO_DEMO_IMAGES="demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi workshop-elastic-stack-lab demo-healthcare"
 
 #3rd party images will be renamed to 3rd-* after each docker pull
 #REPO_3RDPARTY_IMAGES="3rd-mysql 3rd-oraclelinux"
@@ -1365,7 +1365,6 @@ else
 	CMD=`docker exec -ti $fullhostname /opt/splunk/bin/splunk restart splunkweb -auth $USERADMIN:$USERPASS`
 fi
 
-printf "\t->Customizing web.conf!${Green} Done!${NC}\n" >&4
 USERPASS="hello" #rest in case we just processed ES or VMWARE DEMOS
 
 return 0
@@ -1644,17 +1643,20 @@ check_load		#throttle back if high load
 #echo "fullhostname[$fullhostname]"
 #rm -fr $MOUNTPOINT/$fullhostname
 mkdir -m 777 -p $MOUNTPOINT/$fullhostname
+#note:volume bath is relative to VM not MacOS
 
 if ( compare "$fullhostname" "DEMO" ); then	
-	#extract demo name from fullhostname  (ex: DEMO-OI02)
+	#extract image name from fullhostname  (ex: DEMO-OI02)
 	demo_name=$(printf '%s' "$fullhostname" | sed 's/[0-9]*//g')
 	demo_name=`echo $demo_name| tr '[A-Z]' '[a-z]'`		#conver to lower case
- 
-	CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $SPLUNK_DOCKER_HUB/sales-engineering/$demo_name"
-
+	full_image_name="$SPLUNK_DOCKER_HUB/sales-engineering/$demo_name"
 else
-	CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $SPLUNK_IMAGE"
-fi
+	full_image_name="$SPLUNK_IMAGE"
+fi	
+ 
+#CMD="docker run -d -v $MOUNTPOINT/$fullhostname/opt/splunk/etc -v $MOUNTPOINT/$fullhostname/opt/splunk/var --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $full_image_name"
+CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $full_image_name"
+
 
 printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating new splunk docker container ${NC} " 
 OUT=`$CMD` ; display_output "$OUT" "" "2"
@@ -1755,7 +1757,7 @@ if [ -n "$choice" ]; then
 			progress_bar_image_download "$image_name"
         	fi
         	#echo "$id : ${list[$id - 1]}"
-       		printf "${NC}Using ${Purple}[$id:$image_name]:${NC}"; display_stats_banner
+       		printf "${NC}Using ${Purple}[$id:$image_name]:${NC}"; display_stats_banner "short"
         	create_splunk_container "$image_name" "1"
         done
 else
@@ -1766,7 +1768,7 @@ else
         	printf "${Yellow}Creating all demo containers(s)...\n${NC}"
                 for i in $REPO_DEMO_IMAGES; do
 			progress_bar_image_download "$i"
-                        printf "${NC}Using ${Purple}[$i${NC}]"; display_stats_banner
+                        printf "${NC}Using ${Purple}[$i${NC}]"; display_stats_banner "short"
                 	create_splunk_container "$i" "1"
 			pausing "30"
                 done
@@ -1796,7 +1798,7 @@ if [ -z "$cached" ]; then
 fi
 
 next_seq_fullhostname_ip "$basename" "1"	#returns fullhostname & vip
-echo "image:[$image_name]   base:[$basename]   full:[$fullhostname]   vip:[$vip]"
+#echo "image:[$image_name]   base:[$basename]   full:[$fullhostname]   vip:[$vip]"
 
 if ( compare "$basename" "MYSQL" ); then
 #https://hub.docker.com/_/mysql/
@@ -1894,7 +1896,7 @@ if [ -n "$choice" ]; then
                         progress_bar_image_download "$image_name"  
                 fi
                 #echo "$id : ${list[$id - 1]}"
-                printf "${NC}Using ${Purple}[$id:$image_name]:${NC}"; display_stats_banner
+                printf "${NC}Using ${Purple}[$id:$image_name]:${NC}"; display_stats_banner "short"
                 construct_3rdp_container_from_image "$image_name" "1"
         done
 else
@@ -1905,7 +1907,7 @@ else
                 printf "${Yellow}Creating all 3rd party containers(s)...\n${NC}"
                 for image_name in $REPO_3RDPARTY_IMAGES; do
                        # progress_bar_image_download "$image_name"
-                        printf "${NC}Using ${Purple}[$image_name${NC}]"; display_stats_banner
+                        printf "${NC}Using ${Purple}[$image_name${NC}]"; display_stats_banner "short"
                 	construct_3rdp_container_from_image "$image_name" "1"
                 done
         fi
@@ -3118,7 +3120,12 @@ else
 	loadavg="${NC}$loadavg${NC}"
 fi
 
-printf "=>${White}DOCKER:${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg] ${White}Image:${NC}[$SPLUNK_IMAGE] ${White}LogLevel:${NC}[$loglevel]${NC}\n"
+if [ "$1" ]; then
+	printf "=>${White}OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg]${NC}\n"
+else
+	printf "=>${White}DOCKER:${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg] ${White}Image:${NC}[$SPLUNK_IMAGE] ${White}LogLevel:${NC}[$loglevel]${NC}\n"
+fi
+
 return 0
 }	#end display_stats_banner()
 #---------------------------------------------------------------------------------------------------------------
@@ -3857,13 +3864,21 @@ LINES=$(tput lines)
 #echo "cols:$COLUMNS"
 #echo "lines:$LINES"
 
+#online_ver=`curl -fsSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|grep 'splunknbox'|ggrep -Po 'splunknboxver=(\K.*\))' `
+online_ver=`curl --max-time 5 --fail --raw --silent --insecure -sSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|grep 'splunknbox'|ggrep --color -Po 'splunknboxver=#\K(\d+(.\d+)*)' `
+
+#online_ver="3.9.2"
+#VERSION="3.8.3.1"
+newveralert=`awk -v n1=$online_ver -v n2=$VERSION 'BEGIN {if (n1>n2) printf ("Newer version is avialable [%s]", n1);}' `
+
 # Set default message if $1 input not provided
-MESSAGE[1]="Welcome to Splunk n\' Box v$VERSION"
-MESSAGE[2]="Splunk SE essential tool"
-MESSAGE[3]=""
-MESSAGE[4]="Please set your terminal to full mode"
-MESSAGE[5]="https://github.com/mhassan2/splunk-n-box"
-MESSAGE[6]="By continuing you accept Splunk software license agreement"
+MESSAGE[1]="         ${Yellow}$newveralert"
+MESSAGE[2]="Welcome to Splunk n\' Box v$VERSION"
+MESSAGE[3]="Splunk SE essential tool"
+MESSAGE[4]=""
+MESSAGE[5]="Please set your terminal to full mode"
+MESSAGE[6]="https://github.com/mhassan2/splunk-n-box"
+MESSAGE[7]="By continuing you accept Splunk software license agreement"
 #MESSAGE[6]="https://www.splunk.com/en_us/legal/splunk-software-license-agreement.html"
 #MESSAGE[7]=""
 MESSAGE[10]="This script is licensed under GPL v3. All rights reserved Splunk Inc 2005-2017"
