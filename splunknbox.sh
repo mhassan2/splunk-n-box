@@ -3621,9 +3621,9 @@ for id in $(docker ps -a --filter name="$type" --format "{{.ID}}" ) ; do
 	
     #set host state color. Use printf "%b" to show interpreting backslash escapes in there
     case "$hoststate" in
-        Up)      hoststate="${Green}UP${NC}" ;;
-        Created) hoststate="${DarkGray}CREATED${NC}" ;;
-        Exited)  hoststate="${Red}EXISTED${NC}" ;;
+        Up)      hoststate="${Green}Up${NC}" ;;
+        Created) hoststate="${DarkGray}Created${NC}" ;;
+        Exited)  hoststate="${Red}Exited${NC}" ;;
     esac
 
     #set splunk state color
