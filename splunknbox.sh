@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=3.9.3
+VERSION=3.9.4
 # Version:	 see $VERSION above
 #
 #Usage :  splunknbox -v[2 3 4 5 6] 
@@ -32,7 +32,6 @@ VERSION=3.9.3
 # MAC OSX : must install ggrep to get PCRE regrex matching working 
 # -for Darwin http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html
 # -mount point must be under /User/${USER}
-#
 #
 # TO-DO: -add routines for UF and HF containers with eventgen.py
 #	-add DS containers with default serverclass.conf
@@ -1656,7 +1655,11 @@ else
 fi	
  
 #CMD="docker run -d -v $MOUNTPOINT/$fullhostname/opt/splunk/etc -v $MOUNTPOINT/$fullhostname/opt/splunk/var --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $full_image_name"
-CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $full_image_name"
+CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER \
+	-p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT \
+	-p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT \
+	-p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" \
+	--env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $full_image_name"
 
 
 printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating new splunk docker container ${NC} " 
@@ -1814,8 +1817,7 @@ elif ( compare "$basename" "HADOOP-DOCKER" ); then
 	-p $vip:50010:50010 -p $vip:50020:50020 -p $vip:50070:50070 -p $vip:50075:50075 -p $vip:50090:50090 \
 	-p $vip:8020:8020 -p $vip:9000:9000 -p $vip:10020:10020 -p $vip:19888:19888 -p $vip:8030:8030 \
 	-p $vip:8031:8031 -p $vip:8032:8032 -p $vip:8033:8033 -p $vip:8040:8040 -p $vip:8042:8042 \
-	-p $vip:8088:8088 -p $vip:49707:49707 -p $vip:2122:2122
-	 $image_name"
+	-p $vip:8088:8088 -p $vip:49707:49707 -p $vip:2122:2122 $image_name"
 	HTTP_PORTS="Hadoop:50090 Hadoop:8042  Hadoop:8088"
 #https://github.com/caioquirino/docker-cloudera-quickstart/blob/master/Dockerfile
 elif ( compare "$basename" "DOCKER-CLOUDERA-QUICKSTART" ); then
@@ -1823,13 +1825,17 @@ elif ( compare "$basename" "DOCKER-CLOUDERA-QUICKSTART" ); then
 	 -p $vip:2181:2181 -p $vip:8020:8020 -p $vip:8888:8888 -p $vip:11000:11000 -p $vip:11443:11443 \
 	 -p $vip:9090:9090 -p $vip:8088:8088 -p $vip:19888:19888 -p $vip:9092:9092 -p $vip:8983:8983 \
 	 -p $vip:16000:16000 -p $vip:16001:16001 -p $vip:42222:22 -p $vip:8042:8042 -p $vip:60010:60010 \
-	 -p $vip:8080:8080 -p $vip:7077:7077	
-	 $image_name"
+	 -p $vip:8080:8080 -p $vip:7077:7077 $image_name"
 	HTTP_PORTS="Hue:8888 Hadoop:8088 Cluster:8042 HBase:60010 Spark:8080"
 
 elif ( compare "$basename" "ORACLE" ); then
 	printf "${Red}*** not yet ***${NC}\n"
 	#CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER -p $vip:$MYSQL_PORT:$MYSQL_PORT --env MYSQL_DATABASE="mydatabase" --env MYSQL_USER="guest" --env MYSQL_PASSWORD="my-secret-pw" --env MYSQL_ROOT_PASSWORD="my-secret-pw" $image_name"
+#http://elk-docker.readthedocs.io/	
+elif ( compare "$basename" "ELK" );  then
+	CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER \
+	-p $vip:5601:5601 -p $vip:9200:9200 -p $vip:5044:5044 -p $vip:9300:9300 $image_name"
+	HTTP_PORTS="Kibana web:5601 Elasticsearch JSON:9200 Logstash Beats:5044"
 else	
 	printf "${Red}*** No configuration for this 3rd party container yet ***${NC}\n"
 	return 0
