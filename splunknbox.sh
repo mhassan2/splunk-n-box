@@ -353,10 +353,15 @@ last_alias=`ifconfig | $GREP $END_ALIAS `
 if [ -n "$last_alias" ]; then
 	printf "${Green} OK!\n"
 else
-	printf "${Red}NOT FOUND${NC}\n"
+	printf "${Red}NOT FOUND!${NC}\n"
 fi
-echo
+
 if [ "$os" == "Darwin" ] && [ -z "$last_alias" ]; then
+	#interfaces_list=`networksetup -listnetworkserviceorder|grep Hardware|sed 's/(Hardware Port: //g'|sed 's/)//g'`
+	#interfaces_list=`ifconfig | pcregrep -M -o '^[^\t:]+:([^\n]|\n\t)*status: active'`
+	#printf "   ${Red}>>${NC}List of active interfaces (loopback is recommend for MacOS):\n"
+	#printf "Loopback, Device: lo\n$interfaces_list\n"
+	#for nic in "$interfaces_list"; do printf "xxx   %-s4\n" "$nic"; done
 	read -p "Enter interface to bind aliases to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_OSX"; fi
 	printf "Building IP aliases for OSX...[$base_ip.$start_octet4-$end_octet4]\n"
         #to remove aliases repeat with -alias switch
@@ -3647,21 +3652,29 @@ for id in $(docker ps -a --filter name="$type" --format "{{.ID}}" ) ; do
     fi
 
 	if ( compare "$hostname" "DEMO" ); then
-        	printf "${LightCyan}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC} " $i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+        	printf "${LightCyan}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" \
+			$i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
    	elif ( compare "$hostname" "3RDP" ); then
-        	printf "${LightPurple}%-2s) %-20s %-20b %-11s %-14s %-13s %-10s${NC}" $i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+		open_ports=`docker port $hostname|ggrep -Po "\d+/tcp|udp"|tr -d '\n'| sed 's/tcp/tcp /g' ` 
+        	printf "${LightPurple}%-2s) %-20s %-20b %-11s %-14s %-13s %-10s %-40s${NC}" \
+			$i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$open_ports"
+		#for y in $open_ports; do printf "%80s\n" "$y"; done
 
     	elif ( compare "$hostname" "DEP" ); then
-        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" $i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" \
+			$i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
 
     	elif ( compare "$hostname" "CM" ); then
-        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" $i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" \
+			$i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
 
     	elif ( compare "$hostname" "DMC" ); then
-        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" $i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" \
+			$i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
 
      	else 	###generic
-        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s ${NC}" $i $hostname "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s ${NC}" \
+			$i $hostname "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
    	fi
 
   if [ -z "$bind_ip" ]; then
