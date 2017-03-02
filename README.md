@@ -63,6 +63,44 @@ For different linux distributions/versions see:  https://docs.docker.com/engine/
 If you want the docker-host to be able to resolve host IPs (optional) install dnsmasq (google for your Linux flavor). 
 Change DNSSERVER="192.168.2.100"  to point the caching DNS server. This does not work on OSX yet!
 
+##Steps for configuring the Windows environment:
+
+1- Install Windows 10 WSL (Windows Subsystem for Linux)
+https://msdn.microsoft.com/en-us/commandline/wsl/install_guide
+
+
+2- Install Docker for windows
+https://docs.docker.com/docker-for-windows/install/
+
+
+3- Add windows loopback KM-TEST (not enabled by default)
+https://technet.microsoft.com/en-us/library/cc708322(v=ws.10).aspx
+https://www.pingzic.com/how-to-enable-loopback-adapter-in-windows-10/
+
+4- Add IP aliases using cmd.exe (running as admin).  Future bash.exe fixed ifconfig problem under WSL , so this step can be accomplished from the bash session
+http://www.ibm.com/support/knowledgecenter/SSNKWF_8.0.0/com.ibm.rational.test.lt.doc/topics/tconfigip_win.html
+```
+netsh -c Interface ip add address name="KM-TEST" addr=10.0.0.101 mask=255.255.0.0
+
+Repeat the above step for IPs 10.0.0.101-200
+```
+
+To remove IP aliases 
+The ntcmds.chm file, typically located in C:\WINDOWS\Help, contains more details about the netsh command. When you are finished with the IP aliases, use the following command to remove them:
+```
+netsh -c Interface ip delete address name="KM-TEST" addr=x.x.x.x   (repeat for all IPs)
+```
+
+5- Add export DOCKER_HOST=tcp://127.0.0.1:2375 to .bashrc then restart .bashrc  
+
+6- Restart .bashrc (note the double dots)
+```
+. .baschrc
+```
+
+7- While in bash session ICMP ping may not work even though networking is working. The work around to always use runas admin  when you start bash.exe
+https://msdn.microsoft.com/en-us/commandline/wsl/user_support
+
 
 ##MAC OSX installation (ALL STEPS ARE AUTOMATED EXCEPT DOCKER PKG INSTALL):
 
