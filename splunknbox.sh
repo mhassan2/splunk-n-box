@@ -3889,7 +3889,7 @@ online_ver=`curl --max-time 5 --fail --raw --silent --insecure -sSL https://gith
 
 #online_ver="3.9.2"
 #VERSION="3.8.3.1"
-newveralert=`awk -v n1=$online_ver -v n2=$VERSION 'BEGIN {if (n1>n2) printf ("Newer version is avialable [%s]", n1);}' `
+newveralert=`awk -v n1=$online_ver -v n2=$VERSION 'BEGIN {if (n1>n2) printf ("Newer version is available [%s]", n1);}' `
 
 # Set default message if $1 input not provided
 MESSAGE[1]="         ${Yellow}$newveralert"
