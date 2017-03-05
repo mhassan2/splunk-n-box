@@ -21,7 +21,7 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=3.9.4
+VERSION=3.9.5
 # Version:	 see $VERSION above
 #
 #Usage :  splunknbox -v[2 3 4 5 6] 
@@ -2042,10 +2042,10 @@ tput rev  # Set reverse video mode
 printf "${BoldYellowOnBlue} M A I N - M E N U ${NC}\n"
 tput sgr0
 
-tput cup 7 15; printf "${LightCyan}1${NC}) ${LightCyan}Manage Splunk Clusters${NC}\n"
-tput cup 8 15; printf "${LightCyan}2${NC}) ${LightCyan}Manage Splunk Demos ${DarkGray}[**internal use only**]${NC}\n"
-tput cup 9 15; printf "${LightCyan}3${NC}) ${LightCyan}Manage 3Rd Party Containers & Images ${DarkGray}[**under construction**]${NC}\n"
-tput cup 10 15; printf "${LightCyan}4${NC}) ${LightCyan}Manage All Images & Containers ${NC}\n"
+tput cup 7 15; printf "${LightCyan}1${NC}) ${LightCyan}Manage All Images & Containers ${NC}\n"
+tput cup 8 15; printf "${LightCyan}2${NC}) ${LightCyan}Manage Splunk Clusters${NC}\n"
+tput cup 9 15; printf "${LightCyan}3${NC}) ${LightCyan}Manage Splunk Demos ${DarkGray}[**internal use only**]${NC}\n"
+tput cup 10 15; printf "${LightCyan}4${NC}) ${LightCyan}Manage 3Rd Party Containers & Images ${DarkGray}[**under construction**]${NC}\n"
 tput cup 11 15; printf "${LightCyan}5${NC}) ${LightCyan}Manage System ${NC}\n"
 tput cup 12 15; printf "${LightCyan}6${NC}) ${LightCyan}Change Log Level ${NC}\n"
 tput cup 13 15; printf "${LightCyan}?${NC}) ${LightCyan}Help ${NC}\n"
@@ -2240,10 +2240,10 @@ do
 #	read -p "Enter choice: " choice
  	case "$choice" in
                 \? ) display_main_menu_help ;;
-		1 ) clustering_menu_inputs ;;
-        	2 ) demos_menu_inputs ;;
-        	3 ) 3rdparty_menu_inputs ;;
-        	4 ) splunk_menu_inputs ;;
+        	1 ) splunk_menu_inputs ;;
+		2 ) clustering_menu_inputs ;;
+        	3 ) demos_menu_inputs ;;
+        	4 ) 3rdparty_menu_inputs ;;
         	5 ) system_menu_inputs ;;
         	6 ) change_loglevel ;;
 
@@ -3885,7 +3885,7 @@ LINES=$(tput lines)
 #echo "lines:$LINES"
 
 #online_ver=`curl -fsSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|grep 'splunknbox'|ggrep -Po 'splunknboxver=(\K.*\))' `
-online_ver=`curl --max-time 5 --fail --raw --silent --insecure -sSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|grep 'splunknbox'|ggrep --color -Po 'splunknboxver=#\K(\d+(.\d+)*)' `
+online_ver=`curl --max-time 5 --fail --raw --silent --insecure -sSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|$GREP 'splunknbox'|$GREP --color -Po 'splunknboxver=#\K(\d+(.\d+)*)' `
 
 #online_ver="3.9.2"
 #VERSION="3.8.3.1"
@@ -3991,13 +3991,13 @@ done
 #rm  -fr $CMDLOGBIN $CMDLOGTXT
 printf "\n--------------- Starting new script run. Hosts are grouped by color -------------------\n" > $CMDLOGBIN
 
+detect_os	#before welcome_screen to detect which GREP to use
 display_welcome_screen
 clear
 printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: Running startup validation checks...${NC}\n"
 printf "\n"
 
 check_shell
-detect_os
 startup_checks
 setup_ip_aliases
 main_menu_inputs
