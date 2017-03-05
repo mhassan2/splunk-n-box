@@ -59,6 +59,18 @@ There are multiple splunk images on docker hub https://hub.docker.com/  but I ha
 ##Linux installation:
  
 For different linux distributions/versions see:  https://docs.docker.com/engine/installation/
+if you get this message when running the script
+WARNING: No swap limit support
+WARNING: No swap limit support
+WARNING: No swap limit support
+
+try this fix posted here: https://github.com/docker/docker/issues/4250
+
+1. /etc/default/grub:
+```
+GRUB_CMDLINE_LINUX_DEFAULT="cgroup_enable=memory swapaccount=1"
+sudo update-grub && sudo reboot
+```
 
 If you want the docker-host to be able to resolve host IPs (optional) install dnsmasq (google for your Linux flavor). 
 Change DNSSERVER="192.168.2.100"  to point the caching DNS server. This does not work on OSX yet!
@@ -121,7 +133,7 @@ Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-maverick
 xcode-select --install   (this is an optional step. You may NOT need it)
 ```
 
-Install docker & Tool box : https://docs.docker.com/engine/installation/mac/
+Install docker : https://docs.docker.com/engine/installation/mac/
 
 
 Install brew packages management: http://www.howtogeek.com/211541/homebrew-for-os-x-easily-installs-desktop-apps-and-terminal-utilities
