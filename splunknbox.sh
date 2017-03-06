@@ -1,4 +1,6 @@
 #!/bin/bash
+VERSION=3.9.6
+
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
 # 	elements on the fly. A perfect tool to setup a quick Splunk lab for training
@@ -21,7 +23,6 @@
 # Licenses: 	Licensed under GPL v3 <link>
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
-VERSION=3.9.5
 # Version:	 see $VERSION above
 #
 #Usage :  splunknbox -v[2 3 4 5 6] 
@@ -906,7 +907,7 @@ if [ -z "$splunkstate" ]; then
 else	while [ -n "$splunkstate" ] && [ $i -le 3 ]; do
         	#printf "\n\t->Verifying that splunkd is running...${Red}Not running! Attempt $i to restart..${NC}\n" >&3
         	echo -ne "${NC}\t->Verifying that splunkd is running..${Red}Not running! Attempt ${Yellow}$i${Red} to restart\r${NC}" >&3
-        	CMD="docker exec -ti $fullhostname /opt/splunk/bin/splunk start "
+        	CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk start "
         	#echo "cmd[$CMD]"
         	OUT=`$CMD`; display_output "$OUT" "Splunk web interface is at" "4"
         	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
@@ -1025,7 +1026,7 @@ logline "$CMD" "$1"
 
 if ( compare "$1" "LM" ); then
 	printf "\t->*LM* host! Forcing immediate splunkd restart.Please wait " >&3
-	docker exec -ti $1  /opt/splunk/bin/splunk restart > /dev/null >&1
+	docker exec -u splunk -ti $1  /opt/splunk/bin/splunk restart > /dev/null >&1
 	printf "${Green} Done! ${NC}\n" >&3
 fi
 return 0
@@ -1037,18 +1038,18 @@ fullhostname=$1
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-docker exec -ti $fullhostname touch /opt/splunk/etc/.ui_login	#prevent first time changeme password screen
-docker exec -ti $fullhostname rm -fr /opt/splunk/etc/passwd	#remove any existing users (include admin)
+docker exec -u splunk -ti $fullhostname touch /opt/splunk/etc/.ui_login	#prevent first time changeme password screen
+docker exec -u splunk -ti $fullhostname rm -fr /opt/splunk/etc/passwd	#remove any existing users (include admin)
 
 #reset password to "$USERADMIN:$USERPASS"
-CMD="docker exec -ti $fullhostname /opt/splunk/bin/splunk edit user admin -password hello -roles admin -auth admin:changeme"
+CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk edit user admin -password hello -roles admin -auth admin:changeme"
 printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4 ; OUT=`$CMD`
 logline "$CMD" "$fullhostname"
 printf "${Purple}$fullhostname${NC}: > $CMD\n"  >&4
 
 if ( compare "$CMD" "failed" ); then
    echo "\t->Trying default password "
-   CMD="docker exec -ti $fullhostname /opt/splunk/bin/splunk edit user admin -password changeme -roles admin -auth $USERADMIN:$USERPASS"
+   CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk edit user admin -password changeme -roles admin -auth $USERADMIN:$USERPASS"
    printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4 ; OUT=`$CMD`
    logline "$CMD" "$fullhostname"
    printf "${Purple}$fullhostname${NC}: $OUT\n"  >&4
@@ -1126,13 +1127,13 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 if [ "$2" == "b" ]; then
 	printf "\t->Restarting splunkd in the ${White}background${NC} " >&3
-        CMD="docker exec -d $fullhostname /opt/splunk/bin/splunk restart "
+        CMD="docker exec -u splunk -d $fullhostname /opt/splunk/bin/splunk restart "
         OUT=`$CMD`; display_output "$OUT" "The Splunk web interface is at" "3"
    	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$fullhostname"
 else
 	printf "\t->Restarting splunkd. Please wait! " >&3
-	CMD="docker exec -ti $fullhostname /opt/splunk/bin/splunk restart "
+	CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk restart "
         OUT=`$CMD`; display_output "$OUT" "The Splunk web interface is at" "3"
    	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$fullhostname"
@@ -1155,7 +1156,7 @@ if [ -n "$lm" ]; then
 	#echo "hostname[$hostname]  lm[$lm] _____________";exit
 	lm_ip=`docker port  $lm| awk '{print $3}'| cut -d":" -f1|head -1`
   	if [ -n "$lm_ip" ]; then
-        	CMD="docker exec -ti $hostname /opt/splunk/bin/splunk edit licenser-localslave -master_uri https://$lm_ip:$MGMT_PORT -auth $USERADMIN:$USERPASS"
+        	CMD="docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk edit licenser-localslave -master_uri https://$lm_ip:$MGMT_PORT -auth $USERADMIN:$USERPASS"
 		OUT=`$CMD`
         	printf "\t->Making [$hostname] license-slave using LM:[$lm] " >&3 ; display_output "$OUT" "has been edited" "3"
 		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4 
@@ -1228,7 +1229,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 list_all_hosts_by_role() {
 #This functions shows all containers grouped by role (using base hostname)
-#captain=`docker exec -ti $i /opt/splunk/bin/splunk show shcluster-status|head -10 | $GREP -i label |awk '{print $3}'| sed -e 's/^M//g' | tr -d '\r' | tr  '\n' ' '`
+#captain=`docker exec -u splunk -ti $i /opt/splunk/bin/splunk show shcluster-status|head -10 | $GREP -i label |awk '{print $3}'| sed -e 's/^M//g' | tr -d '\r' | tr  '\n' ' '`
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
@@ -1264,7 +1265,7 @@ echo
 printf "Running Index clusters (Cluster Master in yellow):\n"
 for i in $cm_list; do
 	printf "${Yellow}$i${NC}: "	
-	docker exec -ti $i /opt/splunk/bin/splunk show cluster-status -auth $USERADMIN:$USERPASS \
+	docker exec -u splunk -ti $i /opt/splunk/bin/splunk show cluster-status -auth $USERADMIN:$USERPASS \
 	| $GREP -i IDX | awk '{print $1}' | paste -sd ' ' -
 done
 echo
@@ -1272,7 +1273,7 @@ echo
 printf "Running Search Head Clusters (Deployer in yellow):\n"
 prev_list=''
 for i in $sh_list; do
-	sh_cluster=`docker exec -ti $i /opt/splunk/bin/splunk show shcluster-status -auth $USERADMIN:$USERPASS | $GREP -i label |awk '{print $3}'| sed -e 's/^M//g' | tr -d '\r' | tr  '\n' ' ' `
+	sh_cluster=`docker exec -u splunk -ti $i /opt/splunk/bin/splunk show shcluster-status -auth $USERADMIN:$USERPASS | $GREP -i label |awk '{print $3}'| sed -e 's/^M//g' | tr -d '\r' | tr  '\n' ' ' `
 	if ( compare "$sh_cluster" "$prev_list" );  then
 		true  #do nothing
 	else
@@ -1299,21 +1300,21 @@ if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-VMWA
         printf "${Green}OK${NC}\n"
 else
 	#reset password to "$USERADMIN:$USERPASS"
-	CMD="docker exec -ti $fullhostname touch /opt/splunk/etc/.ui_login"      #prevent first time changeme password screen
+	CMD="docker exec -u splunk -ti $fullhostname touch /opt/splunk/etc/.ui_login"      #prevent first time changeme password screen
 	OUT=`$CMD`;   #printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
 	logline "$CMD" "$fullhostname"
-	CMD="docker exec -ti $fullhostname rm -fr /opt/splunk/etc/passwd"        #remove any existing users (include admin)
+	CMD="docker exec -u splunk -ti $fullhostname rm -fr /opt/splunk/etc/passwd"        #remove any existing users (include admin)
 	OUT=`$CMD`;   #printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
 	logline "$CMD" "$fullhostname"
-	CMD="docker exec -ti $fullhostname /opt/splunk/bin/splunk edit user admin -password $USERPASS -roles $USERADMIN -auth admin:changeme"
+	CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk edit user admin -password $USERPASS -roles $USERADMIN -auth admin:changeme"
 	OUT=`$CMD`;   display_output "$OUT" "user admin edited" "3"
 	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$fullhostname"
 
 	if ( compare "$CMD" "failed" ); then
         	echo "Trying default password"
-   #     	docker exec -ti $fullhostname rm -fr /opt/splunk/etc/passwd        #remove any existing users (include admin)
-        	CMD="docker exec -ti $fullhostname touch /opt/splunk/etc/.ui_login"      #prevent first time changeme password screen
+   #     	docker exec -u splunk -ti $fullhostname rm -fr /opt/splunk/etc/passwd        #remove any existing users (include admin)
+        	CMD="docker exec -u splunk -ti $fullhostname touch /opt/splunk/etc/.ui_login"      #prevent first time changeme password screen
 		OUT=`$CMD` ; display_output "$OUT" "user admin edited" "5"
 		#printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$fullhostname"
@@ -1364,10 +1365,10 @@ if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-VMWA
 	#pausing "30"
 	restart_splunkd "$fullhostname"
         #printf "${Green}OK${NC}\n"
-	#CMD=`docker exec -ti $fullhostname /opt/splunk/bin/splunk restart splunkweb -auth $USERADMIN:$USERPASS`
+	#CMD=`docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk restart splunkweb -auth $USERADMIN:$USERPASS`
 else
 	#restarting splunkweb may not work with 6.5+
-	CMD=`docker exec -ti $fullhostname /opt/splunk/bin/splunk restart splunkweb -auth $USERADMIN:$USERPASS`
+	CMD=`docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk restart splunkweb -auth $USERADMIN:$USERPASS`
 fi
 
 USERPASS="hello" #rest in case we just processed ES or VMWARE DEMOS
@@ -1380,7 +1381,7 @@ assign_server_role() {		 ####### NOT USED YET ########
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #EXAMPLE:
-#mhassan:~> docker exec -ti SITE01-DMC01 cat /opt/splunk/etc/apps/splunk_management_console/lookups/assets.csv
+#mhassan:~> docker exec -u splunk -ti SITE01-DMC01 cat /opt/splunk/etc/apps/splunk_management_console/lookups/assets.csv
 #peerURI,serverName,host,machine,"search_group","_mkv_child","_timediff","__mv_peerURI","__mv_serverName","__mv_host","__mv_machine","__mv_search_group","__mv__mkv_child","__mv__timediff"
 #"10.0.0.101:$MGMT_PORT","SITE01-LM01","SITE01-LM01","SITE01-LM01","dmc_group_license_master",0,,,,,,,,
 #"10.0.0.102:$MGMT_PORT","SITE01-CM01","SITE01-CM01","SITE01-CM01","dmc_group_cluster_master",0,,,,,,,,
@@ -1397,7 +1398,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #"10.0.0.110:$MGMT_PORT","SITE01-SH03","SITE01-SH03","SITE01-SH03","dmc_searchheadclustergroup_LABEL1",2,,,,,,,,
 #localhost,"SITE01-DMC01","SITE01-DMC01","SITE01-DMC01","dmc_group_search_head",0,,,,,,,,
 
-#docker exec -ti SITE01-DEP01 cat /opt/splunk/etc/apps/splunk_management_console/lookups/assets.csv
+#docker exec -u splunk -ti SITE01-DEP01 cat /opt/splunk/etc/apps/splunk_management_console/lookups/assets.csv
 #peerURI,serverName,host,machine,"search_group","__mv_peerURI","__mv_serverName","__mv_host","__mv_machine","__mv_search_group"
 #localhost,"SITE01-DEP01","SITE01-DEP01","SITE01-DEP01","dmc_group_license_master",,,,,
 #localhost,"SITE01-DEP01","SITE01-DEP01","SITE01-DEP01","dmc_group_search_head",,,,,
@@ -1425,7 +1426,7 @@ dmc=$1; host=$2
 #adding search peer in DMC
 if [ -n "$dmc" ]; then
 	bind_ip_host=`docker inspect --format '{{ .HostConfig }}' $host| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-	CMD="docker exec -ti $dmc /opt/splunk/bin/splunk add search-server -host $bind_ip_host:$MGMT_PORT -auth $USERADMIN:$USERPASS -remoteUsername $USERADMIN -remotePassword $USERPASS"
+	CMD="docker exec -u splunk -ti $dmc /opt/splunk/bin/splunk add search-server -host $bind_ip_host:$MGMT_PORT -auth $USERADMIN:$USERPASS -remoteUsername $USERADMIN -remotePassword $USERPASS"
         OUT=`$CMD`
         OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
         printf "\t->Adding [$host] to DMC:[$dmc] " >&3 ; display_output "$OUT" "Peer added" "3"
@@ -1461,7 +1462,7 @@ restart_splunkd "$fullhostname"
 
 #restarting splunkweb may not work with 6.5+
 #while splunkd is not running
-#CMD="docker exec -ti $fullhostname /opt/splunk/bin/splunk restart -auth $USERADMIN:$USERPASS" ; OUT=`$CMD`; display_output "$OUT" "has been restarted" "3"
+#CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk restart -auth $USERADMIN:$USERPASS" ; OUT=`$CMD`; display_output "$OUT" "has been restarted" "3"
 
 
 return 0
@@ -1646,8 +1647,8 @@ fullhostname=`echo $fullhostname| tr -d '[[:space:]]'`	#trim white space if they
 check_load		#throttle back if high load
 
 #echo "fullhostname[$fullhostname]"
-#rm -fr $MOUNTPOINT/$fullhostname
-mkdir -m 777 -p $MOUNTPOINT/$fullhostname
+rm -fr $MOUNTPOINT/$fullhostname
+mkdir -m 755 -p $MOUNTPOINT/$fullhostname
 #note:volume bath is relative to VM not MacOS
 
 if ( compare "$fullhostname" "DEMO" ); then	
@@ -1660,11 +1661,14 @@ else
 fi	
  
 #CMD="docker run -d -v $MOUNTPOINT/$fullhostname/opt/splunk/etc -v $MOUNTPOINT/$fullhostname/opt/splunk/var --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $full_image_name"
-CMD="docker run -d --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER \
+#CMD="docker run -d -v $MOUNTPOINT/$fullhostname/etc:/opt/splunk/etc -v  $MOUNTPOINT/$fullhostname/var:/opt/splunk/var \
+CMD="docker run -d \
+	--network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER \
 	-p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT \
 	-p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT \
 	-p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" \
-	--env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $full_image_name"
+	--env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname \
+	--env SPLUNK_SERVER_IP=$vip --env SPLUNK_USER="splunk"  $full_image_name"
 
 
 printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating new splunk docker container ${NC} " 
@@ -2523,7 +2527,7 @@ else
 	printf "${LightPurple}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
 	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n\n" >&4
         printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
-	 if [ "$build_dmc" == "1" ]; then
+	if [ "$build_dmc" == "1" ]; then
                 create_splunk_container "$dmc" "1"; dmc=$gLIST
         fi
 	if [ "$build_lm" == "1" ]; then	
@@ -2554,7 +2558,7 @@ txt="\n #-----Modified by Docker Management script ----\n [shclustering]\n pass4
 #printf "%b" "$txt" >> $MOUNTPOINT/$dep/etc/system/local/server.conf	#cheesy fix!
 printf "%b" "$txt" > server.conf.append
 CMD="docker cp server.conf.append $dep:/tmp/server.conf.append"; OUT=`$CMD`
-CMD=`docker exec -ti $dep  bash -c "cat /tmp/server.conf.append >> /opt/splunk/etc/system/local/server.conf" `; #OUT=`$CMD`
+CMD=`docker exec -u splunk -ti $dep  bash -c "cat /tmp/server.conf.append >> /opt/splunk/etc/system/local/server.conf" `; #OUT=`$CMD`
 
 printf "\t->Adding stanza [shclustering] to server.conf!" >&3 ; display_output "$OUT" "" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
@@ -2572,7 +2576,7 @@ for i in $members_list ; do
 	#-------member config---
  	printf "[${Purple}$i${NC}]${LightBlue} Making cluster member...${NC}\n"
         bind_ip_sh=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-	CMD="docker exec -ti $i /opt/splunk/bin/splunk init shcluster-config -auth $USERADMIN:$USERPASS -mgmt_uri https://$bind_ip_sh:$MGMT_PORT -replication_port $REPL_PORT -replication_factor $RFACTOR -register_replication_address $bind_ip_sh -conf_deploy_fetch_url https://$bind_ip_dep:$MGMT_PORT -secret $MYSECRET -shcluster_label $label"
+	CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk init shcluster-config -auth $USERADMIN:$USERPASS -mgmt_uri https://$bind_ip_sh:$MGMT_PORT -replication_port $REPL_PORT -replication_factor $RFACTOR -register_replication_address $bind_ip_sh -conf_deploy_fetch_url https://$bind_ip_dep:$MGMT_PORT -secret $MYSECRET -shcluster_label $label"
 	OUT=`$CMD`
 	OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
 	printf "\t->Initiating shcluster-config " >&3 ; display_output "$OUT" "clustering has been initialized" "3"
@@ -2585,7 +2589,7 @@ for i in $members_list ; do
 	if [ -n "$cm" ]; then
 		#another method of getting bind IP (showing published ports:IPs).Container must be RUNNING!
 		cm_ip=`docker port  $cm| awk '{print $3}'| cut -d":" -f1|head -1`
-        	CMD="docker exec -ti $i /opt/splunk/bin/splunk edit cluster-config -mode searchhead -master_uri https://$cm_ip:$MGMT_PORT -secret $MYSECRET -auth $USERADMIN:$USERPASS"
+        	CMD="docker exec -u splunk  -ti $i /opt/splunk/bin/splunk edit cluster-config -mode searchhead -master_uri https://$cm_ip:$MGMT_PORT -secret $MYSECRET -auth $USERADMIN:$USERPASS"
 		OUT=`$CMD`
 		printf "\t->Integrating with Cluster Master (for idx auto discovery) [$cm] " >&3 ; display_output "$OUT" "property has been edited" "3"
 		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
@@ -2610,7 +2614,7 @@ printf "[${Purple}$i${NC}]${LightBlue} Configuring as Captain (last SH created).
 
 restart_splunkd "$i"  #last SH (captain) may not be ready yet, so force restart again
 
-CMD="docker exec -ti $i /opt/splunk/bin/splunk bootstrap shcluster-captain -servers_list "$server_list" -auth $USERADMIN:$USERPASS"
+CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk bootstrap shcluster-captain -servers_list "$server_list" -auth $USERADMIN:$USERPASS"
 OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
 printf "\t->Captain bootstrapping (may take time) " >&3 ; display_output "$OUT" "Successfully"  "3"
@@ -2621,7 +2625,7 @@ printf "${LightBlue}___________ Finished STEP#3 __________________________${NC}\
 printf "${LightBlue}___________ Starting STEP#4 (cluster status)__________${NC}\n" >&3
 printf "[${Purple}$i${NC}]${LightBlue}==> Checking SHC status (on captain)...${NC}"
 
-CMD="docker exec -ti $i /opt/splunk/bin/splunk show shcluster-status -auth $USERADMIN:$USERPASS "
+CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk show shcluster-status -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`
 display_output "$OUT" "Captain" "2"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4 
@@ -2758,7 +2762,7 @@ printf "[${Purple}$cm${NC}]${LightBlue} Configuring Cluster Master... ${NC}\n"
 
 #-------CM config---
 bind_ip_cm=`docker inspect --format '{{ .HostConfig }}' $cm| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-CMD="docker exec -ti $cm /opt/splunk/bin/splunk edit cluster-config  -mode master -replication_factor $RFACTOR -search_factor $SFACTOR -secret $MYSECRET -cluster_label $label -auth $USERADMIN:$USERPASS "
+CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk edit cluster-config  -mode master -replication_factor $RFACTOR -search_factor $SFACTOR -secret $MYSECRET -cluster_label $label -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
 printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4 
 logline "$CMD" "$cm"
@@ -2776,14 +2780,14 @@ for i in $members_list ; do
         bind_ip_idx=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 	
 	#-------member config----
-        CMD="docker exec -ti $i /opt/splunk/bin/splunk edit cluster-config -mode slave -master_uri https://$bind_ip_cm:$MGMT_PORT -replication_port $REPL_PORT -register_replication_address $bind_ip_idx -cluster_label $label -secret $MYSECRET -auth $USERADMIN:$USERPASS "
+        CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk edit cluster-config -mode slave -master_uri https://$bind_ip_cm:$MGMT_PORT -replication_port $REPL_PORT -register_replication_address $bind_ip_idx -cluster_label $label -secret $MYSECRET -auth $USERADMIN:$USERPASS "
 	OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 	printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$i"
 	printf "\t->Make a cluster member " >&3 ; display_output "$OUT" "property has been edited" "3"
 	#-------
 	#-------tcp/9997--- disabled 2/15/17 Already in 6.5 image build
-        #CMD="docker exec -ti $i /opt/splunk/bin/splunk enable listen $RECV_PORT -auth $USERADMIN:$USERPASS "
+        #CMD="docker exec -u splunk  -ti $i /opt/splunk/bin/splunk enable listen $RECV_PORT -auth $USERADMIN:$USERPASS "
         #OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
         #printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
         #logline "$CMD" "$i"
@@ -2801,7 +2805,7 @@ printf "${LightBlue}____________ Finished STEP#2 __________________________${NC}
 
 printf "${LightBlue}____________ Starting STEP#3 (IDXC status) ____________${NC}\n" >&3
 printf "[${Purple}$cm${NC}]${LightBlue}==> Checking IDXC status...${NC}"
-CMD="docker exec -ti $cm /opt/splunk/bin/splunk show cluster-status -auth $USERADMIN:$USERPASS "
+CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk show cluster-status -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`; display_output "$OUT" "Replication factor" "2"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$cm"
@@ -2980,7 +2984,7 @@ printf "${DarkGray}Using LM:[$lm] CM:[$cm] sites:[$SITEnames]\n\n${NC}"
 printf "${Cyan}____________ Starting STEP#1 (Configuring one CM for all locations) _____________________${NC}\n" >&3
 printf "[${Purple}$cm${NC}]${Cyan} Configuring Cluster Master... ${NC}\n"
 cm_ip=`docker port $cm| awk '{print $3}'| cut -d":" -f1|head -1 `
-CMD="docker exec -ti $cm /opt/splunk/bin/splunk edit cluster-config -mode master -multisite true -available_sites $sites_str -site site1 -site_replication_factor origin:2,total:3 -site_search_factor origin:1,total:2 -auth $USERADMIN:$USERPASS "
+CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk edit cluster-config -mode master -multisite true -available_sites $sites_str -site site1 -site_replication_factor origin:2,total:3 -site_search_factor origin:1,total:2 -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
@@ -2990,7 +2994,7 @@ printf "\t->Setting multi-site to true... " >&3 ; display_output "$OUT" "propert
 restart_splunkd "$cm"
 is_splunkd_running "$cm"
 
-CMD="docker exec -ti $cm /opt/splunk/bin/splunk enable maintenance-mode --answer-yes -auth $USERADMIN:$USERPASS"
+CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk enable maintenance-mode --answer-yes -auth $USERADMIN:$USERPASS"
 OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
@@ -3008,7 +3012,7 @@ for str in $SITEnames; do
 	site_sh_list=`echo $sh_list | $GREP -Po '('$str'-\w+\d+)' | tr -d '\r' | tr  '\n' ' '  `
 	for i in $site_idx_list; do
 		printf "[${Purple}$i${NC}]${Cyan} Migrating Indexer (restarting takes time)... ${NC}\n"
-		CMD="docker exec -ti $i /opt/splunk/bin/splunk edit cluster-config  -mode slave -site $site -master_uri https://$cm_ip:$MGMT_PORT -replication_port $REPL_PORT  -auth $USERADMIN:$USERPASS "
+		CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk edit cluster-config  -mode slave -site $site -master_uri https://$cm_ip:$MGMT_PORT -replication_port $REPL_PORT  -auth $USERADMIN:$USERPASS "
 		OUT=`$CMD`
         	OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 
@@ -3023,7 +3027,7 @@ for str in $SITEnames; do
 	printf "${Cyan}____________ Starting STEP#3 (Configuring SHs in [site:$site location:$str]) ___${NC}\n" >&3
 	for i in $site_sh_list; do
 		printf "[${Purple}$i${NC}]${Cyan} Migrating Search Head... ${NC}\n"
-	    	CMD="docker exec -ti $i /opt/splunk/bin/splunk edit cluster-master https://$cm_ip:$MGMT_PORT -site $site -auth $USERADMIN:$USERPASS"
+	    	CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk edit cluster-master https://$cm_ip:$MGMT_PORT -site $site -auth $USERADMIN:$USERPASS"
 		OUT=`$CMD`
                 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 		printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
@@ -3039,7 +3043,7 @@ done  #looping thru the sites list
 
 printf "${Cyan}____________ Starting STEP#4 (CM maintenance-mode) _____________________${NC}\n" >&3
 printf "[${Purple}$cm${NC}]${Cyan} Disabling maintenance-mode... ${NC}\n"
-CMD="docker exec -ti $cm /opt/splunk/bin/splunk disable maintenance-mode -auth $USERADMIN:$USERPASS"
+CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk disable maintenance-mode -auth $USERADMIN:$USERPASS"
 OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
