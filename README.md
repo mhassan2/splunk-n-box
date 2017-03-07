@@ -13,20 +13,24 @@ Like with most people, you probably attempted to solve the problem by either thr
 In my small test environment, I was able to quickly bring upward of 40+ Splunk Docker containers for a classroom lab using low powered Intel NUC device (i3 16GB ram, 128G SSD). What’s impressive about Docker is the resource utilization on the docker-host is tiny compared to a VM based build. I need to emphasize the fact that I have not tested builds under heavy load (either user traffic or data ingestion). However, I believe it is just a matter of sizing the hardware appropriately.
 
 
-##Script feature list:
+##Feature list:
 
-- Extensive error checking during startup & while building containers.
-- Adaptive load control during cluster build (throttle execution if exceeds 4 x cores) 
-- Built-in dynamic hostnames and IPs allocation
-- Automatically create & configure large number of Splunk hosts very fast
-- Different levels of logging (show docker commands executed)
-- Fully configured multi & single site cluster builds (including CM and DEP servers)
-- Manual and auto (standard configurations)
-- Modular design that can easily be converted to a higher-level language like Python
-- Custom login screen (helpful for lab & Search Parties scenarios)
-- Low resources requirements
-- Eliminate the need to learn docker (but you should)
-- MAC OSX support
+- Friendly user interface to manage splunk docker containers.
+- Extensive error checks and validation.
+- Support for multiple Splunk versions (images)
+- Adaptive load control during cluster build (throttle execution if exceeds 4 x cores).
+- Built-in dynamic hostnames and IPs allocation (no need for proxy container like NGINX)
+- Automatically create & configure large number of Splunk hosts very fast.
+- Different levels of logging (show docker commands executed).
+- Fully configured multi & single site cluster builds (including LM,CM, DEP, DMC servers).
+- Manual and automatic cluster builds.
+- Modular design that can easily be converted to a higher-level language like Python.
+- Custom login screen (helpful for lab & Search Parties scenarios).
+- Low resources requirements compared to VM based solution.
+- Eliminate the need to learn docker (but you should).
+- MacOS & Linux support.
+- Works with windows10 WSL (Windows Subsystem for Linux) Ubuntu bash.
+- Automatic script upgrade (with version check).
 
 
 
@@ -42,23 +46,21 @@ Once you have your Ubuntu up and running, please follow the instructions for ins
 Please be aware that Ubuntu 14.04 did not work very well for me. There is a bug around mounting docker volumes. Your mileage may vary if you decide to use CentOS or equal Linux distribution. 
 For OSX see https://docs.docker.com/engine/installation/mac/
 
-When you run the scripts for the first time, it will check to see if you have any IP aliases available (the range specified in the script). If not; then it will configure IP aliases 192.168.1.100-254. The aliased IPs will be automatically mapped, at container creation time, to the internal docker IP space (172.18.0.0/24). You should be able to point your browser to any NATed IP on port 8000, and that will get you directly to the container. During my research, I haven’t seen many people using this technique, and they mostly opt for changing the ports or using a proxy container. My approach is to keep the standard Splunk ports (8000, 8089, 9997, etc.) and use iptable NATs to make the containers visible to the outside world.  This trick will save you a lot of headaches when dealing with creating a large number of Splunk containers (aka hosts). Running under OSX, I used private network segment 10.0.0.0/24. The assumption here is you don't need to NAT to the outside world, and everything will be local to your MAC laptop. Windows and OSX do not support Linux c-groups natively. Therefore there is an additional layer of virtualization required, which will impact performance. 
+When you run the scripts for the first time, it will check to see if you have any IP aliases available (the range specified in the script). If not; then it will configure IP aliases 192.168.1.100-254. The aliased IPs will be automatically mapped, at container creation time, to the internal docker IP space (172.18.0.0/24). You should be able to point your browser to any NATed IP on port 8000, and that will get you directly to the container. During my research, I haven’t seen many people using this technique, and they mostly opt for changing the ports or using a proxy container. My approach is to keep the standard Splunk ports (8000, 8089, 9997, etc.) and use iptable NATs to make the containers visible to the outside world.  This trick will save you a lot of headaches when dealing with creating a large number of Splunk containers (aka hosts). Running under OSX, I used private network segment 10.0.0.0/24. The assumption here is you don't need to NAT to the outside world and everything will be local to your MAC laptop. Windows and OSX do not support Linux c-groups natively. Therefore there is an additional layer of virtualization required, which will impact performance. 
 
 
 
 
-##Splunk image:
-
-My original work used outcoldman image. But for some reason, it was pulled out of docker registry website.  https://github.com/outcoldman/docker-splunk . I have cloned outcoldman image into my own so it's always available for download
+##Splunk image(s):
 
 ```
-https://hub.docker.com/r/mhassan/splunk/
+https://hub.docker.com/r/splunknboxk/splunk_x.x.x/
 ```
-There are multiple splunk images on docker hub https://hub.docker.com/  but I haven't verified them. 
 
 ##Linux installation:
  
 For different linux distributions/versions see:  https://docs.docker.com/engine/installation/
+
 if you get this message when running the script
 WARNING: No swap limit support
 WARNING: No swap limit support
@@ -75,7 +77,8 @@ sudo update-grub && sudo reboot
 If you want the docker-host to be able to resolve host IPs (optional) install dnsmasq (google for your Linux flavor). 
 Change DNSSERVER="192.168.2.100"  to point the caching DNS server. This does not work on OSX yet!
 
-##Steps for configuring the Windows environment:
+
+##Steps for configuring Windows environment:
 
 1- Install Windows 10 WSL (Windows Subsystem for Linux)
 https://msdn.microsoft.com/en-us/commandline/wsl/install_guide
@@ -89,7 +92,7 @@ https://docs.docker.com/docker-for-windows/install/
 https://technet.microsoft.com/en-us/library/cc708322(v=ws.10).aspx
 https://www.pingzic.com/how-to-enable-loopback-adapter-in-windows-10/
 
-4- Add IP aliases using cmd.exe (running as admin).  Future bash.exe fixed ifconfig problem under WSL , so this step can be accomplished from the bash session
+4- Add IP aliases using cmd.exe (running as admin). Future bash.exe fixed ifconfig problem under WSL, so this step can be accomplished from the bash session
 http://www.ibm.com/support/knowledgecenter/SSNKWF_8.0.0/com.ibm.rational.test.lt.doc/topics/tconfigip_win.html
 ```
 netsh -c Interface ip add address name="KM-TEST" addr=10.0.0.101 mask=255.255.0.0
@@ -114,7 +117,7 @@ netsh -c Interface ip delete address name="KM-TEST" addr=x.x.x.x   (repeat for a
 https://msdn.microsoft.com/en-us/commandline/wsl/user_support
 
 
-##MAC OSX installation (ALL STEPS ARE AUTOMATED EXCEPT DOCKER PKG INSTALL):
+##MacOS installation (ALL STEPS ARE AUTOMATED EXCEPT DOCKER PKG INSTALL):
 
 &#x1F4D9;For Darwin installtions read this first: 
 
