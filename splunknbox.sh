@@ -3935,6 +3935,7 @@ if [ "$new" == "Y" ]; then
 		chmod 755  ${0##*/}   	#set x permission on splunknbox.sh
 	#	./$(basename $0) && exit  # restart the script
 		echo "Please restart script!"
+		exit
 
 	fi	
 fi
