@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.7
+VERSION=3.9.7.1		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -77,7 +77,7 @@ SPLUNK_IMAGE="splunknbox/splunk_6.5.2"
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
 
 #Available splunk demos registry.splunk.com
-REPO_DEMO_IMAGES="demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi workshop-elastic-stack-lab demo-healthcare"
+REPO_DEMO_IMAGES="demo-uba demo-windows-infrastructure tools-mysql-dbconnect-demo demo-dbconnect workshop-elastic-stack-elk demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi workshop-elastic-stack-lab demo-healthcare"
 
 #3rd party images will be renamed to 3rd-* after each docker pull
 #REPO_3RDPARTY_IMAGES="3rd-mysql 3rd-oraclelinux"
@@ -491,6 +491,8 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 startup_checks() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+
+detect_os
 
 #----------Gnu grep installed? MacOS only-------------
 if [ "$os" == "Darwin" ]; then
@@ -2054,6 +2056,7 @@ tput cup 11 15; printf "${LightCyan}5${NC}) ${LightCyan}Manage System ${NC}\n"
 tput cup 12 15; printf "${LightCyan}6${NC}) ${LightCyan}Change Log Level ${NC}\n"
 tput cup 13 15; printf "${LightCyan}?${NC}) ${LightCyan}Help ${NC}\n"
 tput cup 14 15; printf "${LightCyan}Q${NC}) ${LightCyan}Quit ${NC}\n"
+
 # Set bold mode
 tput bold
 tput cup 16 15
@@ -2062,7 +2065,7 @@ tput cup 16 15
 
 #tput clear
 tput sgr0
-tput rc
+#tput rc
 
 return 0
 }	#end display_main_menu_options2()
