@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.6
+VERSION=3.9.7
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
