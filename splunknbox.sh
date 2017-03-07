@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.7.2		#Used to check against github repository VERSION!
+VERSION=3.9.7.3		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -3937,6 +3937,7 @@ if [ "$new" == "Y" ]; then
 		#curl --max-time 5 -O https://raw.github.com/mhassan2/splunk-n-box/master/${0##*/}	
 		chmod 755  ${0##*/}   	#set x permission on splunknbox.sh
 	#	./$(basename $0) && exit  # restart the script
+		echo
 		echo "Please restart script!                          "
 		exit
 
