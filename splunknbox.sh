@@ -3888,12 +3888,6 @@ LINES=$(tput lines)
 #echo "cols:$COLUMNS"
 #echo "lines:$LINES"
 
-#online_ver=`curl -fsSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|grep 'splunknbox'|ggrep -Po 'splunknboxver=(\K.*\))' `
-online_ver=`curl --max-time 5 --fail --raw --silent --insecure -sSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|$GREP 'splunknbox'|$GREP --color -Po 'splunknboxver=#\K(\d+(.\d+)*)' `
-
-#online_ver="3.9.2"
-#VERSION="3.8.3.1"
-newveralert=`awk -v n1=$online_ver -v n2=$VERSION 'BEGIN {if (n1>n2) printf ("Newer version is available [%s]", n1);}' `
 
 # Set default message if $1 input not provided
 MESSAGE[1]="         ${Yellow}$newveralert"
@@ -3921,6 +3915,28 @@ for (( i=x; i <= (x + $num_of_msgs); i++)); do
         printf "\033[0;36m${MESSAGE[$z]}"
 
 done
+
+#online_ver=`curl -fsSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|grep 'splunknbox'|ggrep -Po 'splunknboxver=(\K.*\))' `
+online_ver=`curl --max-time 5 --fail --raw --silent --insecure -sSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|$GREP 'splunknbox'|$GREP --color -Po 'splunknboxver=#\K(\d+(.\d+)*)' `
+
+#online_ver="3.9.2"
+#VERSION="3.9.2"
+new=""
+#newveralert=`awk -v n1=$online_ver -v n2=$VERSION 'BEGIN {if (n1>n2) printf ("Newer version is available [%s]", n1);}' `
+new=`awk -v n1=$online_ver -v n2=$VERSION 'BEGIN {if (n1>n2) print ("Y");}'  `
+if [ "$new" == "Y" ]; then
+	tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
+	read -p "Newer version [$online_ver] available. Upgrade? [Y/n]? " answer
+	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+		tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
+		echo "Upgrading and restarting ....                     "; sleep 4
+		curl --max-time 5 -O https://raw.github.com/mhassan2/splunk-n-box/master/${0##*/}	
+		chmod 755  ${0##*/}   	#set x permission on splunknbox.sh
+		./$(basename $0) && exit  # restart the script
+
+	fi	
+fi
+
 tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
 printf "\033[0;34m${MESSAGE[10]}"
 # Just wait for user input...
