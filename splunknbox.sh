@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.7
+VERSION=3.9.0
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -4014,6 +4014,7 @@ printf "\n--------------- Starting new script run. Hosts are grouped by color --
 
 detect_os	#before welcome_screen to detect which GREP to use
 display_welcome_screen
+detect_os	#before welcome_screen to detect which GREP to use
 clear
 printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: Running startup validation checks...${NC}\n"
 printf "\n"
