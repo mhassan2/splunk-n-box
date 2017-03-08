@@ -1,0 +1,144 @@
+##Change log:
+ver 2.2
+-added wipe clean entire system option
+-GO back menu option is using B now
+-added a note explaining registry.splunk login requirements for create_demo_containers
+-load avg in banner menu turns yellow if LOAD < core/2 and read if LOAD>= cores
+
+ver 2.3
+-fixed bug in stop_all_container() when select all containers are deleted instead  of stopped
+-combined volume remove with container delete.
+-added download only option for demo images
+-modified create_all_demos() to allow for bulk build
+-create delete demo containers option
+
+v2.4
+-added DMC to show_host_by_role()
+-modified wording in create cluster->Auto builds
+-all stop/start/delete routines show correct title
+-create stop/start/delete DEMO containers 
+-fix stop container routine to allow for selection
+-fixed few spellings
+
+v2.5
+-added progress bar to demo images download 
+-List container menu now shows title
+-Splunk management  menus are now all consistent 
+-rearrange the title menu and fixed VERSION display issue
+-fixed a bug in remove_ip_aliases()
+
+v2.6
+-added welcome screen
+
+v2.7
+-added detection for multiple running scripts; prompt user to kill. 
+-added progress bar when download mhassan/splunk
+-cleaned up display_stats_banner()
+
+v2.8
+-cleaned up logic around memory  & CPU checks
+-more work on validation checks (including interface consistency)
+
+v2.9
+-added progress bar in create_demo_container() for container that are not already cached
+-added detection to see if connected to splunk hub, if not prompt user
+-added mem calculation for linux
+-changed all reference to registry.splunk.com to global var
+-colored main menu selection options
+
+v3.0
+-added support for multiple splunk versions based images.
+-created splunknbox docker hub and posted additional versions (images)
+-web.con: fixed text alignment, change border color, added ver & image_name
+-disabled O) Add OS utils options. Included those utils in the images build
+-show_all_containers(): now show splunk ver, removed internal_ip column
+
+v3.1
+-add OS utils to demo containers option
+-yet another spelling mistakes
+-display container stats is now SYSTEM resource consumption option in main menu
+-pkgs download are now using progress bar
+
+v3.2  2/7/2017
+- ES and VMWARE demos now respond to http
+-reworked container startup verification
+-added splunkd startup verification, will help with heavy duty DEMOs
+-more work to make starting consecutive “heavy” demo run smoothly
+
+v3.3  2/7/2017
+-added code to restart docker daemon if not running in MacOS
+
+v3.4 2/9/2017 (major release)
+-disabled dnsmask stuff for linux (will clean it up later)
+-renamed set_web_to_http() to set_splunkweb_to_http()
+-added is_container_runnig()  & is_splunkd_running()
+-renamed anything with _menu () to _menu_input()
+-added support for 3rd party images (whole bunch of routines)
+-renamed stop/start/delete routines with _all _  since user is now prompted to select all or select item
+-add few maintenance routing for 3rd pary images
+-rearranged code blocks and grouped them together according to function (a lot of cut & past)
+
+v3.5  2/12/2017
+-main menu has only 5 options  now, created sub-menus for the rest
+
+v3.6
+-fixed bugs in splunk_passwd_reset()
+-added 007 “funny”  ascii on Quit
+-added change log level  option in main menu
+
+v3.7
+-added bunch of place holders for HELP routines
+-added  help option  in main()
+-fixed a bug related to 3rd party created immediately after download
+-added docker version check (after is docker running? Check)
+-fixed a bug related to remove-all-images
+-in main menu: validation for logs level numbers
+
+v3.8   2/18/17
+-reworked container creation routines to accommodate 3rdparty creation special case.
+-more work on 3rd party Hadoop containers
+-fixed error msg related to missing “-mode slave” in s-2-s build, last migration phase
+-fixed bug resulted from v3.7 changes where show 3rd failed and download 3rdp failed
+- spell check! several corrections
+-changing_default_image() is fully functioning now
+-added kill for run away “docker pull” processes
+-fixed a bug resulted from v2.7 where $gLIST was not properly updated in create_splunk_container(). This bug impacted proper IDX cluster creation.
+
+v3.9   2/18/ 17
+-in progress_bar_download() added  code to switch to verbose “docker pull” if exceeded timer. Should help with cases where its taking too long to download an images and let the user know its not the script fault 
+
+v3.9.3  2/19/ 17 (maintenance)
+-fixed minor bug preventing delete_container (demo) from working properly
+-more cleanup work on progresss_download_bar()
+-added demo-pci  (runs on  https)
+-creating 3rdparty and demo container show “short” version of banner now (just OS stats)
+-added healthcare demo
+-added online version check ( VERSION file on github)
+
+v3.9.4   2/25/ 17
+-more work on 3rd party ELK container
+-in list_containers() now show exposed ports for 3rdparty only
+
+v3.9.5   3/5/ 17
+-fixed minor bug with $GREP in linux run (impacting check ver)
+-moved main menu options around
+-updated docs for windows_wsl instructions
+
+v.3.9.6 3/6/17
+-fixed major bug where cluster nodes don’t survive the restart. The bug impacted file permission of some of splunk files. That seem to manifest itself in latest docker 17.3.0 CE. All “docker exec” commands included “-u splunk” switch. 
+
+v3.9.7.3 3/7/17
+-minor bug fix where status bar was clearing in main menu
+-added auto upgrade feature (after VERSION check)
+
+v3.9.8 3/7/17
+-added DEMO-ITSI to list of container that don’t change admin password
+-fixed Add common OS utils for DEMO containers
+-fixed custom .bashrc issue
+-added .vimrc to container build /etc/vim/vimrc
+
+v3.9.8.1   3/8/17
+-fixed fields alignment when displaying demo images (minor) 
+-added color to prompt (ENTER: All B:Go Back)
+
+
