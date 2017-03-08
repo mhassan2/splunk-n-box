@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.7.3		#Used to check against github repository VERSION!
+VERSION=3.9.8		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -77,7 +77,7 @@ SPLUNK_IMAGE="splunknbox/splunk_6.5.2"
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
 
 #Available splunk demos registry.splunk.com
-REPO_DEMO_IMAGES="demo-uba demo-windows-infrastructure tools-mysql-dbconnect-demo demo-dbconnect workshop-elastic-stack-elk demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi workshop-elastic-stack-lab demo-healthcare"
+REPO_DEMO_IMAGES="demo-uba demo-windows-infrastructure demo-dbconnect demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi demo-healthcare"
 
 #3rd party images will be renamed to 3rd-* after each docker pull
 #REPO_3RDPARTY_IMAGES="3rd-mysql 3rd-oraclelinux"
@@ -1296,8 +1296,8 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 vip=$1;  fullhostname=$2
 
 #----------- password stuff ----------
-if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-VMWARE" ) ; then
-	true #dont change pass for these 2 demo
+if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-ITSI" ) || ( compare "$fullhostname" "DEMO-VMWARE" ) ; then
+	true #dont change pass for some demos. 
 	USERPASS="changeme"
         printf "${Green}OK${NC}\n"
 else
@@ -1691,7 +1691,7 @@ is_container_running "$fullhostname"
 #-----check if splunkd is running--------
 is_splunkd_running "$fullhostname"	
 
-#adding license unless demo; then leave it alone	
+#Donot add license file to DEMO containers. They are shipped with their own
 if ( compare "$fullhostname" "DEMO" ); then	
 	true
 else
@@ -1703,8 +1703,13 @@ printf "\t->Splunk initialization (password, licenses, custom screen, http)..." 
 custom_login_screen "$vip" "$fullhostname"
 
 #Misc OS stuff
-if [ -f "$PROJ_DIR/containers.bashrc" ]; then
-       	CMD=`docker cp $PROJ_DIR/containers.bashrc $fullhostname:/root/.bashrc`
+if [ -f "$PWD/containers.bashrc" ]; then
+	printf "\t->Copying $PWD/containers.bashrc to $fullhostname:/root/.bashrc\n" >&4
+       	CMD=`docker cp $PWD/containers.bashrc $fullhostname:/root/.bashrc`
+fi
+if [ -f "$PWD/containers.vimrc" ]; then
+	printf "\t->Copying $PWD/containers.vimrc to $fullhostname:/root/.vimrc\n" >&4
+       	CMD=`docker cp $PWD/containers.vimrc $fullhostname:/root/.vimrc`
 fi
 
 #DNS stuff to be used with dnsmasq. Need to revisit for OSX  9/29/16
@@ -1943,12 +1948,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 printf "${White}CLUSTERING MENU HELP:\n\n${NC}"
 printf "\n"
-printf "Under construction!\n";echo; return 0
-printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be prompted to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
-printf ">>If image is not cached; it may take up to 5 minutes to download ($SPLUNK_DOCKER_HUB).\n"
-printf ">>Some images are experimental. Please contact author for any issues.\n"
-printf ">>Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
-echo
+printf "Under construction!\n";echo
+printf "Documentaion can be viewed here:\n\n"
+printf "https://github.com/mhassan2/splunk-n-box\n";echo
 return 0
 }	#end display_clustering_menu_help()
 #---------------------------------------------------------------------------------------------------------------
@@ -1958,11 +1960,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 printf "${White}DEMO MENU HELP:\n\n${NC}"
 printf "\n"
-printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be prompted to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
-printf ">>If image is not cached; it may take up to 5 minutes to download ($SPLUNK_DOCKER_HUB).\n"
-printf ">>Some images are experimental. Please contact author for any issues.\n"
-printf ">>Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
-echo
+printf "Under construction!\n";echo
+printf "Documentaion can be viewed here:\n\n"
+printf "https://github.com/mhassan2/splunk-n-box\n";echo
 return 0
 }	#end display_demos_menu_help()
 #---------------------------------------------------------------------------------------------------------------
@@ -1972,12 +1972,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 printf "${White}3RD PARTY MENU HELP:\n\n${NC}"
 printf "\n"
-printf "Under construction!\n";echo; return 0
-printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be prompted to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
-printf ">>If image is not cached; it may take up to 5 minutes to download ($SPLUNK_DOCKER_HUB).\n"
-printf ">>Some images are experimental. Please contact author for any issues.\n"
-printf ">>Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
-echo
+printf "Under construction!\n";echo
+printf "Documentaion can be viewed here:\n\n"
+printf "https://github.com/mhassan2/splunk-n-box\n";echo
 return 0
 }	#end display_3rdparty_menu_help()
 #---------------------------------------------------------------------------------------------------------------
@@ -1987,14 +1984,8 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 printf "${White}SPLUNK MENU HELP:\n\n${NC}"
 printf "\n"
-printf "Under construction!\n";echo
-return 0
-
-printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be prompted to login. To remove cashed credentials remove ~/.Docker/json.config file \n"
-printf ">>If image is not cached; it may take up to 5 minutes to download ($SPLUNK_DOCKER_HUB).\n"
-printf ">>Some images are experimental. Please contact author for any issues.\n"
-printf ">>Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
-echo
+printf "Documentaion can be viewed here:\n\n"
+printf "https://github.com/mhassan2/splunk-n-box\n";echo
 return 0
 }	#end display_splunk_menu_help()
 #---------------------------------------------------------------------------------------------------------------
@@ -2004,12 +1995,8 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 printf "${White}SYSTEM MENU HELP:\n\n${NC}"
 printf "\n"
-printf "Under construction!\n";echo; return 0
-printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be prompted to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
-printf ">>If image is not cached; it may take up to 5 minutes to download ($SPLUNK_DOCKER_HUB).\n"
-printf ">>Some images are experimental. Please contact author for any issues.\n"
-printf ">>Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
-echo
+printf "Documentaion can be viewed here:\n\n"
+printf "https://github.com/mhassan2/splunk-n-box\n";echo
 return 0
 }	#end display_system_menu_help()
 #---------------------------------------------------------------------------------------------------------------
@@ -2019,14 +2006,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 printf "${White}MAIN MENU HELP:\n\n${NC}"
 printf "\n"
-printf "Under construction!\n";echo;
-        read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
-return 0
-printf ">>You must login before using this menu (run: docker login $SPLUNK_DOCKER_HUB). You will be prompted to login. To remove cashed credentials remove ~/.Docker/jaon.config file \n"
-printf ">>If image is not cached; it may take up to 5 minutes to download ($SPLUNK_DOCKER_HUB).\n"
-printf ">>Some images are experimental. Please contact author for any issues.\n"
-printf ">>Some images requires extra resources (ex: ITSI, MS, ES). Limit concurrent demos.\n"
-echo
+printf "Documentaion can be viewed here:\n\n"
+printf "https://github.com/mhassan2/splunk-n-box\n";echo
+read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
 return 0
 }	#end display_main_menu_help()
 #---------------------------------------------------------------------------------------------------------------
@@ -2166,7 +2148,7 @@ printf "${Yellow}L${NC}) ${Yellow}L${NC}IST demo container(s) ${NC}\n"
 printf "${Yellow}P${NC}) STO${Yellow}P${NC} demo container(s) ${NC}\n"
 printf "${Yellow}T${NC}) S${Yellow}T${NC}ART demo container(s) ${NC}\n"
 printf "${Yellow}D${NC}) ${Yellow}D${NC}ELETE demo container(s)${NC}\n"
-printf "${Yellow}A${NC}) ${Yellow}A${NC}DD common utils to demo container(s) [${White}not recommended${NC}]${NC}\n"
+printf "${Yellow}A${NC}) ${Yellow}A${NC}DD common utils to demo container(s) [${White}useful if you need command line access${NC}]${NC}\n"
 echo
 printf "${BoldWhiteOnGreen}Manage system:${NC}\n"
 printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
@@ -2351,7 +2333,7 @@ do
                 d|D ) delete_containers "DEMO";;
                 t|T ) start_containers "DEMO";;
                 p|P ) stop_containers "DEMO";;
-		o|O ) add_os_utils_to_demos ;;
+		a|A ) add_os_utils_to_demos ;;
 
                 x|X) download_demo_image;;
                 s|S) show_all_images "DEMO";;
