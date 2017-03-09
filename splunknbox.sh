@@ -77,11 +77,14 @@ SPLUNK_IMAGE="splunknbox/splunk_6.5.2"
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
 
 #Available splunk demos registry.splunk.com
-REPO_DEMO_IMAGES="demo-uba demo-windows-infrastructure demo-dbconnect demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi demo-healthcare"
+REPO_DEMO_IMAGES="demo-dbconnect demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi demo-healthcare"
+REPO_DEMO_IMAGES=$(echo "$REPO_DEMO_IMAGES" | tr " " "\n"|sort -u|tr "\n" " ")
 
 #3rd party images will be renamed to 3rd-* after each docker pull
-#REPO_3RDPARTY_IMAGES="3rd-mysql 3rd-oraclelinux"
 REPO_3RDPARTY_IMAGES="mysql oraclelinux sebp/elk sequenceiq/hadoop-docker caioquirino/docker-cloudera-quickstart"
+REPO_3RDPARTY_IMAGES=$(echo "$REPO_3RDPARTY_IMAGES" | tr " " "\n"|sort -u|tr "\n" " ")
+
+
 MYSQL_PORT="3306"
 DOWNLOAD_TIMEOUT="480"	#how long before the progress_bar timeout (seconds)
 #---------------------------------------
@@ -1739,34 +1742,36 @@ clear
 printf "${BoldYellowOnBlue}Manage containers -> CREATE DEMO CONTAINER MENU ${NC}\n"
 display_stats_banner
 printf "\n"
-printf "${BrownOrange}This option requires access to splunk internal docker hub ($SPLUNK_DOCKER_HUB)\n"
-printf "${BrownOrange}*Depending on the time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
-printf "\n"
 printf "Demo images available from $SPLUNK_DOCKER_HUB:\n"
-printf "${Purple}     IMAGE\t\t\t${NC}    CACHED INFO\t\t\t\t CREATED BY\n"
-printf "${Purple} -----------\t\t ${NC}---------------------------- \t\t ----------------------------- \n"
+printf "${Purple}     		IMAGE NAME${NC}		    CREATED	SIZE			AUTHOR\n"
+printf "${Purple} -------------------------------------${NC}   ------------  --------   ---------------------------------------\n"
 
 #---Scan demos images from $REPO_DEMO_IMAGES ---------
 counter=1
-for i in $REPO_DEMO_IMAGES; do
-        printf "${Purple}$counter${NC})${Purple} $i${DarkGray}\t\t"
-        cached=`docker images|grep $i| awk '{print "created:"$4,$5,$6,"  Size:"$7,$8}'`
-        if [ -n "$cached" ]; then
-                author=`docker inspect $SPLUNK_DOCKER_HUB/sales-engineering/$i|grep -i author|cut -d":" -f1-3|sed 's/,//g'`
-                printf "${White}$cached $author${NC}\n"
+#count=`docker images --format "{{.ID}}" | wc -l`
+for image_name in $REPO_DEMO_IMAGES; do
+        printf "${Purple}%-2s${NC}) ${Purple}%-40s${NC}" "$counter" "$image_name"
+	image_name="$SPLUNK_DOCKER_HUB/sales-engineering/$image_name"
+#	echo "cached[$cached]\n"
+	created=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $4,$5,$6}'`
+	size=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $7,$8}'`
+        if [ -n "$created" ]; then
+        	author=`docker inspect $image_name |grep -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
+                printf "%-12s %-7s %-10s ${NC}\n" "$created" "$size" "$author"
         else
-                printf "${DarkGray}NOT CACHED!${NC}\n"
+                printf "${DarkGray}NOT CACHED! ${NC}\n"
         fi
         let counter++
 done
 #---Scan demos images from $REPO_DEMO_IMAGES ---------
+
 
 #build array of RUNNING demo containers
 declare -a list=($REPO_DEMO_IMAGES)
 
 echo
 choice=""
-read -p "Choose number to create. You can select multiple numbers. <ENTER:All B:Go back>: " choice
+read -p $'Choose number to create. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 if [ -n "$choice" ]; then
         printf "**PLEASE WACH THE LOAD AVERAGE CLOSELY**\n\n"
@@ -1905,7 +1910,7 @@ done
 declare -a list=($REPO_3RDPARTY_IMAGES)
 echo
 choice=""
-read -p "Choose number to create. You can select multiple numbers. <ENTER:All B:Go back>: " choice
+read -p $'Choose number to create. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
@@ -3313,7 +3318,7 @@ printf "${BoldYellowOnBlue}Manage Images -> DOWNLOAD DEMO IMAGES MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 printf "${BrownOrange}This option requires access to splunk internal docker hub ($SPLUNK_DOCKER_HUB)\n"
-printf "${BrownOrange}*Depending on time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
+printf "${BrownOrange}*Depending on time of the day downloads may a take long time. Cached images are not downloaded! ${NC}\n"
 printf "\n"
 printf "Demo images available from $SPLUNK_DOCKER_HUB:\n"
 printf "${Purple}     		IMAGE NAME${NC}		    CREATED	SIZE			AUTHOR\n"
@@ -3334,6 +3339,7 @@ for image_name in $REPO_DEMO_IMAGES; do
         fi
         let counter++
 done
+
 echo
 login_to_splunk_hub
 
@@ -3342,7 +3348,7 @@ declare -a list=($REPO_DEMO_IMAGES)
 
 echo
 choice=""
-read -p "Choose number to download. You can select multiple numbers. <ENTER:All B:Go back>: " choice
+read -p $'Choose number to download. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
@@ -3403,7 +3409,7 @@ echo
 declare -a list=($REPO_3RDPARTY_IMAGES)
 
 choice=""
-read -p "Choose number to download. You can select multiple numbers. <ENTER:All B:Go back>: " choice
+read -p $'Choose number to download. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
@@ -3477,7 +3483,7 @@ fi
 declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' '))
 
 choice=""
-read -p "Choose number to start. You can select multiple numbers. <ENTER:All B:Go back>: " choice
+read -p $'Choose number to start. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
@@ -3519,7 +3525,7 @@ fi
 declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' '))
 
 choice=""
-read -p "Choose number to stop. You can select multiple numbers. <ENTER:All B:Go back>: " choice
+read -p $'Choose number to stop. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
@@ -3562,7 +3568,7 @@ fi
 declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' '))
 echo
 choice=""
-read -p "Choose number to delete. You can select multiple numbers. <ENTER:All B:Go back>: " choice
+read -p $'Choose number to delete. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
@@ -3706,8 +3712,17 @@ printf "Current list of all $type images downloaded on this system:\n"
 display_all_images "$type"
 echo
 
+if [ "$type" == "3RDP" ]; then
+	id_list=$(docker images  -a| grep -v "REPOSITORY" | grep -iv "demo"| grep -iv "splunk"| awk '{print $3}'| tr '\n' ' ')
+elif [ "$type" == "DEMO" ]; then
+	id_list=$(docker images  -a| grep -v "REPOSITORY" | grep -i "demo" | awk '{print $3}'| tr '\n' ' ')
+else
+	id_list=$(docker images  -a| grep -v "REPOSITORY" | awk '{print $3}'| tr '\n' ' ')
+fi
+
 #build array of images list
-declare -a list=($(docker images --format "{{.Repository}}"| grep -i "$type" | tr '\n' ' '))
+#declare -a list=($(docker images --format "{{.Repository}}"| grep -i "$type" | tr '\n' ' '))
+declare -a list=($id_list)
 
 if [ "${#list[@]}" == "0" ]; then
         printf "\nCannot find any $type images in the system!\n"
@@ -3716,23 +3731,27 @@ fi
 
 echo
 choice=""
-read -p "Choose number to remove. You can select multiple numbers. <ENTER:All B:Go back>: " choice
+read -p $'Choose number to remove. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
         printf "${Yellow}Deleting selected $type image(s)...\n${NC}"
         for id in `echo $choice`; do
                #echo "$id : ${list[$id - 1]}"
-               	printf "${Purple} ${list[$id - 1]}:${NC}\n"
+        	imagename=`docker images|grep  ${list[$id -1]} | awk '{print $1}'`
+               	printf "${Purple}Deleting:$imagename${NC}\n"
+               	#printf "${Purple} ${list[$id - 1]}:${NC}\n"
                	docker rmi -f ${list[$id - 1]}
         done
 else
 	if [ "$(docker ps -a --filter name="$type" --format "{{.Names}}")" ]; then  	#stop running containers first
 		printf "${Yellow}Stop any running containers first...\n"
 		docker stop $(docker ps -a --filter name="$type" --format "{{.Names}}")
+		#docker stop $id_list
         fi
 	printf "${Yellow}Deleting all $type images...\n${NC}"
-        docker rmi -f $(docker images|grep -v "REPOSITORY"|grep -i "$type" |awk '{print $3}')
+       # docker rmi -f $(docker images|grep -v "REPOSITORY"|grep -i "$type" |awk '{print $3}')
+	docker rmi -f $id_list
 fi
 return 0
 }	#end remove_images()
