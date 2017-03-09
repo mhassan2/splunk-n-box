@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.8		#Used to check against github repository VERSION!
+VERSION=3.9.8.4		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
