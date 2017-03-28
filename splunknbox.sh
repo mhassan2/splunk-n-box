@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.8.4		#Used to check against github repository VERSION!
+VERSION=3.9.9		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -43,10 +43,11 @@ VERSION=3.9.8.4		#Used to check against github repository VERSION!
 
 #-------------Network stuff --------
 ETH_OSX="lo0"			#default interface to use with OSX laptop (el captain)
-ETH_LINUX="eno1"		#default interface to use with Linux server (Ubuntu 16.04
+ETH_LINUX="ens3"		#default interface to use with Linux server (Ubuntu 16.04
 
 #-------------IP aliases --------
 #LINUX is routed and hosts can be reached from anywhere in the network
+#START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.254"
 START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.254"
 
 #OSX space will not be routed, and host reached from the laptop only
@@ -160,7 +161,6 @@ Purple="\033[0;35m";            LightPurple="\033[1;35m"
 Cyan="\033[0;36m";              LightCyan="\033[1;36m"
 LightGray="\033[0;37m";         DarkGray="\033[1;30m"
 BlackOnGreen="\033[30;48;5;82m"
-WhiteOnBurg="\033[30;48;5;88m"
 WhiteOnBurg="\033[30;48;5;88m"
 
 BoldWhiteOnRed="\033[1;1;5;41m"
@@ -713,6 +713,8 @@ printf "${LightBlue}==>${NC} Checking for dns server configuration ..."
 if [ "$os" == "Darwin" ]; then
         DNSSERVER=`scutil --dns|grep nameserver|awk '{print $3}'|sort -u|tail -1`
 	printf "[$DNSSERVER]${Green} OK!${NC}\n"
+else	
+	printf "\n"
 fi
 #-----------discovering DNS setting for OSX. Used for container build--
 
@@ -762,6 +764,25 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
     	os="Windows"
 fi
+
+#is it AWS EC2 instance?
+if [ -f /sys/hypervisor/uuid ] && [ `head -c 3 /sys/hypervisor/uuid` == ec2 ]; then
+	bios_ver=`sudo dmidecode -s bios-version`
+	printf "${LightBlue}==> ${NC}Detected AWS EC2 instance [BIOS:$bios_ver]${NC}\n"
+    	AWS_EC2="YES"
+	START_ALIAS=$START_ALIAS_OSX
+	END_ALIAS=$END_ALIAS_OSX
+else
+    AWS_EC2="NO"
+fi
+
+#LOCAL_HOSTNAME=$(hostname -d)
+#if [[ ${LOCAL_HOSTNAME} =~ .*\.amazonaws\.com ]]
+#then
+#        echo "This is an EC2 instance"
+#else
+#        echo "This is not an EC2 instance, or a reverse-customized one"
+#fi
 return 0
 }	#end detect_os()
 #---------------------------------------------------------------------------------------------------------------
@@ -1347,6 +1368,13 @@ if [ -z "$cluster_label" ]; then
 fi
 #-------cluster label stuff-------
 
+#Dont show pass if running in AWS EC2 (public instance)
+if [ "$AWS_EC2" == "YES" ]; then
+	SHOW_PASS="*****"
+else
+	SHOW_PASS=$USERPASS
+
+fi
 #-------web.conf stuff-------
 LINE1="<CENTER><H1><font color=\"blue\"> SPLUNK LAB   </font></H1><br/></CENTER>"
 #LINE1="<H1 style=\"text-align: left;\"><font color=\"#867979\"> SPLUNK LAB </font></H1>"
@@ -1355,7 +1383,7 @@ LINE2="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &n
 LINE3="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Host IP: </font><font color=\"#FF9033\"> $vip</font></H3></CENTER>"
 LINE4="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Cluster Label: </font><font color=\"#FF9033\"> $cluster_label</font></H3><BR/></CENTER>"
 
-LINE5="<H2><CENTER><font color=\"#867979\">User: </font> <font color=\"red\">$USERADMIN</font> &nbsp&nbsp<font color=\"#867979\">Password:</font> <font color=\"red\"> $USERPASS</font></H2></font></CENTER><BR/>"
+LINE5="<H2><CENTER><font color=\"#867979\">User: </font> <font color=\"red\">$USERADMIN</font> &nbsp&nbsp<font color=\"#867979\">Password:</font> <font color=\"red\"> $SHOW_PASS</font></H2></font></CENTER><BR/>"
 LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$VERSION<BR/> Docker image [$SPLUNK_IMAGE]</font></CENTER>"
 
 #configure the custom login screen and http access for ALL (no exception)
@@ -3596,12 +3624,23 @@ return 0
 display_all_containers() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type=$1		#container type (ex DEMO, 3RDPARTY, empty for ALL)
+#curl http://169.254.169.254/latest/meta-data/public-hostname| sed 's/aws.com/aws.com \n/g'
 
+if [ "$AWS_EC2" == "YES" ]; then
+	rm -fr aws_eip_mapping.tmp
+	for i in `curl -s http://169.254.169.254/latest/meta-data/public-hostname| sed 's/aws.com/aws.com \n/g' `; do 
+		external_ip=`dig +short $i`
+		echo  "$external_ip $i"  >> aws_eip_mapping.tmp
+	done
+fi
 printf "Current list of all $type containers on this system:\n"
-printf "   Host name%-10s Container%-2s Splunkd%-3s Splunk ver%-2s    Bind IP%-3s     Image used%-3s${NC}\n"   # CPU%-4s MEM_USAGE%-3s MEM_LIMIT%-3s ${NC}\n"
-printf "   ---------------%-3s ---------%-3s -------%-3s ----------%-2s    ----------%-3s ------------------%-3s${NC}\n" #---%-4s ---------%-3s ---------%-3s ${NC}\n"
+printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd   Ver    Bind IP%-3s       Image used%-3s${NC}\n"   # CPU%-4s MEM_USAGE%-3s MEM_LIMIT%-3s ${NC}\n"
+printf "   ---------------%-3s --------- ------- ------- ----------%-3s ------------------%-3s${NC}\n" #---%-4s ---------%-3s ---------%-3s ${NC}\n"
 i=0
-for id in $(docker ps -a --filter name="$type" --format "{{.ID}}" ) ; do
+id_sorted=`docker ps -a --filter name="$type" --format "{{.ID}}"`
+#id_sorted=`docker ps | awk '{print $NF}' | sort -r`
+#for id in $(docker ps -a --filter name="$type" --format "{{.ID}}" ) ; do
+for id in $id_sorted ; do
     let i++
     #These operations take long time execute
     #cpu_percent=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $2}'`
@@ -3613,17 +3652,20 @@ for id in $(docker ps -a --filter name="$type" --format "{{.ID}}" ) ; do
     bind_ip=`docker inspect --format '{{ .HostConfig }}' $id| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
     hoststate=`docker ps -a --filter id=$id --format "{{.Status}}" | awk '{print $1}'`
     hostname=`docker ps -a --filter id=$id --format "{{.Names}}"`
-    imagename=`docker ps -a --filter id=$id --format "{{.Image}}"`
+    imagename=`docker ps -a --filter id=$id --format "{{.Image}}" | cut -d'/' -f2-3`  #remove repository name
     splunkd_ver=`docker exec $hostname /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
     host_line[$i]="$bind_ip"
+    if [ "$AWS_EC2" == "YES" ]; then
+		eip=`grep $bind_ip aws_eip_mapping.tmp | awk '{print "["$2"]"}' `
+    fi
 
     #check splunk state if container is UP	
     if [ $hoststate == "Up" ]; then
 	#check splunkstate
         splunkstate=`docker exec -ti $id /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ print $3}'`
     else
-        splunkstate="Unknown"
-	splunkd_ver="Unknown"
+        splunkstate="${Red}N/A${NC}"
+	splunkd_ver="N/A"
     fi
 	
     #set host state color. Use printf "%b" to show interpreting backslash escapes in there
@@ -3643,33 +3685,42 @@ for id in $(docker ps -a --filter name="$type" --format "{{.ID}}" ) ; do
     #3rd party don't have splunk 
     if ( compare "$hostname" "3RDP" ); then
         splunkd_ver="N/A"
-        splunkstate="N/A"
+        splunkstate="${Red}N/A${NC}"
     fi
+	#indentation:
+	i_i="%-2s"
+	i_hostname="%-20s"
+	i_hoststate="%-18b"
+	i_splunkstate="%-18b"
+	i_splunkver="%-6s"
+	i_bind_ip="%-17s"
+	i_imagename="%-20s"
+	i_eip="%-30s"
 
 	if ( compare "$hostname" "DEMO" ); then
-        	printf "${LightCyan}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" \
-			$i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+        	printf "${LightCyan}$i_i) $i_hostname $i_hoststate $i_splunkstate $i_splunkver $i_bind_ip $i_imagename $i_eip ${NC}" \
+			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$eip"
    	elif ( compare "$hostname" "3RDP" ); then
-		open_ports=`docker port $hostname|ggrep -Po "\d+/tcp|udp"|tr -d '\n'| sed 's/tcp/tcp /g' ` 
-        	printf "${LightPurple}%-2s) %-20s %-20b %-11s %-14s %-13s %-10s %-40s${NC}" \
-			$i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$open_ports"
+		open_ports=`docker port $hostname|$GREP -Po "\d+/tcp|udp"|tr -d '\n'| sed 's/tcp/tcp /g' ` 
+        	printf "${LightPurple}$i_i) $i_hostname $i_hoststate $i_splunkstate $i_splunkver $i_bind_ip $i_imagename $i_eip ${NC}" \
+			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$open_ports"
 		#for y in $open_ports; do printf "%80s\n" "$y"; done
 
     	elif ( compare "$hostname" "DEP" ); then
-        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" \
-			$i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+        	printf "${LightBlue}$i_i) $i_hostname $i_hoststate $i_splunkstate $i_splunkver $i_bind_ip $i_imagename $i_eip ${NC}" \
+			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$eip"
 
     	elif ( compare "$hostname" "CM" ); then
-        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" \
-			$i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+        	printf "${LightBlue}$i_i) $i_hostname $i_hoststate $i_splunkstate $i_splunkver $i_bind_ip $i_imagename $i_eip ${NC}" \
+			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$eip"
 
     	elif ( compare "$hostname" "DMC" ); then
-        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s${NC}" \
-			$i "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+        	printf "${LightBlue}$i_i) $i_hostname $i_hoststate $i_splunkstate $i_splunkver $i_bind_ip $i_imagename $i_eip ${NC}" \
+			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$eip"
 
      	else 	###generic
-        	printf "${LightBlue}%-2s) %-20s %-20b %-22b %-14s %-13s %-10s ${NC}" \
-			$i $hostname "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename"
+        	printf "${LightBlue}$i_i) $i_hostname $i_hoststate $i_splunkstate $i_splunkver $i_bind_ip $i_imagename $i_eip ${NC}" \
+			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$eip"
    	fi
 
   if [ -z "$bind_ip" ]; then
