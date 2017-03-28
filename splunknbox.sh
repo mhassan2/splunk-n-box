@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.9		#Used to check against github repository VERSION!
+VERSION=3.9.9.1		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -3637,10 +3637,9 @@ printf "Current list of all $type containers on this system:\n"
 printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd   Ver    Bind IP%-3s       Image used%-3s${NC}\n"   # CPU%-4s MEM_USAGE%-3s MEM_LIMIT%-3s ${NC}\n"
 printf "   ---------------%-3s --------- ------- ------- ----------%-3s ------------------%-3s${NC}\n" #---%-4s ---------%-3s ---------%-3s ${NC}\n"
 i=0
-id_sorted=`docker ps -a --filter name="$type" --format "{{.ID}}"`
-#id_sorted=`docker ps | awk '{print $NF}' | sort -r`
-#for id in $(docker ps -a --filter name="$type" --format "{{.ID}}" ) ; do
-for id in $id_sorted ; do
+hosts_sorted=`docker ps -a --format {{.Names}}| sort`
+for host in $hosts_sorted ; do
+    id=`docker ps -a --filter name="$host" --format {{.ID}}`
     let i++
     #These operations take long time execute
     #cpu_percent=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $2}'`
