@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.9.1		#Used to check against github repository VERSION!
+VERSION=3.9.9.2		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -3634,7 +3634,9 @@ if [ "$AWS_EC2" == "YES" ]; then
 	done
 fi
 printf "Current list of all $type containers on this system:\n"
-printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd   Ver    Bind IP%-3s       Image used%-3s${NC}\n"   # CPU%-4s MEM_USAGE%-3s MEM_LIMIT%-3s ${NC}\n"
+printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd   Ver    Bind IP%-3s       Image used%-10s     URL                 ${NC}\n"   
+# CPU%-4s MEM_USAGE%-3s MEM_LIMIT%-3s ${NC}\n"
+
 printf "   ---------------%-3s --------- ------- ------- ----------%-3s ------------------%-3s${NC}\n" #---%-4s ---------%-3s ---------%-3s ${NC}\n"
 i=0
 hosts_sorted=`docker ps -a --format {{.Names}}| sort`
@@ -3655,7 +3657,7 @@ for host in $hosts_sorted ; do
     splunkd_ver=`docker exec $hostname /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
     host_line[$i]="$bind_ip"
     if [ "$AWS_EC2" == "YES" ]; then
-		eip=`grep $bind_ip aws_eip_mapping.tmp | awk '{print "["$2"]"}' `
+		eip=`grep $bind_ip aws_eip_mapping.tmp | awk '{print "["$2":8000]"}' `
     fi
 
     #check splunk state if container is UP	
