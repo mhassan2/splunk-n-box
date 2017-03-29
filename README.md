@@ -31,6 +31,7 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 - MacOS & Linux support.
 - Works with windows10 WSL (Windows Subsystem for Linux) Ubuntu bash.
 - Automatic script upgrade (with version check).
+- AWS EC2 aware
 
 
 
