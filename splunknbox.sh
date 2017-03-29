@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.9.3		#Used to check against github repository VERSION!
+VERSION=3.9.9.4		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -3695,7 +3695,7 @@ for host in $hosts_sorted ; do
 	i_hoststate="%-18b"
 	i_splunkstate="%-18b"
 	i_splunkver="%-6s"
-	i_bind_ip="%-17s"
+	i_bind_ip="%-12s"
 	i_imagename="%-20s"
 	i_eip="%-30s"
 
