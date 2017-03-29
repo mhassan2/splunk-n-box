@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.9.2		#Used to check against github repository VERSION!
+VERSION=3.9.9.3		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -3508,7 +3508,7 @@ if [ $count == 0 ]; then
 fi
 
 #build array of containers list
-declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' '))
+declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | sort | tr '\n' ' '))
 
 choice=""
 read -p $'Choose number to start. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
@@ -3550,7 +3550,7 @@ if [ $count == 0 ]; then
 fi
 #build array of containers list
 #declare -a list=($(docker ps -a --format "{{.Names}}" |grep -i "$type"| tr '\n' ' '))
-declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' '))
+declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | sort | tr '\n' ' '))
 
 choice=""
 read -p $'Choose number to stop. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
@@ -3593,8 +3593,9 @@ if [ $count == 0 ]; then
 fi
 #build array of containers list
 #declare -a list=($(docker ps -a --format "{{.Names}}" |grep -i "$type"| tr '\n' ' '))
-declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' '))
+declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | sort | tr '\n' ' '))
 echo
+
 choice=""
 read -p $'Choose number to delete. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
