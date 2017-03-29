@@ -14,7 +14,7 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 
 
 ##Feature list:
-``
+
 - Friendly user interface to manage splunk docker containers.
 - Extensive error checks and validation.
 - Support for multiple Splunk versions (images)
@@ -32,7 +32,7 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 - Works with windows10 WSL (Windows Subsystem for Linux) Ubuntu bash.
 - Automatic script upgrade (with version check).
 - AWS EC2 aware
-``
+
 
 
 ##Where to get it?
