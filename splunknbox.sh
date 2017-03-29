@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.9.4		#Used to check against github repository VERSION!
+VERSION=3.9.9.5		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -48,10 +48,10 @@ ETH_LINUX="ens3"		#default interface to use with Linux server (Ubuntu 16.04
 #-------------IP aliases --------
 #LINUX is routed and hosts can be reached from anywhere in the network
 #START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.254"
-START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.254"
+START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.250"
 
 #OSX space will not be routed, and host reached from the laptop only
-START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.254"
+START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.250"
 
 DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine IP
 #---------------------------------
@@ -3640,7 +3640,7 @@ printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd   Ver    Bind 
 
 printf "   ---------------%-3s --------- ------- ------- ----------%-3s ------------------%-3s${NC}\n" #---%-4s ---------%-3s ---------%-3s ${NC}\n"
 i=0
-hosts_sorted=`docker ps -a --format {{.Names}}| sort`
+hosts_sorted=`docker ps -a --format {{.Names}}| grep -i "$type"| sort`
 for host in $hosts_sorted ; do
     id=`docker ps -a --filter name="$host" --format {{.ID}}`
     let i++
