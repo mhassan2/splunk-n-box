@@ -4,7 +4,7 @@
 
  &#x1F534;     Learn docker in 10 minutes video: https://www.youtube.com/watch?v=YFl2mCHdv24 
 
-#Introduction:
+##Introduction:
 
 Have you ever wanted to create a multi-site cluster environment in your lab but you don’t have the resources for it? Have you ever wondered how does bucket replaction impact the file system level? Have you ever wanted to create a portable Splunk classroom but it is cost prohibitive? How about changing critical configuration without worrying about messing up your production environment? If you are like me; you must have dealt with similar challenges.
 
@@ -31,6 +31,7 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 - MacOS & Linux support.
 - Works with windows10 WSL (Windows Subsystem for Linux) Ubuntu bash.
 - Automatic script upgrade (with version check).
+- AWS EC2 aware
 
 
 ##Where to get it?
