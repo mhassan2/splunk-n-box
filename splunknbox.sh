@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.9.5		#Used to check against github repository VERSION!
+VERSION=3.9.9.6		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -1802,6 +1802,8 @@ choice=""
 read -p $'Choose number to create. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 if [ -n "$choice" ]; then
+	read -p "How many containers to create of selected demo [default 1]? " number
+	if [ "$number" == "" ]; then  number=1; fi
         printf "**PLEASE WACH THE LOAD AVERAGE CLOSELY**\n\n"
         printf "${Yellow}Creating selected demo containers(s)...${NC}\n"
         for id in `echo $choice`; do
@@ -1811,7 +1813,7 @@ if [ -n "$choice" ]; then
         	fi
         	#echo "$id : ${list[$id - 1]}"
        		printf "${NC}Using ${Purple}[$id:$image_name]:${NC}"; display_stats_banner "short"
-        	create_splunk_container "$image_name" "1"
+        	create_splunk_container "$image_name" "$number"
         done
 else
 	printf "${Red}WARNING! This operation will stress your system. Make sure you have enough resources...${NC}\n"
