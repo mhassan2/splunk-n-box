@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.9.9		#Used to check against github repository VERSION!
+VERSION=4.0		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -60,6 +60,7 @@ DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine IP
 FILES_DIR="$PWD" 		#place anything needs to copy to container here
 LIC_FILES_DIR="NFR"		#place all your license file here
 VOL_DIR="docker-volumes"	#directory name for volumes mount point.Full path is dynamic based on OS type
+TMP_DIR="$PWD/TMP"	#used as scrach space
 
 #The following are set in detect_os()
 #MOUNTPOINT=
@@ -124,7 +125,7 @@ STD_IDXC_COUNT="3"		#default IDXC count
 STD_SHC_COUNT="3"		#default SHC count
 DEP_SHC_COUNT="1"		#default DEP count
 #------------------------------------------
-#---------Logs-----------------------------
+#---------DIRECTORIES & Logs-----------------------------
 LOGLEVEL=3
 CMDLOGBIN="$PWD/cmds_capture.bin"	#capture all docker cmds (with color)
 CMDLOGTXT="$PWD/cmds_capture.log"	#capture all docker cmds (just ascii txt)
@@ -2625,13 +2626,13 @@ if [ -n "$choice" ]; then
         printf "${Yellow}Configuring selected containers for Lunch & Learn...\n${NC}"
 	if [ ! -d "TUTORIAL_DATASET" ]; then
 		printf "Retrieving tutorial dataset from github first....\n" 
-		curl -O https://github.com/mhassan2/splunk-n-box/blob/TUTORIAL_DATASET/http_status.csv
-		curl -O https://github.com/mhassan2/splunk-n-box/blob/TUTORIAL_DATASET/tutorialdata.zip
-		curl --LOk https://github.com/mhassan2/splunk-n-box/blob/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
+		#curl -O https://github.com/mhassan2/splunk-n-box/blob/TUTORIAL_DATASET/http_status.csv
+		#curl -O https://github.com/mhassan2/splunk-n-box/blob/TUTORIAL_DATASET/tutorialdata.zip
+		#curl -LOk https://github.com/mhassan2/splunk-n-box/blob/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
 
-#	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/http_status.csv
-#	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/tutorialdata.zip
-#	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
+	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/http_status.csv
+	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/tutorialdata.zip
+	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
 	fi	
         for id in `echo $choice`; do
                 printf "${Purple}$hostname${NC}\n"
@@ -2804,9 +2805,9 @@ printf "[${Purple}$dep${NC}]${LightBlue} Configuring Deployer ... ${NC}\n"
 bind_ip_dep=`docker inspect --format '{{ .HostConfig }}' $dep| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 txt="\n #-----Modified by Docker Management script ----\n [shclustering]\n pass4SymmKey = $MYSECRET \n shcluster_label = $label\n"
 #printf "%b" "$txt" >> $MOUNTPOINT/$dep/etc/system/local/server.conf	#cheesy fix!
-printf "%b" "$txt" > server.conf.append
-CMD="docker cp server.conf.append $dep:/tmp/server.conf.append"; OUT=`$CMD`
-CMD=`docker exec -u splunk -ti $dep  bash -c "cat /tmp/server.conf.append >> /opt/splunk/etc/system/local/server.conf" `; #OUT=`$CMD`
+printf "%b" "$txt" > server.conf.tmp
+CMD="docker cp server.conf.tmp $dep:/tmp/server.conf"; OUT=`$CMD`
+CMD=`docker exec -u splunk -ti $dep  bash -c "cat /tmp/server.conf >> /opt/splunk/etc/system/local/server.conf" `; #OUT=`$CMD`
 
 printf "\t->Adding stanza [shclustering] to server.conf!" >&3 ; display_output "$OUT" "" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
