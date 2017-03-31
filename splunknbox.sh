@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.9.8		#Used to check against github repository VERSION!
+VERSION=3.9.9.9		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -431,6 +431,34 @@ return 0
 }	#end check_load()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
+check_for_ubuntu_pkgs() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+
+#----------
+printf "${LightBlue}   >>${NC}Checking bc command:${NC} "
+condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
+if [ $condition -eq 0 ]; then
+	printf "${BrownOrange}Installing [bc]${NC}:"
+	progress_bar_pkg_download "sudo apt-get install bc -y"
+else
+	printf "${Green}Already installed${NC}\n"
+fi
+#----------
+
+printf "${LightBlue}   >>${NC}Checking wget package:${NC} "
+condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
+if [ $condition -eq 0 ]; then
+	printf "${BrownOrange}Installing [wget]${NC}:"
+	progress_bar_pkg_download "sudo apt-get install wget -y"
+else
+	printf "${Green}Already installed${NC}\n"
+fi
+#----------
+echo
+return 0
+}	#end check_for_ubuntu_pkgs()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
 check_for_MACOS_pkgs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
@@ -443,12 +471,6 @@ else
 	printf "${Yellow}Running [xcode-select --install]${NC}\n"
  	cmd=$(xcode-select --install)
 fi
-#----------
-#To completely remove brew and ggrep:
-#brew uninstall grep pcre
-#rm -fr /usr/local/bin/ggrep
-#/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
-#sudo rm -rf /usr/local/Homebrew/
 
 printf "${LightBlue}   >>${NC}Checking brew package management:${NC} "
 condition=$(which brew 2>/dev/null | grep -v "not found" | wc -l)
@@ -458,6 +480,15 @@ if [ $condition -eq 0 ]; then
 	curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install > install_brew.rb
 	sed -ie 's/c = getc/c = 13/g' install_brew.rb   #remove prompt in install.rb script
 	progress_bar_pkg_download "/usr/bin/ruby install_brew.rb"
+else
+	printf "${Green}Already installed${NC}\n"
+fi
+#----------
+printf "${LightBlue}   >>${NC}Checking bc command:${NC} "
+condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
+if [ $condition -eq 0 ]; then
+	printf "${BrownOrange}Installing [bc]${NC}:"
+	progress_bar_pkg_download "brew install bc"
 else
 	printf "${Green}Already installed${NC}\n"
 fi
@@ -507,20 +538,14 @@ detect_os
 
 #----------Gnu grep installed? MacOS only-------------
 if [ "$os" == "Darwin" ]; then
-	printf "${LightBlue}==>${NC} Checking if required MacOS packages installed...\n"
-        #condition=$(which $GREP_OSX 2>/dev/null | grep -v "not found" | wc -l)
-        #if [ $condition -eq 0 ] ; then
-        #        printf "${Red} NOT FOUND!${NC}\n"
-        #        #printf "   ${Red}>>${NC} GNU grep is needed for this script to work. We use PCRE regex in ggrep! \n"
-	#	read -p "   >> Missing Gnu grep! Install required packages? [Y/n]? " answer
-        #	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
-	#		check_for_MACOS_pkgs
-	#	else
-	#		printf "${LightRed}This script will not work without Gnu grep. Exiting...${NC}\n"
-	#		printf "http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html \n"
-	#		exit
-	#	fi
+	printf "${LightBlue}==>${NC} Checking for required MacOS packages...\n"
 	check_for_MACOS_pkgs
+        else
+                printf "${Green} OK!${NC}\n"
+fi
+if [ "$os" == "Linux" ]; then
+	printf "${LightBlue}==>${NC} Checking for required Ubuntu Linux packages...\n"
+	check_for_ubuntu_pkgs
         else
                 printf "${Green} OK!${NC}\n"
 fi
@@ -768,7 +793,7 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	PROJ_DIR="/home/${USER}/"
 	release=`lsb_release -r |awk '{print $2}'`
 	kern_ver=`uname -r`
-	printf "${LightBlue}==> ${NC}Detected LINUX [Release:$release Kernel:$kern_ver]${NC}\n"
+	printf "${LightBlue}==> ${NC}Detected LINUX [Release:$release Kernel:$kern_ver]${NC}"
 
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
     	os="Windows"
