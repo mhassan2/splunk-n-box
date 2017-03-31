@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.9.6		#Used to check against github repository VERSION!
+VERSION=3.9.9.7		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -2246,6 +2246,25 @@ echo
 return 0
 }	#end display_clustering_menu_options()
 #---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+display_ll_menu_options() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+clear
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> LUNCH & LEARN MENU       ${DarkGray}[$dockerinfo]${NC}\n"
+display_stats_banner
+printf "\n"
+echo
+printf "${BoldWhiteOnYellow}Files to install for Lunch & Learn: ${NC}\n"
+printf "${Yellow}1${NC}) Install examples app${NC}\n"
+printf "${Yellow}2${NC}) Install tutorial data set${NC}\n"
+echo
+printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
+printf "${Green}?${NC}) ${Green}H${NC}ELP!\n"
+echo
+return 0
+}	#end display_ll_menu_options()
+#---------------------------------------------------------------------------------------------------------------
+
 
 #### MENU INPUTS ####
 
@@ -2270,6 +2289,7 @@ do
         	4 ) 3rdparty_menu_inputs ;;
         	5 ) system_menu_inputs ;;
         	6 ) change_loglevel ;;
+        	7 ) lunch_learn_menu_inputs ;;
 
 		q|Q ) 	clear;
 			display_goodbye_msg;
@@ -2280,6 +2300,111 @@ do
 done
 return 0
 }	#end main_menu_inputs()
+#---------------------------------------------------------------------------------------------------------------
+lunch_learn_menu_inputs() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+#This function captures user selection for splunk_menu
+while true;
+do
+	clear
+        display_ll_menu_options
+        choice=""
+	echo
+        read -p "Enter choice (? for help) : " choice
+                case "$choice" in
+                \? ) display_splunk_menu_help;;
+
+               #IMAGES -----------
+                1 ) install_ll_files;;
+		b|B) return 0;;
+
+        esac  #end case ---------------------------
+	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+done
+return 0
+}	#end splunk_menu_inputs()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+splunk_menu_inputs() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+#This function captures user selection for splunk_menu
+while true;
+do
+	clear
+        display_splunk_menu_options
+        choice=""
+	echo
+        read -p "Enter choice (? for help) : " choice
+                case "$choice" in
+                \? ) display_splunk_menu_help;;
+
+               #IMAGES -----------
+                r|R ) remove_images;;
+                s|S ) show_all_images;;
+                f|F ) change_default_splunk_image;;
+
+                #CONTAINERS ------------
+                c|C) create_splunk_container  ;;
+                d|D ) delete_containers;;
+                v|V ) delete_all_volumes;;
+                l|L ) list_all_containers ;;
+                t|T ) start_containers;;
+                p|P ) stop_containers;;
+                h|H ) list_all_hosts_by_role ;;
+
+                #SPLUNK ------
+                e|E ) reset_all_splunk_passwords ;;
+                n|N ) add_splunk_licenses ;;
+                u|U ) restart_all_splunkd ;;
+
+		b|B) return 0;;
+
+        esac  #end case ---------------------------
+	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+done
+return 0
+}	#end splunk_menu_inputs()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+splunk_menu_inputs() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+#This function captures user selection for splunk_menu
+while true;
+do
+	clear
+        display_splunk_menu_options
+        choice=""
+	echo
+        read -p "Enter choice (? for help) : " choice
+                case "$choice" in
+                \? ) display_splunk_menu_help;;
+
+               #IMAGES -----------
+                r|R ) remove_images;;
+                s|S ) show_all_images;;
+                f|F ) change_default_splunk_image;;
+
+                #CONTAINERS ------------
+                c|C) create_splunk_container  ;;
+                d|D ) delete_containers;;
+                v|V ) delete_all_volumes;;
+                l|L ) list_all_containers ;;
+                t|T ) start_containers;;
+                p|P ) stop_containers;;
+                h|H ) list_all_hosts_by_role ;;
+
+                #SPLUNK ------
+                e|E ) reset_all_splunk_passwords ;;
+                n|N ) add_splunk_licenses ;;
+                u|U ) restart_all_splunkd ;;
+
+		b|B) return 0;;
+
+        esac  #end case ---------------------------
+	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+done
+return 0
+}	#end splunk_menu_inputs()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 splunk_menu_inputs() {
@@ -2448,7 +2573,83 @@ done
 return 0
 }	#end clustering_menu_inputs()
 #---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+install_ll_files() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+type=""
+clear
+printf "${BoldWhiteOnYellow}CONFIGURE LUNCH & LEARN CONTAINERS MENU ${NC}\n"
+display_stats_banner
+printf "\n"
+display_all_containers 
+echo
+count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
+if [ $count == 0 ]; then
+        printf "No $type containers found!\n"
+        return 0;
+fi
+#build array of containers list
+#declare -a list=($(docker ps -a --format "{{.Names}}" |grep -i "$type"| tr '\n' ' '))
+declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | sort | tr '\n' ' '))
+echo
 
+
+choice=""
+read -p $'Choose number to configure. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
+if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
+
+if [ -n "$choice" ]; then
+        printf "${Yellow}Configuring selected containers for Lunch & Learn...\n${NC}"
+	if [ ! -d "TUTORIAL_DATASET" ]; then
+		printf "Retrieving tutorial dataset from github first....\n" 
+	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/http_status.csv
+	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/tutorialdata.zip
+	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
+	fi	
+        for id in `echo $choice`; do
+                printf "${Purple}$hostname${NC}\n"
+                hostname=${list[$id - 1]}
+                printf "${Purple}Copying examples app..${NC}\n"
+		docker cp  splunk-6x-dashboard-examples_60.tgz $hostname:/tmp
+
+                printf "${Purple}Installing examples app..${NC}\n"
+		docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk install app \
+			/tmp/splunk-6x-dashboard-examples_60.tgz -auth $USERADMIN:$USERPASS
+                printf "${Purple}Copying Tutorial data..${NC}\n"
+		docker cp tutorialdata.zip $hostname:/tmp
+
+                printf "${Purple}Uploading Tutorial data..${NC}\n"
+		docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk add oneshot /tmp/tutorialdata.zip -auth $USERADMIN:$USERPASS
+
+                printf "${Purple}Copying http_status.csv file..${NC}\n"
+		docker cp http_status.csv $hostname:/opt/splunk/etc/apps/search/lookups
+
+                printf "${Purple}Creating transforms.conf configs..${NC}\n"
+		printf "[http_status]\nfilename = http_status.csv\n" > transforms.conf.tmp
+		docker cp  transforms.conf.tmp $hostname:/tmp/transforms.conf
+	  	docker exec -u splunk -ti $hostname bash -c \
+			"cat /tmp/transforms.conf >> /opt/splunk/etc/apps/search/local/transforms.conf"
+
+
+        done
+else
+        printf "${Yellow}Configuring all containers for Lunch & Learn...\n${NC}"
+#	"${filecontent[@]}"
+	for id in "${list[@]}"; do
+        	#hostname=${list[$id - 1]}
+        	hostname=$id
+        	printf "${Purple}$hostname${NC}\n"
+		docker cp  splunk-6x-dashboard-examples_60.tgz $hostname:/tmp
+		docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk install app \
+			/tmp/splunk-6x-dashboard-examples_60.tgz -auth $USERADMIN:$USERPASS
+	done
+fi
+#read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
+#list_all_containers "$type"
+
+return 0
+}       #end install_ll_files()
+#---------------------------------------------------------------------------------------------------------------
 
 
 #### CLUSTERS ######
@@ -3660,7 +3861,9 @@ for host in $hosts_sorted ; do
     splunkd_ver=`docker exec $hostname /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
     host_line[$i]="$bind_ip"
     if [ "$AWS_EC2" == "YES" ]; then
-		eip=`grep $bind_ip aws_eip_mapping.tmp | awk '{print "["$2":8000]"}' `
+		eip=`grep $bind_ip aws_eip_mapping.tmp | awk '{print "[http://"$2":8000]"}' `
+	else
+		eip="http://$bind_ip:8000"
     fi
 
     #check splunk state if container is UP	
