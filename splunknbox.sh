@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=3.9.9.7		#Used to check against github repository VERSION!
+VERSION=3.9.9.8		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	This script is intended to enable you to create number of Splunk infrastructure
@@ -431,14 +431,14 @@ return 0
 }	#end check_load()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-install_gnu_grep() {
+check_for_MACOS_pkgs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 #----------
 printf "${LightBlue}   >>${NC}Checking Xcode commandline tools:${NC} "
 cmd=$(xcode-select -p)
 if [ -n $cmd ]; then
-	printf "${Green}Installed${NC}\n"
+	printf "${Green}Already Installed${NC}\n"
 else
 	printf "${Yellow}Running [xcode-select --install]${NC}\n"
  	cmd=$(xcode-select --install)
@@ -472,7 +472,15 @@ else
 	progress_bar_pkg_download "brew install pcre"
  #	brew install pcre
 fi
-
+#--------------
+printf "${LightBlue}   >>${NC}Checking wget package:${NC} "
+cmd=$(brew ls wget --versions)
+if [ -n "$cmd" ]; then
+	printf "${Green}Already installed${NC}\n"
+else
+	printf "${BrownOrange}Installing [wget]${NC}:"
+	progress_bar_pkg_download "brew install wget"
+fi
 #----------
 printf "${LightBlue}   >>${NC}Checking ggrep package:${NC} "
 cmd=$(brew ls grep --versions|cut -d" " -f2)
@@ -489,7 +497,7 @@ fi
 # brew list --versions
 echo
 return 0
-}	#end install gnu_grep()
+}	#end check_for_MACOS_pkgs()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 startup_checks() {
@@ -499,26 +507,27 @@ detect_os
 
 #----------Gnu grep installed? MacOS only-------------
 if [ "$os" == "Darwin" ]; then
-	printf "${LightBlue}==>${NC} Checking if GNU grep is installed [$GREP]..."
-        condition=$(which $GREP_OSX 2>/dev/null | grep -v "not found" | wc -l)
-        if [ $condition -eq 0 ] ; then
-                printf "${Red} NOT FOUND!${NC}\n"
-                #printf "   ${Red}>>${NC} GNU grep is needed for this script to work. We use PCRE regex in ggrep! \n"
-		read -p "   >> Missing Gnu grep! Install required packages? [Y/n]? " answer
-        	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
-			install_gnu_grep
-		else
-			printf "${LightRed}This script will not work without Gnu grep. Exiting...${NC}\n"
-			printf "http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html \n"
-			exit
-		fi
+	printf "${LightBlue}==>${NC} Checking if required MacOS packages installed...\n"
+        #condition=$(which $GREP_OSX 2>/dev/null | grep -v "not found" | wc -l)
+        #if [ $condition -eq 0 ] ; then
+        #        printf "${Red} NOT FOUND!${NC}\n"
+        #        #printf "   ${Red}>>${NC} GNU grep is needed for this script to work. We use PCRE regex in ggrep! \n"
+	#	read -p "   >> Missing Gnu grep! Install required packages? [Y/n]? " answer
+        #	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+	#		check_for_MACOS_pkgs
+	#	else
+	#		printf "${LightRed}This script will not work without Gnu grep. Exiting...${NC}\n"
+	#		printf "http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html \n"
+	#		exit
+	#	fi
+	check_for_MACOS_pkgs
         else
                 printf "${Green} OK!${NC}\n"
-        fi
 fi
+
 #----------Gnu grep installed? MacOS only-------------
 
-#-----------other scripts running?---------
+#-----------check for another copy of script running?---------
 printf "${LightBlue}==>${NC} Checking if we have instances of this script running...${NC}"
 this_script_name="${0##*/}"
 pid_list=`ps -efa | grep $this_script_name | grep "/bin/bash" |grep -v $$ |awk '{printf $2" " }'`
@@ -2602,9 +2611,13 @@ if [ -n "$choice" ]; then
         printf "${Yellow}Configuring selected containers for Lunch & Learn...\n${NC}"
 	if [ ! -d "TUTORIAL_DATASET" ]; then
 		printf "Retrieving tutorial dataset from github first....\n" 
-	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/http_status.csv
-	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/tutorialdata.zip
-	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
+		curl -O https://github.com/mhassan2/splunk-n-box/blob/TUTORIAL_DATASET/http_status.csv
+		curl -O https://github.com/mhassan2/splunk-n-box/blob/TUTORIAL_DATASET/tutorialdata.zip
+		curl --LOk https://github.com/mhassan2/splunk-n-box/blob/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
+
+#	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/http_status.csv
+#	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/tutorialdata.zip
+#	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
 	fi	
         for id in `echo $choice`; do
                 printf "${Purple}$hostname${NC}\n"
@@ -3861,7 +3874,7 @@ for host in $hosts_sorted ; do
     splunkd_ver=`docker exec $hostname /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
     host_line[$i]="$bind_ip"
     if [ "$AWS_EC2" == "YES" ]; then
-		eip=`grep $bind_ip aws_eip_mapping.tmp | awk '{print "[http://"$2":8000]"}' `
+		eip=`grep $bind_ip aws_eip_mapping.tmp | awk '{print "http://"$2":8000"}' `
 	else
 		eip="http://$bind_ip:8000"
     fi
@@ -4179,10 +4192,10 @@ for (( i=x; i <= (x + $num_of_msgs); i++)); do
 done
 
 #online_ver=`curl -fsSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|grep 'splunknbox'|ggrep -Po 'splunknboxver=(\K.*\))' `
-online_ver=`curl --max-time 5 --fail --raw --silent --insecure -sSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|$GREP 'splunknbox'|$GREP --color -Po 'splunknboxver=#\K(\d+(.\d+)*)' `
+#online_ver=`curl --max-time 5 --fail --raw --silent --insecure -sSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|$GREP 'splunknbox'|$GREP --color -Po 'splunknboxver=#\K(\d+(.\d+)*)' `
+curl -s -O "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION" 
+online_ver=`cat VERSION`
 
-#online_ver="3.9.2"
-#VERSION="3.9.2"
 new=""
 #newveralert=`awk -v n1=$online_ver -v n2=$VERSION 'BEGIN {if (n1>n2) printf ("Newer version is available [%s]", n1);}' `
 new=`awk -v n1=$online_ver -v n2=$VERSION 'BEGIN {if (n1>n2) print ("Y");}'  `
