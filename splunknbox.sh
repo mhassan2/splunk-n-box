@@ -2632,7 +2632,8 @@ if [ -n "$choice" ]; then
 
 	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/http_status.csv
 	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/tutorialdata.zip
-	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
+	# wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
+	 wget -q -np https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
 	fi	
         for id in `echo $choice`; do
                 printf "${Purple}$hostname${NC}\n"
@@ -4227,7 +4228,6 @@ if [ "$new" == "Y" ]; then
 	#	./$(basename $0) && exit  # restart the script
 		echo
 		printf "${Yellow}Please restart the script!${NC}                          \n\n"
-		echo
 		exit
 
 	fi	
