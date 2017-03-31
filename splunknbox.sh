@@ -540,14 +540,10 @@ detect_os
 if [ "$os" == "Darwin" ]; then
 	printf "${LightBlue}==>${NC} Checking for required MacOS packages...\n"
 	check_for_MACOS_pkgs
-        else
-                printf "${Green} OK!${NC}\n"
 fi
 if [ "$os" == "Linux" ]; then
 	printf "${LightBlue}==>${NC} Checking for required Ubuntu Linux packages...\n"
 	check_for_ubuntu_pkgs
-        else
-                printf "${Green} OK!${NC}\n"
 fi
 
 #----------Gnu grep installed? MacOS only-------------
