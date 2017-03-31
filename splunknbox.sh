@@ -793,7 +793,7 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	PROJ_DIR="/home/${USER}/"
 	release=`lsb_release -r |awk '{print $2}'`
 	kern_ver=`uname -r`
-	printf "${LightBlue}==> ${NC}Detected LINUX [Release:$release Kernel:$kern_ver]${NC}"
+	printf "${LightBlue}==> ${NC}Detected LINUX [Release:$release Kernel:$kern_ver]${NC}\n"
 
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
     	os="Windows"
@@ -810,13 +810,6 @@ else
     AWS_EC2="NO"
 fi
 
-#LOCAL_HOSTNAME=$(hostname -d)
-#if [[ ${LOCAL_HOSTNAME} =~ .*\.amazonaws\.com ]]
-#then
-#        echo "This is an EC2 instance"
-#else
-#        echo "This is not an EC2 instance, or a reverse-customized one"
-#fi
 return 0
 }	#end detect_os()
 #---------------------------------------------------------------------------------------------------------------
