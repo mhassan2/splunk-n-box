@@ -4193,8 +4193,8 @@ done
 
 #online_ver=`curl -fsSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|grep 'splunknbox'|ggrep -Po 'splunknboxver=(\K.*\))' `
 #online_ver=`curl --max-time 5 --fail --raw --silent --insecure -sSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|$GREP 'splunknbox'|$GREP --color -Po 'splunknboxver=#\K(\d+(.\d+)*)' `
-curl -s -O "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION" 
-online_ver=`cat VERSION`
+curl -s -O "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT" 
+online_ver=`cat VERSION.TXT`
 
 new=""
 #newveralert=`awk -v n1=$online_ver -v n2=$VERSION 'BEGIN {if (n1>n2) printf ("Newer version is available [%s]", n1);}' `
