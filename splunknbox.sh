@@ -1,10 +1,11 @@
 #!/bin/bash
-VERSION=4.0		#Used to check against github repository VERSION!
+VERSION=4.1		#Used to check against github repository VERSION!
 
 #################################################################################
-# Description:	This script is intended to enable you to create number of Splunk infrastructure
+# Description:	
+#	This script is intended to enable you to create number of Splunk infrastructure
 # 	elements on the fly. A perfect tool to setup a quick Splunk lab for training
-# 	or testing purposes.
+# 	or testing purposes. https://github.com/mhassan2/splunk-n-box
 #
 # List of capabilities:
 #	-Extensive Error and integrity checks
@@ -19,25 +20,21 @@ VERSION=4.0		#Used to check against github repository VERSION!
 #	-Low resources requirements
 #	-Eliminate the need to learn docker (but you should)
 #	-OSX & Linux support
+#	-Works with windows10 WSL (Windows Subsystem for Linux) Ubuntu bash.
+#	-Automatic script upgrade (with version check).
+#	-AWS EC2 aware
 #
-# Licenses: 	Licensed under GPL v3 <link>
+# Licenses: 	Licensed under GPL v3 https://www.gnu.org/licenses/gpl-3.0.en.html
 # Last update:	Nov 10, 2016
 # Author:    	mhassan@splunk.com
 # Version:	 see $VERSION above
 #
 #Usage :  splunknbox -v[2 3 4 5 6] 
-#		v1-2	default setting (recommended for ongoing usage)
-#		-v3	show sub-steps under each host build
+#		v1-2	implied and cannot be changed
+#		-v3	[default] show sub-steps under each host build
 #		-v4	show remote CMD executed in docker container
-#		-v5	even more verbosity (debug)
-# MAC OSX : must install ggrep to get PCRE regrex matching working 
-# -for Darwin http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html
-# -mount point must be under /User/${USER}
-#
-# TO-DO: -add routines for UF and HF containers with eventgen.py
-#	-add DS containers with default serverclass.conf
-#	-ability to adjust RF and SF
-#	-ability to set search affinity
+#		-v5	more verbosity (debug)
+#		-v6	even more verbosity (debug)
 #################################################################################
 
 
@@ -90,6 +87,13 @@ REPO_3RDPARTY_IMAGES=$(echo "$REPO_3RDPARTY_IMAGES" | tr " " "\n"|sort -u|tr "\n
 MYSQL_PORT="3306"
 DOWNLOAD_TIMEOUT="480"	#how long before the progress_bar timeout (seconds)
 #---------------------------------------
+#----------Lunch & Learn stuff----------------
+LL_APPS="splunk-datasets-add-on_10.tgz machine-learning-toolkit_210.tgz \
+	splunk-enterprise-65-overview_13.tgz splunk-6x-dashboard-examples_60.tgz "
+	#python-for-scientific-computing-for-linux-64-bit_12.tgz" #too large for github 63M
+LL_DATASETS="http_status.csv tutorialdata.zip"
+#---------------------------------------
+
 #----------Cluster stuff----------------
 BASEHOSTNAME="HOST"		#default hostname to create
 CM_BASE="CM"
@@ -2613,10 +2617,20 @@ if [ $count == 0 ]; then
         return 0;
 fi
 #build array of containers list
-#declare -a list=($(docker ps -a --format "{{.Names}}" |grep -i "$type"| tr '\n' ' '))
 declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | sort | tr '\n' ' '))
-echo
 
+LL_DOWNLOADS="$LL_APPS $LL_DATASETS"
+printf "${Yellow}Downloading apps & datasets...${NC}\n"
+for file in $LL_DOWNLOADS; do
+	if [ -f $file ];then
+		printf "Download file [$file]: [*cached*]\n"	
+	else	
+		printf "Download file [$file]: "	
+		progress_bar_pkg_download "wget -q -np \
+			https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/$file"
+	fi	
+done
+echo
 
 choice=""
 read -p $'Choose number to configure. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
@@ -2624,58 +2638,52 @@ if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
         printf "${Yellow}Configuring selected containers for Lunch & Learn...\n${NC}"
-	if [ ! -d "TUTORIAL_DATASET" ]; then
-		printf "Retrieving tutorial dataset from github first....\n" 
-		#curl -O https://github.com/mhassan2/splunk-n-box/blob/TUTORIAL_DATASET/http_status.csv
-		#curl -O https://github.com/mhassan2/splunk-n-box/blob/TUTORIAL_DATASET/tutorialdata.zip
-		#curl -LOk https://github.com/mhassan2/splunk-n-box/blob/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
-
-	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/http_status.csv
-	 wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/tutorialdata.zip
-	# wget -q -np -nc https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
-	 wget -q -np https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/splunk-6x-dashboard-examples_60.tgz
-	fi	
-        for id in `echo $choice`; do
-                printf "${Purple}$hostname${NC}\n"
-                hostname=${list[$id - 1]}
-                printf "${Purple}Copying examples app..${NC}\n"
-		docker cp  splunk-6x-dashboard-examples_60.tgz $hostname:/tmp
-
-                printf "${Purple}Installing examples app..${NC}\n"
-		docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk install app \
-			/tmp/splunk-6x-dashboard-examples_60.tgz -auth $USERADMIN:$USERPASS
-                printf "${Purple}Copying Tutorial data..${NC}\n"
-		docker cp tutorialdata.zip $hostname:/tmp
-
-                printf "${Purple}Uploading Tutorial data..${NC}\n"
-		docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk add oneshot /tmp/tutorialdata.zip -auth $USERADMIN:$USERPASS
-
-                printf "${Purple}Copying http_status.csv file..${NC}\n"
-		docker cp http_status.csv $hostname:/opt/splunk/etc/apps/search/lookups
-
-                printf "${Purple}Creating transforms.conf configs..${NC}\n"
-		printf "[http_status]\nfilename = http_status.csv\n" > transforms.conf.tmp
-		docker cp  transforms.conf.tmp $hostname:/tmp/transforms.conf
-	  	docker exec -u splunk -ti $hostname bash -c \
-			"cat /tmp/transforms.conf >> /opt/splunk/etc/apps/search/local/transforms.conf"
-
-
-        done
+	#convert array indexes to a string
+	host_names=""
+	for i in `echo $choice`; do
+		   host_names="$host_names ""${list[$i-1]}"
+	done
 else
         printf "${Yellow}Configuring all containers for Lunch & Learn...\n${NC}"
-#	"${filecontent[@]}"
-	for id in "${list[@]}"; do
-        	#hostname=${list[$id - 1]}
-        	hostname=$id
-        	printf "${Purple}$hostname${NC}\n"
-		docker cp  splunk-6x-dashboard-examples_60.tgz $hostname:/tmp
-		docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk install app \
-			/tmp/splunk-6x-dashboard-examples_60.tgz -auth $USERADMIN:$USERPASS
-	done
-fi
-#read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
-#list_all_containers "$type"
+	host_names=${list[@]}
+fi	
+#echo "host_names:[$host_names]";exit
 
+for hostname in `echo $host_names` ; do
+	printf "[${Purple}$hostname${NC}]${LightBlue} Configuring host ... ${NC}\n"
+	#install all apps on hostname ---------
+	for app in $LL_APPS; do
+		printf "\t->Installing $app app "
+		CMD="docker cp $app $hostname:/tmp"; OUT=`$CMD`
+		CMD="docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk install app /tmp/$app -auth $USERADMIN:$USERPASS"
+		printf "\n${DarkGray}CMD:[$CMD]${NC}\n" >&4
+		OUT=`$CMD`;# installed=$(display_output "$OUT" "installed" "2")
+		if ( compare "$OUT" "already" ); then printf "${Red}Already installed\n${NC}"; else printf "${Green}Done!\n${NC}";fi
+		logline "$CMD" "$hostname"
+	done #-----------------------------------
+		
+	#install all datasets on hostname -------
+	printf "\t->Indexing tutorial data [tutorialdata.zip] "
+	CMD="docker cp tutorialdata.zip $hostname:/tmp"; OUT=`$CMD`
+	CMD="docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk add oneshot /tmp/tutorialdata.zip -auth $USERADMIN:$USERPASS"
+	printf "\n${DarkGray}CMD:[$CMD]${NC}\n" >&4
+	OUT=`$CMD`; display_output "$OUT" "added" "3"
+	logline "$CMD" "$hostname"
+
+	printf "\t->Configuring lookup table [http_status.csv] " 
+	CMD="docker cp http_status.csv $hostname:/opt/splunk/etc/apps/search/lookups"; OUT=`$CMD`
+	printf "[http_status]\nfilename = http_status.csv\n" > transforms.conf.tmp
+	CMD="docker cp transforms.conf.tmp $hostname:/tmp/transforms.conf"; OUT=`$CMD`
+  	CMD=`docker exec -u splunk -ti $hostname bash -c \"cat /tmp/transforms.conf >> /opt/splunk/etc/apps/search/local/transforms.conf`
+	OUT="$CMD"; display_output "$OUT" "added" "2"
+	printf "\n${DarkGray}CMD:[$CMD]${NC}\n" >&4
+	logline "$CMD" "$hostname"
+	#-------------------------------------------
+
+	restart_splunkd "$hostname" "b"
+done
+
+echo
 return 0
 }       #end install_ll_files()
 #---------------------------------------------------------------------------------------------------------------
