@@ -4228,8 +4228,7 @@ if [ "$new" == "Y" ]; then
 	read -p "Newer version [$online_ver] available. Upgrade? [Y/n]? " answer
 	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
-		echo "Upgrading $PWD/${0##*/}                             "; sleep 4
-		#curl -O "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/${0##*/}"
+		prrintf "Upgrading $PWD/${0##*/} "
 		progress_bar_pkg_download "curl -O https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/${0##*/}"
 		#curl --max-time 5 -O https://raw.github.com/mhassan2/splunk-n-box/master/${0##*/}	
 		chmod 755  ${0##*/}   	#set x permission on splunknbox.sh
