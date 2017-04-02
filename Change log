@@ -142,4 +142,33 @@ v3.9.8.1   3/8/17
 -fixed fields alignment when displaying demo images (minor) 
 -added color to prompt (ENTER: All B:Go Back)
 
+v3.9.8.3 3/7/17
+-minor bug fix where status bar was clearing in main menu
+-added auto upgrade feature (after VERSION check)
+
+v3.9.8 3/7/17 GA
+-added DEMO-ITSI to list of container that don’t change admin password
+-fixed Add common OS utils for DEMO containers
+-fixed custom .bashrc issue
+-added .vimrc to container build /etc/vim/vimrc
+
+v3.9.8.4   3/8/17
+-fixed fields alignment when displaying demo images (minor) 
+-added color to prompt (ENTER: All B:Go Back)
+-added sort to 3rdpary and demo images when displayed (R or S options)
+
+v3.9.9   3/27/17
+-sorted hostnames in display_all_containers()
+-support for AWS EC2. If detects its running in EC2 then:
+	-set aliases to 10.0.0.0/24 (this tends to be default private space)
+	-show EIP (NATs) in display_all_containers() 
+	-don’t show password on login screen (since its public image now)
+
+v4.0   3/31/17  GA
+-added wget dependency check/install
+-added option to install L&L materials
+-display_all_containers() show URL with http:// prefix
+-added support for AWS EC2 environment
+-changed the way VERSION is handled.
+-replaced many curl with wget (more to come) 
 
