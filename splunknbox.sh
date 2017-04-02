@@ -2674,8 +2674,8 @@ for hostname in `echo $host_names` ; do
 	CMD="docker cp http_status.csv $hostname:/opt/splunk/etc/apps/search/lookups"; OUT=`$CMD`
 	printf "[http_status]\nfilename = http_status.csv\n" > transforms.conf.tmp
 	CMD="docker cp transforms.conf.tmp $hostname:/tmp/transforms.conf"; OUT=`$CMD`
-  	CMD=`docker exec -u splunk -ti $hostname bash -c \"cat /tmp/transforms.conf >> /opt/splunk/etc/apps/search/local/transforms.conf`
-	OUT="$CMD"; display_output "$OUT" "added" "2"
+  	CMD=`docker exec -u splunk -ti $hostname bash -c "cat /tmp/transforms.conf >> /opt/splunk/etc/apps/search/local/transforms.conf" `
+	OUT="$CMD"; display_output "$OUT" "" "2"
 	printf "\n${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$hostname"
 	#-------------------------------------------
