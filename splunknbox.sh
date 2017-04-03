@@ -2651,11 +2651,19 @@ for hostname in `echo $host_names` ; do
 		CMD="docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk install app /tmp/$app -auth $USERADMIN:$USERPASS"
 		printf "\n${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		OUT=`$CMD`;# installed=$(display_output "$OUT" "installed" "2")
-		if ( compare "$OUT" "already" ); then printf "${Red}Already installed\n${NC}"; else printf "${Green}Done!\n${NC}";fi
+		reboot="N"
+		if ( compare "$OUT" "already" ); then 
+			printf "${Red}Already installed\n${NC}"
+			reboot="N"
+		else 
+			printf "${Green}Done!\n${NC}"
+			reboot="Y"
+		fi
 		logline "$CMD" "$hostname"
 	done #-----------------------------------
-		
-	restart_splunkd "$hostname" "b"
+	if [ "$reboot" == "Y" ]; then	
+		restart_splunkd "$hostname" "b"
+	fi	
 done
 }	#end install_ll_apps()
 #---------------------------------------------------------------------------------------------------------------
