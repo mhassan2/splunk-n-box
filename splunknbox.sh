@@ -177,6 +177,7 @@ BoldWhiteOnTurquoise="\033[1;1;5;46m"
 
 BoldYellowOnBlue="\033[1;33;44m"
 BoldYellowOnPurple="\033[1;33;44m"
+
 DEFAULT_YES="\033[1;37mY\033[0m/n"
 DEFAULT_NO="y/\033[1;37mN\033[0m"
 #---------------------------------------
@@ -1832,7 +1833,7 @@ if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 if [ -n "$choice" ]; then
 	read -p "How many containers to create of selected demo [default 1]? " number
 	if [ "$number" == "" ]; then  number=1; fi
-        printf "**PLEASE WACH THE LOAD AVERAGE CLOSELY**\n\n"
+        printf "     **PLEASE WATCH THE LOAD AVERAGE CLOSELY**\n\n"
         printf "${Yellow}Creating selected demo containers(s)...${NC}\n"
         for id in `echo $choice`; do
 		image_name=(${list[$id - 1]})
@@ -1846,7 +1847,7 @@ if [ -n "$choice" ]; then
 else
 	printf "${Red}WARNING! This operation will stress your system. Make sure you have enough resources...${NC}\n"
         read -p "Are you sure? [y/N]? " answer
-        printf "**PLEASE WACH THE LOAD AVERAGE CLOSELY**\n\n"
+        printf "         **PLEASE WATCH THE LOAD AVERAGE CLOSELY**\n\n"
         if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
         	printf "${Yellow}Creating all demo containers(s)...\n${NC}"
                 for i in $REPO_DEMO_IMAGES; do
@@ -1972,7 +1973,7 @@ read -p $'Choose number to create. You can select multiple numbers <\033[1;32mEN
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
-        printf "**PLEASE WACH THE LOAD AVERAGE CLOSELY**\n\n"
+        printf "    **PLEASE WATCH THE LOAD AVERAGE CLOSELY**\n\n"
         printf "${Yellow}Creating selected 3rd party containers(s)...${NC}\n"
         for id in `echo $choice`; do
                 image_name=(${list[$id - 1]})
@@ -1988,7 +1989,7 @@ if [ -n "$choice" ]; then
 else
         printf "${Red}WARNING! This operation will stress your system. Make sure you have enough resources...${NC}\n"
         read -p "Are you sure? [y/N]? " answer
-        printf "**PLEASE WACH THE LOAD AVERAGE CLOSELY**\n\n"
+        printf "    **PLEASE WATCH THE LOAD AVERAGE CLOSELY**\n\n"
         if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
                 printf "${Yellow}Creating all 3rd party containers(s)...\n${NC}"
                 for image_name in $REPO_3RDPARTY_IMAGES; do
@@ -2079,7 +2080,7 @@ return 0
 #### DISPLAY MENU OPTIONS #####
 
 #---------------------------------------------------------------------------------------------------------------
-display_main_menu_options2() {
+display_main_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function displays user options for the main menu
 clear
@@ -2089,18 +2090,18 @@ display_stats_banner
 
 tput cup 5 25
 tput rev  # Set reverse video mode
-#echo "M A I N - M E N U"
 printf "${BoldYellowOnBlue} M A I N - M E N U ${NC}\n"
 tput sgr0
 
-tput cup 7 15; printf "${LightCyan}1${NC}) ${LightCyan}Manage All Images & Containers ${NC}\n"
-tput cup 8 15; printf "${LightCyan}2${NC}) ${LightCyan}Manage Splunk Clusters${NC}\n"
-tput cup 9 15; printf "${LightCyan}3${NC}) ${LightCyan}Manage Splunk Demos ${DarkGray}[**internal use only**]${NC}\n"
-tput cup 10 15; printf "${LightCyan}4${NC}) ${LightCyan}Manage 3Rd Party Containers & Images ${DarkGray}[**under construction**]${NC}\n"
-tput cup 11 15; printf "${LightCyan}5${NC}) ${LightCyan}Manage System ${NC}\n"
-tput cup 12 15; printf "${LightCyan}6${NC}) ${LightCyan}Change Log Level ${NC}\n"
-tput cup 13 15; printf "${LightCyan}?${NC}) ${LightCyan}Help ${NC}\n"
-tput cup 14 15; printf "${LightCyan}Q${NC}) ${LightCyan}Quit ${NC}\n"
+tput cup 7 15; printf "${LightCyan}1${NC}) ${LightCyan}Manage All Containers & Images ${NC}\n"
+tput cup 8 15; printf "${LightCyan}2${NC}) ${LightCyan}Manage Lunch & Learn Containers ${NC}\n"
+tput cup 9 15; printf "${LightCyan}3${NC}) ${LightCyan}Manage Splunk Clusters${NC}\n"
+tput cup 10 15; printf "${LightCyan}4${NC}) ${LightCyan}Manage Splunk Demos ${DarkGray}[**internal use only**]${NC}\n"
+tput cup 11 15; printf "${LightCyan}5${NC}) ${LightCyan}Manage 3Rd Party Containers & Images ${DarkGray}[**under construction**]${NC}\n"
+tput cup 12 15; printf "${LightCyan}6${NC}) ${LightCyan}Manage System ${NC}\n"
+tput cup 13 15; printf "${LightCyan}7${NC}) ${LightCyan}Change Log Level ${NC}\n"
+tput cup 14 15; printf "${LightCyan}?${NC}) ${LightCyan}Help ${NC}\n"
+tput cup 15 15; printf "${LightCyan}Q${NC}) ${LightCyan}Quit ${NC}\n"
 
 # Set bold mode
 tput bold
@@ -2112,29 +2113,6 @@ tput cup 16 15
 tput sgr0
 #tput rc
 
-return 0
-}	#end display_main_menu_options2()
-#---------------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------------------
-display_main_menu_options() {
-_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-#This function displays user options for the main menu
-clear
-dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU                       ${DarkGray}[$dockerinfo]${NC}\n"
-display_stats_banner
-printf "\n\n\n\n"
-printf "${BoldWhiteOnTurquoise}Manage Infrastructure:${NC}\n"
-printf "${LightCyan}1${NC}) ${LightCyan}Manage Splunk Clusters${NC}\n"
-printf "${LightCyan}2${NC}) ${LightCyan}Manage Splunk Demos ${DarkGray}[**internal use only**]${NC}\n"
-printf "${LightCyan}3${NC}) ${LightCyan}Manage 3Rd Party Containers & Images ${DarkGray}[**under construction**]${NC}\n"
-printf "${LightCyan}4${NC}) ${LightCyan}Manage Splunk Images & Container ${NC}\n"
-printf "${LightCyan}5${NC}) ${LightCyan}Manage System ${NC}\n"
-printf "\n"
-printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
-printf "${Green}?${NC}) ${Green}H${NC}ELP!\n"
-
-printf "\n"
 return 0
 }	#end display_main_menu_options()
 #---------------------------------------------------------------------------------------------------------
@@ -2283,8 +2261,9 @@ display_stats_banner
 printf "\n"
 echo
 printf "${BoldWhiteOnYellow}Files to install for Lunch & Learn: ${NC}\n"
-printf "${Yellow}1${NC}) Install examples app${NC}\n"
-printf "${Yellow}2${NC}) Install tutorial data set${NC}\n"
+printf "${Yellow}1${NC}) Install apps${NC}\n"
+printf "${Yellow}2${NC}) Install tutorial datasets${NC}\n"
+printf "${Yellow}3${NC}) Install apps & tutorial datasets${NC}\n"
 echo
 printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
 printf "${Green}?${NC}) ${Green}H${NC}ELP!\n"
@@ -2302,7 +2281,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 while true;
 do
 	clear
-        display_main_menu_options2
+        display_main_menu_options
         choice=""
 	echo
 	tput bold
@@ -2312,12 +2291,12 @@ do
  	case "$choice" in
                 \? ) display_main_menu_help ;;
         	1 ) splunk_menu_inputs ;;
-		2 ) clustering_menu_inputs ;;
-        	3 ) demos_menu_inputs ;;
-        	4 ) 3rdparty_menu_inputs ;;
-        	5 ) system_menu_inputs ;;
-        	6 ) change_loglevel ;;
-        	7 ) lunch_learn_menu_inputs ;;
+        	2 ) lunch_learn_menu_inputs ;;
+		3 ) clustering_menu_inputs ;;
+        	4 ) demos_menu_inputs ;;
+        	5 ) 3rdparty_menu_inputs ;;
+        	6 ) system_menu_inputs ;;
+        	7 ) change_loglevel ;;
 
 		q|Q ) 	clear;
 			display_goodbye_msg;
@@ -2329,29 +2308,6 @@ done
 return 0
 }	#end main_menu_inputs()
 #---------------------------------------------------------------------------------------------------------------
-lunch_learn_menu_inputs() {
-_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-#This function captures user selection for splunk_menu
-while true;
-do
-	clear
-        display_ll_menu_options
-        choice=""
-	echo
-        read -p "Enter choice (? for help) : " choice
-                case "$choice" in
-                \? ) display_splunk_menu_help;;
-
-               #IMAGES -----------
-                1 ) install_ll_files;;
-		b|B) return 0;;
-
-        esac  #end case ---------------------------
-	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
-done
-return 0
-}	#end splunk_menu_inputs()
-#---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 splunk_menu_inputs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
@@ -2460,7 +2416,7 @@ do
                 l|L ) list_all_containers ;;
                 t|T ) start_containers;;
                 p|P ) stop_containers;;
-                h|H ) list_all_hosts_by_role ;;
+		h|H ) list_all_hosts_by_role ;;
 
                 #SPLUNK ------
                 e|E ) reset_all_splunk_passwords ;;
@@ -2602,11 +2558,38 @@ return 0
 }	#end clustering_menu_inputs()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-install_ll_files() {
+lunch_learn_menu_inputs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+#This function captures user selection for splunk_menu
+while true;
+do
+	clear
+        display_ll_menu_options
+        choice=""
+	echo
+        read -p "Enter choice (? for help) : " choice
+                case "$choice" in
+                \? ) display_splunk_menu_help;;
+
+                1 ) install_ll_menu_inputs "apps";;
+                2 ) install_ll_menu_inputs "datasets";;
+                3 ) install_ll_menu_inputs;;
+
+		b|B) return 0;;
+
+        esac  #end case ---------------------------
+	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+done
+return 0
+}	#end lunch_learn_menu_inputs()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+install_ll_menu_inputs() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+installtype=$1
 type=""
 clear
-printf "${BoldWhiteOnYellow}CONFIGURE LUNCH & LEARN CONTAINERS MENU ${NC}\n"
+printf "${BoldWhiteOnYellow}CONFIGURE LUNCH & LEARN CONTAINERS APPS/DATASETS MENU ${NC}\n"
 display_stats_banner
 printf "\n"
 display_all_containers 
@@ -2616,41 +2599,51 @@ if [ $count == 0 ]; then
         printf "No $type containers found!\n"
         return 0;
 fi
-#build array of containers list
 declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | sort | tr '\n' ' '))
-
-LL_DOWNLOADS="$LL_APPS $LL_DATASETS"
-printf "${Yellow}Downloading apps & datasets...${NC}\n"
-for file in $LL_DOWNLOADS; do
-	if [ -f $file ];then
-		printf "Download file [$file]: [*cached*]\n"	
-	else	
-		printf "Download file [$file]: "	
-		progress_bar_pkg_download "wget -q -np \
-			https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/$file"
-	fi	
-done
-echo
-
 choice=""
 read -p $'Choose number to configure. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
-        printf "${Yellow}Configuring selected containers for Lunch & Learn...\n${NC}"
 	#convert array indexes to a string
 	host_names=""
 	for i in `echo $choice`; do
 		   host_names="$host_names ""${list[$i-1]}"
 	done
 else
-        printf "${Yellow}Configuring all containers for Lunch & Learn...\n${NC}"
 	host_names=${list[@]}
-fi	
-#echo "host_names:[$host_names]";exit
+fi
+printf "${Yellow}Configuring selected containers for Lunch & Learn...\n${NC}"
+if [ "$installtype" == "apps" ]; then 
+	install_ll_apps "$host_names"
 
+elif [ "$installtype" == "datasets" ]; then 
+	install_ll_datasets "$host_names"
+else
+	install_ll_datasets "$host_names"
+	install_ll_apps "$host_names"  #keep this in the second place. Hosts need rebooting
+fi
+echo
+return 0
+}       #end install_ll_menu_inputs()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+install_ll_apps() {
+host_names=$1	#list of hostnames to configure
+echo
+printf "${Yellow}Downloading apps...${NC}\n"
+for file in $LL_APPS; do
+	if [ -f $file ];then
+		printf "Download file [$file]: [${White}*cached*${NC}]\n"	
+	else	
+		printf "Download file [$file]: "	
+		progress_bar_pkg_download "wget -q -np \
+			https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/$file"
+	fi	
+done
+echo	
 for hostname in `echo $host_names` ; do
-	printf "[${Purple}$hostname${NC}]${LightBlue} Configuring host ... ${NC}\n"
+	printf "[${Purple}$hostname${NC}]${LightBlue} Configuring host apps ... ${NC}\n"
 	#install all apps on hostname ---------
 	for app in $LL_APPS; do
 		printf "\t->Installing $app app "
@@ -2662,6 +2655,28 @@ for hostname in `echo $host_names` ; do
 		logline "$CMD" "$hostname"
 	done #-----------------------------------
 		
+	restart_splunkd "$hostname" "b"
+done
+}	#end install_ll_apps()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+install_ll_datasets() {
+host_names=$1	#list of hostnames to configure
+echo
+printf "${Yellow}Downloading datasets...${NC}\n"
+for file in $LL_DATASETS; do
+	if [ -f $file ];then
+		printf "Download file [$file]: [${White}*cached*${NC}]\n"	
+	else	
+		printf "Download file [$file]: "	
+		progress_bar_pkg_download "wget -q -np \
+			https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/$file"
+	fi	
+done
+echo
+
+for hostname in `echo $host_names` ; do
+	printf "[${Purple}$hostname${NC}]${LightBlue} Configuring host datasets... ${NC}\n"
 	#install all datasets on hostname -------
 	printf "\t->Indexing tutorial data [tutorialdata.zip] "
 	CMD="docker cp tutorialdata.zip $hostname:/tmp"; OUT=`$CMD`
@@ -2679,14 +2694,10 @@ for hostname in `echo $host_names` ; do
 	printf "\n${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$hostname"
 	#-------------------------------------------
-
-	restart_splunkd "$hostname" "b"
 done
-
-echo
-return 0
-}       #end install_ll_files()
+}	#end install_ll_datasets()
 #---------------------------------------------------------------------------------------------------------------
+
 
 
 #### CLUSTERS ######
@@ -3552,7 +3563,7 @@ if [ -z "$cached" ]; then
 		printf "] ${DarkGray} $t_total ${NC}\n"
 	fi	
 else
-      	printf "Downloading ${Purple}$image_name:${NC}[*cached*]\n"
+      	printf "Downloading ${Purple}$image_name:${NC}[${White}*cached*${NC}]\n"
 	
 fi
 original_name=""  #initialize for next round in case of consecutive downloads
