@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.1		#Used to check against github repository VERSION!
+VERSION=4.2		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:	
@@ -45,10 +45,10 @@ ETH_LINUX="ens3"		#default interface to use with Linux server (Ubuntu 16.04
 #-------------IP aliases --------
 #LINUX is routed and hosts can be reached from anywhere in the network
 #START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.254"
-START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.250"
+START_ALIAS_LINUX="192.168.1.101";  	END_ALIAS_LINUX="192.168.1.250"
 
 #OSX space will not be routed, and host reached from the laptop only
-START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.250"
+START_ALIAS_OSX="10.0.0.101";  		END_ALIAS_OSX="10.0.0.250"
 
 DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine IP
 #---------------------------------
@@ -89,12 +89,14 @@ DOWNLOAD_TIMEOUT="480"	#how long before the progress_bar timeout (seconds)
 #---------------------------------------
 #----------Lunch & Learn stuff----------------
 LL_APPS="splunk-datasets-add-on_10.tgz machine-learning-toolkit_210.tgz \
-	splunk-enterprise-65-overview_13.tgz splunk-6x-dashboard-examples_60.tgz "
+	splunk-enterprise-65-overview_13.tgz splunk-6x-dashboard-examples_60.tgz \
+	splunk-common-information-model-cim_470.tgz"
 	#python-for-scientific-computing-for-linux-64-bit_12.tgz" #too large for github 63M
 LL_DATASETS="http_status.csv tutorialdata.zip"
 #---------------------------------------
 
 #----------Cluster stuff----------------
+MASTER_CONTAINER="DOCKER-MONITOR" #name of master container used to monitor ALL containers
 BASEHOSTNAME="HOST"		#default hostname to create
 CM_BASE="CM"
 DMC_BASE="DMC"
@@ -317,11 +319,13 @@ read -p "Are you sure you want to proceed? [y/N]? " answer
 if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
 	base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `; # base_ip=$base_ip"."
 	start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
+	docker_mc_start_octet4=`expr $start_octet4 - 1`
 	end_octet4=`echo $END_ALIAS | cut -d"." -f4 `
 
 	#---------
 	if [ "$os" == "Darwin" ]; then
 		read -p "Enter interface where IP aliases are binded to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_OSX"; fi
+		sudo ifconfig  $eth  $base_ip.$docker_mc_start_octet4 255.255.255.0 -alias #special alias
 		for i in `seq $start_octet4  $end_octet4`; do
 			sudo ifconfig  $eth  $base_ip.$i 255.255.255.0 -alias
         		echo -ne "${NC}Removing: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
@@ -330,6 +334,7 @@ if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
 			printf "\n${Red}You must restart the script to regain functionality!${NC}\n"
 	elif  [ "$os" == "Linux" ]; then
 			read -p "Enter interface where IP aliases are binded to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_LINUX"
+                	sudo ifconfig $eth:$docker_mc_start_octet4 $base_ip.$docker_mc_start_octet4 down;  #special aliases 
  			for  ((i=$start_octet4; i<=$end_octet4 ; i++))  do
                 		echo -ne "${NC}Removing: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
                 		sudo ifconfig $eth:$i "$base_ip.$i" down;
@@ -357,6 +362,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `; # base_ip=$base_ip"."
 start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
 end_octet4=`echo $END_ALIAS | cut -d"." -f4 `
+docker_mc_start_octet4=`expr $start_octet4 - 1`
 
 printf "${LightBlue}==>${NC} Checking if last IP alias is configured on any NIC [$END_ALIAS]..."
 last_alias=`ifconfig | $GREP $END_ALIAS `
@@ -374,6 +380,8 @@ if [ "$os" == "Darwin" ] && [ -z "$last_alias" ]; then
 	#for nic in "$interfaces_list"; do printf "xxx   %-s4\n" "$nic"; done
 	read -p "Enter interface to bind aliases to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_OSX"; fi
 	printf "Building IP aliases for OSX...[$base_ip.$start_octet4-$end_octet4]\n"
+	printf "Building special IP aliases for $MASTER_CONTAINER (used for docker monitoring only)...[$base_ip.$docker_mc_start_octet4]\n"
+	sudo ifconfig  $eth  $base_ip.$docker_mc_start_octet4 255.255.255.0 alias  #special alias
         #to remove aliases repeat with -alias switch
         for i in `seq $start_octet4  $end_octet4`; do 
 		sudo ifconfig  $eth  $base_ip.$i 255.255.255.0 alias
@@ -382,6 +390,8 @@ if [ "$os" == "Darwin" ] && [ -z "$last_alias" ]; then
 elif [ "$os" == "Linux" ] && [ -z "$last_alias" ]; then
 	read -p "Enter interface to bind aliases to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_LINUX"; fi
 	printf "Building IP aliases for LINUX...[$base_ip.$start_octet4-$end_octet4]\n"
+	printf "Building special IP aliases for $MASTER_CONTAINER (used for docker monitoring only)...[$base_ip.$docker_mc_start_octet4]\n"
+	sudo ifconfig $eth:$docker_mc_start_octet4 "$base_ip.$docker_mc_start_octet4" up   #special alias
 	for  ((i=$start_octet4; i<=$end_octet4 ; i++))  do 
         	echo -ne "${NC}Adding: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
 		sudo ifconfig $eth:$i "$base_ip.$i" up; 
@@ -1676,9 +1686,13 @@ fi
 if [ -z "$count" ]; then count=1;  fi
 #---If not passed; prompt user to get basename and count ----
 
-
+#Create master container (for docker monitoring). Only once in the entire system
+master_container_exists=`docker ps | grep -i "$MASTER_CONTAINER" `
+if [ -z "$master_container_exists" ]; then
+	construct_splunk_container "$base_ip.$docker_mc_start_octet4" "$MASTER_CONTAINER"
+fi
 for (( a = 1; a <= count; a++ ))  ; do
-	next_seq_fullhostname_ip "$basename" "$count"
+	next_seq_fullhostname_ip "$basename" "$count"	#function will return global $vip
 	construct_splunk_container $vip $fullhostname $lic_master $cluster_label
 	gLIST="$gLIST""$fullhostname "		#append last host create to the global LIST
 done
@@ -3902,7 +3916,6 @@ i=0
 hosts_sorted=`docker ps -a --format {{.Names}}| grep -i "$type"| sort`
 for host in $hosts_sorted ; do
     id=`docker ps -a --filter name="$host" --format {{.ID}}`
-    let i++
     #These operations take long time execute
     #cpu_percent=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $2}'`
     #mem_usage=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $3$4}'`
@@ -3992,6 +4005,7 @@ for host in $hosts_sorted ; do
         printf "${NC}\n"
     fi
 
+    let i++	#container display counter (starts at zero now that we have special DOCKER-MONITOR)
 done
 
 printf "count: %s\n\n" $i
