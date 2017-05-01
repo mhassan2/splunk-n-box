@@ -172,3 +172,16 @@ v4.0   3/31/17  GA
 -changed the way VERSION is handled.
 -replaced many curl with wget (more to come) 
 
+v4.2 4/10/17
+-created “special” docker monitoring container that starts at (start_ip_alias – 1)
+-minor bug fix for ubuntu 16.10 (replacing free –mg with free –g)
+-during startup check mem/cpu percentage calculation are now colored
+-added search_party app (Paul Daigle pdaigle@splunk.com) to the list of available apps in SP menu
+
+v4.2.1 5/1/2017
+-add support for demo images with “workshop” name
+-fixed a bug in progress_bar_image_download() where args in compare call reversed
+-Manual cluster-build now shows how the cluster will be build and ask for confirmation
+-Upon start, if the main splunk_image doesn’t exist and the user chooses not to download; the script will not exit. This is need since we have a lot more features now they may not require the main image (3rd party, demos)
+
+
