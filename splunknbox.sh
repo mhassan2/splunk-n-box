@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.2		#Used to check against github repository VERSION!
+VERSION=4.2.2.1		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -1563,22 +1563,22 @@ return 0
 }	#end is_container_running()
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
-next_seq_fullhostname_ip() {
+calc_next_seq_fullhostname_ip() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 basename=$1		#input
 count=$2		#input
 #vip			#output global
-#fullhostname		#output global
+#fullhostname	#output global
 
 #---- calculate sequence numbers -----------[in:basename out: startx, endx]
 #get last seq used by last host created
 last_host_num=`docker ps -a --format "{{.Names}}"|$GREP "^$basename"|head -1| $GREP -P '\d+(?!.*\d)' -o`;
 if [ -z "$last_host_num" ]; then    					#no previous hosts with this name exists
         printf "${DarkGray}[$basename] New basename. ${NC}" >&4
-	starting=1
+		starting=1
         ending=$count
-	last_host_num=0
+		last_host_num=0
 else
        	starting=`expr $last_host_num + 1`
        	ending=`expr $starting + $count - 1`
@@ -1594,8 +1594,8 @@ printf "${DarkGray}Next sequence:${NC} [${Green}$basename${Yellow}$startx${NC} -
 #---- calculate VIP numbers -----------
 base_ip=`echo $START_ALIAS | cut -d"." -f1-3 `;  #base_ip=$base_ip"."
 
-#Find last container created IP (not hostname/sitename dependent). Returns value only if last container has an IP assigned (which excludes
-#containers not built by this script)
+#Find last container created IP (not hostname/sitename dependent).
+#Returns value only if last container has bind IP assigned (which excludes containers not built by this script)
 containers_count=`docker ps -aq | wc -l|awk '{print $1}' `
 printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} last ip used:[$last_ip_used]\n" >&5
 printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} containers_count:[$containers_count]\n" >&5
@@ -1620,42 +1620,40 @@ fi
 #---- calculate VIP numbers -----------
 
 #---- build fullhostname (Base+seq & VIP) -----------
-#---Loop for number of hosts to create----
 octet4=$last_used_octet4
 x=${starting}
-#for (( x=${starting}; x <= ${ending}; x++)) ; do
-	#fix the digits size first
-     	if [ "$x" -lt "10" ]; then
-      		host_num="0"$x         		 #always reformat number to 2-digits if less than 2-digits
-     	else
-                host_num=$x             	#do nothing
-     	fi
-     	fullhostname="$basename"$host_num  	#create full hostname (base + 2-digits)
+#fix the digits size first
+if [ "$x" -lt "10" ]; then
+   		host_num="0"$x         		 #always reformat number to 2-digits if less than 2-digits
+else
+    	host_num=$x             	#do nothing
+fi
+if ( compare "$basename" "DEMO" ) || ( compare "$basename" "WORKSHOP" ) ; then
+	fullhostname="$basename""_"$host_num  	#demos user under score
+else
+	fullhostname="$basename"$host_num  	#create full hostname (base + 2-digits)
+fi
 
-     	#------ VIP processing ------
-     	octet4=`expr $octet4 + 1`       	#increment octet4
-     	vip="$base_ip.$octet4"            	#build new IP to be assigned
-	printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}fulhostname:[$fullhostname] vip:[$vip] basename:[$basename] count[$count] ${NC}\n" >&5
-	#---- build fullhostname (Base+seq & VIP) -----------
-#done  #end for loop
+#------ VIP processing ------
+octet4=`expr $octet4 + 1`       	#increment octet4
+vip="$base_ip.$octet4"            	#build new IP to be assigned
+printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}fulhostname:[$fullhostname] vip:[$vip] basename:[$basename] count[$count] ${NC}\n" >&5
+
+
+#---- build fullhostname (Base+seq & VIP) -----------
 
 return 0
-}	#next_seq_fullname_ip
+}	#calc_next_seq_fullhostname_ip()
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
 create_splunk_container() {
-#This function creates generic splunk containers. Role is assigned later
-#inputs: $1:basehostname: (ex IDX, SH,HF) just the base (no numbers)
-#	 $2:hostcount:     how many containers to create from this host type (ie name)
-#	 $3:lic_master		if provided dont copy license, make host license-slave
-# 	 $4:cluster_label	cluster label in web.conf, use if provided
-#outputs: $gLIST:  global var compare the list of hostname just got created
-
-#clear
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-#printf "${BoldYellowOnBlue}CREATE GENERIC SPLUNK CONTAINER MENU ${NC}\n"
-#display_stats_banner
-#printf "\n"
+#This function creates generic splunk containers. Role is assigned later
+#inputs:$1:basehostname: (ex IDX, SH,HF) just the base (no numbers)
+#	 	$2:hostcount:     how many containers to create from this host type (ie name)
+#	 	$3:lic_master		if provided dont copy license, make host license-slave
+# 	 	$4:cluster_label	cluster label in web.conf, use if provided
+#outputs: $gLIST:  global var compare the list of hostname just got created
 
 basename=$1; hostcount=$2; lic_master=$3; cluster_label=$4
 count=0;starting=0; ending=0;basename=$BASEHOSTNAME;  octet4=0
@@ -1681,10 +1679,10 @@ basename=`echo $basename| tr '[a-z]' '[A-Z]'`
 
 if [ -z "$2" ]; then
         read -p ">>>> How many hosts to create (default 1)? " count
+		if [ -z "$count" ]; then count=1;  fi  #user accepted default 1
 else
         count=$2
 fi
-if [ -z "$count" ]; then count=1;  fi
 #---If not passed; prompt user to get basename and count ----
 
 #Create master container (for docker monitoring). Created only once in the entire system
@@ -1695,7 +1693,7 @@ if [ -z "$master_container_exists" ]; then
 	bind_ip_monitor=`docker inspect --format '{{ .HostConfig }}' $MASTER_CONTAINER| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 fi
 for (( a = 1; a <= count; a++ ))  ; do
-	next_seq_fullhostname_ip "$basename" "$count"	#function will return global $vip
+	calc_next_seq_fullhostname_ip "$basename" "$count"	#function will return global $vip
 	construct_splunk_container $vip $fullhostname $lic_master $cluster_label $bindip_monitor
 	gLIST="$gLIST""$fullhostname "		#append last host create to the global LIST
 done
@@ -1710,15 +1708,17 @@ return $host_num
 construct_splunk_container() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function creates single splunk container using $vip and $hostname
-#inputs: $1: container's IP to use (nated IP aka as bind IP)
-#	 $2: fullhostname:  container name (may include site and host number sequence)
-#	 $3: lic_master
-#	 $4: cluster_label
-#	 $5: MONITOR-DOCKER container IP
+#inputs:
+#	$1: container's IP to use (nated IP aka as bind IP)
+#	$2: fullhostname:  container name (may include site and host number sequence)
+#	$3: lic_master
+#	$4: cluster_label
+#	$5: MONITOR-DOCKER container IP
 #
-#output: -create single host. will not prompt user for any input data
-#	 -reset password and setup splunk's login screen
-#        -configure container's OS related items if needed
+#output:
+#	-create single host. will not prompt user for any input data
+#	-reset password and setup splunk's login screen
+#   -configure container's OS related items if needed
 
 START=$(date +%s);
 vip=$1;  fullhostname=$2;lic_master=$3; cluster_label=$4;
@@ -1731,11 +1731,13 @@ rm -fr $MOUNTPOINT/$fullhostname
 mkdir -m 755 -p $MOUNTPOINT/$fullhostname
 #note:volume bath is relative to VM not MacOS
 
+#At this point fullhostname (w/ seq num) has been assigned. Use it to figure out what image to use!
+#watch out for original names ending with numbers!
 if ( compare "$fullhostname" "DEMO" ) || ( compare "$fullhostname" "WORKSHOP" ) ; then
-	#extract image name from fullhostname  (ex: DEMO-OI02)
-	demo_name=$(printf '%s' "$fullhostname" | sed 's/[0-9]*//g')
-	demo_name=`echo $demo_name| tr '[A-Z]' '[a-z]'`		#conver to lower case
-	full_image_name="$SPLUNK_DOCKER_HUB/sales-engineering/$demo_name"
+	#extract image name from fullhostname  (ex: DEMO-OI_02, WORKSHOP-SPLUNKLIVE-2017_02)
+	demo_image_name=$(printf '%s' "$fullhostname" | sed 's/_[0-9]*//g') #remove last _02
+	demo_image_name=`echo $demo_image_name| tr '[A-Z]' '[a-z]'`		#conver to lower case
+	full_image_name="$SPLUNK_DOCKER_HUB/sales-engineering/$demo_image_name"
 else
 	full_image_name="$SPLUNK_IMAGE"
 fi
@@ -1898,7 +1900,7 @@ if [ -z "$cached" ]; then
         progress_bar_image_download "$image_name"
 fi
 
-next_seq_fullhostname_ip "$basename" "1"	#returns fullhostname & vip
+calc_next_seq_fullhostname_ip "$basename" "1"	#returns fullhostname & vip
 #echo "image:[$image_name]   base:[$basename]   full:[$fullhostname]   vip:[$vip]"
 
 if ( compare "$basename" "MYSQL" ); then
