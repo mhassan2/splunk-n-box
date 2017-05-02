@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.1		#Used to check against github repository VERSION!
+VERSION=4.2.2		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -1731,7 +1731,7 @@ rm -fr $MOUNTPOINT/$fullhostname
 mkdir -m 755 -p $MOUNTPOINT/$fullhostname
 #note:volume bath is relative to VM not MacOS
 
-if ( compare "$host_name" "DEMO" ) || ( compare "$host_name" "WORKSHOP" ) ; then
+if ( compare "$fullhostname" "DEMO" ) || ( compare "$fullhostname" "WORKSHOP" ) ; then
 	#extract image name from fullhostname  (ex: DEMO-OI02)
 	demo_name=$(printf '%s' "$fullhostname" | sed 's/[0-9]*//g')
 	demo_name=`echo $demo_name| tr '[A-Z]' '[a-z]'`		#conver to lower case
@@ -1739,7 +1739,6 @@ if ( compare "$host_name" "DEMO" ) || ( compare "$host_name" "WORKSHOP" ) ; then
 else
 	full_image_name="$SPLUNK_IMAGE"
 fi
-
 #CMD="docker run -d -v $MOUNTPOINT/$fullhostname/opt/splunk/etc -v $MOUNTPOINT/$fullhostname/opt/splunk/var --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $full_image_name"
 #CMD="docker run -d -v $MOUNTPOINT/$fullhostname/etc:/opt/splunk/etc -v  $MOUNTPOINT/$fullhostname/var:/opt/splunk/var \
 CMD="docker run -d \
@@ -3951,7 +3950,7 @@ if [ "$AWS_EC2" == "YES" ]; then
 	done
 fi
 printf "Current list of all $type containers on this system:\n"
-printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd   Ver    Bind IP%-3s       Image used%-10s     URL                 ${NC}\n"
+printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd   Ver    Internal IP%-3s       Image used%-10s     URL                 ${NC}\n"
 printf "   ---------------%-3s --------- ------- ------- ----------%-3s ------------------%-3s${NC}\n" #---%-4s ---------%-3s ---------%-3s ${NC}\n"
 i=0
 hosts_sorted=`docker ps -a --format {{.Names}}| egrep -i "$type"| sort`
@@ -4007,43 +4006,44 @@ for host in $hosts_sorted ; do
         splunkstate="${Red}N/A${NC}"
     fi
 	#indentation:
-	i_i="%-2s"
-	i_hostname="%-20s"
-	i_hoststate="%-18b"
-	i_splunkstate="%-18b"
-	i_splunkver="%-6s"
-	i_bind_ip="%-12s"
-	i_imagename="%-20s"
-	i_eip="%-30s"
+	fmt_i="%-2s"
+	fmt_hostname="%-20s"
+	fmt_hoststate="%-18b"
+	fmt_splunkstate="%-18b"
+	fmt_splunkver="%-6s"
+	fmt_bind_ip="%-12s"
+	fmt_internal_ip="%-12s"
+	fmt_imagename="%-20s"
+	fmt_eip="%-30s"
 
     if ( compare "$host_name" "DEMO" ) || ( compare "$host_name" "WORKSHOP" ) ; then
-        	printf "${LightCyan}$i_i) $i_hostname $i_hoststate $i_splunkstate $i_splunkver $i_bind_ip $i_imagename $i_eip ${NC}" \
-			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$eip"
+        	printf "${LightCyan}$fmt_i) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
+			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
    	elif ( compare "$hostname" "3RDP" ); then
 			open_ports=`docker port $hostname|$GREP -Po "\d+/tcp|udp"|tr -d '\n'| sed 's/tcp/tcp /g' `
-        	printf "${LightPurple}$i_i) $i_hostname $i_hoststate $i_splunkstate $i_splunkver $i_bind_ip $i_imagename $i_eip ${NC}" \
-			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$open_ports"
+        	printf "${LightPurple}$fmt_i) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
+			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$open_ports"
 		#for y in $open_ports; do printf "%80s\n" "$y"; done
 
     elif ( compare "$hostname" "DEP" ); then
-        	printf "${LightBlue}$i_i) $i_hostname $i_hoststate $i_splunkstate $i_splunkver $i_bind_ip $i_imagename $i_eip ${NC}" \
-			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$eip"
+        	printf "${LightBlue}$fmt_i) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
+			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
 
     elif ( compare "$hostname" "CM" ); then
-        	printf "${LightBlue}$i_i) $i_hostname $i_hoststate $i_splunkstate $i_splunkver $i_bind_ip $i_imagename $i_eip ${NC}" \
-			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$eip"
+        	printf "${LightBlue}$fmt_i) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
+			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
 
     elif ( compare "$hostname" "DMC" ); then
-        	printf "${LightBlue}$i_i) $i_hostname $i_hoststate $i_splunkstate $i_splunkver $i_bind_ip $i_imagename $i_eip ${NC}" \
-			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$eip"
+        	printf "${LightBlue}$fmt_i) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
+			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
 
     else 	###generic
-        	printf "${LightBlue}$i_i) $i_hostname $i_hoststate $i_splunkstate $i_splunkver $i_bind_ip $i_imagename $i_eip ${NC}" \
-			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$bind_ip" "$imagename" "$eip"
+        	printf "${LightBlue}$fmt_i) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
+			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
    	fi
 
   	if [ -z "$bind_ip" ]; then
-       printf "${Red}<** NOT BUILT BY THIS SCRIPT **${NC}\n"
+       printf "${Red}<NOT BUILT BY THIS SCRIPT!${NC}\n"
     else
         printf "${NC}\n"
     fi
