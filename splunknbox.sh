@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.2.1		#Used to check against github repository VERSION!
+VERSION=4.2.2.3		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -77,7 +77,7 @@ SPLUNK_IMAGE="splunknbox/splunk_6.5.3"
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
 
 #Available splunk demos registry.splunk.com
-REPO_DEMO_IMAGES="demo-dbconnect demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi demo-healthcare workshop-splunking-endpoint workshop-ransomware-splunklive-2017"
+REPO_DEMO_IMAGES="demo-dbconnect demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi demo-healthcare workshop-splunking-endpoint workshop-ransomware-splunklive-2017 workshop-boss-of-the-soc demo-connected-cars workshop-elastic-stack-lab"
 REPO_DEMO_IMAGES=$(echo "$REPO_DEMO_IMAGES" | tr " " "\n"|sort -u|tr "\n" " ")
 
 #3rd party images will be renamed to 3rd-* after each docker pull
@@ -1546,18 +1546,20 @@ is_container_running() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 fullhostname=$1
 
+check_load              #throttle back if high load
+
 #-----check if container is running--------
-#check if bind IP is used by new container (indications its running)
+#check if bind IP is used by new container (indicating it's running)
 ip=`docker port $fullhostname| awk '{print $3}'| cut -d":" -f1|head -1`
 printf "\t->Verifying that container is running..." >&3
 if [ -n "$ip" ]; then
 	printf "${Green}OK!${NC}\n" >&3
 else
-        printf "${Red}Not running! Attempting to restart..${NC}\n" >&3
-        CMD="docker start $fullhostname"; OUT=`$CMD`; display_output "$OUT" "" "4"
-        printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
-        sleep 15
-        #logline "$CMD" "$fullhostname"
+    printf "${Red}Not running! Attempting to restart..${NC}\n" >&3
+    CMD="docker start $fullhostname"; OUT=`$CMD`; display_output "$OUT" "" "4"
+    printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+    sleep 15
+    #logline "$CMD" "$fullhostname"
 fi
 return 0
 }	#end is_container_running()
@@ -1741,6 +1743,7 @@ if ( compare "$fullhostname" "DEMO" ) || ( compare "$fullhostname" "WORKSHOP" ) 
 else
 	full_image_name="$SPLUNK_IMAGE"
 fi
+#echo "fullhostname:[$fullhostname]    demo_image_name:[$demo_image_name]"
 #CMD="docker run -d -v $MOUNTPOINT/$fullhostname/opt/splunk/etc -v $MOUNTPOINT/$fullhostname/opt/splunk/var --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $full_image_name"
 #CMD="docker run -d -v $MOUNTPOINT/$fullhostname/etc:/opt/splunk/etc -v  $MOUNTPOINT/$fullhostname/var:/opt/splunk/var \
 CMD="docker run -d \
@@ -1751,8 +1754,11 @@ CMD="docker run -d \
 	--env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname \
 	--env SPLUNK_SERVER_IP=$vip --env SPLUNK_USER="splunk"  $full_image_name"
 
-
-printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating new splunk docker container ${NC} "
+if [ "$fullhostname" == "$MASTER_CONTAINER" ]; then
+	printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating docker monitor container.This is created once in the entire system! ${NC} "
+else
+	printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating new splunk docker container ${NC} "
+fi
 OUT=`$CMD` ; display_output "$OUT" "" "2"
 #CMD=`echo $CMD | sed 's/\t//g' `;
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
@@ -2140,7 +2146,7 @@ display_splunk_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}SPLUNK MENU                       ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow} MAIN MENU  -> SPLUNK MENU        ${DarkGray}[$dockerinfo]${NC}\n"
 display_stats_banner
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
@@ -2173,7 +2179,7 @@ display_system_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}SYSTEM MENU                       ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> SYSTEM MENU          ${DarkGray}[$dockerinfo]${NC}\n"
 display_stats_banner
 printf "\n\n"
 
@@ -2308,20 +2314,20 @@ do
 	read -p "Enter your choice [1-6] " choice
 #	read -p "Enter choice: " choice
  	case "$choice" in
-                \? ) display_main_menu_help ;;
+           \? ) display_main_menu_help ;;
         	1 ) splunk_menu_inputs ;;
         	2 ) lunch_learn_menu_inputs ;;
-		3 ) clustering_menu_inputs ;;
+			3 ) clustering_menu_inputs ;;
         	4 ) demos_menu_inputs ;;
         	5 ) 3rdparty_menu_inputs ;;
         	6 ) system_menu_inputs ;;
         	7 ) change_loglevel ;;
 
-		q|Q ) 	clear;
-			display_goodbye_msg;
-			echo;
-	      		echo -e "Please send feedback to mhassan@splunk.com  \0360\0237\0230\0200";echo
-	      		exit ;;
+			q|Q ) clear;
+				  display_goodbye_msg;
+			      echo;
+	      		  echo -e "Please send feedback to mhassan@splunk.com  \0360\0237\0230\0200";echo
+	      	      exit ;;
 	esac  #end case ---------------------------
 done
 return 0
@@ -2360,88 +2366,6 @@ do
                 n|N ) add_splunk_licenses ;;
                 u|U ) restart_all_splunkd ;;
 
-		b|B) return 0;;
-
-        esac  #end case ---------------------------
-	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
-done
-return 0
-}	#end splunk_menu_inputs()
-#---------------------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------------------
-splunk_menu_inputs() {
-_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-#This function captures user selection for splunk_menu
-while true;
-do
-	clear
-        display_splunk_menu_options
-        choice=""
-	echo
-        read -p "Enter choice (? for help) : " choice
-                case "$choice" in
-                \? ) display_splunk_menu_help;;
-
-               #IMAGES -----------
-                r|R ) remove_images;;
-                s|S ) show_all_images;;
-                f|F ) change_default_splunk_image;;
-
-                #CONTAINERS ------------
-                c|C) create_splunk_container  ;;
-                d|D ) delete_containers;;
-                v|V ) delete_all_volumes;;
-                l|L ) list_all_containers ;;
-                t|T ) start_containers;;
-                p|P ) stop_containers;;
-                h|H ) list_all_hosts_by_role ;;
-
-                #SPLUNK ------
-                e|E ) reset_all_splunk_passwords ;;
-                n|N ) add_splunk_licenses ;;
-                u|U ) restart_all_splunkd ;;
-
-		b|B) return 0;;
-
-        esac  #end case ---------------------------
-	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
-done
-return 0
-}	#end splunk_menu_inputs()
-#---------------------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------------------
-splunk_menu_inputs() {
-_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-#This function captures user selection for splunk_menu
-while true;
-do
-	clear
-        display_splunk_menu_options
-        choice=""
-	echo
-        read -p "Enter choice (? for help) : " choice
-                case "$choice" in
-                \? ) display_splunk_menu_help;;
-
-               #IMAGES -----------
-                r|R ) remove_images;;
-                s|S ) show_all_images;;
-                f|F ) change_default_splunk_image;;
-
-                #CONTAINERS ------------
-                c|C) create_splunk_container  ;;
-                d|D ) delete_containers;;
-                v|V ) delete_all_volumes;;
-                l|L ) list_all_containers ;;
-                t|T ) start_containers;;
-                p|P ) stop_containers;;
-				h|H ) list_all_hosts_by_role ;;
-
-                #SPLUNK ------
-                e|E ) reset_all_splunk_passwords ;;
-                n|N ) add_splunk_licenses ;;
-                u|U ) restart_all_splunkd ;;
-
 				b|B) return 0;;
 
         esac  #end case ---------------------------
@@ -2463,14 +2387,14 @@ do
         read -p "Enter choice (? for help) : " choice
                 case "$choice" in
 		#SYSTEM
-                \? ) display_system_menu_help;;
+        \? ) display_system_menu_help;;
 		r|R ) remove_ip_aliases ;;
 		w|W ) wipe_entire_system ;;
 		m|M ) display_docker_stats ;;
 		s|S ) show_docker_system_df ;;
 		c|C ) show_docker_system_prune ;;
 
-                b|B ) return 0;;
+        b|B ) return 0;;
 
         esac  #end case ---------------------------
 	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
@@ -2552,24 +2476,22 @@ do
         display_clustering_menu_options
         choice=""
         read -p "Enter choice: " choice
-                case "$choice" in
+        case "$choice" in
                 \? ) display_clustering_menu_help;;
-
-		1 ) create_single_idxc "AUTO" ;;
+				1 ) create_single_idxc "AUTO" ;;
                 2 ) create_single_shc  "AUTO" ;;
                 3 ) build_single_site "AUTO" ;;
                 4 ) build_multi_site_cluster "AUTO" ;;
-
                 5 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    create_single_idxc;;
-		6 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    create_single_shc;;
+		    		create_single_idxc;;
+				6 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
+		    		create_single_shc;;
                 7 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    build_single_site;;
+		    		build_single_site;;
                 8 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    build_multi_site_cluster;;
+		    		build_multi_site_cluster;;
 
-	        b|B) return 0;;
+	        	b|B) return 0;;
         esac  #end case ---------------------------
         read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
 done
@@ -2763,7 +2685,7 @@ lm_list=`docker ps -a --filter name="LM|lm" --format "{{.Names}}"|sort| tr '\n' 
 cm_list=`docker ps -a --filter name="CM|cm" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
 
 if [ "$mode" == "AUTO" ]; then
-        #DEPname="DEP"; DEPcount="1"; SHname="SH"; SHcount="$STD_SHC_COUNT";
+    #DEPname="DEP"; DEPcount="1"; SHname="SH"; SHcount="$STD_SHC_COUNT";
 	label="$SHCLUSTERLABEL"
 	#printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
 	printf  "\n"
@@ -2773,61 +2695,63 @@ if [ "$mode" == "AUTO" ]; then
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
 	#Basic services. Sequence is very important!
-        create_splunk_container "$DMC_BASE" "1" ; dmc=$gLIST
-        create_splunk_container "$LM_BASE" "1" ; lm=$gLIST
-        make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
-        create_splunk_container "$DEP_BASE" "$DEP_SHC_COUNT" ; dep="$gLIST"
-        make_lic_slave $lm $dep ; make_dmc_search_peer $dmc $dep
+    create_splunk_container "$DMC_BASE" "1" ; dmc=$gLIST
+    create_splunk_container "$LM_BASE" "1" ; lm=$gLIST
+    make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
+    create_splunk_container "$DEP_BASE" "$DEP_SHC_COUNT" ; dep="$gLIST"
+    make_lic_slave $lm $dep ; make_dmc_search_peer $dmc $dep
 
 	#The rest of SHs
-        create_splunk_container "$SH_BASE" "$STD_SHC_COUNT" ; members_list="$gLIST"
+    create_splunk_container "$SH_BASE" "$STD_SHC_COUNT" ; members_list="$gLIST"
 else
 	#Error checking (values should already have been passed at this point)
 	if [ -z "$label" ]; then
-                read -p "Need to know SH cluster label ($SHCLUSTERLABEL)> " label ;
-                label=`echo $label| tr '[a-z]' '[A-Z]'`; if [ -z "$label" ]; then label="$SHCLUSTERLABEL"; fi
-        fi
-        if [ -z "$DEPname" ] || [ -z "$DEPcount" ]; then
+        read -p "Need to know SH cluster label ($SHCLUSTERLABEL)> " label ;
+        label=`echo $label| tr '[a-z]' '[A-Z]'`; if [ -z "$label" ]; then label="$SHCLUSTERLABEL"; fi
+    fi
+    if [ -z "$DEPname" ] || [ -z "$DEPcount" ]; then
 		read -p "Need to know DEP basename (default $DEP_BASE)> " DEPname ;
-        	DEPname=`echo $DEPname| tr '[a-z]' '[A-Z]'` ; if [ -z "$DEPname" ]; then DEPname="$DEP_BASE"; fi
+        DEPname=`echo $DEPname| tr '[a-z]' '[A-Z]'` ; if [ -z "$DEPname" ]; then DEPname="$DEP_BASE"; fi
 	fi
-        if [ -z "$SHname" ] || [ -z "$SHcount" ]; then
+    if [ -z "$SHname" ] || [ -z "$SHcount" ]; then
 		read -p "Need to know SH basename (default $SH_BASE)> " SHname ;
-        	SHname=`echo $SHname| tr '[a-z]' '[A-Z]'`
-                if [ -z "$SHname" ]; then SHname="$SH_BASE"; fi
+        SHname=`echo $SHname| tr '[a-z]' '[A-Z]'`
+        if [ -z "$SHname" ]; then SHname="$SH_BASE"; fi
 		read -p "Need to know how many SH's to create (default $STD_SHC_COUNT)>  " SHcount
-                if [ -z "$SHcount" ]; then SHcount="$STD_SHC_COUNT"; fi
+        if [ -z "$SHcount" ]; then SHcount="$STD_SHC_COUNT"; fi
 	fi
 	if [ -z "$lm" ]; then
 		printf "Current list of LMs: [$lm_list]\n"
 		read -p "Choose LM from existing list or hit <ENTER> to create new one (default $LM_BASE)? " lm
 		lm=`echo $lm| tr '[a-z]' '[A-Z]'`
-                if [ -z "$lm" ]; then
+        if [ -z "$lm" ]; then
 			lm="$LM_BASE"; build_lm=1;
 		else
 			build_lm=0;
 		fi
 	fi
 	if [ -z "$dmc" ]; then
-                read -p "Need to know DMC basename (default $DMC_BASE)> " dmc ;
-                dmc=`echo $dmc| tr '[a-z]' '[A-Z]'`
-                if [ -z "$dmc" ]; then
-                       dmc="$DMC_BASE"; build_dmc=1;
-                else
-                       build_dmc=0;
-                fi
+        read -p "Need to know DMC basename (default $DMC_BASE)> " dmc ;
+        dmc=`echo $dmc| tr '[a-z]' '[A-Z]'`
+        if [ -z "$dmc" ]; then
+            dmc="$DMC_BASE"; build_dmc=1;
+        else
+            build_dmc=0;
         fi
+    fi
 	printf "\n"
-	printf "${Yellow}The following single SH Cluster will be created [$mode]:${NC}\n"
-	printf "Cluster Label: ${Green}%s${NC}\n" $label
-	printf "Cluster Label: ${Green}%s${NC}\n" $label
-	printf "Deployment Base Hostname: ${Green}%s${NC}\n" $DEPname
-	printf "DMC Base Hostname: ${Green}%s${NC}\n" $dmc
-	printf "License Master Base Hostname: ${Green}%s${NC}\n" $lm
-	printf "SH Base Hostname: ${Green}%s${NC}\n" $SHname
-	printf "Number of Search Heads: ${Green}%s${NC}\n" $SHcount
-	read -p $'Hit <\033[1;32mENTER>\e[0m:Confirm \033[1;32m <B>\e[0m:Go Back ? ' choice
-	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
+	#printf "${Yellow}The following single SH Cluster will be created [$mode]:${NC}\n"
+	#printf "Cluster Label: ${Green}%s${NC}\n" $label
+	#printf "Cluster Label: ${Green}%s${NC}\n" $label
+	#printf "Deployer Base Hostname: ${Green}%s${NC}\n" $DEPname
+	#printf "DMC Base Hostname: ${Green}%s${NC}\n" $dmc
+	#printf "License Master Base Hostname: ${Green}%s${NC}\n" $lm
+	#printf "SH Base Hostname: ${Green}%s${NC}\n" $SHname
+	#printf "Number of Search Heads: ${Green}%s${NC}\n" $SHcount
+	#if [ "$mode" == "MANUAL" ]; then
+	#	read -p $'Hit <\033[1;32mENTER>\e[0m:Confirm \033[1;32m <B>\e[0m:Go Back ? ' choice
+	#	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
+	#fi
 	printf "\n"
 
 
@@ -2835,18 +2759,18 @@ else
 	printf "${LightPurple}>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
 	printf "${LightPurple}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
 	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n\n" >&4
-        printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
+    printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	if [ "$build_dmc" == "1" ]; then
-                create_splunk_container "$dmc" "1"; dmc=$gLIST
-        fi
+            create_splunk_container "$dmc" "1"; dmc=$gLIST
+    fi
 	if [ "$build_lm" == "1" ]; then
         	create_splunk_container "$lm" "1" ; lm="$gLIST"
-		make_lic_slave $lm $dmc  #for previous step since lm was not ready yet
-                make_dmc_search_peer $dmc $lm
+			make_lic_slave $lm $dmc  #for previous step since lm was not ready yet
+            make_dmc_search_peer $dmc $lm
 	fi
 
         create_splunk_container "$DEPname" "$DEP_SHC_COUNT" ; dep="$gLIST"
-	make_lic_slave $lm $dep
+		make_lic_slave $lm $dep
         make_dmc_search_peer $dmc $dep
         create_splunk_container "$SHname" "$SHcount" ; members_list="$gLIST"
 fi
@@ -2884,7 +2808,7 @@ for i in $members_list ; do
 
 	#-------member config---
  	printf "[${Purple}$i${NC}]${LightBlue} Making cluster member...${NC}\n"
-        bind_ip_sh=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+    bind_ip_sh=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 	CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk init shcluster-config -auth $USERADMIN:$USERPASS -mgmt_uri https://$bind_ip_sh:$MGMT_PORT -replication_port $REPL_PORT -replication_factor $RFACTOR -register_replication_address $bind_ip_sh -conf_deploy_fetch_url https://$bind_ip_dep:$MGMT_PORT -secret $MYSECRET -shcluster_label $label"
 	OUT=`$CMD`
 	OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
@@ -2898,7 +2822,7 @@ for i in $members_list ; do
 	if [ -n "$cm" ]; then
 		#another method of getting bind IP (showing published ports:IPs).Container must be RUNNING!
 		cm_ip=`docker port  $cm| awk '{print $3}'| cut -d":" -f1|head -1`
-        	CMD="docker exec -u splunk  -ti $i /opt/splunk/bin/splunk edit cluster-config -mode searchhead -master_uri https://$cm_ip:$MGMT_PORT -secret $MYSECRET -auth $USERADMIN:$USERPASS"
+    	CMD="docker exec -u splunk  -ti $i /opt/splunk/bin/splunk edit cluster-config -mode searchhead -master_uri https://$cm_ip:$MGMT_PORT -secret $MYSECRET -auth $USERADMIN:$USERPASS"
 		OUT=`$CMD`
 		printf "\t->Integrating with Cluster Master (for idx auto discovery) [$cm] " >&3 ; display_output "$OUT" "property has been edited" "3"
 		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
@@ -2906,7 +2830,7 @@ for i in $members_list ; do
         fi
 	#-------
 
-        make_dmc_search_peer $dmc $i
+    make_dmc_search_peer $dmc $i
 	make_lic_slave $lm $i
 	restart_splunkd "$i" "b"
 
@@ -2978,15 +2902,15 @@ cm_list=`docker ps -a --filter name="$CMname" --format "{{.Names}}"|sort| tr '\n
 lm_list=`docker ps -a --filter name="$LMname" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'` #global list
 idx_list=`docker ps -a --filter name="$IDXname" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
 
-
-if [ "$1" == "AUTO" ]; then
+#------- big if ------------------
+if [ "$mode" == "AUTO" ]; then
 	#CMname="CM"; DMCname="DMC"; LMname="LM";  IDXname="IDX"; IDXcount="$STD_IDXC_COUNT";
 	label="$IDXCLUSTERLABEL"
 	#printf "${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
 	printf "${LightPurple}>>BUILDING INDEX CLUSTER${NC}\n"
 	printf "${LightPurple}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
 	printf "${DarkGray}Using base-names DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:$STD_IDXC_COUNT]${NC}\n\n" >&4
-        printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
+    printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
 	#Basic services. Sequence is very important!
 	create_splunk_container "$DMC_BASE" "1" ; dmc=$gLIST
@@ -2996,58 +2920,62 @@ if [ "$1" == "AUTO" ]; then
 	make_lic_slave $lm $cm ; make_dmc_search_peer $dmc $cm
 
 	#The rest of IDXs
-        create_splunk_container "$IDX_BASE" "$STD_IDXC_COUNT" ; members_list="$gLIST"
+    create_splunk_container "$IDX_BASE" "$STD_IDXC_COUNT" ; members_list="$gLIST"
 else
 	#Anything passed to function; user will NOT be prompted for it!
 	if [ -z "$label" ]; then
-                read -p "Need to know IDX cluster label (default $SHCLUSTERLABEL)? " label ;
-                label=`echo $label| tr '[a-z]' '[A-Z]'`; if [ -z "$label" ]; then label="$SHCLUSTERLABEL"; fi
-        fi
+        read -p "Need to know IDX cluster label (default $SHCLUSTERLABEL)? " label ;
+        label=`echo $label| tr '[a-z]' '[A-Z]'`; if [ -z "$label" ]; then label="$SHCLUSTERLABEL"; fi
+    fi
 	if [ -z "$IDXname" ] || [ -z "$IDXcount" ]; then
-                read -p "Need to know IDX basename (default $IDX_BASE)? " IDXname ;
-                IDXname=`echo $IDXname| tr '[a-z]' '[A-Z]'` ; if [ -z "$IDXname" ]; then IDXname="$IDX_BASE"; fi
+        read -p "Need to know IDX basename (default $IDX_BASE)? " IDXname ;
+        IDXname=`echo $IDXname| tr '[a-z]' '[A-Z]'` ; if [ -z "$IDXname" ]; then IDXname="$IDX_BASE"; fi
 		read -p "Need to know how IDX to create (default 3)? " IDXcount;
-                if [ -z "$IDXcount" ]; then IDXcount="$STD_IDXC_COUNT"; fi
-        fi
-        if [ -z "$lm" ]; then
-                printf "Current list of LMs: [$lm_list]\n"
-                read -p "Choose LM from existing list or hit <ENTER> to create new one (default $LM_BASE)? " lm
+        if [ -z "$IDXcount" ]; then IDXcount="$STD_IDXC_COUNT"; fi
+    fi
+    if [ -z "$lm" ]; then
+        printf "Current list of LMs: [$lm_list]\n"
+        read -p "Choose LM from existing list or hit <ENTER> to create new one (default $LM_BASE)? " lm
 		lm=`echo $lm| tr '[a-z]' '[A-Z]'`
-                if [ -z "$lm" ]; then
-                        lm="$LM_BASE"; build_lm=1;
-                else
-                        build_lm=0;
-                fi
-        fi
-        if [ -z "$cm" ]; then
-               	printf "Current list of CMs: [$cm_list]\n"
-               	read -p "Choose CM from existing list or hit <ENTER> to create new one (default $CM_BASE)? " cm ;
-		cm=`echo $cm| tr '[a-z]' '[A-Z]'`
-               	if [ -z "$cm" ]; then
-                       cm="$CM_BASE"; build_cm=1;
-               	else
-                       build_cm=0;
-               	fi
-       	fi
+        if [ -z "$lm" ]; then
+            lm="$LM_BASE"; build_lm=1;
+        else
+            build_lm=0;
+    	fi
+    fi
+    if [ -z "$cm" ]; then
+            printf "Current list of CMs: [$cm_list]\n"
+            read -p "Choose CM from existing list or hit <ENTER> to create new one (default $CM_BASE)? " cm ;
+			cm=`echo $cm| tr '[a-z]' '[A-Z]'`
+            if [ -z "$cm" ]; then
+                cm="$CM_BASE"; build_cm=1;
+            else
+                build_cm=0;
+            fi
+    fi
 	if [ -z "$dmc" ]; then
-                read -p "Need to know DMC basename (default $DMC_BASE)? " dmc ;
-                dmc=`echo $dmc| tr '[a-z]' '[A-Z]'`
-                if [ -z "$dmc" ]; then
-                       dmc="$DMC_BASE"; build_dmc=1;
-                else
-                       build_dmc=0;
-                fi
-        fi
+            read -p "Need to know DMC basename (default $DMC_BASE)? " dmc ;
+            dmc=`echo $dmc| tr '[a-z]' '[A-Z]'`
+            if [ -z "$dmc" ]; then
+                    dmc="$DMC_BASE"; build_dmc=1;
+            else
+                    build_dmc=0;
+            fi
+    fi
+
 	printf "\n"
-	printf "${Yellow}The following single IDX Cluster will be created:${NC}\n"
-	printf "Cluster Label: ${Green}%s${NC}\n" $label
-	printf "Cluster Master Base Hostname: ${Green}%s${NC}\n" $cm
-	printf "DMC Base Hostname: ${Green}%s${NC}\n" $dmc
-	printf "License Master Base Hostname: ${Green}%s${NC}\n" $lm
-	printf "IDX Base Hostname: ${Green}%s${NC}\n" $IDXname
-	printf "Number of Indexers: ${Green}%s${NC}\n" $IDXcount
-	read -p $'Hit <\033[1;32mENTER>\e[0m:Confirm \033[1;32m <B>\e[0m:Go Back ? ' choice
-	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
+	#printf "${Yellow}The following single IDX Cluster will be created[$mode]:${NC}\n"
+	#printf "Cluster Label: ${Green}%s${NC}\n" $label
+	#printf "Cluster Master Base Hostname: ${Green}%s${NC}\n" $cm
+	#printf "DMC Base Hostname: ${Green}%s${NC}\n" $dmc
+	#printf "License Master Base Hostname: ${Green}%s${NC}\n" $lm
+	#printf "IDX Base Hostname: ${Green}%s${NC}\n" $IDXname
+	#printf "Number of Indexers: ${Green}%s${NC}\n" $IDXcount
+	#if [ "$mode" == "MANUAL" ]; then
+	#	read -p $'Hit <\033[1;32mENTER>\e[0m:Confirm \033[1;32m <B>\e[0m:Go Back ? ' choice
+	#	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
+	#fi
+
 	printf "\n"
 
 	#printf "\n${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
@@ -3057,22 +2985,24 @@ else
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	if [ "$build_dmc" == "1" ]; then
                 create_splunk_container "$dmc" "1"; dmc=$gLIST
-        fi
-        if [ "$build_lm" == "1" ]; then
-                create_splunk_container "$lm" "1" ; lm=$gLIST
+    fi
+    if [ "$build_lm" == "1" ]; then
+        create_splunk_container "$lm" "1" ; lm=$gLIST
 		make_lic_slave $lm $dmc  #for previous step since lm was not ready yet
 		make_dmc_search_peer $dmc $lm
-        fi
-       	if [ "$build_cm" == "1" ]; then
-                create_splunk_container "$cm" "1"; cm=$gLIST
+    fi
+    if [ "$build_cm" == "1" ]; then
+        create_splunk_container "$cm" "1"; cm=$gLIST
 		make_lic_slave $lm $cm
 		make_dmc_search_peer $dmc $cm
-        fi
+    fi
 
 	#create the remaining IDXs
-        create_splunk_container "$IDXname" "$IDXcount" ; members_list="$gLIST"
+    create_splunk_container "$IDXname" "$IDXcount" ; members_list="$gLIST"
 
 fi
+#------- big if ------------------
+
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
 printf "\n"
 printf "${LightPurple}==>Starting PHASE2: Converting generic IDX hosts into IDXC${NC}\n"
@@ -3097,10 +3027,10 @@ for i in $members_list ; do
 	check_load	#throttle during IDXC build
 
 	printf "[${Purple}$i${NC}]${LightBlue} Making search peer... ${NC}\n"
-        bind_ip_idx=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+    bind_ip_idx=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 
 	#-------member config----
-        CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk edit cluster-config -mode slave -master_uri https://$bind_ip_cm:$MGMT_PORT -replication_port $REPL_PORT -register_replication_address $bind_ip_idx -cluster_label $label -secret $MYSECRET -auth $USERADMIN:$USERPASS "
+    CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk edit cluster-config -mode slave -master_uri https://$bind_ip_cm:$MGMT_PORT -replication_port $REPL_PORT -register_replication_address $bind_ip_idx -cluster_label $label -secret $MYSECRET -auth $USERADMIN:$USERPASS "
 	OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 	printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$i"
@@ -3172,37 +3102,39 @@ if [ "$1" == "AUTO" ]; then
 else
 	mode="MANUAL"
 	read -p "Enter SH cluster label (default $SHCLUSTERLABEL): " shc_label
-        shc_label=`echo $shc_label| tr '[a-z]' '[A-Z]'`; if [ -z "$shc_label" ]; then shc_label="$SHCLUSTERLABEL";  fi
+    shc_label=`echo $shc_label| tr '[a-z]' '[A-Z]'`; if [ -z "$shc_label" ]; then shc_label="$SHCLUSTERLABEL";  fi
 
 	read -p "Enter IDX cluster label (default $IDXCLUSTERLABEL): " idxc_label
-        idxc_label=`echo $idxc_label| tr '[a-z]' '[A-Z]'`; if [ -z "$idxc_label" ]; then idxc_label="$IDXCLUSTERLABEL";  fi
+    idxc_label=`echo $idxc_label| tr '[a-z]' '[A-Z]'`; if [ -z "$idxc_label" ]; then idxc_label="$IDXCLUSTERLABEL";  fi
 
 	read -p "Enter site name (default site01): " site
 	site=`echo $site| tr '[a-z]' '[A-Z]'`		#convert to upper case
 	if [ -z "$site" ]; then site="SITE01";  fi
 
-        read -p "How many IDX's (default $STD_IDXC_COUNT)>  " IDXcount
-        if [ -z "$IDXcount" ]; then IDXcount="$STD_IDXC_COUNT"; fi
-        read -p "How many SH's (default $STD_SHC_COUNT)>  " SHcount
-        if [ -z "$SHcount" ]; then SHcount="$STD_SHC_COUNT"; fi
+    read -p "How many IDX's (default $STD_IDXC_COUNT)>  " IDXcount
+    if [ -z "$IDXcount" ]; then IDXcount="$STD_IDXC_COUNT"; fi
+    read -p "How many SH's (default $STD_SHC_COUNT)>  " SHcount
+    if [ -z "$SHcount" ]; then SHcount="$STD_SHC_COUNT"; fi
 fi
 
 #assign_server_role "$lm" "dmc_group_license_master"
 echo
 printf "\n"
-printf "${Yellow}The following single site  will be created:${NC}\n"
-printf "Site Name: ${Green}%s${NC}\n" $site
-printf "SH Cluster Label: ${Green}%s${NC}\n" $shc_label
-printf "IDX Cluster Label: ${Green}%s${NC}\n" $idxc_label
-printf "Cluster Master Base Hostname: ${Green}%s-CM${NC}\n" $site
-printf "DMC Base Hostname: ${Green}%s-DMC${NC}\n" $site
-printf "License Master Base Hostname: ${Green}%s-LM${NC}\n" $site
-printf "IDX Base Hostname: ${Green}%s-IDX${NC}\n" $site
-printf "Number of Indexers: ${Green}%s${NC}\n" $IDXcount
-printf "SH Base Hostname: ${Green}%s-SH${NC}\n" $site
-printf "Number of Search Heads: ${Green}%s${NC}\n" $SHcount
-read -p $'Hit <\033[1;32mENTER>\e[0m:Confirm \033[1;32m <B>\e[0m:Go Back ? ' choice
-if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
+#printf "${Yellow}The following single site will be created [$mode]:${NC}\n"
+#printf "Site Name: ${Green}%s${NC}\n" $site
+#printf "SH Cluster Label: ${Green}%s${NC}\n" $shc_label
+#printf "IDX Cluster Label: ${Green}%s${NC}\n" $idxc_label
+#printf "Cluster Master Base Hostname: ${Green}%s-CM${NC}\n" $site
+#printf "DMC Base Hostname: ${Green}%s-DMC${NC}\n" $site
+#printf "License Master Base Hostname: ${Green}%s-LM${NC}\n" $site
+#printf "IDX Base Hostname: ${Green}%s-IDX${NC}\n" $site
+#printf "Number of Indexers: ${Green}%s${NC}\n" $IDXcount
+#printf "SH Base Hostname: ${Green}%s-SH${NC}\n" $site
+#printf "Number of Search Heads: ${Green}%s${NC}\n" $SHcount
+#if [ "$mode" == "MANUAL" ]; then
+#	read -p $'Hit <\033[1;32mENTER>\e[0m:Confirm \033[1;32m <B>\e[0m:Go Back  > ' choice
+#	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
+#fi
 printf "\n"
 
 
@@ -3249,39 +3181,38 @@ printf "One CM server will be automatically created for the entire site-2-site c
 
 if [ "$mode" == "AUTO" ]; then
 	count=3;
-        IDXcount="$STD_IDXC_COUNT"; SHcount="$STD_SHC_COUNT"; shc_label="$SHCLUSTERLABEL"; idxc_label="$IDXCLUSTERLABEL"
+    IDXcount="$STD_IDXC_COUNT"; SHcount="$STD_SHC_COUNT"; shc_label="$SHCLUSTERLABEL"; idxc_label="$IDXCLUSTERLABEL"
 	#SITEnames="$DEFAULT_SITES_NAMES"
-        SITEnames="STL LON HKG"
-        sites_str="site1,site2,site3"
+    SITEnames="STL LON HKG"
+    sites_str="site1,site2,site3"
 	first_site=`echo $SITEnames|awk '{print $1}'`		#where basic services CM,LM resides
 	cm="$first_site-CM01"
 else
 	read -p "How many LOCATIONS to build (default 3)?  " count
-        if [ -z "$count" ]; then count=3; fi
+    if [ -z "$count" ]; then count=3; fi
 
 	#loop thru site count to capture site details
-	for (( i=1; i <= ${count}; i++));
-        do
+	for (( i=1; i <= ${count}; i++)); do
 		printf "\n"
-                read -p "Enter site$i fullname (default SITE0$i)>  " site
-                if [ -z "$site" ]; then site="site0$i"; fi
-                read -p "How many IDX's (default $STD_IDXC_COUNT)>  " IDXcount
-                if [ -z "$IDXcount" ]; then IDXcount="$STD_IDXC_COUNT"; fi
-                read -p "How many SH's (default $STD_SHC_COUNT)>  " SHcount
-                if [ -z "$SHcount" ]; then SHcount="$STD_SHC_COUNT"; fi
+        read -p "Enter site$i fullname (default SITE0$i)>  " site
+        if [ -z "$site" ]; then site="site0$i"; fi
+        read -p "How many IDX's (default $STD_IDXC_COUNT)>  " IDXcount
+        if [ -z "$IDXcount" ]; then IDXcount="$STD_IDXC_COUNT"; fi
+        read -p "How many SH's (default $STD_SHC_COUNT)>  " SHcount
+        if [ -z "$SHcount" ]; then SHcount="$STD_SHC_COUNT"; fi
 
-                SITEnames="$SITEnames ""$site"
+        SITEnames="$SITEnames ""$site"
 		SITEnames=`echo $SITEnames| tr '[a-z]' '[A-Z]' `	#upper case
-                s="site""$i"
-                sites_str="$sites_str""$s,"               #spaces causes error with "-available_sites" switch
-                #echo "$s [$sites_str]"
-        done
+        s="site""$i"
+        sites_str="$sites_str""$s,"               #spaces causes error with "-available_sites" switch
+        #echo "$s [$sites_str]"
+    done
 	sites_str=`echo ${sites_str%?}`  			#remove last comma
 	first_site=`echo $SITEnames|awk '{print $1}'`			#where basic services CM,LM resides
 	printf "\n"
 	read -p "site-to-site cluster must have one CM. Enter CM fullname (default $first_site-CM01)> " cm
-        cm=`echo $cm| tr '[a-z]' '[A-Z]' `
-        if [ -z "$cm" ]; then cm="$first_site-CM01"; fi
+    cm=`echo $cm| tr '[a-z]' '[A-Z]' `
+    if [ -z "$cm" ]; then cm="$first_site-CM01"; fi
 fi
 
 #------- Finished capturing sites names/basic services names ------------------
@@ -3350,7 +3281,7 @@ for str in $SITEnames; do
 		printf "[${Purple}$i${NC}]${Cyan} Migrating Indexer (restarting takes time)... ${NC}\n"
 		CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk edit cluster-config  -mode slave -site $site -master_uri https://$cm_ip:$MGMT_PORT -replication_port $REPL_PORT  -auth $USERADMIN:$USERPASS "
 		OUT=`$CMD`
-        	OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
+        OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 
 		printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$i"
@@ -3363,9 +3294,9 @@ for str in $SITEnames; do
 	printf "${Cyan}____________ Starting STEP#3 (Configuring SHs in [site:$site location:$str]) ___${NC}\n" >&3
 	for i in $site_sh_list; do
 		printf "[${Purple}$i${NC}]${Cyan} Migrating Search Head... ${NC}\n"
-	    	CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk edit cluster-master https://$cm_ip:$MGMT_PORT -site $site -auth $USERADMIN:$USERPASS"
+	    CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk edit cluster-master https://$cm_ip:$MGMT_PORT -site $site -auth $USERADMIN:$USERPASS"
 		OUT=`$CMD`
-                OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
+        OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 		printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$i"
 		printf "\t->Pointing to CM[$cm] for [site:$site location:$str]" >&3
@@ -3412,11 +3343,11 @@ grep exec $CMDLOGTXT | awk '{print $5}'|grep -v -e '^[[:space:]]*$'|sort -u > tm
 printf "${LightBlue}   HOST         NUMBER OF CMDS${NC}\n"  >&3
 printf "${LightBlue}============    =============${NC}\n"   >&3
 for host_name in `cat tmp1`; do
-        count=`grep $host_name $CMDLOGTXT|grep exec|wc -l`;
-        cmd_list=`grep exec $CMDLOGTXT| grep $host_name| awk '{print $6,$7,$8}'| sed 's/\$//g'|sed 's/\/opt\/splunk\/bin\/splunk //g'| sort | uniq -c|sed 's/\r\n/ /g'|awk '{printf "[%s:%s %s]", $1,$2,$3}' `
+    count=`grep $host_name $CMDLOGTXT|grep exec|wc -l`;
+    cmd_list=`grep exec $CMDLOGTXT| grep $host_name| awk '{print $6,$7,$8}'| sed 's/\$//g'|sed 's/\/opt\/splunk\/bin\/splunk //g'| sort | uniq -c|sed 's/\r\n/ /g'|awk '{printf "[%s:%s %s]", $1,$2,$3}' `
 
-        printf "${LightBlue}%-15s %7s ${NC}\n" $host_name $count >&3
-        printf "${DarkGray}$cmd_list${NC}\n" >&4
+    printf "${LightBlue}%-15s %7s ${NC}\n" $host_name $count >&3
+    printf "${DarkGray}$cmd_list${NC}\n" >&4
 
 done > tmp2
 #cat tmp2  >&3	#show results
@@ -3952,8 +3883,8 @@ if [ "$AWS_EC2" == "YES" ]; then
 	done
 fi
 printf "Current list of all $type containers on this system:\n"
-printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd   Ver    Internal IP%-3s       Image used%-10s     URL                 ${NC}\n"
-printf "   ---------------%-3s --------- ------- ------- ----------%-3s ------------------%-3s${NC}\n" #---%-4s ---------%-3s ---------%-3s ${NC}\n"
+printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd   Ver    Internal IP%-3s       Image used%-10s     URL${NC}\n"
+printf "   ---------------%-3s --------- ------- ------- ----------%-3s ------------------%-3s---------------------------${NC}\n"
 i=0
 hosts_sorted=`docker ps -a --format {{.Names}}| egrep -i "$type"| sort`
 
@@ -4406,5 +4337,3 @@ main_menu_inputs
 #<<<<<<<<<<<<<----------   MAIN BEGINS     ---------->>>>>>>>>>>>
 
 ##### EOF #######
-
-
