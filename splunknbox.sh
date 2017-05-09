@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.2.3		#Used to check against github repository VERSION!
+VERSION=4.2.2.4		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -77,7 +77,7 @@ SPLUNK_IMAGE="splunknbox/splunk_6.5.3"
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
 
 #Available splunk demos registry.splunk.com
-REPO_DEMO_IMAGES="demo-dbconnect demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi demo-healthcare workshop-splunking-endpoint workshop-ransomware-splunklive-2017 workshop-boss-of-the-soc demo-connected-cars workshop-elastic-stack-lab"
+REPO_DEMO_IMAGES="demo-dbconnect demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi demo-healthcare workshop-splunking-endpoint workshop-ransomware-splunklive-2017 demo-connected-cars workshop-elastic-stack-lab"
 REPO_DEMO_IMAGES=$(echo "$REPO_DEMO_IMAGES" | tr " " "\n"|sort -u|tr "\n" " ")
 
 #3rd party images will be renamed to 3rd-* after each docker pull
@@ -97,7 +97,7 @@ LL_DATASETS="http_status.csv tutorialdata.zip"
 #---------------------------------------
 
 #----------Cluster stuff----------------
-MASTER_CONTAINER="DOCKER-MONITOR" 	#name of master container used to monitor ALL containers
+MASTER_CONTAINER="MONITOR" 	#name of master container used to monitor ALL containers
 BASEHOSTNAME="HOST"					#default hostname to create
 CM_BASE="CM"
 DMC_BASE="DMC"
@@ -108,7 +108,8 @@ SH_BASE="SH"
 SPLUNKNET="splunk-net"				#default name for network (host-to-host comm)
 #Splunk standard ports
 SSHD_PORT="8022"					#in case we need to enable sshd, not recommended
-SPLUNKWEB_PORT="8000"
+SPLUNKWEB_PORT="8000"				#port splunkd is listing on
+SPLUNKWEB_PORT_EXT="8000"			#port mapped during docker run (customer facing)
 MGMT_PORT="8089"
 #KV_PORT="8191"
 RECV_PORT="9997"
@@ -193,6 +194,123 @@ DEFAULT_NO="y/\033[1;37mN\033[0m"
 exec >> >(tee -i $SCREENLOGFILE)
 exec 2>&1
 
+#---------------------------------------------------------------------------------------------------------------
+function catimg() {
+
+#this is cut & paste from imgcat package
+
+# tmux requires unrecognized OSC sequences to be wrapped with DCS tmux;
+# <sequence> ST, and for all ESCs in <sequence> to be replaced with ESC ESC. It
+# only accepts ESC backslash for ST.
+function print_osc() {
+    if [[ $TERM == screen* ]] ; then
+        printf "\033Ptmux;\033\033]"
+    else
+        printf "\033]"
+    fi
+}
+
+# More of the tmux workaround described above.
+function print_st() {
+    if [[ $TERM == screen* ]] ; then
+        printf "\a\033\\"
+    else
+        printf "\a"
+    fi
+}
+
+# print_image filename inline base64contents print_filename
+#   filename: Filename to convey to client
+#   inline: 0 or 1
+#   base64contents: Base64-encoded contents
+#   print_filename: If non-empty, print the filename
+#                   before outputting the image
+function print_image() {
+    print_osc
+    printf '1337;File='
+    if [[ -n "$1" ]]; then
+      printf 'name='`printf "%s" "$1" | base64`";"
+    fi
+
+    VERSION=$(base64 --version 2>&1)
+    if [[ "$VERSION" =~ fourmilab ]]; then
+      BASE64ARG=-d
+    elif [[ "$VERSION" =~ GNU ]]; then
+      BASE64ARG=-di
+    else
+      BASE64ARG=-D
+    fi
+
+    printf "%s" "$3" | base64 $BASE64ARG | wc -c | awk '{printf "size=%d",$1}'
+    printf ";inline=$2"
+    printf ":"
+    printf "%s" "$3"
+    print_st
+    printf '\n'
+    if [[ -n "$4" ]]; then
+      echo $1
+    fi
+}
+
+function error() {
+    echo "ERROR: $*" 1>&2
+}
+
+function show_help() {
+    echo "Usage: imgcat [-p] filename ..." 1>& 2
+    echo "   or: cat filename | imgcat" 1>& 2
+}
+
+## Main
+
+if [ -t 0 ]; then
+    has_stdin=f
+else
+    has_stdin=t
+fi
+
+# Show help if no arguments and no stdin.
+if [ $has_stdin = f -a $# -eq 0 ]; then
+    show_help
+    exit
+fi
+
+# Look for command line flags.
+while [ $# -gt 0 ]; do
+    case "$1" in
+    -h|--h|--help)
+        show_help
+        exit
+        ;;
+    -p|--p|--print)
+        print_filename=1
+        ;;
+    -*)
+        error "Unknown option flag: $1"
+        show_help
+        exit 1
+      ;;
+    *)
+        if [ -r "$1" ] ; then
+            has_stdin=f
+            print_image "$1" 1 "$(base64 < "$1")" "$print_filename"
+        else
+            error "imgcat: $1: No such file or directory"
+            exit 2
+        fi
+        ;;
+    esac
+    shift
+done
+
+# Read and print stdin
+if [ $has_stdin = t ]; then
+    print_image "" 1 "$(cat | base64)" ""
+fi
+
+return
+}	#end catimg()
+#---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 logline() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
@@ -1525,7 +1643,7 @@ custom_web_conf="[settings]\nenableSplunkWebSSL=0\n"
 printf "$custom_web_conf" > $PROJ_DIR/web.conf.demo
 CMD="docker cp $PROJ_DIR/web.conf.demo $fullhostname:/opt/splunk/etc/system/local/web.conf" ; OUT=`$CMD`
 printf "${DarkGray}CMD:[$CMD]${NC}>>[$OUT]\n" >&4
-printf "\t->Configuring demo to be viewed on http://$fullhostname:8000 ${Green} Done!${NC}\n" >&3
+printf "\t->Configuring demo to be viewed on http://$fullhostname:$SPLUNKWEB_PORT_EXT ${Green} Done!${NC}\n" >&3
 
 #if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-ITSI" ) ;then
 #	USERPASS="changeme"
@@ -1706,6 +1824,49 @@ gLIST=`echo $gLIST |sed 's/;$//'`	#GLOBAL! remove last space (causing host to lo
 return $host_num
 }	#end of create_splunk_container()
 #---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+build_dot_graph() {
+hosts=`docker ps -a --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
+list=`echo $hosts |sed 's/;$//'`	#remove last space
+list=`echo $hosts| sed 's/ /->/g' `  #replace space between hostnames with ->
+#echo "hosts in build_dot_graph():[$hosts]"
+#echo "list in build_dot_graph():[$list]"
+
+#section 1 of the .dot file -------
+echo  "
+digraph test {
+	splines=false
+	rankdir=LR
+	node [nodesep=1.0, outputMode=nodesfirst, style=dashed, penwidth=1.0, bgcolor=\"#ffffff00\", overlap=scale];
+	edge [penwidth=0.75,arrowsize=0.6]
+	edge [color=black, fontsize=8, forcelabels=true]
+subgraph cluster_3 {
+	forcelabels=true;
+	label=\"All Hosts\";
+	node [ nodesep=0.02, style=\"rounded\", fontcolor=blue, fontsize=10,shape=box];
+	$list [style=\"invis\" ]
+	" > file.dot
+
+for i in `echo $hosts`; do
+	host_ip=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+#section 2 the .dot file -------
+	echo "	$i [label=<$i<BR/><FONT POINT-SIZE=\"7\">$host_ip:$SPLUNKWEB_PORT_EXT</FONT>>];
+
+	" >> file.dot
+done
+#section 3 the .dot file -------
+echo "	}
+}
+" >> file.dot
+
+#clear
+sleep 2
+dot -Gnewrank -Tpng  file.dot -o test.png
+#open test.png
+#catimg test.png
+return
+}
+#---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
 construct_splunk_container() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
@@ -1744,11 +1905,11 @@ else
 	full_image_name="$SPLUNK_IMAGE"
 fi
 #echo "fullhostname:[$fullhostname]    demo_image_name:[$demo_image_name]"
-#CMD="docker run -d -v $MOUNTPOINT/$fullhostname/opt/splunk/etc -v $MOUNTPOINT/$fullhostname/opt/splunk/var --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $full_image_name"
+#CMD="docker run -d -v $MOUNTPOINT/$fullhostname/opt/splunk/etc -v $MOUNTPOINT/$fullhostname/opt/splunk/var --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT_EXT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $full_image_name"
 #CMD="docker run -d -v $MOUNTPOINT/$fullhostname/etc:/opt/splunk/etc -v  $MOUNTPOINT/$fullhostname/var:/opt/splunk/var \
 CMD="docker run -d \
 	--network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER \
-	-p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT \
+	-p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT_EXT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT \
 	-p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT \
 	-p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" \
 	--env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname \
@@ -1796,6 +1957,8 @@ if [ -f "$PWD/containers.vimrc" ]; then
 	printf "\t->Copying $PWD/containers.vimrc to $fullhostname:/root/.vimrc\n" >&4
        	CMD=`docker cp $PWD/containers.vimrc $fullhostname:/root/.vimrc`
 fi
+echo "\t->Building graphviz dot file ..." >&4
+#build_dot_graph
 
 #DNS stuff to be used with dnsmasq. Need to revisit for OSX  9/29/16
 #Enable for Linux at this point
@@ -3905,9 +4068,9 @@ for host in $hosts_sorted ; do
     splunkd_ver=`docker exec $hostname /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
     host_line[$i]="$bind_ip"
     if [ "$AWS_EC2" == "YES" ]; then
-		eip=`grep $bind_ip aws_eip_mapping.tmp | awk '{print "http://"$2":8000"}' `
+		eip=`grep $bind_ip aws_eip_mapping.tmp | awk '{print "http://"$2":$SPLUNKWEB_PORT_EXT"}' `
 	else
-		eip="http://$bind_ip:8000"
+		eip="http://$bind_ip:$SPLUNKWEB_PORT_EXT"
     fi
 
     #check splunk state if container is UP
@@ -3992,7 +4155,7 @@ printf "count: %s\n\n" $i
 #       if [ -z "$choice" ]; then
 #               continue
 #       elif [ "$choice" -le "$i" ] && [ "$choice" -ne "0" ] ; then
-#                       open http://${host_line[$choice]}:8000
+#                       open http://${host_line[$choice]}:$SPLUNKWEB_PORT_EXT
 #               else
 #                       printf "Invalid choice! Valid options [1..$i]\n"
 #       fi
