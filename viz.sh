@@ -145,7 +145,7 @@ role=$2		#used if supplied to us
 
 host_ip=`docker inspect --format '{{ .HostConfig }}' $name| ggrep -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 
-pendwith=1;role=""
+pendwith=1
 if  ! ( is_container_running "$name" ); then      #return=1 if running
         style="rounded,dashed"
 		penwidth="1.0"
@@ -170,8 +170,9 @@ elif ( compare "$name" "DEP" ); then
 elif ( compare "$name" "SH" ); then
 		style="rounded,filled"
 		penwidth="2.0"
-		color="greenyellow"
+		color="palegreen3"
 		#color="khaki"
+		#echo "$name:$role"
 		label="$name\\\n $host_ip\\\n $role"
 elif ( compare "$name" "IDX" ); then
 		style="rounded,filled"
@@ -185,7 +186,7 @@ elif ( compare "$name" "DEMO" ); then
 		color="hotpink"
 		#color="khaki"
 		label="$name\\\n $host_ip\\\n $role"
-else
+else   #everything else
 		style="rounded,bold"
 		penwidth="2.0"
 		color="green"
