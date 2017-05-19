@@ -160,9 +160,9 @@ v3.9.8.4   3/8/17
 v3.9.9   3/27/17
 -sorted hostnames in display_all_containers()
 -support for AWS EC2. If detects its running in EC2 then:
-	-set aliases to 10.0.0.0/24 (this tends to be default private space)
-	-show EIP (NATs) in display_all_containers() 
-	-don’t show password on login screen (since its public image now)
+-set aliases to 10.0.0.0/24 (this tends to be default private space)
+-show EIP (NATs) in display_all_containers() 
+-don’t show password on login screen (since its public image now)
 
 v4.0   3/31/17  GA
 -added wget dependency check/install
@@ -183,5 +183,14 @@ v4.2.1 5/1/2017
 -fixed a bug in progress_bar_image_download() where args in compare call reversed
 -Manual cluster-build now shows how the cluster will be build and ask for confirmation
 -Upon start, if the main splunk_image doesn’t exist and the user chooses not to download; the script will not exit. This is need since we have a lot more features now they may not require the main image (3rd party, demos)
+
+v4.2.2 5/1/2017
+-fixed a bug construct_container where workshop demos get generic splunk image. This bug is a result 4.2.1 release
+
+v4.2.2.6  5/18/2017
+-fixed a bug around similar hostnames in display_all_containers() [ex SITE01DEP01 vs DEP01]
+-modified is_splunkd_running() for robustness
+-modified is_container_running() for robustness
+-added more check_load checks
 
 
