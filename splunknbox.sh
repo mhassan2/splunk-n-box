@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.2.4		#Used to check against github repository VERSION!
+VERSION=4.2.2.6		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -105,6 +105,7 @@ LM_BASE="LM"
 DEP_BASE="DEP"
 IDX_BASE="IDX"
 SH_BASE="SH"
+HF_BASE="HF"
 SPLUNKNET="splunk-net"				#default name for network (host-to-host comm)
 #Splunk standard ports
 SSHD_PORT="8022"					#in case we need to enable sshd, not recommended
@@ -1007,10 +1008,10 @@ string=$1 ; substring=$2
     if test "${string#*$substring}" != "$string"
     then
 	printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} strings matching${NC}\n"  >&5
-        return 0    # $substring is in $string
+        return 0    # TRUE! $substring is in $string
     else
 	printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} strings NOT matching!${NC}\n"  >&5
-        return 1    # $substring is not in $string
+        return 1    # NOT TRUE! $substring is not in $string
     fi
 return 0
 }	#end compare()
@@ -1077,38 +1078,42 @@ is_splunkd_running() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 fullhostname=$1
+check_load
 
 #-----check if splunkd is running--------
-if ( compare "$host_name" "DEMO" ) || ( compare "$host_name" "WORKSHOP" ); then pausing 30; fi #demo/workshop containers takes little longer to start
-i=1
-splunkstate=`docker exec -ti $fullhostname /opt/splunk/bin/splunk status| $GREP -i "not running" `
+if ( compare "$host_name" "DEMO" ) || ( compare "$host_name" "WORKSHOP" ); then
+	pausing 30;
+fi #demo/workshop containers takes little longer to start
+
+#splunkstate=`docker exec -ti $fullhostname /opt/splunk/bin/splunk status| $GREP -i "not running" `
+splunkstate=`docker exec -ti $fullhostname sh -c "ps xa|$GREP '[s]plunkd -p'" `
 #echo "splunkstate[$splunkstate]"
 echo -ne "\t->Verifying that splunkd is running...\r" >&3
-if [ -z "$splunkstate" ]; then
-        true
-	#printf "${Green}OK!${NC}\n" >&3
-	#echo -ne  "\t->->Verifying that splunkd is running...${Green}OK!${NC}\n" >&3
-else	while [ -n "$splunkstate" ] && [ $i -le 3 ]; do
-        	#printf "\n\t->Verifying that splunkd is running...${Red}Not running! Attempt $i to restart..${NC}\n" >&3
+if [ -n "$splunkstate" ]; then
+        echo -ne  "\t->Verifying that splunkd is running...${Green}OK!${NC}                           \n" >&3
+else
         	echo -ne "${NC}\t->Verifying that splunkd is running..${Red}Not running! Attempt ${Yellow}$i${Red} to restart\r${NC}" >&3
+        	sleep 30        #pause between attempts to restart
         	CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk start "
         	#echo "cmd[$CMD]"
         	OUT=`$CMD`; display_output "$OUT" "Splunk web interface is at" "4"
         	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
         	#logline "$CMD" "$fullhostname"
         	#pausing "30"
-        	sleep 30        #pause between attempts to restart
-        	splunkstate=`docker exec -ti $fullhostname /opt/splunk/bin/splunk status| $GREP -i "not running" `
-        	let i+=1
-        done
+			splunkstate=`docker exec -ti $fullhostname sh -c "ps xa|$GREP '[s]plunkd -p'" `
+			if [ -z "$splunkstat" ]; then
+        		echo -ne  "\t->Verifying that splunkd is running...${Green}OK!${NC}                           \n" >&3
+				return
+
+			fi
 fi
 
-if [ -z "$splunkstate" ]; then
+#if [ -z "$splunkstate" ]; then
 # printf "${Green}OK!${NC}\n" >&3
-        echo -ne  "\t->Verifying that splunkd is running...${Green}OK!${NC}                           \n" >&3
-else
-        echo -ne  "\t->Verifying that splunkd is running...${Red}NOT OK!${NC}                          \n" >&3
-fi
+ #       echo -ne  "\t->Verifying that splunkd is running...${Green}OK!${NC}                           \n" >&3
+#else
+ #       echo -ne  "\t->Verifying that splunkd is running...${Red}NOT OK!${NC}                          \n" >&3
+#fi
 
 return 0
 }	#end is_splunkd_running()
@@ -1203,6 +1208,7 @@ add_license_file() {
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
+check_load
 CMD="docker cp $PROJ_DIR/$LIC_FILES_DIR  $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
 printf "\t->Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
@@ -1335,6 +1341,7 @@ make_lic_slave() {
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
+check_load
 lm=$1; hostname=$2;
 if [ -n "$lm" ]; then
 	#echo "hostname[$hostname]  lm[$lm] _____________";exit
@@ -1476,6 +1483,8 @@ custom_login_screen() {
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 vip=$1;  fullhostname=$2
+
+check_load
 
 #----------- password stuff ----------
 if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-ITSI" ) || ( compare "$fullhostname" "DEMO-VMWARE" ) ; then
@@ -1659,28 +1668,20 @@ restart_splunkd "$fullhostname"
 return 0
 }	#end set_splunkweb_to_http()
 #---------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------
+#--------------------------------------------
 is_container_running() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-fullhostname=$1
 
 check_load              #throttle back if high load
-
 #-----check if container is running--------
 #check if bind IP is used by new container (indicating it's running)
-ip=`docker port $fullhostname| awk '{print $3}'| cut -d":" -f1|head -1`
-printf "\t->Verifying that container is running..." >&3
-if [ -n "$ip" ]; then
-	printf "${Green}OK!${NC}\n" >&3
+is_running=`docker ps --format '{{.Names}}' --filter status=running --filter name="$1" `
+if [ -z "$is_running" ]; then   #check if not empty
+    return 1    #empty / not running
 else
-    printf "${Red}Not running! Attempting to restart..${NC}\n" >&3
-    CMD="docker start $fullhostname"; OUT=`$CMD`; display_output "$OUT" "" "4"
-    printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
-    sleep 15
-    #logline "$CMD" "$fullhostname"
+    return 0    #not empty / container is running
 fi
-return 0
-}	#end is_container_running()
+}   #end is_container_running()
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
 calc_next_seq_fullhostname_ip() {
@@ -1825,47 +1826,10 @@ return $host_num
 }	#end of create_splunk_container()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-build_dot_graph() {
-hosts=`docker ps -a --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
-list=`echo $hosts |sed 's/;$//'`	#remove last space
-list=`echo $hosts| sed 's/ /->/g' `  #replace space between hostnames with ->
-#echo "hosts in build_dot_graph():[$hosts]"
-#echo "list in build_dot_graph():[$list]"
+#build_dot_file() {
+##### place holder for future use ####
 
-#section 1 of the .dot file -------
-echo  "
-digraph test {
-	splines=false
-	rankdir=LR
-	node [nodesep=1.0, outputMode=nodesfirst, style=dashed, penwidth=1.0, bgcolor=\"#ffffff00\", overlap=scale];
-	edge [penwidth=0.75,arrowsize=0.6]
-	edge [color=black, fontsize=8, forcelabels=true]
-subgraph cluster_3 {
-	forcelabels=true;
-	label=\"All Hosts\";
-	node [ nodesep=0.02, style=\"rounded\", fontcolor=blue, fontsize=10,shape=box];
-	$list [style=\"invis\" ]
-	" > file.dot
-
-for i in `echo $hosts`; do
-	host_ip=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-#section 2 the .dot file -------
-	echo "	$i [label=<$i<BR/><FONT POINT-SIZE=\"7\">$host_ip:$SPLUNKWEB_PORT_EXT</FONT>>];
-
-	" >> file.dot
-done
-#section 3 the .dot file -------
-echo "	}
-}
-" >> file.dot
-
-#clear
-sleep 2
-dot -Gnewrank -Tpng  file.dot -o test.png
-#open test.png
-#catimg test.png
-return
-}
+#}	#end build_dot_file()
 #---------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------
 construct_splunk_container() {
@@ -1932,7 +1896,12 @@ else
 fi
 
 #-----check if container is running--------
-is_container_running "$fullhostname"
+printf "\t->Verifying that container is running..." >&3
+if ! ( is_container_running "$fullhostname" ); then
+	printf "${Red}NOT RUNNING!${NC}\n" >&3
+else
+	printf "${Green}OK!${NC}\n" >&3
+fi
 
 #-----check if splunkd is running--------
 is_splunkd_running "$fullhostname"
@@ -1957,8 +1926,13 @@ if [ -f "$PWD/containers.vimrc" ]; then
 	printf "\t->Copying $PWD/containers.vimrc to $fullhostname:/root/.vimrc\n" >&4
        	CMD=`docker cp $PWD/containers.vimrc $fullhostname:/root/.vimrc`
 fi
-echo "\t->Building graphviz dot file ..." >&4
-#build_dot_graph
+#printf "\t->Building graphviz dot file ...\n" >&4
+#build_dot_file
+##clear
+#dot -Gnewrank -Tpng  file.dot -o test.png
+#open test.png
+#sleep 1
+#catimg test.png
 
 #DNS stuff to be used with dnsmasq. Need to revisit for OSX  9/29/16
 #Enable for Linux at this point
@@ -2121,7 +2095,12 @@ else
 fi
 
 #-----check if container is running--------
-is_container_running "$fullhostname"
+printf "\t->Verifying that container is running..." >&3
+if ! ( is_container_running "$fullhostname" ); then
+	printf "${Red}NOT RUNNING!${NC}\n" >&3
+else
+	printf "${Green}OK!${NC}\n" >&3
+fi
 
 return 0
 }	#end construct_3rdp_container_from_image()
@@ -2818,7 +2797,7 @@ done
 create_single_shc() {
 #This function creates single Search Head Cluster. Details is passed using $1
 #inputs: $1: pass all components (any order) needed and how many to create. The names the counts will be extracted
-#example : create_single_shc "$site-SH:$SHcount $cm:1 $lm:1"
+#example : create_single_shc "$siteSH:$SHcount $cm:1 $lm:1"
 #outputs: -adjust hostname with sitename if used
 #	  -always convert hostnames to upper case (to avoid lookup/compare issues)
 #	  -create single deployer and as many SH hosts required
@@ -2902,9 +2881,8 @@ else
             build_dmc=0;
         fi
     fi
-	printf "\n"
+	#printf "\n"
 	#printf "${Yellow}The following single SH Cluster will be created [$mode]:${NC}\n"
-	#printf "Cluster Label: ${Green}%s${NC}\n" $label
 	#printf "Cluster Label: ${Green}%s${NC}\n" $label
 	#printf "Deployer Base Hostname: ${Green}%s${NC}\n" $DEPname
 	#printf "DMC Base Hostname: ${Green}%s${NC}\n" $dmc
@@ -2915,7 +2893,7 @@ else
 	#	read -p $'Hit <\033[1;32mENTER>\e[0m:Confirm \033[1;32m <B>\e[0m:Go Back ? ' choice
 	#	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 	#fi
-	printf "\n"
+	#printf "\n"
 
 
 	#printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
@@ -3042,7 +3020,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 create_single_idxc() {
 #This function creates single IDX cluster. Details are parsed from $1
-#example call: create_single_idxc "$site-IDX:$IDXcount $cm:1 $lm $label"
+#example call: create_single_idxc "$siteIDX:$IDXcount $cm:1 $lm $label"
 #$1 AUTO or MANUAL mode
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
@@ -3052,6 +3030,7 @@ if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 START=$(date +%s);
 #$1 CMbasename:count   $2 IDXbasename:count  $3 LMbasename:count
 
+check_load
 #Extract values from $1 if passed to us!
 lm=`echo $1| $GREP -Po '(\s*\w*-*LM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
 cm=`echo $1| $GREP -Po '(\s*\w*-*CM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
@@ -3241,11 +3220,12 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 build_single_site() {
 #This function will build 1 CM and 1 LM then calls create_splunk_container()
-# Expected parameters: "$cm $lm $site-IDX:$IDXcount $site-SH:$SHcount $site-DEP:1"
+# Expected parameters: "$cm $lm $siteIDX:$IDXcount $siteSH:$SHcount $siteDEP:1"
 #$1 AUTO or MANUAL mode
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
+check_load
 START_TIME=$(date +%s);
 #extract these values from $1 if passed to us!
 lm=`echo $1| $GREP -Po '(\s*\w*-*LM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
@@ -3306,22 +3286,22 @@ printf "${LightPurple}==>Building single-site ($site)...${NC}\n\n"
 printf "${LightBlue}____________ Building basic services [LM, DMC, CM] ___________________${NC}\n" >&3
 #Basic services
 #Sequence is very important!
-create_splunk_container "$site-DMC" "1" ; dmc=$gLIST
-create_splunk_container "$site-LM" "1" ; lm=$gLIST
+create_splunk_container "$site$DMC_BASE" "1" ; dmc=$gLIST
+create_splunk_container "$site$LM_BASE" "1" ; lm=$gLIST
 make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
-create_splunk_container "$site-CM" "1" ; cm=$gLIST
+create_splunk_container "$site$CM_BASE" "1" ; cm=$gLIST
 make_lic_slave $lm $cm ; make_dmc_search_peer $dmc $cm
 
 #testing HF ****************************************
-create_splunk_container "$site-HF" "1" ; hf=$gLIST
+create_splunk_container "$site$HF_BASE" "1" ; hf=$gLIST
 make_lic_slave $lm $hf ; #make_dmc_search_peer $dmc $hf
 
 printf "${LightBlue}____________ Finished building basic services ___________________${NC}\n\n" >&3
 
-create_single_idxc "$site-IDX:$IDXcount $dmc $cm:1 $lm LABEL:$idxc_label"
-create_single_shc "$site-SH:$SHcount $site-DEP:1 $dmc $cm $lm LABEL:$shc_label"
+create_single_idxc "$site$IDX_BASE:$IDXcount $dmc $cm:1 $lm LABEL:$idxc_label"
+create_single_shc "$site$SH_BASE:$SHcount $site$DEP_BASE:1 $dmc $cm $lm LABEL:$shc_label"
 
-print_stats $START_TIME ${FUNCNAME}
+#print_stats $START_TIME ${FUNCNAME}
 
 
 return 0
@@ -3336,6 +3316,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 mode=$1		#either "AUTO" or "MANUAL"
 START_TIME=$(date +%s);
 
+check_load
 s=""; sites_str=""     			#used with "splunk edit cluster-config" on CM
 SITEnames=""
 
@@ -3349,7 +3330,7 @@ if [ "$mode" == "AUTO" ]; then
     SITEnames="STL LON HKG"
     sites_str="site1,site2,site3"
 	first_site=`echo $SITEnames|awk '{print $1}'`		#where basic services CM,LM resides
-	cm="$first_site-CM01"
+	cm=$first_site"CM01"
 else
 	read -p "How many LOCATIONS to build (default 3)?  " count
     if [ -z "$count" ]; then count=3; fi
@@ -3373,9 +3354,9 @@ else
 	sites_str=`echo ${sites_str%?}`  			#remove last comma
 	first_site=`echo $SITEnames|awk '{print $1}'`			#where basic services CM,LM resides
 	printf "\n"
-	read -p "site-to-site cluster must have one CM. Enter CM fullname (default $first_site-CM01)> " cm
+	read -p "site-to-site cluster must have one CM. Enter CM fullname (default $first_site"CM01")> " cm
     cm=`echo $cm| tr '[a-z]' '[A-Z]' `
-    if [ -z "$cm" ]; then cm="$first_site-CM01"; fi
+    if [ -z "$cm" ]; then cm=$first_site"CM01"; fi
 fi
 
 #------- Finished capturing sites names/basic services names ------------------
@@ -3385,10 +3366,10 @@ printf "${DarkGray}Using Locations:[$SITEnames] CM:[$cm] First_site:[$first_site
 
 printf "\n\n${Yellow}Creating cluster basic services [only in $first_site]${NC}\n"
 #Sequence is very important!
-create_splunk_container "$first_site-DMC" "1" ; dmc=$gLIST
-create_splunk_container "$first_site-LM" "1" ; lm=$gLIST
+create_splunk_container "$first_site$DMC_BASE" "1" ; dmc=$gLIST
+create_splunk_container "$first_site$LM_BASE" "1" ; lm=$gLIST
 make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
-create_splunk_container "$first_site-CM" "1" ; cm=$gLIST
+create_splunk_container "$first_site$CM_BASE" "1" ; cm=$gLIST
 make_lic_slave $lm $cm ; make_dmc_search_peer $dmc $cm
 
 #Loop thru list of sites & build generic SH/IDX hosts on each site
@@ -3397,8 +3378,8 @@ for site in $SITEnames; do
 	let counter++
 	#printf "counter=[$counter] [$SITEnames]\n"
 	printf "\n${BoldYellowOnBlue}Building site$counter >> $site ${NC}\n"
-	create_single_idxc "$site-IDX:$IDXcount $cm $lm LABEL:$IDXCLUSTERLABEL"
-	create_single_shc "$site-SH:$SHcount $site-DEP:1 $cm $lm LABEL:$SHCLUSTERLABEL"
+	create_single_idxc "$site$IDX_BASE:$IDXcount $cm $lm LABEL:$IDXCLUSTERLABEL"
+	create_single_shc "$site$SH_BASE:$SHcount $site$DEP_BASE:1 $cm $lm LABEL:$SHCLUSTERLABEL"
 done
 
 idx_list=`docker ps -a --filter name="IDX|idx" --format "{{.Names}}"|sort | tr -d '\r' | tr  '\n' ' ' `
@@ -3482,7 +3463,7 @@ printf "\t->Disabling maintenance-mode..." >&3 ; display_output "$OUT" "No longe
 #restart_splunkd "$i"
 printf "${Cyan}____________ Finished STEP#4 __________________________________________________${NC}\n" >&3
 
-print_stats $START_TIME ${FUNCNAME}
+#print_stats $START_TIME ${FUNCNAME}
 
 return 0
 }	#build_multi_site_cluster()
@@ -4048,38 +4029,39 @@ fi
 printf "Current list of all $type containers on this system:\n"
 printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd   Ver    Internal IP%-3s       Image used%-10s     URL${NC}\n"
 printf "   ---------------%-3s --------- ------- ------- ----------%-3s ------------------%-3s---------------------------${NC}\n"
+
 i=0
 hosts_sorted=`docker ps -a --format {{.Names}}| egrep -i "$type"| sort`
 
 for host in $hosts_sorted ; do
     let i++	#container display counter (starts at zero now that we have special DOCKER-MONITOR)
-    id=`docker ps -a --filter name="$host" --format {{.ID}}`
+    id=`docker ps -a --no-trunc --filter  name="^/$host$" --format {{.ID}}`
     #These operations take long time execute
     #cpu_percent=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $2}'`
     #mem_usage=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $3$4}'`
     #mem_limit=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $6$7}'`
     #mem_percent=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $8}'`
 
-    internal_ip=`docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $id`
-    bind_ip=`docker inspect --format '{{ .HostConfig }}' $id| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-    hoststate=`docker ps -a --filter id=$id --format "{{.Status}}" | awk '{print $1}'`
-    hostname=`docker ps -a --filter id=$id --format "{{.Names}}"`
-    imagename=`docker ps -a --filter id=$id --format "{{.Image}}" | cut -d'/' -f2-3`  #remove repository name
-    splunkd_ver=`docker exec $hostname /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
+    internal_ip=`docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$id"`
+    bind_ip=`docker inspect --format '{{ .HostConfig }}' "$id"| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+    hoststate=`docker ps -a --filter id="$id" --format "{{.Status}}" | awk '{print $1}'`
+    hostname=`docker ps -a --filter id="$id" --format "{{.Names}}"`
+    imagename=`docker ps -a --filter id="$id" --format "{{.Image}}" | cut -d'/' -f2-3`  #remove repository name
+    splunkd_ver=`docker exec "$hostname" /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
     host_line[$i]="$bind_ip"
     if [ "$AWS_EC2" == "YES" ]; then
-		eip=`grep $bind_ip aws_eip_mapping.tmp | awk '{print "http://"$2":$SPLUNKWEB_PORT_EXT"}' `
+		eip=`grep "$bind_ip" aws_eip_mapping.tmp | awk '{print "http://"$2":$SPLUNKWEB_PORT_EXT"}' `
 	else
 		eip="http://$bind_ip:$SPLUNKWEB_PORT_EXT"
     fi
 
     #check splunk state if container is UP
-    if [ $hoststate == "Up" ]; then
+    if [ "$hoststate" == "Up" ]; then
 	#check splunkstate
-        splunkstate=`docker exec -ti $id /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ print $3}'`
+        splunkstate=`docker exec -ti "$id" /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ print $3}'`
     else
         splunkstate="${Red}N/A${NC}"
-	splunkd_ver="N/A"
+		splunkd_ver="N/A"
     fi
 
     #set host state color. Use printf "%b" to show interpreting backslash escapes in there
