@@ -613,7 +613,7 @@ fi
 #----------
 #----------
 printf "${LightBlue}   >>${NC}Checking optional [graphviz] package:${NC} "
-condition=$(which graphviz 2>/dev/null | grep -v "not found" | wc -l)
+condition=$(which dot 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [graphviz]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install graphviz -y"
