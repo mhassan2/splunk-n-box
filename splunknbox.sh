@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.2.7		#Used to check against github repository VERSION!
+VERSION=4.2.2.8		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -601,11 +601,22 @@ else
 fi
 #----------
 #----------
-printf "${LightBlue}   >>${NC}Checking optional [gtimeout] package:${NC} "
-condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
+printf "${LightBlue}   >>${NC}Checking optional [timeout] package:${NC} "
+condition=$(which timeout 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
-	printf "${BrownOrange}Installing [gtimeout]${NC}:"
-	progress_bar_pkg_download "sudo apt-get install gtimeout -y"
+	printf "${BrownOrange}Installing [timeout]${NC}:"
+	progress_bar_pkg_download "sudo apt-get install timeout -y"
+else
+	printf "${Green}Already installed${NC}\n"
+	alias timeout="gtimeout"
+fi
+#----------
+#----------
+printf "${LightBlue}   >>${NC}Checking optional [graphviz] package:${NC} "
+condition=$(which graphviz 2>/dev/null | grep -v "not found" | wc -l)
+if [ $condition -eq 0 ]; then
+	printf "${BrownOrange}Installing [graphviz]${NC}:"
+	progress_bar_pkg_download "sudo apt-get install graphviz -y"
 else
 	printf "${Green}Already installed${NC}\n"
 fi
@@ -702,6 +713,17 @@ if [ -n "$cmd" ]; then
 else
 	printf "${BrownOrange}Installing [coreutils]${NC}:"
 	progress_bar_pkg_download "brew install coreutils"
+	alias timeout="gtimeout"
+fi
+#----------
+#----------
+printf "${LightBlue}   >>${NC}Checking optional [graphviz] package:${NC} "
+cmd=$(brew ls graphviz --versions)
+if [ -n "$cmd" ]; then
+	printf "${Green}Already installed${NC}\n"
+else
+	printf "${BrownOrange}Installing [graphviz]${NC}:"
+	progress_bar_pkg_download "brew install graphviz"
 fi
 #----------
 
