@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.2.6		#Used to check against github repository VERSION!
+VERSION=4.2.2.7		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -580,7 +580,7 @@ else
 	printf "${Green}Already installed${NC}\n"
 fi
 #----------
-
+#----------
 printf "${LightBlue}   >>${NC}Checking wget package:${NC} "
 condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
@@ -590,6 +590,28 @@ else
 	printf "${Green}Already installed${NC}\n"
 fi
 #----------
+#----------
+printf "${LightBlue}   >>${NC}Checking optional [imgcat] package:${NC} "
+condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
+if [ $condition -eq 0 ]; then
+	printf "${BrownOrange}Installing [imgcat]${NC}:"
+	progress_bar_pkg_download "sudo apt-get install imgcat -y"
+else
+	printf "${Green}Already installed${NC}\n"
+fi
+#----------
+#----------
+printf "${LightBlue}   >>${NC}Checking optional [gtimeout] package:${NC} "
+condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
+if [ $condition -eq 0 ]; then
+	printf "${BrownOrange}Installing [gtimeout]${NC}:"
+	progress_bar_pkg_download "sudo apt-get install gtimeout -y"
+else
+	printf "${Green}Already installed${NC}\n"
+fi
+#----------
+
+
 echo
 return 0
 }	#end check_for_ubuntu_pkgs()
@@ -662,6 +684,28 @@ else
 fi
 #printf "${Yellow}Running [brew list]${NC}\n"
 # brew list --versions
+#----------
+printf "${LightBlue}   >>${NC}Checking optional [imagcat] package:${NC} "
+cmd=$(brew ls imgcat --versions)
+if [ -n "$cmd" ]; then
+	printf "${Green}Already installed${NC}\n"
+else
+	printf "${BrownOrange}Installing [gtimeout]${NC}:"
+	progress_bar_pkg_download "brew install imgcat"
+fi
+#----------
+#----------
+printf "${LightBlue}   >>${NC}Checking optional [gtimeout] package:${NC} "
+cmd=$(brew ls coretutils --versions)
+if [ -n "$cmd" ]; then
+	printf "${Green}Already installed${NC}\n"
+else
+	printf "${BrownOrange}Installing [coreutils]${NC}:"
+	progress_bar_pkg_download "brew install coreutils"
+fi
+#----------
+
+
 echo
 return 0
 }	#end check_for_MACOS_pkgs()
@@ -1485,7 +1529,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 vip=$1;  fullhostname=$2
 
 check_load
-
+#set -x
 #----------- password stuff ----------
 if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-ITSI" ) || ( compare "$fullhostname" "DEMO-VMWARE" ) ; then
 	true #dont change pass for some demos.
@@ -1499,7 +1543,7 @@ else
 	CMD="docker exec -u splunk -ti $fullhostname rm -fr /opt/splunk/etc/passwd"        #remove any existing users (include admin)
 	OUT=`$CMD`;   #printf "${DarkGray}CMD:[$CMD]${NC}\n" >&5
 	logline "$CMD" "$fullhostname"
-	CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk edit user admin -password $USERPASS -roles $USERADMIN -auth admin:changeme"
+	CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk edit user admin -password $USERPASS -roles $USERADMIN -auth admin:changeme "
 	OUT=`$CMD`;   display_output "$OUT" "user admin edited" "3"
 	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$fullhostname"
@@ -1572,7 +1616,7 @@ else
 fi
 
 USERPASS="hello" #rest in case we just processed ES or VMWARE DEMOS
-
+#set +x
 return 0
 }	#end custom_login_screen()
 #---------------------------------------------------------------------------------------------------------------
@@ -2831,7 +2875,7 @@ if [ "$mode" == "AUTO" ]; then
 	label="$SHCLUSTERLABEL"
 	#printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
 	printf  "\n"
-	printf "${LightPurple}>>BUILDING INDEX CLUSTER${NC}\n"
+	printf "${LightPurple}>>BUILDING SEARCH HEAD CLUSTER${NC}\n"
 	printf "${LightPurple}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
 	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:$DEP_SHC_COUNT] SHC:[$SH_BASE:$STD_SHC_COUNT]${NC}\n\n" >&4
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
@@ -3563,10 +3607,10 @@ clear
 printf "${Yellow}In 5 seconds we will enter a loop to continuously display containers stats :\n";
 printf "${Red}Control-C to stop\n${NC}";
 #Trap the killer signals so that we can exit with a good message.
-trap "error_exit 'Received signal SIGHUP'" SIGHUP
-trap "error_exit 'Received signal SIGINT'" SIGINT
-trap "error_exit 'Received signal SIGTERM'" SIGTERM
-trap return
+#trap "error_exit 'Received signal SIGHUP'" SIGHUP
+#trap "error_exit 'Received signal SIGINT'" SIGINT
+#trap "error_exit 'Received signal SIGTERM'" SIGTERM
+#trap return
 
 sleep 5
 docker stats  --format "HOST{{.Name}}   CPU:{{.CPUPerc}}   MEM:{{.MemPerc}}";
