@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.2.8		#Used to check against github repository VERSION!
+VERSION=4.2.2.9		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -571,7 +571,7 @@ check_for_ubuntu_pkgs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 #----------
-printf "${LightBlue}   >>${NC}Checking bc package:${NC} "
+printf "${LightBlue}   >>${NC}Checking [bc] package:${NC} "
 condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [bc]${NC}:"
@@ -581,8 +581,8 @@ else
 fi
 #----------
 #----------
-printf "${LightBlue}   >>${NC}Checking wget package:${NC} "
-condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
+printf "${LightBlue}   >>${NC}Checking [wget] package:${NC} "
+condition=$(which wget 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [wget]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install wget -y"
@@ -592,7 +592,7 @@ fi
 #----------
 #----------
 printf "${LightBlue}   >>${NC}Checking optional [imgcat] package:${NC} "
-condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
+condition=$(which imgcat 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [imgcat]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install imgcat -y"
@@ -701,13 +701,13 @@ cmd=$(brew ls imgcat --versions)
 if [ -n "$cmd" ]; then
 	printf "${Green}Already installed${NC}\n"
 else
-	printf "${BrownOrange}Installing [gtimeout]${NC}:"
+	printf "${BrownOrange}Installing [imgcat]${NC}:"
 	progress_bar_pkg_download "brew install imgcat"
 fi
 #----------
 #----------
 printf "${LightBlue}   >>${NC}Checking optional [gtimeout] package:${NC} "
-cmd=$(brew ls coretutils --versions)
+cmd=$(brew ls coreutils --versions)
 if [ -n "$cmd" ]; then
 	printf "${Green}Already installed${NC}\n"
 else
