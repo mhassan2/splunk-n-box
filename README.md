@@ -15,7 +15,7 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 
 ## Feature list:
 
-- User friendly interface to manage splunk docker containers.
+- Menu driven and user friendly interface to manage splunk docker containers.
 - Extensive error checking and validation.
 - Support for multiple Splunk versions (images)
 - Adaptive load control during cluster build (throttle execution if exceeds 4 x cores).
