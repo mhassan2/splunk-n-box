@@ -15,8 +15,8 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 
 ## Feature list:
 
-- Friendly user interface to manage splunk docker containers.
-- Extensive error checks and validation.
+- User friendly interface to manage splunk docker containers.
+- Extensive error checking and validation.
 - Support for multiple Splunk versions (images)
 - Adaptive load control during cluster build (throttle execution if exceeds 4 x cores).
 - Built-in dynamic hostnames and IPs allocation (no need for proxy container like NGINX)
@@ -26,12 +26,12 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 - Manual and automatic cluster builds.
 - Modular design that can easily be converted to a higher-level language like Python.
 - Custom login screen (helpful for lab & Search Parties scenarios).
-- Low resources requirements compared to VM based solution.
+- Low resources requirements compared to VM based solutions.
 - Eliminate the need to learn docker (but you should).
 - MacOS & Linux support.
 - Works with windows10 WSL (Windows Subsystem for Linux) Ubuntu bash.
 - Automatic script upgrade (with version check).
-- AWS EC2 aware
+- AWS EC2 aware (shows the NATed IPs)
 
 
 ## Where to get it?
