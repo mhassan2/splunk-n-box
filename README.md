@@ -2,7 +2,8 @@
 
  &#x1F534;     Splunk n' box presentaion: https://youtu.be/k1WmnlWa4lo  
  &#x1F534;     Learn docker in 10 minutes video: https://www.youtube.com/watch?v=YFl2mCHdv24 
- &#x1F534;     Presenation by Ant Lefebvre, Solutions Architect.Run Splunk n' Box on USB stick  https://youtu.be/qTAS1gvIGxM
+ 
+ &#x1F534;     Ant Lefebvre, Solutions Architect.Run Splunk n' Box on USB stick  https://youtu.be/qTAS1gvIGxM
 
 ## Introduction:
 
