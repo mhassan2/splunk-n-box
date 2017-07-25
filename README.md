@@ -264,7 +264,15 @@ I have an extensive set of validation routines that handels multiple issues. The
 ### LIST OF FUNCTIONS:
 ```
 mhassan:~/splunk_docker_script_github> grep  "() {" splunknbox.sh
+function catimg() {
+function print_osc() {
+function print_st() {
+function print_image() {
+function error() {
+function show_help() {
 logline() {
+show_docker_system_prune() {
+show_docker_system_df() {
 restart_docker_mac() {    ### NOT USED YET ####
 start_docker_mac() {
 start_docker_liunx() {
@@ -272,14 +280,15 @@ check_shell() {
 remove_ip_aliases() {
 setup_ip_aliases() {
 check_load() {
-install_gnu_grep() {
+check_for_ubuntu_pkgs() {
+check_for_MACOS_pkgs() {
 startup_checks() {
 detect_os() {
 change_loglevel() {
 compare() {
 pausing() {
 display_output() {
-display_debug() {
+_debug_function_inputs() {
 is_splunkd_running() {
 change_default_splunk_image() {
 splunkd_status_all() {
@@ -298,37 +307,43 @@ assign_server_role() {		 ####### NOT USED YET ########
 make_dmc_search_peer() {
 set_splunkweb_to_http() {
 is_container_running() {
+calc_next_seq_fullhostname_ip() {
 create_splunk_container() {
-build_splunk_container() {
-build_3rdparty_container() {
-create_demo_container() {
-build_3rdparty_container_input() {
+#build_dot_file() {
+construct_splunk_container() {
+create_demo_container_from_list() {
+construct_3rdp_container_from_image() {
+create_3rdp_container_from_list() {
 display_clustering_menu_help() {
 display_demos_menu_help() {
 display_3rdparty_menu_help() {
 display_splunk_menu_help() {
 display_system_menu_help() {
 display_main_menu_help() {
-display_main_menu_options2() {
 display_main_menu_options() {
 display_splunk_menu_options() {
 display_system_menu_options() {
 display_demos_menu_options() {
 display_3rdparty_menu_options() {
 display_clustering_menu_options() {
+display_ll_menu_options() {
 main_menu_inputs() {
 splunk_menu_inputs() {
 system_menu_inputs() {
 demos_menu_inputs () {
 3rdparty_menu_inputs() {
 clustering_menu_inputs() {
+lunch_learn_menu_inputs() {
+install_ll_menu_inputs() {
+install_ll_apps() {
+install_ll_datasets() {
 create_single_shc() {
 create_single_idxc() {
 build_single_site() {
 build_multi_site_cluster() {
 print_stats() {
 display_stats_banner() {
-display_docker_stats_menu() {
+display_docker_stats() {
 login_to_splunk_hub() {
 spinner() {
 progress_bar_image_download() {
@@ -347,9 +362,10 @@ delete_all_volumes() {
 wipe_entire_system() {
 display_welcome_screen() {
 display_goodbye_msg() {
+
 ________________________________________________________________________________
 mhassan:~/splunk_docker_script_github> grep  "() {" splunknbox.sh|wc -l
-      83
+      98
 ```
 
 ## Misc stuff:
