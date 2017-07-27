@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.2.9		#Used to check against github repository VERSION!
+VERSION=4.2.3		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -66,8 +66,12 @@ TMP_DIR="$PWD/TMP"	#used as scrach space
 #-----------------------------------
 #----------Images--------------------
 #My builds posted on docker hub    -MyH
-#SPLUNK_IMAGE="mhassan/splunk"		#6.4.3
-SPLUNK_IMAGE="splunknbox/splunk_6.5.3"
+SPLUNK_IMAGE="splunknbox/splunk_6.6.2"
+#SPLUNK_IMAGE="splunknbox/splunk_6.6.1"
+#SPLUNK_IMAGE="splunknbox/splunk_6.6.0"
+#SPLUNK_IMAGE="splunknbox/splunk_6.5.5"
+#SPLUNK_IMAGE="splunknbox/splunk_6.5.4"
+#SPLUNK_IMAGE="splunknbox/splunk_6.5.3"
 #SPLUNK_IMAGE="splunknbox/splunk_6.5.2"
 #SPLUNK_IMAGE="splunknbox/splunk_6.5.1"
 #SPLUNK_IMAGE="splunknbox/splunk_6.4.4"
@@ -776,16 +780,16 @@ printf "${LightBlue}==>${NC} Checking if docker daemon is running & version "
 is_running=`docker info|grep Images 2>/dev/null `
 if [ -z "$is_running" ] && [ "$os" == "Darwin" ]; then
         printf "${Red}NOT RUNNING!${NC}\n"
-	start_docker_mac
+		start_docker_mac
 elif [ -z "$is_running" ] && [ "$os" == "Linux" ]; then
         printf "${Red}NOT RUNNING!${NC}\n"
-	start_docker_linux
+		start_docker_linux
 fi
 #expected to arrive at this point only if docker is running, therefore we can collect dockerinfo
 if [ -n "$is_running" ]; then
-	dockerinfo_ver=`docker info| $GREP 'Server Version'| awk '{printf $3}'| tr -d '\n' `
+		dockerinfo_ver=`docker info| $GREP 'Server Version'| awk '{printf $3}'| tr -d '\n' `
         dockerinfo_cpu=`docker info| $GREP 'CPU' | awk '{printf $2}'| tr -d '\n' `
-        dockerinfo_mem1=`docker info| $GREP  'Total Memory'| awk '{printf $3}'| tr -d '\n' `
+        dockerinfo_mem1=`docker info| $GREP  'Total Memory'| awk '{printf $3}'|sed 's/GiB//g'| tr -d '\n' `
         dockerinfo_mem=`echo "$dockerinfo_mem1 / 1" | bc `
         #echo "DOCKER: ver:[$dockerinfo_ver]  cpu:[$dockerinfo_cpu]  totmem:[$dockerinfo_mem] ";exit
 	printf "[ver:$dockerinfo_ver].."
@@ -882,7 +886,7 @@ if [ -z "$image_ok" ]; then
 		progress_bar_image_download "$SPLUNK_IMAGE"
                 printf "\n${NC}"
         else
-                printf "    ${Red}>> WARNNING! Many functions will fail without splunk. It is critical to download this splunk image....${NC}\n"
+			printf "    ${Red}>> WARNNING! Many functions will fail without ($SPLUNK_IMAGE). It is critical to download this splunk image....${NC}\n"
                 printf "    See https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=splunknbox&starCount=0\n"
 		read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
         fi
@@ -1200,7 +1204,7 @@ printf "Retrieving list from: [https://hub.docker.com/u/splunknbox/]...\n\n"
 CMD="docker search splunknbox"; OUT=`$CMD`
 #printf "$OUT" #| awk '{printf $1}'
 
-retrieved_images_list=`printf "$OUT"|grep -v NAME|awk '{print $1" "}'| tr -d '\n' `
+retrieved_images_list=`printf "$OUT"|grep -v NAME|awk '{print $1" "}'| sort | tr -d '\n' `
 declare -a list=($retrieved_images_list)
 printf "${Purple}     		IMAGE NAME${NC}		    CREATED	SIZE			AUTHOR\n"
 printf "${Purple} -------------------------------------${NC}   ------------  --------   ---------------------------------------\n"
@@ -1229,9 +1233,9 @@ done
 count=0
 echo;echo
 echo;printf "Current default image is [$SPLUNK_IMAGE]\n"; echo
-printf "${BrownOrange}WARNING! Changing the default image means any subsequent container's builds (except DEMOs) will use the new splunk image!${NC}\n"
 read -p "Are you sure you want to continue? [Y/n]? " answer
 if [ "$answer" == "Y" ] || [ "$answer" == "y" ] || [ "$answer" == "" ] ; then
+	printf "${BrownOrange}WARNING! Changing the default image means any subsequent container builds (except DEMO images) will use the new splunk image!${NC}\n"
 	choice=""
 	read -p "Select number: " choice
 	if [ -n "$choice" ]; then
@@ -1920,8 +1924,8 @@ fullhostname=`echo $fullhostname| tr -d '[[:space:]]'`	#trim white space if they
 check_load		#throttle back if high load
 
 #echo "fullhostname[$fullhostname]"
-rm -fr $MOUNTPOINT/$fullhostname
-mkdir -m 755 -p $MOUNTPOINT/$fullhostname
+#rm -fr $MOUNTPOINT/$fullhostname
+#mkdir -m 755 -p $MOUNTPOINT/$fullhostname
 #note:volume bath is relative to VM not MacOS
 
 #At this point fullhostname (w/ seq num) has been assigned. Use it to figure out what image to use!
@@ -1944,6 +1948,8 @@ CMD="docker run -d \
 	-p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" \
 	--env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname \
 	--env SPLUNK_SERVER_IP=$vip --env SPLUNK_USER="splunk"  $full_image_name"
+
+#-v $MOUNTPOINT/$fullhostname/etc:/opt/splunk/etc -v  $MOUNTPOINT/$fullhostname/var:/opt/splunk/var \
 
 if [ "$fullhostname" == "$MASTER_CONTAINER" ]; then
 	printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating docker monitor container.This is created once in the entire system! ${NC} "
@@ -3585,7 +3591,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 dockerinfo_ver=`docker info| $GREP 'Server Version'| awk '{printf $3}'| tr -d '\n' `
 dockerinfo_cpu=`docker info| $GREP 'CPU' | awk '{printf $2}'| tr -d '\n' `
-dockerinfo_mem1=`docker info| $GREP  'Total Memory'| awk '{printf $3}'| tr -d '\n' `
+dockerinfo_mem1=`docker info| $GREP  'Total Memory'| awk '{printf $3}'|sed 's/GiB//g'| tr -d '\n' `
 dockerinfo_mem=`echo "$dockerinfo_mem1 / 1" | bc `
 #echo "DOCKER: ver:[$dockerinfo_ver]  cpu:[$dockerinfo_cpu]  totmem:[$dockerinfo_mem] "
 
