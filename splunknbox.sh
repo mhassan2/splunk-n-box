@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.3		#Used to check against github repository VERSION!
+VERSION=4.2.3.1		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -4122,7 +4122,8 @@ for host in $hosts_sorted ; do
     splunkd_ver=`docker exec "$hostname" /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
     host_line[$i]="$bind_ip"
     if [ "$AWS_EC2" == "YES" ]; then
-		eip=`grep "$bind_ip" aws_eip_mapping.tmp | awk '{print "http://"$2":$SPLUNKWEB_PORT_EXT"}' `
+		eip_tmp=`grep "$bind_ip" aws_eip_mapping.tmp | cut -f1`
+	    eip="$eip_tmp:$SPLUNKWEB_PORT_EXT"
 	else
 		eip="http://$bind_ip:$SPLUNKWEB_PORT_EXT"
     fi
