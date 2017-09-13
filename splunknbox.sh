@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.3.1		#Used to check against github repository VERSION!
+VERSION=4.2.3.2		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -24,13 +24,27 @@ VERSION=4.2.3.1		#Used to check against github repository VERSION!
 #	-Automatic script upgrade (with version check).
 #	-AWS EC2 aware
 #
-# Licenses: 	Licensed under GPL v3 https://www.gnu.org/licenses/gpl-3.0.en.html
-# Last update:	Nov 10, 2016
+# Licenses:	Apache 2.0 https://www.apache.org/licenses/LICENSE-2.0
+# Copyright [2017] [Mohamad Y. Hassan]
+
+#Licensed under the Apache License, Version 2.0 (the "License");
+#you may not use this file except in compliance with the License.
+#You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#Unless required by applicable law or agreed to in writing, software
+#distributed under the License is distributed on an "AS IS" BASIS,
+#WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#See the License for the specific language governing permissions and
+#limitations under the License.
+#
+# Last update:	Sep 5, 2017
 # Author:    	mhassan@splunk.com
-# Version:	 see $VERSION above
+# Version:	 	see $VERSION above
 #
 #Usage :  splunknbox -v[2 3 4 5 6]
-#		v1-2	implied and cannot be changed
+#		v1-2 implied and cannot be changed
 #		-v3	[default] show sub-steps under each host build
 #		-v4	show remote CMD executed in docker container
 #		-v5	more verbosity (debug)
@@ -66,18 +80,18 @@ TMP_DIR="$PWD/TMP"	#used as scrach space
 #-----------------------------------
 #----------Images--------------------
 #My builds posted on docker hub    -MyH
-SPLUNK_IMAGE="splunknbox/splunk_6.6.2"
-#SPLUNK_IMAGE="splunknbox/splunk_6.6.1"
-#SPLUNK_IMAGE="splunknbox/splunk_6.6.0"
-#SPLUNK_IMAGE="splunknbox/splunk_6.5.5"
-#SPLUNK_IMAGE="splunknbox/splunk_6.5.4"
-#SPLUNK_IMAGE="splunknbox/splunk_6.5.3"
-#SPLUNK_IMAGE="splunknbox/splunk_6.5.2"
-#SPLUNK_IMAGE="splunknbox/splunk_6.5.1"
-#SPLUNK_IMAGE="splunknbox/splunk_6.4.4"
-#SPLUNK_IMAGE="splunknbox/splunk_6.4.3"
+DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.6.2"
+#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.6.1"
+#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.6.0"
+#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.5.5"
+#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.5.4"
+#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.5.3"
+#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.5.2"
+#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.5.1"
+#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.4.4"
+#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.4.3"
 
-#SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-
+#DEFAULT_SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
 
 #Available splunk demos registry.splunk.com
@@ -140,10 +154,10 @@ DEP_SHC_COUNT="1"					#default DEP count
 #------------------------------------------
 #---------DIRECTORIES & Logs-----------------------------
 LOGLEVEL=3
-CMDLOGBIN="$PWD/cmds_capture.bin"	#capture all docker cmds (with color)
-CMDLOGTXT="$PWD/cmds_capture.log"	#capture all docker cmds (just ascii txt)
-#LOGFILE="${0##*/}.log"   			#log file will be this_script_name.log
-SCREENLOGFILE="screens_capture.log"   	#capture all screen shots during execution
+CMDLOGBIN="$PWD/splunknbox_bin.log"		#capture all docker cmds (with color)
+CMDLOGTXT="$PWD/splunknbox.log"			#capture all docker cmds (just ascii txt)
+#LOGFILE="${0##*/}.log"   				#log file will be this_script_name.log
+SCREENLOGFILE="splunknbox_screens.log"  #capture all screen shots during execution
 HOSTSFILE="$PWD/docker-hosts.dnsmasq"  	#local host file. optional if dns caching is used
 #-----------------------------------------
 #--------Load control---------------------
@@ -876,17 +890,17 @@ fi
 #-----------docker preferences check-------
 
 #-----------splunk image check-------------
-printf "${LightBlue}==>${NC} Checking if Splunk image is available [$SPLUNK_IMAGE]..."
-image_ok=`docker images|grep "$SPLUNK_IMAGE"`
+printf "${LightBlue}==>${NC} Checking if Splunk image is available [$DEFAULT_SPLUNK_IMAGE]..."
+image_ok=`docker images|grep "$DEFAULT_SPLUNK_IMAGE"`
 if [ -z "$image_ok" ]; then
 	printf "${Red}NOT FOUND!${NC}\n"
-	read -p "    >> Download image [$SPLUNK_IMAGE]? [Y/n]? " answer
+	read -p "    >> Download image [$DEFAULT_SPLUNK_IMAGE]? [Y/n]? " answer
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		#printf "    ${Red}>>${NC} Downloading from https://hub.docker.com/r/mhassan/splunk/\n"
-		progress_bar_image_download "$SPLUNK_IMAGE"
+		progress_bar_image_download "$DEFAULT_SPLUNK_IMAGE"
                 printf "\n${NC}"
         else
-			printf "    ${Red}>> WARNNING! Many functions will fail without ($SPLUNK_IMAGE). It is critical to download this splunk image....${NC}\n"
+			printf "    ${Red}>> WARNNING! Many functions will fail without ($DEFAULT_SPLUNK_IMAGE). It is critical to download this splunk image....${NC}\n"
                 printf "    See https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=splunknbox&starCount=0\n"
 		read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
         fi
@@ -1232,7 +1246,7 @@ done
 #display_all_images "DEMO"
 count=0
 echo;echo
-echo;printf "Current default image is [$SPLUNK_IMAGE]\n"; echo
+echo;printf "Current default image is [$DEFAULT_SPLUNK_IMAGE]\n"; echo
 read -p "Are you sure you want to continue? [Y/n]? " answer
 if [ "$answer" == "Y" ] || [ "$answer" == "y" ] || [ "$answer" == "" ] ; then
 	printf "${BrownOrange}WARNING! Changing the default image means any subsequent container builds (except DEMO images) will use the new splunk image!${NC}\n"
@@ -1242,8 +1256,8 @@ if [ "$answer" == "Y" ] || [ "$answer" == "y" ] || [ "$answer" == "" ] ; then
 		START=$(date +%s)
 		image_name=(${list[$choice - 1]})
 		progress_bar_image_download "$image_name"
-       		printf "Changing default image from [$SPLUNK_IMAGE] to [${Yellow}$image_name${NC}]\n"
-		SPLUNK_IMAGE="$image_name"
+       		printf "Changing default image from [$DEFAULT_SPLUNK_IMAGE] to [${Yellow}$image_name${NC}]\n"
+		DEFAULT_SPLUNK_IMAGE="$image_name"
 		echo
 	fi
 else
@@ -1621,7 +1635,7 @@ LINE3="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &n
 LINE4="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Cluster Label: </font><font color=\"#FF9033\"> $cluster_label</font></H3><BR/></CENTER>"
 
 LINE5="<H2><CENTER><font color=\"#867979\">User: </font> <font color=\"red\">$USERADMIN</font> &nbsp&nbsp<font color=\"#867979\">Password:</font> <font color=\"red\"> $SHOW_PASS</font></H2></font></CENTER><BR/>"
-LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$VERSION<BR/> Docker image [$SPLUNK_IMAGE]</font></CENTER>"
+LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$VERSION<BR/> Docker image [$DEFAULT_SPLUNK_IMAGE]</font></CENTER>"
 
 #configure the custom login screen and http access for ALL (no exception)
 custom_web_conf="[settings]\nlogin_content=<div align=\"right\" style=\"border:1px solid blue;\"> $LINE1 $LINE2 $LINE3 $LINE4 $LINE5 $LINE6 </div> <p>This data is auto-generated at container build time (container internal IP=$container_ip)</p>\n\nenableSplunkWebSSL=0\n"
@@ -1936,7 +1950,7 @@ if ( compare "$fullhostname" "DEMO" ) || ( compare "$fullhostname" "WORKSHOP" ) 
 	demo_image_name=`echo $demo_image_name| tr '[A-Z]' '[a-z]'`		#conver to lower case
 	full_image_name="$SPLUNK_DOCKER_HUB/sales-engineering/$demo_image_name"
 else
-	full_image_name="$SPLUNK_IMAGE"
+	full_image_name="$DEFAULT_SPLUNK_IMAGE"
 fi
 #echo "fullhostname:[$fullhostname]    demo_image_name:[$demo_image_name]"
 #CMD="docker run -d -v $MOUNTPOINT/$fullhostname/opt/splunk/etc -v $MOUNTPOINT/$fullhostname/opt/splunk/var --network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER  -p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT_EXT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT -p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" --env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname --env SPLUNK_SERVER_IP=$vip $full_image_name"
@@ -2366,7 +2380,7 @@ printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
 printf "${Red}S${NC}) ${Red}S${NC}HOW all images details ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
 printf "${Red}R${NC}) ${Red}R${NC}EMOVE image(s) to recover disk-space (will extend build times) ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
-printf "${Red}F${NC}) DE${Red}F${NC}AULT Splunk images ${DarkGray}[currently: $SPLUNK_IMAGE]${NC}\n"
+printf "${Red}F${NC}) DE${Red}F${NC}AULT Splunk images ${DarkGray}[currently: $DEFAULT_SPLUNK_IMAGE]${NC}\n"
 printf "\n"
 printf "${BoldWhiteOnYellow}Manage Containers:${NC}\n"
 printf "${Yellow}C${NC}) ${Yellow}C${NC}REATE generic Splunk container(s) ${DarkGray}[docker run ...]${NC}\n"
@@ -3622,7 +3636,7 @@ fi
 if [ "$1" ]; then
 	printf "=>${White}OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg]${NC}\n"
 else
-	printf "=>${White}DOCKER:${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg] ${White}Image:${NC}[$SPLUNK_IMAGE] ${White}LogLevel:${NC}[$loglevel]${NC}\n"
+	printf "=>${White}DOCKER:${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg] ${White}Image:${NC}[$DEFAULT_SPLUNK_IMAGE] ${White}LogLevel:${NC}[$loglevel]${NC}\n"
 fi
 
 return 0
@@ -4423,7 +4437,7 @@ MESSAGE[6]="https://github.com/mhassan2/splunk-n-box"
 MESSAGE[7]="By continuing you accept Splunk software license agreement"
 #MESSAGE[6]="https://www.splunk.com/en_us/legal/splunk-software-license-agreement.html"
 #MESSAGE[7]=""
-MESSAGE[10]="This script is licensed under GPL v3. All rights reserved Splunk Inc 2005-2017"
+MESSAGE[10]="This script is licensed under Apache 2.0 All rights reserved Splunk Inc 2005-2017"
 
 # Calculate x and y coordinates so that we can display $MESSAGE
 # centered in the screen
