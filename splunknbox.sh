@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.3.2		#Used to check against github repository VERSION!
+VERSION=4.2.4		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -80,7 +80,9 @@ TMP_DIR="$PWD/TMP"	#used as scrach space
 #-----------------------------------
 #----------Images--------------------
 #My builds posted on docker hub    -MyH
-DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.6.2"
+DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_7.0.0"
+#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.6.3"
+#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.6.2"
 #DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.6.1"
 #DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.6.0"
 #DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.5.5"
@@ -95,7 +97,7 @@ DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.6.2"
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
 
 #Available splunk demos registry.splunk.com
-REPO_DEMO_IMAGES="demo-dbconnect demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi demo-healthcare workshop-splunking-endpoint workshop-ransomware-splunklive-2017 demo-connected-cars workshop-elastic-stack-lab"
+REPO_DEMO_IMAGES="demo-uba demo-dbconnect demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi demo-healthcare workshop-splunking-endpoint workshop-ransomware-splunklive-2017 demo-connected-cars workshop-elastic-stack-lab"
 REPO_DEMO_IMAGES=$(echo "$REPO_DEMO_IMAGES" | tr " " "\n"|sort -u|tr "\n" " ")
 
 #3rd party images will be renamed to 3rd-* after each docker pull
@@ -133,7 +135,7 @@ MGMT_PORT="8089"
 #KV_PORT="8191"
 RECV_PORT="9997"
 REPL_PORT="9887"
-HEC_PORT="8081"
+HEC_PORT="8088"
 APP_SERVER_PORT="8065"				#new to 6.5
 APP_KEY_VALUE_PORT="8191"			#new to 6.5
 USERADMIN="admin"
@@ -613,7 +615,9 @@ printf "${LightBlue}   >>${NC}Checking optional [imgcat] package:${NC} "
 condition=$(which imgcat 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [imgcat]${NC}:"
-	progress_bar_pkg_download "sudo apt-get install imgcat -y"
+	#progress_bar_pkg_download "sudo apt-get install imgcat -y"
+	progress_bar_pkg_download "sudo curl -o /usr/local/bin/imgc     at -O https://raw.githubusercontent.com/gnachman/iTerm2/master/     tests/imgcat"
+    sudo chmod +x /usr/local/bin/imgcat
 else
 	printf "${Green}Already installed${NC}\n"
 fi
@@ -720,6 +724,7 @@ if [ -n "$cmd" ]; then
 	printf "${Green}Already installed${NC}\n"
 else
 	printf "${BrownOrange}Installing [imgcat]${NC}:"
+	progress_bar_pkg_download "brew tap eddieantonio/eddieantonio"
 	progress_bar_pkg_download "brew install imgcat"
 fi
 #----------
@@ -3805,9 +3810,11 @@ progress_bar_pkg_download() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 install_cmd1="$1"
 install_cmd2="$2"
+install_cmd3="$3"
+install_cmd2="$4"
 START=$(date +%s)
 printf "[${NC}"
-( $install_cmd1 $install_cmd2 > /dev/null 2>&1) &
+( $install_cmd1 $install_cmd2 $install_cmd3 $install_cmd4> /dev/null 2>&1) &
 spinner $!
 printf "]${NC}"
 END=$(date +%s)
