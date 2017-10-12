@@ -616,7 +616,7 @@ condition=$(which imgcat 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [imgcat]${NC}:"
 	#progress_bar_pkg_download "sudo apt-get install imgcat -y"
-	progress_bar_pkg_download "sudo curl -o /usr/local/bin/imgc     at -O https://raw.githubusercontent.com/gnachman/iTerm2/master/     tests/imgcat"
+	progress_bar_pkg_download "sudo curl -o /usr/local/bin/imgcat -O https://raw.githubusercontent.com/gnachman/iTerm2/master/tests/imgcat"
     sudo chmod +x /usr/local/bin/imgcat
 else
 	printf "${Green}Already installed${NC}\n"
