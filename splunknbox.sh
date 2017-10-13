@@ -1819,7 +1819,7 @@ if [ "$containers_count" == 0 ]; then       #nothing created yet!
 elif [ "$containers_count" -gt "0" ]; then
 	#last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aql)|$GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 	#last_ip_used=`docker inspect --format='{{(index (index .NetworkSettings.Ports "8000/tcp") 0).HostIp}}' $(docker ps -aq) 2>/dev/null | sort -u |tail -1`
-	last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aq)| ggrep -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+ 8000'|cut -d" " -f 1|sort -u|tail -1`
+	last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aq)| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+ 8000'|cut -d" " -f 1|sort -u|tail -1`
 
 	if [ -n "$last_ip_used" ]; then
         	last_used_octet4=`echo $last_ip_used |cut -d"." -f4`
