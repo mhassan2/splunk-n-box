@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.4.1		#Used to check against github repository VERSION!
+VERSION=4.2.4.2		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
