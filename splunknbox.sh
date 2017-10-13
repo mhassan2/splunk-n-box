@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.4		#Used to check against github repository VERSION!
+VERSION=4.2.4.1		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -1817,7 +1817,10 @@ if [ "$containers_count" == 0 ]; then       #nothing created yet!
         printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} NO HOSTS EXIST! [containers_count:$containers_count] [last ip used:$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
 
 elif [ "$containers_count" -gt "0" ]; then
-	last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aql)|$GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+	#last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aql)|$GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+	#last_ip_used=`docker inspect --format='{{(index (index .NetworkSettings.Ports "8000/tcp") 0).HostIp}}' $(docker ps -aq) 2>/dev/null | sort -u |tail -1`
+	last_ip_used=`docker inspect --format '{{ .HostConfig }}' $(docker ps -aq)| ggrep -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+ 8000'|cut -d" " -f 1|sort -u|tail -1`
+
 	if [ -n "$last_ip_used" ]; then
         	last_used_octet4=`echo $last_ip_used |cut -d"." -f4`
 	else
@@ -1896,8 +1899,8 @@ fi
 #---If not passed; prompt user to get basename and count ----
 
 #Create master container (for docker monitoring). Created only once in the entire system
-master_container_exists=`docker ps | grep -i "$MASTER_CONTAINER" `
-#### disable for now 5/1/2017 -MyH-------------------
+master_container_exists=`docker ps -a| grep -i "$MASTER_CONTAINER" `
+#Build MONITOR if does not exist
 if [ -z "$master_container_exists" ]; then
 	construct_splunk_container "$base_ip.$docker_mc_start_octet4" "$MASTER_CONTAINER"
 	bind_ip_monitor=`docker inspect --format '{{ .HostConfig }}' $MASTER_CONTAINER| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
@@ -1971,7 +1974,7 @@ CMD="docker run -d \
 #-v $MOUNTPOINT/$fullhostname/etc:/opt/splunk/etc -v  $MOUNTPOINT/$fullhostname/var:/opt/splunk/var \
 
 if [ "$fullhostname" == "$MASTER_CONTAINER" ]; then
-	printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating docker monitor container.This is created once in the entire system! ${NC} "
+	printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${Yellow}Creating docker monitor container.This is created once in the entire system! ${NC} "
 else
 	printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating new splunk docker container ${NC} "
 fi
@@ -2395,10 +2398,6 @@ printf "${Yellow}T${NC}) S${Yellow}T${NC}ART container(s) ${DarkGray}[docker sta
 printf "${Yellow}D${NC}) ${Yellow}D${NC}ELETE container(s) & Volumes(s)${DarkGray} [docker rm -vf \$(docker ps -aq)]${NC}\n"
 printf "${Yellow}H${NC}) ${Yellow}H${NC}OSTS grouped by role ${DarkGray}[works only if you followed the host naming rules]${NC}\n"
 printf "\n"
-printf "${BoldWhiteOnBlue}Manage Splunk:${NC}\n"
-printf "${LightBlue}E${NC}) R${LightBlue}E${NC}SET all splunk passwords [changeme --> $USERPASS] ${DarkGray}[splunkd must be running]${NC}\n"
-printf "${LightBlue}N${NC}) LICE${LightBlue}N${NC}SES reset ${DarkGray}[copy license file to all instances]${NC}\n"
-printf "${LightBlue}U${NC}) SPL${LightBlue}U${NC}NK instance(s) restart\n"
 echo
 printf "${BoldWhiteOnGreen}Manage system:${NC}\n"
 printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
@@ -2523,6 +2522,11 @@ printf "${Yellow}1${NC}) Install apps${NC}\n"
 printf "${Yellow}2${NC}) Install tutorial datasets${NC}\n"
 printf "${Yellow}3${NC}) Install apps & tutorial datasets${NC}\n"
 echo
+printf "${BoldWhiteOnBlue}Manage Splunk:${NC}\n"
+printf "${LightBlue}E${NC}) R${LightBlue}E${NC}SET all splunk passwords [changme --> $USERPASS] ${DarkGray}[splunkd must be running]${NC}\n"
+printf "${LightBlue}N${NC}) LICE${LightBlue}N${NC}SES reset ${DarkGray}[copy license file to all instances]${NC}\n"
+printf "${LightBlue}U${NC}) SPL${LightBlue}U${NC}NK instance(s) restart\n"
+echo
 printf "${Green}B${NC}) ${Green}B${NC}ACK to MAIN menu\n"
 printf "${Green}?${NC}) ${Green}H${NC}ELP!\n"
 echo
@@ -2593,11 +2597,6 @@ do
                 t|T ) start_containers;;
                 p|P ) stop_containers;;
                 h|H ) list_all_hosts_by_role ;;
-
-                #SPLUNK ------
-                e|E ) reset_all_splunk_passwords ;;
-                n|N ) add_splunk_licenses ;;
-                u|U ) restart_all_splunkd ;;
 
 				b|B) return 0;;
 
@@ -2747,9 +2746,14 @@ do
 
                 1 ) install_ll_menu_inputs "apps";;
                 2 ) install_ll_menu_inputs "datasets";;
-                3 ) install_ll_menu_inputs;;
+            	3 ) install_ll_menu_inputs;;
 
-		b|B) return 0;;
+                #SPLUNK ------
+                e|E ) reset_all_splunk_passwords ;;
+                n|N ) add_splunk_licenses ;;
+                u|U ) restart_all_splunkd ;;
+
+				b|B) return 0;;
 
         esac  #end case ---------------------------
 	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
