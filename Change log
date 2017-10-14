@@ -199,4 +199,23 @@ v4.2.3   7/16/2017
 -changed default image to 6.6.2
 -When changing default image; the listing is sorted now
 
+v4.2.3.1   8/7/2017
+-changed SPLUNK_IMAGE to DEFAULT_SPLUNK_IMAGE
+-change all logs file to splunknbox_xxx.log  
+
+v4.2.3.2   9/10/2017
+-added splunk 6.6.3 image
+-change license from GPL 3.0 to Apache 2.0
+-fixed a bug with imgcat download on Ubuntu (now using curl from github)
+
+v4.2.4   10/12/2017
+-support for splunk 7.0 docker image
+-change default image to splunk 7.0
+
+v4.2.4.1   10/12/2017
+-moved few options from splunk menu to lunch & learn menu (pass reset, license reset, splunkd restart )
+-fixed bug in checking for existing but dead MONITOR container 
+-fixed a bug in detecting last IP used. Now it handles stopped containers. IP will not be used is container created but not running
+
+
 
