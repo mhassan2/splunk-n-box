@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.4.2		#Used to check against github repository VERSION!
+VERSION=4.2.4.3		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -4475,6 +4475,7 @@ new=""
 new=`awk -v n1=$online_ver -v n2=$VERSION 'BEGIN {if (n1>n2) print ("Y");}'  `
 if [ "$new" == "Y" ]; then
 	tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
+	printf "Checking for new version...\n"
 	read -p "Newer version [$online_ver] available. Upgrade? [Y/n]? " answer
 	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
