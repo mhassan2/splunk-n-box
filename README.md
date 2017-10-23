@@ -1,8 +1,7 @@
-      **_Scroll all the way down to see sample screenshots_**
 
- &#x1F535;     Splunk n' box presentaion (.conf2017): https://youtu.be/tXeFwWTXtD4  
- &#x1F534;     Learn docker in 10 minutes video: https://www.youtube.com/watch?v=YFl2mCHdv24
+ &#x1F535;     Splunk N' Box full presentaion (.conf2017): https://youtu.be/tXeFwWTXtD4 
  
+ &#x1F534;     In depth docker video: https://youtu.be/rfjmeakbeH8?t=1s
  &#x1F534;     Ant Lefebvre, Solutions Architect.Run Splunk n' Box on USB stick  https://youtu.be/qTAS1gvIGxM
 
 ## Introduction:
