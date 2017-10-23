@@ -79,7 +79,7 @@ If you want the docker-host to be able to resolve host IPs (optional) install dn
 Change DNSSERVER="192.168.2.100"  to point the caching DNS server. This does not work on OSX yet!
 
 
-## Steps for configuring Windows environment:
+## Windows10 installtion:
 
 1- Install Windows 10 WSL (Windows Subsystem for Linux)
 https://msdn.microsoft.com/en-us/commandline/wsl/install_guide
