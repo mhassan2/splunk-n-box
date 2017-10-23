@@ -118,7 +118,7 @@ netsh -c Interface ip delete address name="KM-TEST" addr=x.x.x.x   (repeat for a
 https://msdn.microsoft.com/en-us/commandline/wsl/user_support
 
 
-## MacOS installation (ALL STEPS ARE AUTOMATED EXCEPT DOCKER PKG INSTALL):
+## MacOS installation:
 
 &#x1F4D9;For Darwin installtions read this first: 
 
