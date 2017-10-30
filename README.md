@@ -1,5 +1,5 @@
 ## Videos:
- &#x1F534;     Splunk N' Box full presentaion (.conf2017): https://youtu.be/tXeFwWTXtD4
+ &#x1F534;     Splunk N' Box full presentation (.conf2017): https://youtu.be/tXeFwWTXtD4
  
  &#x1F535;     Run Splunk n' Box on USB stick:  https://youtu.be/qTAS1gvIGxM
  
