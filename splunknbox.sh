@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.4.3		#Used to check against github repository VERSION!
+VERSION=4.2.4.5		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -97,7 +97,7 @@ DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_7.0.0"
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
 
 #Available splunk demos registry.splunk.com
-REPO_DEMO_IMAGES="demo-uba demo-dbconnect demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi demo-healthcare workshop-splunking-endpoint workshop-ransomware-splunklive-2017 demo-connected-cars workshop-elastic-stack-lab"
+REPO_DEMO_IMAGES="workshop-boss-of-the-soc demo-azure demo-uba demo-dbconnect demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi demo-healthcare workshop-splunking-endpoint workshop-ransomware-splunklive-2017 demo-connected-cars workshop-elastic-stack-lab"
 REPO_DEMO_IMAGES=$(echo "$REPO_DEMO_IMAGES" | tr " " "\n"|sort -u|tr "\n" " ")
 
 #3rd party images will be renamed to 3rd-* after each docker pull
@@ -431,10 +431,20 @@ return 0
 }	#end start_docker_linux()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
+check_root() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+
+# Check that we're in a BASH shell
+if [[ $EUID -eq 0 ]]; then
+  echo "This script must NOT be run as root" 1>&2
+  exit 1
+fi
+}	#end check_root()
+#---------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------
 check_shell() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 # Check that we're in a BASH shell
-
 if test -z "$BASH" ; then
   echo "This script ${0##*/} must be run in the BASH shell... Aborting."; echo;
   exit 192
@@ -4566,12 +4576,13 @@ done
 printf "\n--------------- Starting new script run. Hosts are grouped by color -------------------\n" > $CMDLOGBIN
 
 detect_os	#before welcome_screen to detect which GREP to use
+check_root
+check_shell
 display_welcome_screen
 clear
 printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: Running startup validation checks...${NC}\n"
 printf "\n"
 
-check_shell
 startup_checks
 setup_ip_aliases
 main_menu_inputs
