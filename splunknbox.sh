@@ -1,10 +1,9 @@
 #!/bin/bash
-GIT_VERSION='$VERSION: [v4.3-11] $'
+GIT_VERSION='$VERSION: [v4.3-24] $'
 GIT_VERSION=`echo $GIT_VERSION| awk '{print $2}'|sed 's/\[\v//g'|sed 's/\]//g' `
-echo "VERSION now=>$GIT_VERSION<"
 
-#	$VERSION: [v4.3-11] $
-#	$DATE:    [Wed Dec 27,2017 - 11:23:18PM -0600] $
+#	$VERSION: [v4.3-24] $
+#	$DATE:    [Thu Dec 28,2017 - 12:00:21AM -0600] $
 #	$AUTHOR:  [mhassan2 <mhassan@splunk.com>] $
 
 #################################################################################
@@ -74,10 +73,6 @@ DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine IP
 #---------------------------------
 #----------PATHS-------------------
 #Full PATH is dynamic based on OS type, see detect_os()
-FILES_DIR="$PWD" 		#place anything needs to copy to container here
-LIC_FILES_DIR="$PWD/licenses"		#place all your license file here
-VOL_DIR="docker-volumes"	#directory name for volumes mount point.Full path is dynamic based on OS type
-TMP_DIR="$PWD/TMP"	#used as scrach space
 
 #The following are set in detect_os()
 #MOUNTPOINT=
@@ -151,11 +146,16 @@ DEP_SHC_COUNT="1"					#default DEP count
 #------------------------------------------
 #---------DIRECTORIES & Logs-----------------------------
 LOGLEVEL=3
-CMDLOGBIN="$PWD/splunknbox_bin.log"		#capture all docker cmds (with color)
-CMDLOGTXT="$PWD/splunknbox.log"			#capture all docker cmds (just ascii txt)
+FILES_DIR="$PWD" 		#place anything needs to copy to container here
+TMP_DIR="/tmp"	#used as scrach space
+LOGS_DIR="$PWD/logs"		#store generated logs during run
+CMDLOGBIN="$LOGS_DIR/splunknbox_bin.log"		#capture all docker cmds (with color)
+CMDLOGTXT="$LOGS_DIR/splunknbox.log"			#capture all docker cmds (just ascii txt)
 #LOGFILE="${0##*/}.log"   				#log file will be this_script_name.log
-SCREENLOGFILE="splunknbox_screens.log"  #capture all screen shots during execution
+SCREENLOGFILE="$LOGS_DIR/splunknbox_screens.log"  #capture all screen shots during execution
 HOSTSFILE="$PWD/docker-hosts.dnsmasq"  	#local host file. optional if dns caching is used
+LIC_FILES_DIR="$PWD/licenses"		#place all your license file here
+VOL_DIR="docker-volumes"	#volumes mount point.Full path is dynamic based on OS type
 #-----------------------------------------
 #--------Load control---------------------
 MAXLOADTIME=10						#seconds increments for timer
@@ -345,10 +345,10 @@ elif [ "$FLIPFLOP" == 2 ] && [ "$curr_host" != "$prev_host" ]; then
         FLIPFLOP=0; COLOR="${LightCyan}"; echo > $CMDLOGBIN
 fi
 
-printf "${White}[$DATE:    [Wed Dec 27,2017 - 11:23:18PM -0600] $CMDLOGBIN
-printf "[$DATE:    [Wed Dec 27,2017 - 11:23:18PM -0600] $CMDLOGTXT
+printf "${White}[$DATE:    [Thu Dec 28,2017 - 12:00:21AM -0600] $CMDLOGBIN
+printf "[$DATE:    [Thu Dec 28,2017 - 12:00:21AM -0600] $CMDLOGTXT
 
-#echo "[$DATE:    [Wed Dec 27,2017 - 11:23:18PM -0600] $CMDLOGBIN
+#echo "[$DATE:    [Thu Dec 28,2017 - 12:00:21AM -0600] $CMDLOGBIN
 #sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" -i $CMDLOGBIN
 prev_host=$curr_host
 
@@ -4474,8 +4474,9 @@ done
 
 #online_ver=`curl -fsSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|grep 'splunknbox'|ggrep -Po 'splunknboxver=(\K.*\))' `
 #online_ver=`curl --max-time 5 --fail --raw --silent --insecure -sSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|$GREP 'splunknbox'|$GREP --color -Po 'splunknboxver=#\K(\d+(.\d+)*)' `
-curl -s -O "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
-online_ver=`cat VERSION.TXT`
+#curl -s -O "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
+wget -qO $TMP_DIR/version.txt "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
+online_ver=`cat $TMP_DIR/version.txt`
 
 new=""
 #newveralert=`awk -v n1=$online_ver -v n2=$GIT_VERSION 'BEGIN {if (n1>n2) printf ("Newer version is available [%s]", n1);}' `
