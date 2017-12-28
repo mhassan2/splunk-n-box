@@ -1,9 +1,9 @@
 #!/bin/bash
-GIT_VERSION='$VERSION: [v4.3-24] $'
+GIT_VERSION='$VERSION: [v4.3-26] $'
 GIT_VERSION=`echo $GIT_VERSION| awk '{print $2}'|sed 's/\[\v//g'|sed 's/\]//g' `
 
-#	$VERSION: [v4.3-24] $
-#	$DATE:    [Thu Dec 28,2017 - 12:00:21AM -0600] $
+#	$VERSION: [v4.3-26] $
+#	$DATE:    [Thu Dec 28,2017 - 12:00:41AM -0600] $
 #	$AUTHOR:  [mhassan2 <mhassan@splunk.com>] $
 
 #################################################################################
@@ -345,10 +345,10 @@ elif [ "$FLIPFLOP" == 2 ] && [ "$curr_host" != "$prev_host" ]; then
         FLIPFLOP=0; COLOR="${LightCyan}"; echo > $CMDLOGBIN
 fi
 
-printf "${White}[$DATE:    [Thu Dec 28,2017 - 12:00:21AM -0600] $CMDLOGBIN
-printf "[$DATE:    [Thu Dec 28,2017 - 12:00:21AM -0600] $CMDLOGTXT
+printf "${White}[$DATE:    [Thu Dec 28,2017 - 12:00:41AM -0600] $CMDLOGBIN
+printf "[$DATE:    [Thu Dec 28,2017 - 12:00:41AM -0600] $CMDLOGTXT
 
-#echo "[$DATE:    [Thu Dec 28,2017 - 12:00:21AM -0600] $CMDLOGBIN
+#echo "[$DATE:    [Thu Dec 28,2017 - 12:00:41AM -0600] $CMDLOGBIN
 #sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" -i $CMDLOGBIN
 prev_host=$curr_host
 
@@ -2823,7 +2823,7 @@ for file in $LL_APPS; do
 	else
 		printf "Download file [$file]: "
 		progress_bar_pkg_download "wget -q -np \
-			https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/$file"
+			https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/tutorial_datasets/$file"
 	fi
 done
 echo
@@ -2863,7 +2863,7 @@ for file in $LL_DATASETS; do
 	else
 		printf "Download file [$file]: "
 		progress_bar_pkg_download "wget -q -np \
-			https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/TUTORIAL_DATASET/$file"
+			https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/tutorial_datasets/$file"
 	fi
 done
 echo
