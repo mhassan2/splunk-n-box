@@ -55,7 +55,7 @@ When you run the scripts for the first time, it will check to see if you have an
 
 
 ## Splunk image(s):
-
+All splunk images (with multiple versions) are pre-built and posted to docker hub. The script will utilize this URL during execution to download the desired image<br>
 ```
 https://hub.docker.com/r/splunknboxk/splunk_x.x.x/
 ```
@@ -300,7 +300,7 @@ http://conf.splunk.com/files/2016/recordings/indexer-clustering-internals-scalin
 
 Document last update:<br>
 |------|
-|$VERSION: [v4.3-22] $|
-|$DATE:    [Thu Dec 28,2017 - 12:00:00AM -0600] $|
+|$VERSION: [v4.3-28] $|
+|$DATE:    [Thu Dec 28,2017 - 11:11:00AM -0600] $|
 |$AUTHOR:  [mhassan2 <mhassan@splunk.com>] $|
 
