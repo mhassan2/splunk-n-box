@@ -1,9 +1,9 @@
 #!/bin/bash
-VERSION=$VERSION: [v4.3-3] $
+VERSION='$VERSION: [v4.3-4] $'
 echo "VERSION now=>$VERSION<"
 
-#	$VERSION: [v4.3-3] $
-#	$DATE:    [Wed Dec 27,2017 - 10:22:46PM -0600] $
+#	$VERSION: [v4.3-4] $
+#	$DATE:    [Wed Dec 27,2017 - 10:22:47PM -0600] $
 #	$AUTHOR:  [mhassan2 <mhassan@splunk.com>] $
 
 # Description:
