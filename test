@@ -1,0 +1,10 @@
+#!/bin/bash
+VERSION=$VERSION: [v4.3-2] $
+
+#	$VERSION: [v4.3-2] $
+#	$DATE:    [Wed Dec 27,2017 - 10:22:43PM -0600] $
+#	$AUTHOR:  [mhassan2 <mhassan@splunk.com>] $
+
+#################################################################################
+# Description:
+#	This script is intended to enable you to create number of Splunk infrastructure
