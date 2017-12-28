@@ -385,6 +385,7 @@ http://conf.splunk.com/files/2016/recordings/indexer-clustering-internals-scalin
 
 ## sample validation screen (OSX run):
 ![validation](https://cloud.githubusercontent.com/assets/16661624/19257521/de9a93fa-8f35-11e6-9910-fb73199c93a6.png)
+![splunk_login.png](img/splunk_login.png)
 
 ## Main Menu:
 ![Main Menu](https://cloud.githubusercontent.com/assets/16661624/19257520/de8cef70-8f35-11e6-857e-6a3eb2b747a0.png)
@@ -409,7 +410,7 @@ http://conf.splunk.com/files/2016/recordings/indexer-clustering-internals-scalin
 
 Document last update:<br>
 |------|
-|$VERSION: [v4.3-1] $|
-|$DATE:    [Wed Dec 27,2017 - 10:22:26PM -0600] $|
+|$VERSION: [v4.3-11] $|
+|$DATE:    [Wed Dec 27,2017 - 11:23:18PM -0600] $|
 |$AUTHOR:  [mhassan2 <mhassan@splunk.com>] $|
 

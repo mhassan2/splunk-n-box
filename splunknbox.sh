@@ -1,8 +1,10 @@
 #!/bin/bash
-VERSION=4.3		#Used to check against github repository VERSION!
+GIT_VERSION='$VERSION: [v4.3-11] $'
+GIT_VERSION=`echo $GIT_VERSION| awk '{print $2}'|sed 's/\[\v//g'|sed 's/\]//g' `
+echo "VERSION now=>$GIT_VERSION<"
 
-#	$VERSION: [v4.3-1] $
-#	$DATE:    [Wed Dec 27,2017 - 10:22:26PM -0600] $
+#	$VERSION: [v4.3-11] $
+#	$DATE:    [Wed Dec 27,2017 - 11:23:18PM -0600] $
 #	$AUTHOR:  [mhassan2 <mhassan@splunk.com>] $
 
 #################################################################################
@@ -45,7 +47,7 @@ VERSION=4.3		#Used to check against github repository VERSION!
 #
 # Last update:	Sep 5, 2017
 # Author:    	mhassan@splunk.com
-# Version:	 	see $VERSION above
+# Version:	 	see $GIT_VERSION above
 #
 #Usage :  splunknbox -v[2 3 4 5 6]
 #		v1-2 implied and cannot be changed
@@ -73,7 +75,7 @@ DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine IP
 #----------PATHS-------------------
 #Full PATH is dynamic based on OS type, see detect_os()
 FILES_DIR="$PWD" 		#place anything needs to copy to container here
-LIC_FILES_DIR="./license"		#place all your license file here
+LIC_FILES_DIR="$PWD/licenses"		#place all your license file here
 VOL_DIR="docker-volumes"	#directory name for volumes mount point.Full path is dynamic based on OS type
 TMP_DIR="$PWD/TMP"	#used as scrach space
 
@@ -343,10 +345,10 @@ elif [ "$FLIPFLOP" == 2 ] && [ "$curr_host" != "$prev_host" ]; then
         FLIPFLOP=0; COLOR="${LightCyan}"; echo > $CMDLOGBIN
 fi
 
-printf "${White}[$DATE:    [Wed Dec 27,2017 - 10:22:26PM -0600] $CMDLOGBIN
-printf "[$DATE:    [Wed Dec 27,2017 - 10:22:26PM -0600] $CMDLOGTXT
+printf "${White}[$DATE:    [Wed Dec 27,2017 - 11:23:18PM -0600] $CMDLOGBIN
+printf "[$DATE:    [Wed Dec 27,2017 - 11:23:18PM -0600] $CMDLOGTXT
 
-#echo "[$DATE:    [Wed Dec 27,2017 - 10:22:26PM -0600] $CMDLOGBIN
+#echo "[$DATE:    [Wed Dec 27,2017 - 11:23:18PM -0600] $CMDLOGBIN
 #sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" -i $CMDLOGBIN
 prev_host=$curr_host
 
@@ -929,12 +931,12 @@ fi
 #-----------splunk-net check---------------
 
 #-----------license files/dir check--------
-printf "${LightBlue}==>${NC} Checking if we have license files *.lic in [$PROJ_DIR/$LIC_FILES_DIR]..."
-if [ ! -d $PROJ_DIR/$LIC_FILES_DIR ]; then
+printf "${LightBlue}==>${NC} Checking if we have license files *.lic in [$LIC_FILES_DIR]..."
+if [ ! -d $LIC_FILES_DIR ]; then
     		printf "${Red} DIR DOESN'T EXIST!${NC}\n"
-		printf "    ${Red}>>${NC} Please create $PROJ_DIR/$LIC_FILES_DIR and place all *.lic files there.\n"
+		printf "    ${Red}>>${NC} Please create $LIC_FILES_DIR and place all *.lic files there.\n"
 		printf "    ${Red}>>${NC} Change the location of LICENSE dir in the config section of the script.${NC}\n\n"
-elif  ls $PROJ_DIR/$LIC_FILES_DIR/*.lic 1> /dev/null 2>&1 ; then
+elif  ls $LIC_FILES_DIR/*.lic 1> /dev/null 2>&1 ; then
        		printf "${Green} OK!${NC}\n"
 	else
         	printf "${Red}NO LIC FILE(S) FOUND!${NC}\n"
@@ -1301,7 +1303,7 @@ add_license_file() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 check_load
-CMD="docker cp $PROJ_DIR/$LIC_FILES_DIR  $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
+CMD="docker cp $LIC_FILES_DIR  $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
 printf "\t->Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$1"
@@ -1643,7 +1645,7 @@ LINE3="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &n
 LINE4="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Cluster Label: </font><font color=\"#FF9033\"> $cluster_label</font></H3><BR/></CENTER>"
 
 LINE5="<H2><CENTER><font color=\"#867979\">User: </font> <font color=\"red\">$USERADMIN</font> &nbsp&nbsp<font color=\"#867979\">Password:</font> <font color=\"red\"> $SHOW_PASS</font></H2></font></CENTER><BR/>"
-LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$VERSION: [v4.3-1] $DEFAULT_SPLUNK_IMAGE]</font></CENTER>"
+LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$GIT_VERSION $DEFAULT_SPLUNK_IMAGE]</font></CENTER>"
 
 #configure the custom login screen and http access for ALL (no exception)
 custom_web_conf="[settings]\nlogin_content=<div align=\"right\" style=\"border:1px solid blue;\"> $LINE1 $LINE2 $LINE3 $LINE4 $LINE5 $LINE6 </div> <p>This data is auto-generated at container build time (container internal IP=$container_ip)</p>\n\nenableSplunkWebSSL=0\n"
@@ -2351,7 +2353,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #This function displays user options for the main menu
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [v4.3-1] ${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION ${NC}\n"
 display_stats_banner
 
 tput cup 5 25
@@ -2387,7 +2389,7 @@ display_splunk_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [v4.3-1] ${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION ${NC}\n"
 display_stats_banner
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
@@ -2416,7 +2418,7 @@ display_system_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [v4.3-1] ${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION ${NC}\n"
 display_stats_banner
 printf "\n\n"
 
@@ -2436,7 +2438,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [v4.3-1] ${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION ${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2464,7 +2466,7 @@ return 0
 display_3rdparty_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [v4.3-1] ${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION ${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2492,7 +2494,7 @@ return 0
 display_clustering_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [v4.3-1] ${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION ${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2518,7 +2520,7 @@ return 0
 display_ll_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [v4.3-1] ${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION ${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -4417,7 +4419,7 @@ read -p "Are you sure you want to proceed? [y/N]? " answer
 		fi
 
 	 	printf "\n\n"
-                echo -e "Life is good! Thank you for using Splunk n' Box v$VERSION \0360\0237\0230\0200"
+                echo -e "Life is good! Thank you for using Splunk n' Box v$GIT_VERSION \0360\0237\0230\0200"
 		printf "Please send feedback to mhassan@splunk.com \n"
 		exit
 fi
@@ -4445,7 +4447,7 @@ LINES=$(tput lines)
 
 # Set default message if $1 input not provided
 MESSAGE[1]="         ${Yellow}$newveralert"
-MESSAGE[2]="Welcome to Splunk n\' Box v$VERSION"
+MESSAGE[2]="Welcome to Splunk n\' Box v$GIT_VERSION"
 MESSAGE[3]="Splunk SE essential tool"
 MESSAGE[4]=""
 MESSAGE[5]="Please set your terminal to full mode"
@@ -4476,8 +4478,8 @@ curl -s -O "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSI
 online_ver=`cat VERSION.TXT`
 
 new=""
-#newveralert=`awk -v n1=$online_ver -v n2=$VERSION 'BEGIN {if (n1>n2) printf ("Newer version is available [%s]", n1);}' `
-new=`awk -v n1=$online_ver -v n2=$VERSION 'BEGIN {if (n1>n2) print ("Y");}'  `
+#newveralert=`awk -v n1=$online_ver -v n2=$GIT_VERSION 'BEGIN {if (n1>n2) printf ("Newer version is available [%s]", n1);}' `
+new=`awk -v n1=$online_ver -v n2=$GIT_VERSION 'BEGIN {if (n1>n2) print ("Y");}'  `
 if [ "$new" == "Y" ]; then
 	tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
 	printf "Checking for new version...\n"
@@ -4575,7 +4577,7 @@ check_root
 check_shell
 display_welcome_screen
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [v4.3-1] ${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION ${NC}\n"
 printf "\n"
 
 startup_checks
