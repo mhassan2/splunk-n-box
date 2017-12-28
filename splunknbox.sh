@@ -1,6 +1,10 @@
 #!/bin/bash
 VERSION=4.2.4.8		#Used to check against github repository VERSION!
 
+#	$VERSION: [] $
+#	$DATE:    [Wed Dec 27,2017 - 10:22:11PM -0600] $
+#	$AUTHOR:  [Mohamad Hassan <mhassan@splunk.com>] $
+
 #################################################################################
 # Description:
 #	This script is intended to enable you to create number of Splunk infrastructure
@@ -339,10 +343,10 @@ elif [ "$FLIPFLOP" == 2 ] && [ "$curr_host" != "$prev_host" ]; then
         FLIPFLOP=0; COLOR="${LightCyan}"; echo > $CMDLOGBIN
 fi
 
-printf "${White}[$DATE]:${NC}$COLOR $cmd${NC}\n" >> $CMDLOGBIN
-printf "[$DATE]: $cmd$\n" >> $CMDLOGTXT
+printf "${White}[$DATE:    [Wed Dec 27,2017 - 10:22:11PM -0600] $CMDLOGBIN
+printf "[$DATE:    [Wed Dec 27,2017 - 10:22:11PM -0600] $CMDLOGTXT
 
-#echo "[$DATE]:$cmd\n" >> $CMDLOGBIN
+#echo "[$DATE:    [Wed Dec 27,2017 - 10:22:11PM -0600] $CMDLOGBIN
 #sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" -i $CMDLOGBIN
 prev_host=$curr_host
 
@@ -1639,7 +1643,7 @@ LINE3="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &n
 LINE4="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Cluster Label: </font><font color=\"#FF9033\"> $cluster_label</font></H3><BR/></CENTER>"
 
 LINE5="<H2><CENTER><font color=\"#867979\">User: </font> <font color=\"red\">$USERADMIN</font> &nbsp&nbsp<font color=\"#867979\">Password:</font> <font color=\"red\"> $SHOW_PASS</font></H2></font></CENTER><BR/>"
-LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$VERSION<BR/> Docker image [$DEFAULT_SPLUNK_IMAGE]</font></CENTER>"
+LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$VERSION: [] $DEFAULT_SPLUNK_IMAGE]</font></CENTER>"
 
 #configure the custom login screen and http access for ALL (no exception)
 custom_web_conf="[settings]\nlogin_content=<div align=\"right\" style=\"border:1px solid blue;\"> $LINE1 $LINE2 $LINE3 $LINE4 $LINE5 $LINE6 </div> <p>This data is auto-generated at container build time (container internal IP=$container_ip)</p>\n\nenableSplunkWebSSL=0\n"
@@ -2347,7 +2351,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #This function displays user options for the main menu
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU     ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [] ${NC}\n"
 display_stats_banner
 
 tput cup 5 25
@@ -2383,7 +2387,7 @@ display_splunk_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow} MAIN MENU  -> SPLUNK MENU        ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [] ${NC}\n"
 display_stats_banner
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
@@ -2412,7 +2416,7 @@ display_system_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> SYSTEM MENU          ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [] ${NC}\n"
 display_stats_banner
 printf "\n\n"
 
@@ -2432,7 +2436,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> DEMOS MENU          ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [] ${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2460,7 +2464,7 @@ return 0
 display_3rdparty_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> 3RD PARTY MENU      ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [] ${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2488,7 +2492,7 @@ return 0
 display_clustering_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> CLUSTERING MENU       ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [] ${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2514,7 +2518,7 @@ return 0
 display_ll_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: ${Yellow}MAIN MENU -> LUNCH & LEARN MENU       ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [] ${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -4571,7 +4575,7 @@ check_root
 check_shell
 display_welcome_screen
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: Running startup validation checks...${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$VERSION: [] ${NC}\n"
 printf "\n"
 
 startup_checks
