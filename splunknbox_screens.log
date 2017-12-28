@@ -1,0 +1,39 @@
+[1;34m==> [0mDetected MacOS [System:(16G1114) Kernel:Darwin 16.7.0][0m
+[H[2J[9;31H[1m[0;36m         [1;33m[10;26H[1m[0;36mWelcome to Splunk n' Box v4.3[11;29H[1m[0;36mSplunk SE essential tool[12;41H[1m[0;36m[13;22H[1m[0;36mPlease set your terminal to full mode[14;21H[1m[0;36mhttps://github.com/mhassan2/splunk-n-box[15;12H[1m[0;36mBy continuing you accept Splunk software license agreement[16;41H[1m[0;36m[17;41H[1m[0;36m[25;1H[0;34mThis script is licensed under Apache 2.0 All rights reserved Splunk Inc 2005-2017[H[2J(B[m8[H[2J[1;1;5;46mSplunk n' Box v4.3: [v4.3-0] [0m
+
+[1;34m==> [0mDetected MacOS [System:(16G1114) Kernel:Darwin 16.7.0][0m
+[1;34m==>[0m Checking for required MacOS packages...
+[1;34m   >>[0mChecking Xcode commandline tools:[0m [0;32mAlready Installed[0m
+[1;34m   >>[0mChecking brew package management:[0m [0;32mAlready installed[0m
+[1;34m   >>[0mChecking bc package:[0m [0;32mAlready installed[0m
+[1;34m   >>[0mChecking pcre package:[0m [0;32mAlready installed[0m
+[1;34m   >>[0mChecking wget package:[0m [0;32mAlready installed[0m
+[1;34m   >>[0mChecking ggrep package:[0m [0;32mAlready installed[0m
+[1;34m   >>[0mChecking optional [imagcat] package:[0m [0;32mAlready installed[0m
+[1;34m   >>[0mChecking optional [gtimeout] package:[0m [0;32mAlready installed[0m
+[1;34m   >>[0mChecking optional [graphviz] package:[0m [0;32mAlready installed[0m
+
+[1;34m==>[0m Checking if we have instances of this script running...[0m[0;32m OK![0m
+[1;34m==>[0m Checking if docker daemon is running & version [ver:17.09.1-ce]..[0;32m #OK!
+[1;34m==>[0m Checking if we have enough free OS memory [Free:2.3gb Total:19.1gb  [1;34m12%[0m]...[0;33mWARNING, may not be a problem![0m
+    [0;31m>>[0m Recommended 6.0GB+ of free memory for large builds
+    [0;31m>>[0m Modern OSs do not always report unused memory as free
+
+[1;34m==>[0m Checking Docker configs for CPUs allocation [Docker:8gb  OS:8gb]... [0;32mOK![0m
+[1;34m==>[0m Checking Docker configs for MEMORY allocation [Docker:15gb OS:19.1gb  [1;34m78%[0m]...[0;33m WARNING![0m
+    [0;31m>>[0m Docker is configured to use 15gb of the available system 19.1gb memory
+    [0;31m>>[0m Please allocate all available system memory to Docker (Preferences->Advance)
+
+[1;34m==>[0m Checking if Splunk image is available [splunknbox/splunk_7.0.1]...[0;31mNOT FOUND![0m
+    >> Download image [splunknbox/splunk_7.0.1]? [Y/n]? Downloading [0;35msplunknbox/splunk_7.0.1[0m:[▓▓▓▓▓▓▓[0m] [1;30m 0:35 [0m
+
+[0m[1;34m==>[0m Checking if docker network is created [splunk-net]...[0;32m Creating...[0m
+39b0c10d8207b1cffeac3ad7f7c5164bb26229e3e91d294b2f6a0e5e0757cce4
+[1;34m==>[0m Checking if we have license files *.lic in [/Users/mhassan/./license]...[0;31m DIR DOESN'T EXIST![0m
+    [0;31m>>[0m Please create /Users/mhassan/./license and place all *.lic files there.
+    [0;31m>>[0m Change the location of LICENSE dir in the config section of the script.[0m
+
+[1;34m==>[0m Checking if non-docker splunkd process is running [/opt/splunk/bin/splunk]...[0;32m OK![0m
+[1;34m==>[0m Checking for dns server configuration ...[192.168.1.1][0;32m OK![0m
+[1;34m==>[0m Checking if last IP alias is configured on any NIC [10.0.0.250]...[0;31mNOT FOUND![0m
+Enter interface to bind aliases to (default lo0):  

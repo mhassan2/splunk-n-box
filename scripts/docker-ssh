@@ -1,0 +1,18 @@
+#!/bin/bash -xe
+#       $VERSION: [v4.3-1] $
+#       $DATE:    [Wed Dec 27,2017 - 10:22:26PM -0600] $
+#       $AUTHOR:  [mhassan2 <mhassan@splunk.com>] $
+#
+
+#optional script
+
+# docker id might be given as a parameter
+DID=$1
+DID=`echo $DID| tr '[a-z]' '[A-Z]'`
+if [[ "$DID" == "" ]]; then
+  # if no id given simply just connect to the first running instance
+  DID=$(docker ps | grep -Eo "^[0-9a-z]{8,}\b")
+fi
+
+docker exec -i -t $DID bash
+
