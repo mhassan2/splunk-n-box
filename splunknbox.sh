@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=4.2.4.6		#Used to check against github repository VERSION!
+VERSION=4.2.4.8		#Used to check against github repository VERSION!
 
 #################################################################################
 # Description:
@@ -80,18 +80,7 @@ TMP_DIR="$PWD/TMP"	#used as scrach space
 #-----------------------------------
 #----------Images--------------------
 #My builds posted on docker hub    -MyH
-DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_7.0.0"
-#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.6.3"
-#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.6.2"
-#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.6.1"
-#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.6.0"
-#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.5.5"
-#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.5.4"
-#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.5.3"
-#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.5.2"
-#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.5.1"
-#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.4.4"
-#DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_6.4.3"
+DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_7.0.1"
 
 #DEFAULT_SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
@@ -1163,7 +1152,7 @@ func_name=$1; arg_num=$2; param_list=$3; calls=$4
 calls_count=`echo $calls|wc -w|sed 's/ //g'`
 calls=`echo $calls| sed 's/ / <- /g'`;
 printf "\n${LightRed}DEBUG:=> CALLS($calls_count) =>${Yellow}[$calls]${NC}\n"  >&6
-printf "${LightRed}DEBUG:=> STARTED  =>${Yellow}$func_name(): ${Purple}args:[$arg_num] ${Yellow}(${LightGreen}$param_list${Yellow})${NC}\n" >&6
+printf "${LightRed}DEBUG:=> STARTED  =>${Yellow}$func_name():=> ${Purple}args:[$arg_num] ${Yellow}(${LightGreen}$param_list${Yellow})${NC}\n" >&6
 
 return 0
 }	#end _debug_function_inputs()
@@ -4159,8 +4148,8 @@ for host in $hosts_sorted ; do
     splunkd_ver=`docker exec "$hostname" /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
     host_line[$i]="$bind_ip"
     if [ "$AWS_EC2" == "YES" ]; then
-		eip_tmp=`grep "$bind_ip" aws_eip_mapping.tmp | cut -f1`
-	    eip="$eip_tmp:$SPLUNKWEB_PORT_EXT"
+		eip=`grep "$bind_ip" aws_eip_mapping.tmp | awk '{print $2}'`
+	    eip="$bind_ip $eip:$SPLUNKWEB_PORT_EXT"
 	else
 		eip="http://$bind_ip:$SPLUNKWEB_PORT_EXT"
     fi
