@@ -1,10 +1,10 @@
 #!/bin/bash
-VERSION='$VERSION: [v4.3-7] $'
-VERSION=`echo $VERSION: [v4.3-7] $2}'| sed 's/\[//g'|sed 's/\]//g' `
-echo "VERSION now=>$VERSION<"
+GIT_VERSION='$VERSION: [v4.3-8] $'
+GIT_VERSION=`echo $GIT_VERSION| awk '{print $2}'|sed 's/\[//g'|sed 's/\]//g' `
+echo "VERSION now=>$GIT_VERSION<"
 
-#	$VERSION: [v4.3-7] $
-#	$DATE:    [Wed Dec 27,2017 - 10:22:50PM -0600] $
+#	$VERSION: [v4.3-8] $
+#	$DATE:    [Wed Dec 27,2017 - 10:22:53PM -0600] $
 #	$AUTHOR:  [mhassan2 <mhassan@splunk.com>] $
 
 # Description:
