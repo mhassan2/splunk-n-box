@@ -258,112 +258,6 @@ I have an extensive set of validation routines that handels multiple issues. The
 - Check if IP aliases are created, if not; create them. The user has a menu option to delete them.
 - During container builds and cluster builds check load Avg. Pause execution until it goes down. This will solve problems on hosts with limited resources (i.e., Mac laptop or 16GB ram devices).
 
-### LIST OF FUNCTIONS:
-```
-mhassan:~/splunk_docker_script_github> grep  "() {" splunknbox.sh
-function catimg() {
-function print_osc() {
-function print_st() {
-function print_image() {
-function error() {
-function show_help() {
-logline() {
-show_docker_system_prune() {
-show_docker_system_df() {
-restart_docker_mac() {    ### NOT USED YET ####
-start_docker_mac() {
-start_docker_liunx() {
-check_shell() {
-remove_ip_aliases() {
-setup_ip_aliases() {
-check_load() {
-check_for_ubuntu_pkgs() {
-check_for_MACOS_pkgs() {
-startup_checks() {
-detect_os() {
-change_loglevel() {
-compare() {
-pausing() {
-display_output() {
-_debug_function_inputs() {
-is_splunkd_running() {
-change_default_splunk_image() {
-splunkd_status_all() {
-add_license_file() {
-reset_splunk_passwd() {
-reset_all_splunk_passwords() {
-add_splunk_licenses() {
-restart_all_splunkd() {
-restart_splunkd() {
-make_lic_slave() {
-check_host_exist() {		 ####### NOT USED YET ########
-add_os_utils_to_demos() {
-list_all_hosts_by_role() {
-custom_login_screen() {
-assign_server_role() {		 ####### NOT USED YET ########
-make_dmc_search_peer() {
-set_splunkweb_to_http() {
-is_container_running() {
-calc_next_seq_fullhostname_ip() {
-create_splunk_container() {
-#build_dot_file() {
-construct_splunk_container() {
-create_demo_container_from_list() {
-construct_3rdp_container_from_image() {
-create_3rdp_container_from_list() {
-display_clustering_menu_help() {
-display_demos_menu_help() {
-display_3rdparty_menu_help() {
-display_splunk_menu_help() {
-display_system_menu_help() {
-display_main_menu_help() {
-display_main_menu_options() {
-display_splunk_menu_options() {
-display_system_menu_options() {
-display_demos_menu_options() {
-display_3rdparty_menu_options() {
-display_clustering_menu_options() {
-display_ll_menu_options() {
-main_menu_inputs() {
-splunk_menu_inputs() {
-system_menu_inputs() {
-demos_menu_inputs () {
-3rdparty_menu_inputs() {
-clustering_menu_inputs() {
-lunch_learn_menu_inputs() {
-install_ll_menu_inputs() {
-install_ll_apps() {
-install_ll_datasets() {
-create_single_shc() {
-create_single_idxc() {
-build_single_site() {
-build_multi_site_cluster() {
-print_stats() {
-display_stats_banner() {
-display_docker_stats() {
-login_to_splunk_hub() {
-spinner() {
-progress_bar_image_download() {
-progress_bar_pkg_download() {
-download_demo_image() {
-download_3rdparty_image() {
-list_all_containers() {
-start_containers() {
-stop_containers() {
-delete_containers() {
-display_all_containers() {
-remove_images() {
-show_all_images() {
-display_all_images() {
-delete_all_volumes() {
-wipe_entire_system() {
-display_welcome_screen() {
-display_goodbye_msg() {
-
-________________________________________________________________________________
-mhassan:~/splunk_docker_script_github> grep  "() {" splunknbox.sh|wc -l
-      98
-```
 
 ## Misc stuff:
 There are few optional items (open source) not part of my work. I added them to the container build for troubleshooting. You may want to exclude them to keep the container footprint small.<br>
@@ -406,7 +300,7 @@ http://conf.splunk.com/files/2016/recordings/indexer-clustering-internals-scalin
 
 Document last update:<br>
 |------|
-|$VERSION: [v4.3-12] $|
-|$DATE:    [Wed Dec 27,2017 - 11:23:27PM -0600] $|
+|$VERSION: [v4.3-13] $|
+|$DATE:    [Wed Dec 27,2017 - 11:23:36PM -0600] $|
 |$AUTHOR:  [mhassan2 <mhassan@splunk.com>] $|
 
