@@ -1,11 +1,11 @@
 #!/bin/bash
 
-GIT_VERSION='$VERSION: [v4.3-31] $'
+GIT_VERSION='$VERSION: [v4.4-0] $'
 GIT_VERSION=`echo $GIT_VERSION| awk '{print $2}'|sed 's/\[\v//g'|sed 's/\]//g' `
 
 #################################################################################
-#	$VERSION: [v4.3-31] $
-#	$DATE:    [Fri Dec 29,2017 - 06:18:25PM -0600] $
+#	$VERSION: [v4.4-0] $
+#	$DATE:    [Fri Dec 29,2017 - 06:18:30PM -0600] $
 #	$AUTHOR:  [mhassan2 <mhassan@splunk.com>] $
 
 #################################################################################
@@ -57,7 +57,6 @@ GIT_VERSION=`echo $GIT_VERSION| awk '{print $2}'|sed 's/\[\v//g'|sed 's/\]//g' `
 #		-v5	more verbosity (debug)
 #		-v6	even more verbosity (debug)
 #################################################################################
-
 
 #-------------Network stuff --------
 ETH_OSX="lo0"			#default interface to use with OSX laptop (el captain)
@@ -347,10 +346,10 @@ elif [ "$FLIPFLOP" == 2 ] && [ "$curr_host" != "$prev_host" ]; then
         FLIPFLOP=0; COLOR="${LightCyan}"; echo > $CMDLOGBIN
 fi
 
-printf "${White}[$DATE:    [Fri Dec 29,2017 - 06:18:25PM -0600] $CMDLOGBIN
-printf "[$DATE:    [Fri Dec 29,2017 - 06:18:25PM -0600] $CMDLOGTXT
+printf "${White}[$DATE:    [Fri Dec 29,2017 - 06:18:30PM -0600] $CMDLOGBIN
+printf "[$DATE:    [Fri Dec 29,2017 - 06:18:30PM -0600] $CMDLOGTXT
 
-#echo "[$DATE:    [Fri Dec 29,2017 - 06:18:25PM -0600] $CMDLOGBIN
+#echo "[$DATE:    [Fri Dec 29,2017 - 06:18:30PM -0600] $CMDLOGBIN
 #sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" -i $CMDLOGBIN
 prev_host=$curr_host
 
