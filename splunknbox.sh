@@ -1,9 +1,9 @@
 #!/bin/bash
-GIT_VERSION='$VERSION: [v4.3-27] $'
+GIT_VERSION='$VERSION: [v4.3-29] $'
 GIT_VERSION=`echo $GIT_VERSION| awk '{print $2}'|sed 's/\[\v//g'|sed 's/\]//g' `
 
-#	$VERSION: [v4.3-27] $
-#	$DATE:    [Thu Dec 28,2017 - 10:10:55AM -0600] $
+#	$VERSION: [v4.3-29] $
+#	$DATE:    [Thu Dec 28,2017 - 11:11:15AM -0600] $
 #	$AUTHOR:  [mhassan2 <mhassan@splunk.com>] $
 
 #################################################################################
@@ -345,10 +345,10 @@ elif [ "$FLIPFLOP" == 2 ] && [ "$curr_host" != "$prev_host" ]; then
         FLIPFLOP=0; COLOR="${LightCyan}"; echo > $CMDLOGBIN
 fi
 
-printf "${White}[$DATE:    [Thu Dec 28,2017 - 10:10:55AM -0600] $CMDLOGBIN
-printf "[$DATE:    [Thu Dec 28,2017 - 10:10:55AM -0600] $CMDLOGTXT
+printf "${White}[$DATE:    [Thu Dec 28,2017 - 11:11:15AM -0600] $CMDLOGBIN
+printf "[$DATE:    [Thu Dec 28,2017 - 11:11:15AM -0600] $CMDLOGTXT
 
-#echo "[$DATE:    [Thu Dec 28,2017 - 10:10:55AM -0600] $CMDLOGBIN
+#echo "[$DATE:    [Thu Dec 28,2017 - 11:11:15AM -0600] $CMDLOGBIN
 #sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" -i $CMDLOGBIN
 prev_host=$curr_host
 
@@ -4328,7 +4328,10 @@ display_all_images() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function displays custom view all images downloaded.
 
+#clean up the anoying "none" images first
+#docker rmi $(docker images -a | grep "^<none>" | awk '{print $3}')
 type=$1
+id_list=""
 count=`docker images --format "{{.ID}}" | wc -l`
 if [ $count == 0 ]; then
         printf "\nNo $type images to list!\n"
@@ -4445,9 +4448,14 @@ LINES=$(tput lines)
 #echo "lines:$LINES"
 
 
+colored_git_version=`echo $GIT_VERSION | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3 "\033[0m"  }'`
 # Set default message if $1 input not provided
+x=$(( $LINES / 2 ))                             #centered in the screen
+tput cup 9 25                 #set x and y position
+printf "\033[0;36mWelcome to Splunk n\' Box v$colored_git_version\033[0m"
+
 MESSAGE[1]="         ${Yellow}$newveralert"
-MESSAGE[2]="Welcome to Splunk n\' Box v$GIT_VERSION"
+MESSAGE[2]=""
 MESSAGE[3]="Splunk SE essential tool"
 MESSAGE[4]=""
 MESSAGE[5]="Please set your terminal to full mode"
@@ -4472,11 +4480,9 @@ for (( i=x; i <= (x + $num_of_msgs); i++)); do
 
 done
 
-#online_ver=`curl -fsSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|grep 'splunknbox'|ggrep -Po 'splunknboxver=(\K.*\))' `
-#online_ver=`curl --max-time 5 --fail --raw --silent --insecure -sSL https://github.com/mhassan2/splunk-n-box/blob/master/VERSION|$GREP 'splunknbox'|$GREP --color -Po 'splunknboxver=#\K(\d+(.\d+)*)' `
-#curl -s -O "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
 wget -qO $TMP_DIR/version.txt "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
 online_ver=`cat $TMP_DIR/version.txt`
+colored_online_ver=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3 "\033[0m"  }'`
 
 new=""
 #newveralert=`awk -v n1=$online_ver -v n2=$GIT_VERSION 'BEGIN {if (n1>n2) printf ("Newer version is available [%s]", n1);}' `
@@ -4484,7 +4490,8 @@ new=`awk -v n1=$online_ver -v n2=$GIT_VERSION 'BEGIN {if (n1>n2) print ("Y");}' 
 if [ "$new" == "Y" ]; then
 	tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
 	printf "Checking for new version...\n"
-	read -p "Newer version [$online_ver] available. Upgrade? [Y/n]? " answer
+	printf "\033[0m"
+	read -p "Newer version avialable v$colored_online_ver . Upgrade? [Y/n]? " answer
 	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
 		printf "Downloading [$PWD/${0##*/}] >> ${NC}"
