@@ -1,11 +1,10 @@
 #!/bin/bash
 
-
 #################################################################################
-GIT_VERSION='$VERSION: [v4.4-9] $'
+GIT_VERSION='$VERSION: [v4.4-15] $'
 GIT_VERSION=`echo $GIT_VERSION| awk '{print $2}'|sed 's/\[\v//g'|sed 's/\]//g' `
-#	$VERSION: [v4.4-9] $
-#	$DATE:    [Sun Dec 31,2017 - 10:10:59AM -0600] $
+#	$VERSION: [v4.4-15] $
+#	$DATE:    [Sun Dec 31,2017 - 11:11:16AM -0600] $
 #	$AUTHOR:  [mhassan2 <mhassan@splunk.com>] $
 
 #################################################################################
@@ -346,10 +345,10 @@ elif [ "$FLIPFLOP" == 2 ] && [ "$curr_host" != "$prev_host" ]; then
         FLIPFLOP=0; COLOR="${LightCyan}"; echo > $CMDLOGBIN
 fi
 
-printf "${White}[$DATE:    [Sun Dec 31,2017 - 10:10:59AM -0600] $CMDLOGBIN
-printf "[$DATE:    [Sun Dec 31,2017 - 10:10:59AM -0600] $CMDLOGTXT
+printf "${White}[$DATE:    [Sun Dec 31,2017 - 11:11:16AM -0600] $CMDLOGBIN
+printf "[$DATE:    [Sun Dec 31,2017 - 11:11:16AM -0600] $CMDLOGTXT
 
-#echo "[$DATE:    [Sun Dec 31,2017 - 10:10:59AM -0600] $CMDLOGBIN
+#echo "[$DATE:    [Sun Dec 31,2017 - 11:11:16AM -0600] $CMDLOGBIN
 #sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" -i $CMDLOGBIN
 prev_host=$curr_host
 
