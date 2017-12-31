@@ -1,11 +1,11 @@
 #!/bin/bash
 
-GIT_VERSION='$VERSION: [v4.4-6] $'
+GIT_VERSION='$VERSION: [v4.4-7] $'
 GIT_VERSION=`echo $GIT_VERSION| awk '{print $2}'|sed 's/\[\v//g'|sed 's/\]//g' `
 
 #################################################################################
-#	$VERSION: [v4.4-6] $
-#	$DATE:    [Fri Dec 29,2017 - 09:21:06PM -0600] $
+#	$VERSION: [v4.4-7] $
+#	$DATE:    [Fri Dec 29,2017 - 09:21:13PM -0600] $
 #	$AUTHOR:  [mhassan2 <mhassan@splunk.com>] $
 
 #################################################################################
@@ -346,10 +346,10 @@ elif [ "$FLIPFLOP" == 2 ] && [ "$curr_host" != "$prev_host" ]; then
         FLIPFLOP=0; COLOR="${LightCyan}"; echo > $CMDLOGBIN
 fi
 
-printf "${White}[$DATE:    [Fri Dec 29,2017 - 09:21:06PM -0600] $CMDLOGBIN
-printf "[$DATE:    [Fri Dec 29,2017 - 09:21:06PM -0600] $CMDLOGTXT
+printf "${White}[$DATE:    [Fri Dec 29,2017 - 09:21:13PM -0600] $CMDLOGBIN
+printf "[$DATE:    [Fri Dec 29,2017 - 09:21:13PM -0600] $CMDLOGTXT
 
-#echo "[$DATE:    [Fri Dec 29,2017 - 09:21:06PM -0600] $CMDLOGBIN
+#echo "[$DATE:    [Fri Dec 29,2017 - 09:21:13PM -0600] $CMDLOGBIN
 #sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" -i $CMDLOGBIN
 prev_host=$curr_host
 
@@ -4448,8 +4448,7 @@ LINES=$(tput lines)
 #echo "cols:$COLUMNS"
 #echo "lines:$LINES"
 
-
-colored_git_version=`echo $GIT_VERSION | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3 "\033[0m"  }'`
+colored_git_version=`echo $GIT_VERSION |sed 's/\[//g'|sed 's/\]//g'| awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
 # Set default message if $1 input not provided
 x=$(( $LINES / 2 ))                             #centered in the screen
 tput cup 9 25                 #set x and y position
@@ -4483,7 +4482,7 @@ done
 
 wget -qO $TMP_DIR/version.txt "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
 online_ver=`cat $TMP_DIR/version.txt`
-colored_online_ver=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3 "\033[0m"  }'`
+colored_online_version=`echo $online_ver |sed 's/\[//g'|sed 's/\]//g'| awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
 
 new=""
 #newveralert=`awk -v n1=$online_ver -v n2=$GIT_VERSION 'BEGIN {if (n1>n2) printf ("Newer version is available [%s]", n1);}' `
