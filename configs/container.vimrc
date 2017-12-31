@@ -1,4 +1,4 @@
-au! BufRead,BufNewFile *.sass         setfiletype sass 
+au! BufRead,BufNewFile *.sass         setfiletype sass
 au! BufRead,BufNewFile *.scss       setfiletype css
 " Use vim settings, instead of vi
 set nocompatible
@@ -86,14 +86,14 @@ if has("gui_running")
     "# Custom options"
     set fuoptions=maxvert,maxhorz
     set lines=24 columns=80
-    
+
 
 	highlight Normal     gui=NONE guibg=Black guifg=White
 	highlight NonText    gui=NONE guibg=Black
 	highlight Pmenu      gui=NONE guifg=Black guibg=LightGrey
 	highlight PmenuSel   gui=NONE guifg=LightGrey guibg=Black
 	highlight PmenuSbar  gui=NONE guifg=LightGrey guibg=Black
-	highlight PmenuThumb gui=NONE guifg=Black guibg=LightGrey 
+	highlight PmenuThumb gui=NONE guifg=Black guibg=LightGrey
 endif
 
 " Change buffer
@@ -117,4 +117,5 @@ nnoremap <silent> <C-k> :tabprevious<CR>
 "----MyH--
 color desert
 set number
+
 
