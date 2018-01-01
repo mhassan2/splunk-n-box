@@ -520,7 +520,6 @@ while true; do
 	gCOUNTER=0
 
 done
-
 exit 0
 
 
