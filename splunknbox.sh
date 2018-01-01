@@ -2,7 +2,7 @@
 
 #################################################################################
 GIT_VERSION=`echo VERSION.TXT`
-#	__VERSION: 4.4-43
+#	__VERSION: 4.4-44
 #	__DATE: Sun Dec 31,2017 - 11:23:22PM -0600
 #	__AUTHOR: mhassan2 <mhassan@splunk.com>
 
