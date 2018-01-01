@@ -38,6 +38,7 @@ scriptVersion="3.7.0"
 # Settings for fetcher
 ######################
 
+
 # This setting controls what ASCII logo is displayed.
 # distro="Linux"
 
