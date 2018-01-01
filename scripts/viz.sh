@@ -1,6 +1,6 @@
 #!/bin/bash
-#       $VERSION: [v4.3-1] $
-#       $DATE:    [Wed Dec 27,2017 - 10:22:26PM -0600] $
+#       $VERSION: [v4.4-23] $
+#       $DATE:    [Sun Dec 31,2017 - 09:21:24PM -0600] $
 #       $AUTHOR:  [mhassan2 <mhassan@splunk.com>] $
 #
 #set -x
@@ -520,7 +520,6 @@ while true; do
 	gCOUNTER=0
 
 done
-
 exit 0
 
 
