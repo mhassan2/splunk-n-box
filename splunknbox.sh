@@ -44,9 +44,6 @@ GIT_VERSION="4.4-39"
 #See the License for the specific language governing permissions and
 #limitations under the License.
 #
-# Last update:	Sep 5, 2017
-# Author:    	mhassan@splunk.com
-# Version:	 	see $GIT_VERSION: 4.4-39
 #
 #Usage :  splunknbox -v[2 3 4 5 6]
 #		v1-2 implied and cannot be changed
@@ -344,10 +341,10 @@ elif [ "$FLIPFLOP" == 2 ] && [ "$curr_host" != "$prev_host" ]; then
         FLIPFLOP=0; COLOR="${LightCyan}"; echo > $CMDLOGBIN
 fi
 
-printf "${White}[$DATE:    [Fri Dec 29,2017 - 09:21:06PM -0600] $CMDLOGBIN
-printf "[$DATE:    [Fri Dec 29,2017 - 09:21:06PM -0600] $CMDLOGTXT
+printf "${White}[$DATE]" >>$CMDLOGBIN
+printf "[$DATE]" >> $CMDLOGTXT
 
-#echo "[$DATE:    [Fri Dec 29,2017 - 09:21:06PM -0600] $CMDLOGBIN
+#echo "[$DATE] $CMDLOGBIN
 #sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" -i $CMDLOGBIN
 prev_host=$curr_host
 
@@ -1644,7 +1641,7 @@ LINE3="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &n
 LINE4="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Cluster Label: </font><font color=\"#FF9033\"> $cluster_label</font></H3><BR/></CENTER>"
 
 LINE5="<H2><CENTER><font color=\"#867979\">User: </font> <font color=\"red\">$USERADMIN</font> &nbsp&nbsp<font color=\"#867979\">Password:</font> <font color=\"red\"> $SHOW_PASS</font></H2></font></CENTER><BR/>"
-LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$GIT_VERSION: 4.4-39
+LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$GIT_VERSION"
 
 #configure the custom login screen and http access for ALL (no exception)
 custom_web_conf="[settings]\nlogin_content=<div align=\"right\" style=\"border:1px solid blue;\"> $LINE1 $LINE2 $LINE3 $LINE4 $LINE5 $LINE6 </div> <p>This data is auto-generated at container build time (container internal IP=$container_ip)</p>\n\nenableSplunkWebSSL=0\n"
@@ -2352,7 +2349,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #This function displays user options for the main menu
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION: 4.4-39
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
 display_stats_banner
 
 tput cup 5 25
@@ -2388,7 +2385,7 @@ display_splunk_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION: 4.4-39
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
 display_stats_banner
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
@@ -2417,7 +2414,7 @@ display_system_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION: 4.4-39
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
 display_stats_banner
 printf "\n\n"
 
@@ -2437,7 +2434,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION: 4.4-39
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
 display_stats_banner
 printf "\n"
 echo
@@ -2465,7 +2462,7 @@ return 0
 display_3rdparty_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION: 4.4-39
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
 display_stats_banner
 printf "\n"
 echo
@@ -2493,7 +2490,7 @@ return 0
 display_clustering_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION: 4.4-39
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
 display_stats_banner
 printf "\n"
 echo
@@ -2519,7 +2516,7 @@ return 0
 display_ll_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION: 4.4-39
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
 display_stats_banner
 printf "\n"
 echo
@@ -4421,7 +4418,7 @@ read -p "Are you sure you want to proceed? [y/N]? " answer
 		fi
 
 	 	printf "\n\n"
-                echo -e "Life is good! Thank you for using Splunk n' Box v$GIT_VERSION: 4.4-39
+                echo -e "Life is good! Thank you for using Splunk n' Box v$GIT_VERSION"
 		printf "Please send feedback to mhassan@splunk.com \n"
 		exit
 fi
@@ -4446,7 +4443,7 @@ LINES=$(tput lines)
 #echo "cols:$COLUMNS"
 #echo "lines:$LINES"
 
-colored_git_version=`echo $GIT_VERSION: 4.4-39
+colored_git_version=`echo $GIT_VERSION | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
 # Set default message if $1 input not provided
 x=$(( $LINES / 2 ))                             #centered in the screen
 tput cup 9 25                 #set x and y position
@@ -4480,11 +4477,11 @@ done
 
 wget -qO $TMP_DIR/version.txt "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
 online_ver=`cat $TMP_DIR/version.txt`
-colored_online_version=`echo $online_ver |sed 's/\[//g'|sed 's/\]//g'| awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
+colored_online_version=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
 
 new=""
-#newveralert=`awk -v n1=$online_ver -v n2=$GIT_VERSION: 4.4-39
-new=`awk -v n1=$online_ver -v n2=$GIT_VERSION: 4.4-39
+#newveralert=`awk -v n1=$online_ver -v n2=$GIT_VERSION"
+new=`awk -v n1=$online_ver -v n2=$GIT_VERSION"
 if [ "$new" == "Y" ]; then
 	tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
 	printf "Checking for new version...\n"
@@ -4583,7 +4580,7 @@ check_root
 check_shell
 display_welcome_screen
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION: 4.4-39
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
 printf "\n"
 
 startup_checks
