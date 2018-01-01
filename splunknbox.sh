@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #################################################################################
-#	__VERSION: 4.4-64 _
-#	__DATE: Mon Jan 01,2018 - 10:10:29AM -0600 _
+#	__VERSION: 4.4-66 _
+#	__DATE: Mon Jan 01,2018 - 10:10:32AM -0600 _
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> _
 
 GIT_VERSION=`cat VERSION.TXT `	#VERSION.TXT should be present and current
@@ -149,7 +149,7 @@ LOGS_DIR="$PWD/logs"		#store generated logs during run
 CMDLOGBIN="$LOGS_DIR/splunknbox_bin.log"		#capture all docker cmds (with color)
 CMDLOGTXT="$LOGS_DIR/splunknbox.log"			#capture all docker cmds (just ascii txt)
 #LOGFILE="${0##*/}.log"   				#log file will be this_script_name.log
-SCREENLOGFILE="$LOGS_DIR/splunknbox_screens.log"  #capture all screen shots during execution
+#SCREENLOGFILE="$LOGS_DIR/splunknbox_screens.log"  #capture all screen shots during execution
 HOSTSFILE="$PWD/docker-hosts.dnsmasq"  	#local host file. optional if dns caching is used
 LIC_FILES_DIR="$PWD/licenses"		#place all your license file here
 VOL_DIR="docker-volumes"	#volumes mount point.Full path is dynamic based on OS type
@@ -205,7 +205,7 @@ DEFAULT_NO="y/\033[1;37mN\033[0m"
 #Log level is controlled with I/O redirection. Must be first thing executed in a bash script
 # Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
 mkdir -p $LOGS_DIR	#will create if doesnt exisit
-exec >> >(tee -i $SCREENLOGFILE)
+#exec >> >(tee -i $SCREENLOGFILE)
 exec 2>&1
 
 #---------------------------------------------------------------------------------------------------------------
@@ -4447,7 +4447,6 @@ LINES=$(tput lines)
 
 colored_git_version=`echo $GIT_VERSION | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
 # Set default message if $1 input not provided
-x=$(( $LINES / 2 ))                             #centered in the screen
 tput cup 9 25                 #set x and y position
 printf "\033[0;36mWelcome to Splunk n\' Box v$colored_git_version\033[0m"
 
@@ -4479,7 +4478,7 @@ done
 
 wget -qO $TMP_DIR/version.txt "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
 online_ver=`cat $TMP_DIR/version.txt`
-colored_online_version=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
+colored_online_ver=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
 
 new=""
 #newveralert=`awk -v n1=$online_ver -v n2=$GIT_VERSION"
