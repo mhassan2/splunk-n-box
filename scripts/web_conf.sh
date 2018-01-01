@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #used for testing building web.conf. Run from /opt/splunk/system/local
 
 fullhostname="HOST03"; cluster_label="cluster1"; vip="192.168.1.1"
