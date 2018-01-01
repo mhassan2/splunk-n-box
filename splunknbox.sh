@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #################################################################################
-#	__VERSION: 4.4-66 _
-#	__DATE: Mon Jan 01,2018 - 10:10:32AM -0600 _
+#	__VERSION: 4.4-67 _
+#	__DATE: Mon Jan 01,2018 - 10:10:37AM -0600 _
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> _
 
 GIT_VERSION=`cat VERSION.TXT `	#VERSION.TXT should be present and current
@@ -1253,24 +1253,17 @@ done
 #fi
 #display_all_images "DEMO"
 count=0
-echo;echo
-echo;printf "Current default image is [$DEFAULT_SPLUNK_IMAGE]\n"; echo
-read -p "Are you sure you want to continue? [Y/n]? " answer
-if [ "$answer" == "Y" ] || [ "$answer" == "y" ] || [ "$answer" == "" ] ; then
-	printf "${BrownOrange}WARNING! Changing the default image means any subsequent container builds (except DEMO images) will use the new splunk image!${NC}\n"
-	choice=""
-	read -p "Select number: " choice
-	if [ -n "$choice" ]; then
+echo
+printf "${BrownOrange}WARNING! Changing the default image means any subsequent container builds (except DEMO images) will use the new splunk image!${NC}\n"
+printf "Current default image is [$DEFAULT_SPLUNK_IMAGE]\n"; echo
+read -p "Select number: " choice
+if [ -n "$choice" ]; then
 		START=$(date +%s)
 		image_name=(${list[$choice - 1]})
 		progress_bar_image_download "$image_name"
        		printf "Changing default image from [$DEFAULT_SPLUNK_IMAGE] to [${Yellow}$image_name${NC}]\n"
 		DEFAULT_SPLUNK_IMAGE="$image_name"
 		echo
-	fi
-else
-	echo
-	return 0
 fi
 
 return 0
@@ -2351,12 +2344,12 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #This function displays user options for the main menu
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
 display_stats_banner
 
 tput cup 5 25
 tput rev  # Set reverse video mode
-printf "${BoldYellowOnBlue} M A I N - M E N U ${NC}\n"
+printf "${BoldYellowOnWhite} M A I N - M E N U ${NC}\n"
 tput sgr0
 
 tput cup 7 15; printf "${LightCyan}1${NC}) ${LightCyan}Manage All Containers & Images ${NC}\n"
@@ -2387,7 +2380,7 @@ display_splunk_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
 display_stats_banner
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
@@ -2416,7 +2409,7 @@ display_system_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
 display_stats_banner
 printf "\n\n"
 
@@ -2436,7 +2429,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2464,7 +2457,7 @@ return 0
 display_3rdparty_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2492,7 +2485,7 @@ return 0
 display_clustering_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2518,7 +2511,7 @@ return 0
 display_ll_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -4445,13 +4438,13 @@ LINES=$(tput lines)
 #echo "cols:$COLUMNS"
 #echo "lines:$LINES"
 
-colored_git_version=`echo $GIT_VERSION | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
+colored_git_version=`echo $GIT_VERSION|awk -F '[.-]' '{print "\033[1;33m"$1"\033[0;33m."$2"\033[1;31m-" $3"\033[0m"}'`
 # Set default message if $1 input not provided
-tput cup 9 25                 #set x and y position
-printf "\033[0;36mWelcome to Splunk n\' Box v$colored_git_version\033[0m"
+#x=$(( $LINES - 34 / 2 ))                             #centered in the screen
+#tput cup $x 25                 #set x and y position
 
-MESSAGE[1]="         ${Yellow}$newveralert"
-MESSAGE[2]=""
+MESSAGE[1]=""
+MESSAGE[2]="Welcome to Splunk N\' Box v$colored_git_version"
 MESSAGE[3]="Splunk SE essential tool"
 MESSAGE[4]=""
 MESSAGE[5]="Please set your terminal to full mode"
@@ -4459,7 +4452,7 @@ MESSAGE[6]="https://github.com/mhassan2/splunk-n-box"
 MESSAGE[7]="By continuing you accept Splunk software license agreement"
 #MESSAGE[6]="https://www.splunk.com/en_us/legal/splunk-software-license-agreement.html"
 #MESSAGE[7]=""
-MESSAGE[10]="This script is licensed under Apache 2.0 All rights reserved Splunk Inc 2005-2017"
+MESSAGE[10]="This script is licensed under Apache 2.0 All rights reserved Splunk Inc 2005-2018"
 
 # Calculate x and y coordinates so that we can display $MESSAGE
 # centered in the screen
@@ -4468,11 +4461,17 @@ num_of_msgs=${#MESSAGE[@]}
 z=0
 for (( i=x; i <= (x + $num_of_msgs); i++)); do
         let z++
-        y=$(( ( $COLUMNS - ${#MESSAGE[$z]} )  / 2 ))
-        tput cup $(($i - 4)) $y                 #set x and y position
+		msg_len=${#MESSAGE[$z]}
+        col=$(( ( $COLUMNS - $msg_len )  / 2 ))
+		row=$(($i - 4))
+		if ( compare "${MESSAGE[$z]}" "Box" ); then
+			col=$(($col + 12))
+		fi
+        tput cup $row $col                 #set x and y position
         tput bold   #set reverse video mode
         # Alright display message stored in $MESSAGE
-        printf "\033[0;36m${MESSAGE[$z]}"
+		#printf "($row,$col)\033[0;36m${MESSAGE[$z]}"
+		printf "\033[0;36m${MESSAGE[$z]}"
 
 done
 
@@ -4487,7 +4486,7 @@ if [ "$new" == "Y" ]; then
 	tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
 	printf "Checking for new version...\n"
 	printf "\033[0m"
-	read -p "Newer version avialable v$colored_online_ver . Upgrade? [Y/n]? " answer
+	read -p "Newer version avialable v$colored_online_ver\033[0m . Upgrade? [Y/n]? " answer
 	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
 		printf "Downloading [$PWD/${0##*/}] >> ${NC}"
@@ -4581,7 +4580,7 @@ check_root
 check_shell
 display_welcome_screen
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION ${NC}\n"
 printf "\n"
 
 startup_checks
