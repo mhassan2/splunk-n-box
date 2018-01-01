@@ -1,11 +1,11 @@
 #!/bin/bash
 
 #################################################################################
-GIT_VERSION=`echo VERSION.TXT`
-#	__VERSION: 4.4-45
-#	__DATE: Sun Dec 31,2017 - 11:23:23PM -0600
+#	__VERSION: 4.4-46
+#	__DATE: Sun Dec 31,2017 - 11:23:24PM -0600
 #	__AUTHOR: mhassan2 <mhassan@splunk.com>
 
+GIT_VERSION=`cat VERSION.TXT `	#VERSION should be present and current
 #################################################################################
 # Description:
 #	This script is intended to enable you to create number of Splunk infrastructure
@@ -4481,7 +4481,7 @@ colored_online_version=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1
 
 new=""
 #newveralert=`awk -v n1=$online_ver -v n2=$GIT_VERSION"
-new=`awk -v n1=$online_ver -v n2=$GIT_VERSION"
+new=`awk -v n1=$online_ver -v n2=$GIT_VERSION 'BEGIN {if (n1>n2) print ("Y");}'  `
 if [ "$new" == "Y" ]; then
 	tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
 	printf "Checking for new version...\n"
