@@ -300,7 +300,7 @@ http://conf.splunk.com/files/2016/recordings/indexer-clustering-internals-scalin
 
 Document last update:<br>
 |------|
-|   __VERSION: 4.4-63 _
-|   __DATE: Mon Jan 01,2018 - 10:10:27AM -0600 _
+|   __VERSION: 4.4-68 _
+|   __DATE: Mon Jan 01,2018 - 03:15:25PM -0600 _
 |   __AUTHOR: mhassan2 <mhassan@splunk.com> _
 
