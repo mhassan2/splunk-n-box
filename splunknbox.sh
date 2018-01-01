@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #################################################################################
-GIT_VERSION="4.4-39"
-#	VERSION: 4.4-39
-#	DATE:    Sun Dec 31,2017 - 10:22:59PM -0600
-#	AUTHOR:  mhassan2 <mhassan@splunk.com>
+GIT_VERSION="__VERSION: 4.4-41
+#	__VERSION: 4.4-41
+#	__DATE: Sun Dec 31,2017 - 11:23:14PM -0600
+#	__AUTHOR: mhassan2 <mhassan@splunk.com>
 
 #################################################################################
 # Description:
