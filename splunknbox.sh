@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #################################################################################
-#	__VERSION
-#	__DATE
-#	__AUTHOR
+#	__VERSION: 4.4-56 _
+#	__DATE: Mon Jan 01,2018 - 10:10:10AM -0600 _
+#	__AUTHOR: mhassan2 <mhassan@splunk.com> _
 
 GIT_VERSION=`cat VERSION.TXT `	#VERSION.TXT should be present and current
 #################################################################################
