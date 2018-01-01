@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #################################################################################
-#	__VERSION: 4.4-52
-#	__DATE: Sun Dec 31,2017 - 11:23:45PM -0600
+#	__VERSION: 4.4-53
+#	__DATE: Sun Dec 31,2017 - 11:23:53PM -0600
 #	__AUTHOR: mhassan2 <mhassan@splunk.com>
 
 GIT_VERSION=`cat VERSION.TXT `	#VERSION.TXT should be present and current
@@ -2352,7 +2352,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #This function displays user options for the main menu
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
 display_stats_banner
 
 tput cup 5 25
@@ -2388,7 +2388,7 @@ display_splunk_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
 display_stats_banner
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
@@ -2417,7 +2417,7 @@ display_system_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
 display_stats_banner
 printf "\n\n"
 
@@ -2437,7 +2437,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2465,7 +2465,7 @@ return 0
 display_3rdparty_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2493,7 +2493,7 @@ return 0
 display_clustering_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2519,7 +2519,7 @@ return 0
 display_ll_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
 display_stats_banner
 printf "\n"
 echo
@@ -4421,7 +4421,7 @@ read -p "Are you sure you want to proceed? [y/N]? " answer
 		fi
 
 	 	printf "\n\n"
-                echo -e "Life is good! Thank you for using Splunk n' Box v$GIT_VERSION"
+                echo -e "Life is good! Thank you for using Splunk n' Box v$GIT_VERSION\n"
 		printf "Please send feedback to mhassan@splunk.com \n"
 		exit
 fi
@@ -4583,7 +4583,7 @@ check_root
 check_shell
 display_welcome_screen
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION\n"
 printf "\n"
 
 startup_checks
