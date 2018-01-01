@@ -1,13 +1,12 @@
 #!/bin/bash
 
 #################################################################################
-#	__VERSION: 4.4-49
-#	__DATE: Sun Dec 31,2017 - 11:23:36PM -0600
-#	__AUTHOR: mhassan2 <mhassan@splunk.com>
+#	__VERSION: 4.4-50 _
+#	__DATE: Sun Dec 31,2017 - 11:23:41PM -0600 _
+#	__AUTHOR: mhassan2 <mhassan@splunk.com> _
 
 GIT_VERSION=`cat VERSION.TXT `	#VERSION.TXT should be present and current
 #################################################################################
-
 
 # Description:
 #	This script is intended to enable you to create number of Splunk infrastructure
