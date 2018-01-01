@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #################################################################################
-#	__VERSION: 4.4-51
-#	__DATE: Sun Dec 31,2017 - 11:23:44PM -0600
+#	__VERSION: 4.4-52
+#	__DATE: Sun Dec 31,2017 - 11:23:45PM -0600
 #	__AUTHOR: mhassan2 <mhassan@splunk.com>
 
 GIT_VERSION=`cat VERSION.TXT `	#VERSION.TXT should be present and current
@@ -205,6 +205,7 @@ DEFAULT_NO="y/\033[1;37mN\033[0m"
 
 #Log level is controlled with I/O redirection. Must be first thing executed in a bash script
 # Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
+mkdir -p $LOGS_DIR	#will create if doesnt exisit
 exec >> >(tee -i $SCREENLOGFILE)
 exec 2>&1
 
