@@ -2,11 +2,11 @@
 
 
 #################################################################################
-#	__VERSION: 4.4-159 _
-#	__DATE: Mon Jan 01,2018 - 08:20:36PM -0600 _
+#	__VERSION: 4.4-160 _
+#	__DATE: Mon Jan 01,2018 - 08:20:37PM -0600 _
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> _
 
-GIT_VERSION= __VERSION: 4.4-159 _
+echo __VERSION > version.tmp
 GIT_VERSION=` echo $GIT_VERSION | awk '{print $2}'`	#extract number next
 
 #GIT_VERSION=`cat VERSION.TXT `	#VERSION.TXT should be present and current
