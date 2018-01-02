@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #################################################################################
-#	__VERSION: 4.4-200 $
-#	__DATE: Tue Jan 02,2018 - 09:09:35AM -0600 $
+#	__VERSION: 4.4-201 $
+#	__DATE: Tue Jan 02,2018 - 09:09:37AM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1035,16 +1035,16 @@ fi
 #detect_os is executed early so we place git stuff here
 #Must break the line with \ otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 4.4-200 $" | \
+GIT_VER=`echo "__VERSION: 4.4-201 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 09:09:35AM -0600 $" | \
+GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 09:09:37AM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
 
-echo [$GIT_VER]
-echo [$GIT_DATE]
-echo [$GIT_AUTHOR]
+#echo [$GIT_VER]
+#echo [$GIT_DATE]
+#echo [$GIT_AUTHOR]
 
 return 0
 }	#end detect_os()
