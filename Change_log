@@ -229,5 +229,7 @@ v4.4 12/27/2017
 -version stamp will updates VERSION.TXT
 -added colored version numbers
 -fixed some text alignment issue in the Welcome screen
+-disabled MONITOR container build for now. Will revist later
+
 
 
