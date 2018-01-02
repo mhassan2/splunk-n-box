@@ -3,13 +3,13 @@
 
 #################################################################################
 #	__VERSION:$
-#	__DATE: Tue Jan  2 00:13:08 CST 2018 $
+#	__DATE: Tue Jan  2 00:13:36 CST 2018 $
 #	__AUTHOR:$
 
 #date1=`echo __DATE: Tue Jan  2 00:03:36 CST 2018 _
 #ggrep -Po "__DATE: Tue Jan  2 00:03:36 CST 2018 _
 
-var=`echo "__DATE: Tue Jan  2 00:13:08 CST 2018 $" | ggrep -Po "\s+\w+\s+\w+\s+\d+\s\d{2}:\d{2}:\d{2}\sCST\s\d{4}" `
+var=`echo "__DATE: Tue Jan  2 00:13:36 CST 2018 $" | ggrep -Po "\s+\w+\s+\w+\s+\d+\s\d{2}:\d{2}:\d{2}\sCST\s\d{4}" `
 echo "var[$var]"
 exit
 
