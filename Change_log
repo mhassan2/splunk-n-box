@@ -218,13 +218,16 @@ v4.2.4.1   10/12/2017
 -fixed a bug in detecting last IP used. Now it handles stopped containers. IP will not be used is container created but not running
 
 v4.3 12/25/2017
+-switched to git versioning x.y-aaaa
 -moved to new github structure for directories
 -fixed few paths releated to the move (LOGS, LICENSES)
+-disabled SCREENCMDLOG
 
 v4.4 12/27/2017
--switched to git versioning x.y-aaaa
--version stamp is now automatic with git checkin (commit)
+-version stamp is now automatic with git check-in (commit)
 -version stamp applies to README.md and *.sh
--version stamp update VERSION.TXT
+-version stamp will updates VERSION.TXT
 -added colored version numbers
+-fixed some text alignment issue in the Welcome screen
+
 
