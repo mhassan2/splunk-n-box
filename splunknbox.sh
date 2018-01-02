@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #################################################################################
-#	__VERSION: 4.4-186 $
-#	__DATE: Tue Jan 02,2018 - 12:00:31AM -0600 $
+#	__VERSION: 4.4-187 $
+#	__DATE: Tue Jan 02,2018 - 12:00:37AM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1033,14 +1033,13 @@ else
 fi
 
 #detect_os is executed early so we place git stuff here
-GIT_VER=`echo "__VERSION: 4.4-186 $" | ggrep -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 12:00:31AM -0600 $" | ggrep -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
+GIT_VER=`echo "__VERSION: 4.4-187 $" | ggrep -Po "\d+.\d+-\d+"`
+GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 12:00:37AM -0600 $" | ggrep -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | ggrep -Po "\w+\s\<\w+\@\w+.\w+\>"`
 
-echo [$GIT_VER]
-echo [$GIT_DATE]
-echo [$GIT_AUTHOR]
-exit
+#echo [$GIT_VER]
+#echo [$GIT_DATE]
+#echo [$GIT_AUTHOR]
 
 return 0
 }	#end detect_os()
