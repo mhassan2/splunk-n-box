@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #################################################################################
-#	__VERSION: 4.4-188 $
-#	__DATE: Tue Jan 02,2018 - 12:00:38AM -0600 $
+#	__VERSION: 4.4-190 $
+#	__DATE: Tue Jan 02,2018 - 12:00:39AM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1033,9 +1033,9 @@ else
 fi
 
 #detect_os is executed early so we place git stuff here
-GIT_VER=`echo "__VERSION: 4.4-188 $" | ggrep -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 12:00:38AM -0600 $" | ggrep -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
-GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | ggrep -Po "\w+\s\<\w+\@\w+.\w+\>"`
+GIT_VER=`echo "__VERSION: 4.4-190 $" | ggrep -Po "\d+.\d+-\d+"`
+GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 12:00:39AM -0600 $GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
+GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
 
 #echo [$GIT_VER]
 #echo [$GIT_DATE]
@@ -4487,13 +4487,14 @@ online_ver=`cat $TMP_DIR/version.txt`
 colored_online_ver=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
 
 new=""
-#newveralert=`awk -v n1=$online_ver -v n2=$GIT_VER"
 new=`awk -v n1=$online_ver -v n2=$GIT_VER 'BEGIN {if (n1>n2) print ("Y");}'  `
+
 if [ "$new" == "Y" ]; then
-	tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
-	printf "Checking for new version...\n"
+	#tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
+	tput cup $LINES 0
+	printf "Checking for new version... [found $colored_online_ver${NC}]\n"
 	printf "\033[0m"
-	read -p "Newer version avialable v$colored_online_ver\033[0m . Upgrade? [Y/n]? " answer
+	read -p $"Newer version avialable. Upgrade? [Y/n]? " answer
 	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
 		printf "Downloading [$PWD/${0##*/}] >> ${NC}"
