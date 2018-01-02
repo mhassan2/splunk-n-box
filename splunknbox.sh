@@ -2,14 +2,18 @@
 
 
 #################################################################################
-#	__VERSION: 4.4-183 $
-#	__DATE: Tue Jan 02,2018 - 12:00:26AM -0600 $
+#	__VERSION: 4.4-184 $
+#	__DATE: Tue Jan 02,2018 - 12:00:27AM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 
-GIT_VER=`echo "__VERSION: 4.4-183 $" | ggrep -Po "\d+.\d+-\d+"`
-#GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 12:00:26AM -0600 $" | ggrep -Po "\w+\s+\w+\s+\d+\s\d{2}:\d{2}:\d{2}\sCST\s\d{4}" `
-#GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | ggrep -Po "\w+\s\<\w+\@\w+.\w+\>"`
+GIT_VER=`echo "__VERSION: 4.4-184 $" | ggrep -Po "\d+.\d+-\d+"`
+GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 12:00:27AM -0600 $" | ggrep -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
+GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | ggrep -Po "\w+\s\<\w+\@\w+.\w+\>"`
 
+echo [$GIT_VER]
+echo [$GIT_DATE]
+echo [$GIT_AUTHOR]
+exit
 #################################################################################
 
 # Description:
