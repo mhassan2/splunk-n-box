@@ -2,12 +2,12 @@
 
 
 #################################################################################
-#	__VERSION: 4.4-182 $
-#	__DATE: Tue Jan  2 00:26:02 CST 2018 $
+#	__VERSION: 4.4-183 $
+#	__DATE: Tue Jan 02,2018 - 12:00:26AM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 
-GIT_VER=`echo "__VERSION: 4.4-182 $" | ggrep -Po "\d+.\d+-\d+"`
-#GIT_DATE=`echo "__DATE: Tue Jan  2 00:26:02 CST 2018 $" | ggrep -Po "\w+\s+\w+\s+\d+\s\d{2}:\d{2}:\d{2}\sCST\s\d{4}" `
+GIT_VER=`echo "__VERSION: 4.4-183 $" | ggrep -Po "\d+.\d+-\d+"`
+#GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 12:00:26AM -0600 $" | ggrep -Po "\w+\s+\w+\s+\d+\s\d{2}:\d{2}:\d{2}\sCST\s\d{4}" `
 #GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | ggrep -Po "\w+\s\<\w+\@\w+.\w+\>"`
 
 #################################################################################
