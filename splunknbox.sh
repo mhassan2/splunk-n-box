@@ -1,19 +1,9 @@
 #!/bin/bash
 
-
 #################################################################################
-#	__VERSION: 4.4-185 $
-#	__DATE: Tue Jan 02,2018 - 12:00:30AM -0600 $
+#	__VERSION: 4.4-186 $
+#	__DATE: Tue Jan 02,2018 - 12:00:31AM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
-
-GIT_VER=`echo "__VERSION: 4.4-185 $" | ggrep -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 12:00:30AM -0600 $" | ggrep -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
-GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | ggrep -Po "\w+\s\<\w+\@\w+.\w+\>"`
-
-echo [$GIT_VER]
-echo [$GIT_DATE]
-echo [$GIT_AUTHOR]
-exit
 #################################################################################
 
 # Description:
@@ -1042,6 +1032,16 @@ else
     AWS_EC2="NO"
 fi
 
+#detect_os is executed early so we place git stuff here
+GIT_VER=`echo "__VERSION: 4.4-186 $" | ggrep -Po "\d+.\d+-\d+"`
+GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 12:00:31AM -0600 $" | ggrep -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
+GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | ggrep -Po "\w+\s\<\w+\@\w+.\w+\>"`
+
+echo [$GIT_VER]
+echo [$GIT_DATE]
+echo [$GIT_AUTHOR]
+exit
+
 return 0
 }	#end detect_os()
 #---------------------------------------------------------------------------------------------------------------
@@ -1644,7 +1644,7 @@ LINE3="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &n
 LINE4="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Cluster Label: </font><font color=\"#FF9033\"> $cluster_label</font></H3><BR/></CENTER>"
 
 LINE5="<H2><CENTER><font color=\"#867979\">User: </font> <font color=\"red\">$USERADMIN</font> &nbsp&nbsp<font color=\"#867979\">Password:</font> <font color=\"red\"> $SHOW_PASS</font></H2></font></CENTER><BR/>"
-LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$GIT_VERSION"
+LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$GIT_VER"
 
 #configure the custom login screen and http access for ALL (no exception)
 custom_web_conf="[settings]\nlogin_content=<div align=\"right\" style=\"border:1px solid blue;\"> $LINE1 $LINE2 $LINE3 $LINE4 $LINE5 $LINE6 </div> <p>This data is auto-generated at container build time (container internal IP=$container_ip)</p>\n\nenableSplunkWebSSL=0\n"
@@ -2352,7 +2352,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #This function displays user options for the main menu
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
 display_stats_banner
 
 tput cup 5 25
@@ -2388,7 +2388,7 @@ display_splunk_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
 display_stats_banner
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
@@ -2417,7 +2417,7 @@ display_system_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
 display_stats_banner
 printf "\n\n"
 
@@ -2437,7 +2437,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2465,7 +2465,7 @@ return 0
 display_3rdparty_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2493,7 +2493,7 @@ return 0
 display_clustering_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2519,7 +2519,7 @@ return 0
 display_ll_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -4421,7 +4421,7 @@ read -p "Are you sure you want to proceed? [y/N]? " answer
 		fi
 
 	 	printf "\n\n"
-                echo -e "Life is good! Thank you for using Splunk n' Box v$GIT_VERSION\n"
+                echo -e "Life is good! Thank you for using Splunk n' Box v$GIT_VER\n"
 		printf "Please send feedback to mhassan@splunk.com \n"
 		exit
 fi
@@ -4446,7 +4446,7 @@ LINES=$(tput lines)
 #echo "cols:$COLUMNS"
 #echo "lines:$LINES"
 
-colored_git_version=`echo $GIT_VERSION|awk -F '[.-]' '{print "\033[1;33m"$1"\033[0;33m."$2"\033[1;31m-" $3"\033[0m"}'`
+colored_git_version=`echo $GIT_VER|awk -F '[.-]' '{print "\033[1;33m"$1"\033[0;33m."$2"\033[1;31m-" $3"\033[0m"}'`
 # Set default message if $1 input not provided
 #x=$(( $LINES - 34 / 2 ))                             #centered in the screen
 #tput cup $x 25                 #set x and y position
@@ -4488,8 +4488,8 @@ online_ver=`cat $TMP_DIR/version.txt`
 colored_online_ver=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
 
 new=""
-#newveralert=`awk -v n1=$online_ver -v n2=$GIT_VERSION"
-new=`awk -v n1=$online_ver -v n2=$GIT_VERSION 'BEGIN {if (n1>n2) print ("Y");}'  `
+#newveralert=`awk -v n1=$online_ver -v n2=$GIT_VER"
+new=`awk -v n1=$online_ver -v n2=$GIT_VER 'BEGIN {if (n1>n2) print ("Y");}'  `
 if [ "$new" == "Y" ]; then
 	tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
 	printf "Checking for new version...\n"
@@ -4588,7 +4588,7 @@ check_root
 check_shell
 display_welcome_screen
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VERSION ${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER ${NC}\n"
 printf "\n"
 
 startup_checks
