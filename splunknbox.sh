@@ -148,7 +148,7 @@ CMDLOGTXT="$LOGS_DIR/splunknbox.log"			#capture all docker cmds (just ascii txt)
 #LOGFILE="${0##*/}.log"   				#log file will be this_script_name.log
 #SCREENLOGFILE="$LOGS_DIR/splunknbox_screens.log"  #capture all screen shots during execution
 HOSTSFILE="$PWD/docker-hosts.dnsmasq"  	#local host file. optional if dns caching is used
-LIC_FILES_DIR="$PWD/licenses"		#place all your license file here
+SPLUNK_LIC_DIR="$PWD/licenses"		#place all your license file here
 VOL_DIR="docker-volumes"	#volumes mount point.Full path is dynamic based on OS type
 #-----------------------------------------
 #--------Load control---------------------
@@ -202,6 +202,7 @@ DEFAULT_NO="y/\033[1;37mN\033[0m"
 #Log level is controlled with I/O redirection. Must be first thing executed in a bash script
 # Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
 mkdir -p $LOGS_DIR	#will create if doesnt exisit
+mkdir -p $SPLUNK_LIC_DIR	#will create if doesnt exisit
 #exec >> >(tee -i $SCREENLOGFILE)
 exec 2>&1
 
@@ -926,12 +927,12 @@ fi
 #-----------splunk-net check---------------
 
 #-----------license files/dir check--------
-printf "${LightBlue}==>${NC} Checking if we have license files *.lic in [$LIC_FILES_DIR]..."
-if [ ! -d $LIC_FILES_DIR ]; then
+printf "${LightBlue}==>${NC} Checking if we have license files *.lic in [$SPLUNK_LIC_DIR]..."
+if [ ! -d $SPLUNK_LIC_DIR ]; then
     		printf "${Red} DIR DOESN'T EXIST!${NC}\n"
-		printf "    ${Red}>>${NC} Please create $LIC_FILES_DIR and place all *.lic files there.\n"
+		printf "    ${Red}>>${NC} Please create $SPLUNK_LIC_DIR and place all *.lic files there.\n"
 		printf "    ${Red}>>${NC} Change the location of LICENSE dir in the config section of the script.${NC}\n\n"
-elif  ls $LIC_FILES_DIR/*.lic 1> /dev/null 2>&1 ; then
+elif  ls $SPLUNK_LIC_DIR/*.lic 1> /dev/null 2>&1 ; then
        		printf "${Green} OK!${NC}\n"
 	else
         	printf "${Red}NO LIC FILE(S) FOUND!${NC}\n"
@@ -1305,7 +1306,7 @@ add_license_file() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 check_load
-CMD="docker cp $LIC_FILES_DIR  $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
+CMD="docker cp $SPLUNK_LIC_DIR  $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
 printf "\t->Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$1"
