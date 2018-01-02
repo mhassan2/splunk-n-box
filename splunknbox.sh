@@ -2,16 +2,16 @@
 
 
 #################################################################################
-#	__VERSION: 4.4-180 $
-#	__DATE: Tue Jan  2 00:23:02 CST 2018 $
+#	__VERSION: 4.4-181 $
+#	__DATE: Tue Jan  2 00:24:00 CST 2018 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 
 #date1=`echo __DATE: Tue Jan  2 00:03:36 CST 2018 _
 #ggrep -Po "__DATE: Tue Jan  2 00:03:36 CST 2018 _
 
-ver=`echo "__VERSION: 4.4-180 $" | ggrep -Po "\s+\d+.\d+-\d+"`
-dat=`echo "__DATE: Tue Jan  2 00:23:02 CST 2018 $" | ggrep -Po "\s+\w+\s+\w+\s+\d+\s\d{2}:\d{2}:\d{2}\sCST\s\d{4}" `
-auth=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | ggrep -Po "\s+\w+\s\<\w+\@\w+.\w+\>"`
+ver=`echo "__VERSION: 4.4-181 $" | ggrep -Po "\d+.\d+-\d+"`
+dat=`echo "__DATE: Tue Jan  2 00:24:00 CST 2018 $" | ggrep -Po "\w+\s+\w+\s+\d+\s\d{2}:\d{2}:\d{2}\sCST\s\d{4}" `
+auth=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | ggrep -Po "\w+\s\<\w+\@\w+.\w+\>"`
 
 echo "ver[$ver]"
 echo "date[$dat]"
