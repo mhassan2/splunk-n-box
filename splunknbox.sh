@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #################################################################################
-#	__VERSION: 4.4-193 $
-#	__DATE: Tue Jan 02,2018 - 01:01:07AM -0600 $
+#	__VERSION: 4.4-194 $
+#	__DATE: Tue Jan 02,2018 - 09:09:24AM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1033,8 +1033,8 @@ else
 fi
 
 #detect_os is executed early so we place git stuff here
-GIT_VER=`echo "__VERSION: 4.4-193 $" | ggrep -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 01:01:07AM -0600 $GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
+GIT_VER=`echo "__VERSION: 4.4-194 $" | ggrep -Po "\d+.\d+-\d+"`
+GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 09:09:24AM -0600 $GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
 
 #echo [$GIT_VER]
