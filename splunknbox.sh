@@ -2,11 +2,13 @@
 
 
 #################################################################################
-#	__VERSION: 4.4-164 _
-#	__DATE: Mon Jan 01,2018 - 11:23:35PM -0600 _
+#	__VERSION: 4.4-165 _
+#	__DATE
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> _
 
-date1=`echo __DATE: Mon Jan 01,2018 - 11:23:35PM -0600 _
+date1=`echo __DATE | ggrep -Po "__DATE: Mon Jan 01,2018 - 11:23:37PM -0600 _\s+\w+\s+\w+\s+\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(PM|AM)\s-\d{4}" `
+#ggrep -Po "__DATE: Mon Jan 01,2018 - 11:23:37PM -0600 _\s+\w+\s+\w+\s+\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(PM|AM)\s-\d{4}"
+
 echo "date1[$date1]";exit
 GIT_VERSION=` echo $GIT_VERSION | awk '{print $2}'`	#extract number next
 
