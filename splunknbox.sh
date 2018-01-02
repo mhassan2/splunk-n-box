@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #################################################################################
-#	__VERSION: 4.4-190 $
-#	__DATE: Tue Jan 02,2018 - 12:00:39AM -0600 $
+#	__VERSION: 4.4-191 $
+#	__DATE: Tue Jan 02,2018 - 01:01:03AM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1033,8 +1033,8 @@ else
 fi
 
 #detect_os is executed early so we place git stuff here
-GIT_VER=`echo "__VERSION: 4.4-190 $" | ggrep -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 12:00:39AM -0600 $GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
+GIT_VER=`echo "__VERSION: 4.4-191 $" | ggrep -Po "\d+.\d+-\d+"`
+GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 01:01:03AM -0600 $GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
 
 #echo [$GIT_VER]
@@ -4496,7 +4496,7 @@ if [ "$new" == "Y" ]; then
 	printf "\033[0m"
 	read -p $"Newer version avialable. Upgrade? [Y/n]? " answer
 	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
-		tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
+		tput cup $LINES 0
 		printf "Downloading [$PWD/${0##*/}] >> ${NC}"
 		progress_bar_pkg_download "curl -O https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/${0##*/}"
 		#curl --max-time 5 -O https://raw.github.com/mhassan2/splunk-n-box/master/${0##*/}
