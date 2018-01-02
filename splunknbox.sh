@@ -2,17 +2,17 @@
 
 
 #################################################################################
-#	__VERSION: 4.4-174 _
-#	__DATE: :58:31 CST 2018 _
+#	__VERSION: 4.4-175 _
+#	__DATE: Tue Jan  2 00:03:35 CST 2018 _
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> _
 
-#date1=`echo __DATE: Mon Jan  1 23:55:48 CST 2018 _ Mon Jan  1 23:55:46 CST 2018 _ Mon Jan  1 23:53:37 CST 2018 _ Mon Jan  1 23:53:34 CST 2018 _ Mon Jan  1 23:52:05 CST 2018 _: Mon Jan  1 23:51:52 CST 2018 _ | ggrep -Po "__DATE: Mon Jan 01,2018 - 11:23:40PM -0600 _ Mon Jan 01,2018 - 11:23:37PM -0600 _\s+\w+\s+\w+\s+\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(PM|AM)\s-\d{4}" `
-#ggrep -Po "__DATE: Mon Jan  1 23:55:48 CST 2018 _ Mon Jan  1 23:55:46 CST 2018 _ Mon Jan  1 23:53:37 CST 2018 _ Mon Jan  1 23:53:34 CST 2018 _ Mon Jan  1 23:52:05 CST 2018 _: Mon Jan  1 23:51:52 CST 2018 _: Mon Jan 01,2018 - 11:23:40PM -0600 _ Mon Jan 01,2018 - 11:23:37PM -0600 _\s+\w+\s+\w+\s+\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(PM|AM)\s-\d{4}"
+#date1=`echo __DATE: Tue Jan  2 00:03:35 CST 2018 _
+#ggrep -Po "__DATE: Tue Jan  2 00:03:35 CST 2018 _
 
-echo __DATE: | ggrep -Po "\s+\w+\s+\w+\s+\d+\s\d{2}:\d{2}:\d{2}\sCST\s\d{4}"
+echo __DATE: Tue Jan  2 00:03:35 CST 2018 _
 echo "var[$var]"
 
-#var=`echo "__DATE:" | ggrep -Po "\s+\w+\s+\w+\s+\d+\s\d{2}:\d{2}:\d{2}\sCST\s\d{4}" `
+#var=`echo "__DATE: Tue Jan  2 00:03:35 CST 2018 _
 echo "date1[$date1]";exit
 GIT_VERSION=` echo $GIT_VERSION | awk '{print $2}'`	#extract number next
 
