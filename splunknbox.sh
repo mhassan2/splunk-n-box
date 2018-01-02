@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #################################################################################
-#	__VERSION: 4.4-204 $
-#	__DATE: Tue Jan 02,2018 - 09:09:50AM -0600 $
+#	__VERSION: 4.4-209 $
+#	__DATE: Tue Jan 02,2018 - 09:09:58AM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -59,10 +59,10 @@ ETH_LINUX="ens3"		#default interface to use with Linux server (Ubuntu 16.04
 #-------------IP aliases --------
 #LINUX is routed and hosts can be reached from anywhere in the network
 #START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.254"
-START_ALIAS_LINUX="192.168.1.101";  	END_ALIAS_LINUX="192.168.1.250"
+START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.250"
 
 #OSX space will not be routed, and host reached from the laptop only
-START_ALIAS_OSX="10.0.0.101";  		END_ALIAS_OSX="10.0.0.250"
+START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.250"
 
 DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine IP
 #---------------------------------
@@ -1035,9 +1035,9 @@ fi
 #detect_os is executed early so we place git stuff here
 #Must break the line with \ otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 4.4-204 $" | \
+GIT_VER=`echo "__VERSION: 4.4-209 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 09:09:50AM -0600 $" | \
+GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 09:09:58AM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
@@ -1833,7 +1833,7 @@ elif [ "$containers_count" -gt "0" ]; then
         	last_used_octet4=`echo $last_ip_used |cut -d"." -f4`
 	else
 		printf "${NC}\n"
-		#printf "Use option ${Yellow}1)${NC} SHOW all containers... ${Red}above to see the offending container(s). Exiting...${NC}\n"
+		printf "Use option ${Yellow}1)${NC} SHOW all containers... ${Red}above to see the offending container(s). Exiting...${NC}\n"
 	#	exit
 	fi
         printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}SOME HOSTS EXIST. [containers_count:$containers_count][last ip used:$last_ip_used][last_octet4:$last_used_octet4]\n" >&5
@@ -1906,13 +1906,16 @@ else
 fi
 #---If not passed; prompt user to get basename and count ----
 
+#--------------------
 #Create master container (for docker monitoring). Created only once in the entire system
-master_container_exists=`docker ps -a| grep -i "$MASTER_CONTAINER" `
+#master_container_exists=`docker ps -a| grep -i "$MASTER_CONTAINER" `
 #Build MONITOR if does not exist
-if [ -z "$master_container_exists" ]; then
-	construct_splunk_container "$base_ip.$docker_mc_start_octet4" "$MASTER_CONTAINER"
-	bind_ip_monitor=`docker inspect --format '{{ .HostConfig }}' $MASTER_CONTAINER| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-fi
+#if [ -z "$master_container_exists" ]; then
+#	construct_splunk_container "$base_ip.$docker_mc_start_octet4" "$MASTER_CONTAINER"
+#	bind_ip_monitor=`docker inspect --format '{{ .HostConfig }}' $MASTER_CONTAINER| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+#fi
+#--------------------
+
 for (( a = 1; a <= count; a++ ))  ; do
 	calc_next_seq_fullhostname_ip "$basename" "$count"	#function will return global $vip
 	construct_splunk_container $vip $fullhostname $lic_master $cluster_label $bindip_monitor
