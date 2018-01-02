@@ -1649,7 +1649,7 @@ LINE3="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &n
 LINE4="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Cluster Label: </font><font color=\"#FF9033\"> $cluster_label</font></H3><BR/></CENTER>"
 
 LINE5="<H2><CENTER><font color=\"#867979\">User: </font> <font color=\"red\">$USERADMIN</font> &nbsp&nbsp<font color=\"#867979\">Password:</font> <font color=\"red\"> $SHOW_PASS</font></H2></font></CENTER><BR/>"
-LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$GIT_VER"
+LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$GIT_VER<BR/> Docker image [$SPLUNK_IMAGE]</font></CENTER>"
 
 #configure the custom login screen and http access for ALL (no exception)
 custom_web_conf="[settings]\nlogin_content=<div align=\"right\" style=\"border:1px solid blue;\"> $LINE1 $LINE2 $LINE3 $LINE4 $LINE5 $LINE6 </div> <p>This data is auto-generated at container build time (container internal IP=$container_ip)</p>\n\nenableSplunkWebSSL=0\n"
@@ -2360,7 +2360,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #This function displays user options for the main menu
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU     ${DarkGray}[$dockerinfo]${NC}\n"
 display_stats_banner
 
 tput cup 5 25
@@ -2396,7 +2396,7 @@ display_splunk_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow} MAIN MENU  -> SPLUNK MENU        ${DarkGray}[$dockerinfo]${NC}\n"
 display_stats_banner
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
@@ -2425,7 +2425,7 @@ display_system_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> SYSTEM MENU          ${DarkGray}[$dockerinfo]${NC}\n"
 display_stats_banner
 printf "\n\n"
 
@@ -2445,7 +2445,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DEMOS MENU          ${DarkGray}[$dockerinfo]${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2473,7 +2473,7 @@ return 0
 display_3rdparty_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> 3RD PARTY MENU      ${DarkGray}[$dockerinfo]${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2501,7 +2501,7 @@ return 0
 display_clustering_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU       ${DarkGray}[$dockerinfo]${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -2527,7 +2527,7 @@ return 0
 display_ll_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> LUNCH & LEARN MENU       ${DarkGray}[$dockerinfo]${NC}\n"
 display_stats_banner
 printf "\n"
 echo
@@ -4597,7 +4597,7 @@ check_root
 check_shell
 display_welcome_screen
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER ${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: Running startup validation checks...${NC}\n"
 printf "\n"
 
 startup_checks
