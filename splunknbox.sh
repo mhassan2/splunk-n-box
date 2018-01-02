@@ -2,11 +2,11 @@
 
 
 #################################################################################
-#	__VERSION: 4.4-153 _
-#	__DATE: Mon Jan 01,2018 - 07:19:28PM -0600 _
+#	__VERSION: 4.4-155 _
+#	__DATE: Mon Jan 01,2018 - 07:19:32PM -0600 _
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> _
-
-GIT_VERSION=`cat VERSION.TXT `	#VERSION.TXT should be present and current
+GIT_VERSION=` echo __VERSION: 4.4-155 _
+#GIT_VERSION=`cat VERSION.TXT `	#VERSION.TXT should be present and current
 #################################################################################
 
 # Description:
