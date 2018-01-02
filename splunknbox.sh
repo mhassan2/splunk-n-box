@@ -2,27 +2,14 @@
 
 
 #################################################################################
-#	__VERSION: 4.4-181 $
-#	__DATE: Tue Jan  2 00:24:00 CST 2018 $
+#	__VERSION: 4.4-182 $
+#	__DATE: Tue Jan  2 00:26:02 CST 2018 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 
-#date1=`echo __DATE: Tue Jan  2 00:03:36 CST 2018 _
-#ggrep -Po "__DATE: Tue Jan  2 00:03:36 CST 2018 _
+GIT_VER=`echo "__VERSION: 4.4-182 $" | ggrep -Po "\d+.\d+-\d+"`
+#GIT_DATE=`echo "__DATE: Tue Jan  2 00:26:02 CST 2018 $" | ggrep -Po "\w+\s+\w+\s+\d+\s\d{2}:\d{2}:\d{2}\sCST\s\d{4}" `
+#GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | ggrep -Po "\w+\s\<\w+\@\w+.\w+\>"`
 
-ver=`echo "__VERSION: 4.4-181 $" | ggrep -Po "\d+.\d+-\d+"`
-dat=`echo "__DATE: Tue Jan  2 00:24:00 CST 2018 $" | ggrep -Po "\w+\s+\w+\s+\d+\s\d{2}:\d{2}:\d{2}\sCST\s\d{4}" `
-auth=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | ggrep -Po "\w+\s\<\w+\@\w+.\w+\>"`
-
-echo "ver[$ver]"
-echo "date[$dat]"
-echo "author[$auth]"
-exit
-
-#var=`echo "__DATE: Tue Jan  2 00:03:36 CST 2018 _
-echo "date1[$date1]";exit
-GIT_VERSION=` echo $GIT_VERSION | awk '{print $2}'`	#extract number next
-
-#GIT_VERSION=`cat VERSION.TXT `	#VERSION.TXT should be present and current
 #################################################################################
 
 # Description:
