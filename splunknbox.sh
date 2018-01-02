@@ -2,8 +2,8 @@
 
 
 #################################################################################
-#	__VERSION: 4.4-162 _
-#	__DATE: Mon Jan 01,2018 - 08:20:41PM -0600 _
+#	__VERSION: 4.4-163 _
+#	__DATE
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> _
 
 date1=`echo __DATE |ggrep -Po "__DATE:\s+\w+\s+\w+\s+\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(PM|AM)\s-\d{4}" `
