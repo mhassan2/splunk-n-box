@@ -2,15 +2,20 @@
 
 
 #################################################################################
-#	__VERSION: 4.4-178 $
-#	__DATE: Tue Jan  2 00:14:58 CST 2018 $
+#	__VERSION: 4.4-179 $
+#	__DATE: Tue Jan  2 00:22:25 CST 2018 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 
 #date1=`echo __DATE: Tue Jan  2 00:03:36 CST 2018 _
 #ggrep -Po "__DATE: Tue Jan  2 00:03:36 CST 2018 _
 
-var=`echo "__DATE: Tue Jan  2 00:14:58 CST 2018 $" | ggrep -Po "\s+\w+\s+\w+\s+\d+\s\d{2}:\d{2}:\d{2}\sCST\s\d{4}" `
-echo "var[$var]"
+ver=`echo "__VERSION:" | ggrep -Po "\s+\d+.\d+-\d+"`
+dat=`echo "__DATE:" | ggrep -Po "\s+\w+\s+\w+\s+\d+\s\d{2}:\d{2}:\d{2}\sCST\s\d{4}" `
+auth=`echo "__AUTHOR:" | ggrep -Po "\s+\w+\s\<\w+\@\w+.\w+\>"`
+
+echo "ver[$ver]"
+echo "date[$dat]"
+echo "author[$auth]"
 exit
 
 #var=`echo "__DATE: Tue Jan  2 00:03:36 CST 2018 _
