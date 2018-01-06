@@ -200,6 +200,7 @@ ARROW='\xe2\x96\xb6'
 ARROW_STOP='\xe2\x8f\xaf'
 REPEAT='\xe2\x8f\xad'
 CHECK_MARK='\xe2\x9c\x85'
+OK_MARK='\xe2\x9c\x85'
 OK_BUTTON='\xf0\x9f\x86\x97'
 WARNING='\xe2\x9a\xa0'
 #---------------------------------------
@@ -513,10 +514,10 @@ start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
 end_octet4=`echo $END_ALIAS | cut -d"." -f4 `
 docker_mc_start_octet4=`expr $start_octet4 - 1`
 
-printf "${LightBlue}==>${NC} Checking if last IP alias is configured on any NIC [$END_ALIAS]..."
+printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if last IP alias is configured on any NIC [$END_ALIAS]..."
 last_alias=`ifconfig | $GREP $END_ALIAS `
 if [ -n "$last_alias" ]; then
-	printf "${Green} OK!\n"
+	printf "${Green}${OK_MARK} OK\n"
 else
 	printf "${Red}NOT FOUND!${NC}\n"
 fi
@@ -600,7 +601,7 @@ check_for_ubuntu_pkgs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 #----------
-printf "${LightBlue}   >>${NC}Checking [bc] package:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking [bc] package:${NC} "
 condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [bc]${NC}:"
@@ -610,17 +611,18 @@ else
 fi
 #----------
 #----------
-printf "${LightBlue}   >>${NC}Checking [wget] package:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking [wget] package:${NC} "
 condition=$(which wget 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [wget]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install wget -y"
+	brew link --overwrite wget
 else
 	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 fi
 #----------
 #----------
-printf "${LightBlue}   >>${NC}Checking optional [imgcat] package:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking optional [imgcat] package:${NC} "
 condition=$(which imgcat 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [imgcat]${NC}:"
@@ -632,7 +634,7 @@ else
 fi
 #----------
 #----------
-printf "${LightBlue}   >>${NC}Checking optional [timeout] package:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking optional [timeout] package:${NC} "
 condition=$(which timeout 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [timeout]${NC}:"
@@ -643,7 +645,7 @@ else
 fi
 #----------
 #----------
-printf "${LightBlue}   >>${NC}Checking optional [graphviz] package:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking optional [graphviz] package:${NC} "
 condition=$(which dot 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [graphviz]${NC}:"
@@ -663,7 +665,7 @@ check_for_MACOS_pkgs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 #----------
-printf "${LightBlue}   >>${NC}Checking Xcode commandline tools:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking Xcode commandline tools:${NC} "
 cmd=$(xcode-select -p)
 if [ -n $cmd ]; then
 	printf "${Green}${CHECK_MARK} Installed\n${NC}"
@@ -672,7 +674,7 @@ else
  	cmd=$(xcode-select --install)
 fi
 
-printf "${LightBlue}   >>${NC}Checking brew package management:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking brew package management:${NC} "
 condition=$(which brew 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [brew]${NC}:"
@@ -684,7 +686,7 @@ else
 	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 fi
 #----------
-printf "${LightBlue}   >>${NC}Checking bc package:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking bc package:${NC} "
 condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [bc]${NC}:"
@@ -694,7 +696,7 @@ else
 fi
 #----------
 
-printf "${LightBlue}   >>${NC}Checking pcre package:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking pcre package:${NC} "
 cmd=$(brew ls pcre --versions)
 if [ -n "$cmd" ]; then
 	printf "${Green}${CHECK_MARK} Installed${NC}\n"
@@ -704,7 +706,7 @@ else
  #	brew install pcre
 fi
 #--------------
-printf "${LightBlue}   >>${NC}Checking wget package:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking wget package:${NC} "
 cmd=$(brew ls wget --versions)
 if [ -n "$cmd" ]; then
 	printf "${Green}${CHECK_MARK} Installed${NC}\n"
@@ -713,7 +715,7 @@ else
 	progress_bar_pkg_download "brew install wget"
 fi
 #----------
-printf "${LightBlue}   >>${NC}Checking ggrep package:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking ggrep package:${NC} "
 cmd=$(brew ls grep --versions|cut -d" " -f2)
 if [ -n "$cmd" ]; then
         printf "${Green}${CHECK_MARK} Installed${NC}\n"
@@ -727,7 +729,7 @@ fi
 #printf "${Yellow}Running [brew list]${NC}\n"
 # brew list --versions
 #----------
-printf "${LightBlue}   >>${NC}Checking optional [imagcat] package:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking optional [imagcat] package:${NC} "
 cmd=$(brew ls imgcat --versions)
 if [ -n "$cmd" ]; then
 	printf "${Green}${CHECK_MARK} Installed${NC}\n"
@@ -738,7 +740,7 @@ else
 fi
 #----------
 #----------
-printf "${LightBlue}   >>${NC}Checking optional [gtimeout] package:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking optional [gtimeout] package:${NC} "
 cmd=$(brew ls coreutils --versions)
 if [ -n "$cmd" ]; then
 	printf "${Green}${CHECK_MARK} Installed${NC}\n"
@@ -749,7 +751,7 @@ else
 fi
 #----------
 #----------
-printf "${LightBlue}   >>${NC}Checking optional [graphviz] package:${NC} "
+printf "${Yellow}   ${ARROW}${NC} Checking optional [graphviz] package:${NC} "
 cmd=$(brew ls graphviz --versions)
 if [ -n "$cmd" ]; then
 	printf "${Green}${CHECK_MARK} Installed${NC}\n"
@@ -773,18 +775,18 @@ detect_os
 
 #----------Gnu grep installed? MacOS only-------------
 if [ "$os" == "Darwin" ]; then
-	printf "${LightBlue}==>${NC} Checking for required MacOS packages...\n"
+	printf "${Blue}   ${ARROW}${ARROW}${NC} Checking for required MacOS packages...\n"
 	check_for_MACOS_pkgs
 fi
 if [ "$os" == "Linux" ]; then
-	printf "${LightBlue}==>${NC} Checking for required Ubuntu Linux packages...\n"
+	printf "${Blue}   ${ARROW}${ARROW}${NC} Checking for required Ubuntu Linux packages...\n"
 	check_for_ubuntu_pkgs
 fi
 
 #----------Gnu grep installed? MacOS only-------------
 
 #-----------check for another copy of script running?---------
-printf "${LightBlue}==>${NC} Checking if we have instances of this script running...${NC}"
+printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if we have instances of this script running...${NC}"
 this_script_name="${0##*/}"
 pid_list=`ps -efa | grep $this_script_name | grep "/bin/bash" |grep -v $$ |awk '{printf $2" " }'`
 #echo "running:  ps -efa | grep splunknbox.sh | grep \"/bin/bash\" |grep -v \$\$ |awk '{printf \$2\" \" }"
@@ -799,12 +801,12 @@ if [ -n "$pid_list" ]; then
         fi
 	printf "\n"
 else
-        printf "${Green} OK!${NC}\n"
+        printf "${Green}${OK_MARK} OK${NC}\n"
 fi
 #-----------other scripts running?---------
 
 #-----------docker daemon running check----
-printf "${LightBlue}==>${NC} Checking if docker daemon is running & version "
+printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if docker daemon is running & version "
 
 is_running=`docker info|grep Images 2>/dev/null `
 if [ -z "$is_running" ] && [ "$os" == "Darwin" ]; then
@@ -821,10 +823,10 @@ if [ -n "$is_running" ]; then
         dockerinfo_mem1=`docker info| $GREP  'Total Memory'| awk '{printf $3}'|sed 's/GiB//g'| tr -d '\n' `
         dockerinfo_mem=`echo "$dockerinfo_mem1 / 1" | bc `
         #echo "DOCKER: ver:[$dockerinfo_ver]  cpu:[$dockerinfo_cpu]  totmem:[$dockerinfo_mem] ";exit
-	printf "[ver:$dockerinfo_ver].."
+	printf "[ver:$dockerinfo_ver]..."
 	awk -v n1=$dockerinfo_ver -v n2=$DOCKER_MIN_VER \
-	'BEGIN {if (n1<n2) printf ("\033[0;33mWarning! Recommending %s+\n", n2); else printf ("\033[0;32m #OK!\n");}'
-      	#printf "${Green} OK!${NC}\n"
+	'BEGIN {if (n1<n2) printf ("\033[0;33mWarning! Recommending %s+\n", n2); else printf ("\033[0;32m\xe2\x9c\x85 OK!\n");}'
+      	#printf "${Green}${OK_MARK} OK${NC}\n"
 fi
 #-----------docker daemon running check----
 
@@ -869,43 +871,43 @@ fi
 #-----------Gathering OS memory/cpu info---
 
 #-----------OS memory check-------------------
-printf "${LightBlue}==>${NC} Checking if we have enough free OS memory [Free:%sgb Total:%sgb  ${LightBlue}%s%%${NC}]..." $os_free_mem $os_total_mem $os_free_mem_perct
+printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if we have enough free OS memory [Free:%sgb Total:%sgb  ${LightBlue}%s%%${NC}]..." $os_free_mem $os_total_mem $os_free_mem_perct
 #state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparison
 #WARN if free mem is 20% or less of total mem
 if [ "$os_free_mem_perct" -le "20" ]; then
-	printf "${BrownOrange}WARNING, may not be a problem!${NC}\n"
+	printf "${BrownOrange}WARNING! (May not be a problem)${NC}\n"
 	printf "    ${Red}>>${NC} Recommended %sGB+ of free memory for large builds\n" $LOW_MEM_THRESHOLD
 	printf "    ${Red}>>${NC} Modern OSs do not always report unused memory as free\n\n" $os_free_mem $LOW_MEM_THRESHOLD
 	#printf "${White}    7-Change docker default settings! Docker-icon->Preferences->General->pick max CPU/MEM available${NC}\n\n"
 else
-	printf "${Green}OK!${NC}\n"
+	printf "${Green}${OK_MARK} OK${NC}\n"
 fi
 #-----------OS memory check-------------------
 
 #-----------docker preferences/config check-------
-printf "${LightBlue}==>${NC} Checking Docker configs for CPUs allocation [Docker:%sgb  OS:%sgb]..." $dockerinfo_cpu $cores
+printf "${Blue}   ${ARROW}${ARROW}${NC} Checking Docker configs for CPUs allocation [Docker:%sgb  OS:%sgb]..." $dockerinfo_cpu $cores
 #state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparison
 if [ "$dockerinfo_cpu" -lt "$cores" ]; then
 	printf "${BrownOrange} WARNING!${NC}\n"
 	printf "    ${Red}>>${NC} Docker is configured to use %s of the available system %s CPUs\n" $dockerinfo_cpu $cores
 	printf "    ${Red}>>${NC} Please allocate all available system CPUs to Docker (Preferences->Advance)\n\n"
 else
-        printf " ${Green}OK!${NC}\n"
+        printf " ${Green}${OK_MARK} OK${NC}\n"
 fi
 docker_total_mem_perct=`echo "($dockerinfo_mem * 100) / $os_total_mem"| bc`
-printf "${LightBlue}==>${NC} Checking Docker configs for MEMORY allocation [Docker:%sgb OS:%sgb  ${LightBlue}%s%%${NC}]..." $dockerinfo_mem $os_total_mem $docker_total_mem_perct
+printf "${Blue}   ${ARROW}${ARROW}${NC} Checking Docker configs for MEMORY allocation [Docker:%sgb OS:%sgb  ${LightBlue}%s%%${NC}]..." $dockerinfo_mem $os_total_mem $docker_total_mem_perct
 #WARN if ration docker_configred_mem/os_total-mem < 80%
 if [ "$docker_total_mem_perct" -lt "80" ]; then
 	printf "${BrownOrange} WARNING!${NC}\n" $dockerinfo_mem $os_total_mem
        	printf "    ${Red}>>${NC} Docker is configured to use %sgb of the available system %sgb memory\n" $dockerinfo_mem $os_total_mem
        	printf "    ${Red}>>${NC} Please allocate all available system memory to Docker (Preferences->Advance)\n\n"
 else
-        printf " ${Green}OK!${NC}\n"
+        printf " ${Green}${OK_MARK} OK${NC}\n"
 fi
 #-----------docker preferences check-------
 
 #-----------splunk image check-------------
-printf "${LightBlue}==>${NC} Checking if Splunk image is available [$DEFAULT_SPLUNK_IMAGE]..."
+printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if Splunk image is available [$DEFAULT_SPLUNK_IMAGE]..."
 image_ok=`docker images|grep "$DEFAULT_SPLUNK_IMAGE"`
 if [ -z "$image_ok" ]; then
 	printf "${Red}NOT FOUND!${NC}\n"
@@ -920,29 +922,29 @@ if [ -z "$image_ok" ]; then
 		read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
         fi
 else
-        printf "${Green} OK!${NC}\n"
+        printf "${Green}${OK_MARK} OK${NC}\n"
 fi
 #-----------splunk image check-------------
 
 #-----------splunk-net check---------------
-printf "${LightBlue}==>${NC} Checking if docker network is created [$SPLUNKNET]..."
+printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if docker network is created [$SPLUNKNET]..."
 net=`docker network ls | grep $SPLUNKNET `
 if [ -z "$net" ]; then
 	printf "${Green} Creating...${NC}\n"
         docker network create -o --iptables=true -o --ip-masq -o --ip-forward=true $SPLUNKNET
 else
-       printf "${Green} OK!${NC}\n"
+       printf "${Green}${OK_MARK} OK${NC}\n"
 fi
 #-----------splunk-net check---------------
 
 #-----------license files/dir check--------
-printf "${LightBlue}==>${NC} Checking if we have license files *.lic in [$SPLUNK_LIC_DIR]..."
+printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if we have license files *.lic in [$SPLUNK_LIC_DIR]..."
 if [ ! -d $SPLUNK_LIC_DIR ]; then
     		printf "${Red} DIR DOESN'T EXIST!${NC}\n"
 		printf "    ${Red}>>${NC} Please create $SPLUNK_LIC_DIR and place all *.lic files there.\n"
 		printf "    ${Red}>>${NC} Change the location of LICENSE dir in the config section of the script.${NC}\n\n"
 elif  ls $SPLUNK_LIC_DIR/*.lic 1> /dev/null 2>&1 ; then
-       		printf "${Green} OK!${NC}\n"
+       		printf "${Green}${OK_MARK} OK${NC}\n"
 	else
         	printf "${Red}NO LIC FILE(S) FOUND!${NC}\n"
 		printf "    ${Red}>>${NC} If *.lic exist, make sure they are readable.${NC}\n\n"
@@ -951,7 +953,7 @@ fi
 
 #-----------local splunkd check------------
 #Little tricky, local splunkd process running on docker-host is different than splunkd inside a container!
-printf "${LightBlue}==>${NC} Checking if non-docker splunkd process is running [$LOCAL_SPLUNKD]..."
+printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if non-docker splunkd process is running [$LOCAL_SPLUNKD]..."
 PID=`ps aux | $GREP 'splunkd' | $GREP 'start' | head -1 | awk '{print $2}' `  	#works on OSX & Linux
 
 if [ "$os" == "Darwin" ] && [ -n "$PID" ]; then
@@ -969,15 +971,15 @@ if [ -n "$splunk_is_running" ]; then
 		printf "    ${Red}>>${NC} Running local splunkd may prevent containers from binding to interfaces!${NC}\n\n"
 	fi
 else
-	printf "${Green} OK!${NC}\n"
+	printf "${Green}${OK_MARK} OK${NC}\n"
 fi
 #-----------local splunkd check------------
 
 #-----------discovering DNS setting for OSX. Used for container build--
-printf "${LightBlue}==>${NC} Checking for dns server configuration ..."
+printf "${Blue}   ${ARROW}${ARROW}${NC} Checking for dns server configuration "
 if [ "$os" == "Darwin" ]; then
         DNSSERVER=`scutil --dns|grep nameserver|awk '{print $3}'|sort -u|tail -1`
-	printf "[$DNSSERVER]${Green} OK!${NC}\n"
+	printf "[$DNSSERVER]...${Green}${OK_MARK} OK${NC}\n"
 else
 	printf "\n"
 fi
@@ -1165,7 +1167,7 @@ size=${#outputmsg}
 #printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} vars outputmsg:[$outputmsg] OKmsg:[$OKmsg]${NC}\n"  >&5
 #echo "result[$1]"
         if ( compare "$outputmsg" "$OKmsg" ) || [ "$size" == 64 ] || [ "$size" == 0 ] ; then
-                printf "${Green} OK! ${NC}\n"  >&$logging
+                printf "${Green}${OK_MARK} OK ${NC}\n"  >&$logging
         else
                # printf "\n${DarkGray}[%s] ${NC}" "$1"
                 printf "${Red}[%s] ${NC}\n" "$1" >&$logging
@@ -1207,7 +1209,7 @@ splunkstate=`docker exec -ti $fullhostname sh -c "ps xa|$GREP '[s]plunkd -p'" `
 #echo "splunkstate[$splunkstate]"
 echo -ne "\t->Verifying that splunkd is running...\r" >&3
 if [ -n "$splunkstate" ]; then
-        echo -ne  "\t->Verifying that splunkd is running...${Green}OK!${NC}                           \n" >&3
+        echo -ne  "\t->Verifying that splunkd is running...${Green}${OK_MARK} OK${NC}                           \n" >&3
 else
         	echo -ne "${NC}\t->Verifying that splunkd is running..${Red}Not running! Attempt ${Yellow}$i${Red} to restart\r${NC}" >&3
         	sleep 30        #pause between attempts to restart
@@ -1219,17 +1221,17 @@ else
         	#pausing "30"
 			splunkstate=`docker exec -ti $fullhostname sh -c "ps xa|$GREP '[s]plunkd -p'" `
 			if [ -z "$splunkstat" ]; then
-        		echo -ne  "\t->Verifying that splunkd is running...${Green}OK!${NC}                           \n" >&3
+        		echo -ne  "\t->Verifying that splunkd is running...${Green}${OK_MARK} OK${NC}                           \n" >&3
 				return
 
 			fi
 fi
 
 #if [ -z "$splunkstate" ]; then
-# printf "${Green}OK!${NC}\n" >&3
- #       echo -ne  "\t->Verifying that splunkd is running...${Green}OK!${NC}                           \n" >&3
+# printf "${Green}${OK_MARK} OK${NC}\n" >&3
+ #       echo -ne  "\t->Verifying that splunkd is running...${Green}${OK_MARK} OK${NC}                           \n" >&3
 #else
- #       echo -ne  "\t->Verifying that splunkd is running...${Red}NOT OK!${NC}                          \n" >&3
+ #       echo -ne  "\t->Verifying that splunkd is running...${Red}NOT${OK_MARK} OK${NC}                          \n" >&3
 #fi
 
 return 0
@@ -2020,7 +2022,7 @@ printf "\t->Verifying that container is running..." >&3
 if ! ( is_container_running "$fullhostname" ); then
 	printf "${Red}NOT RUNNING!${NC}\n" >&3
 else
-	printf "${Green}OK!${NC}\n" >&3
+	printf "${Green}${OK_MARK} OK${NC}\n" >&3
 fi
 
 #-----check if splunkd is running--------
@@ -2065,7 +2067,7 @@ fi
 #        	printf "\t${Red}[$fullhostname] is already in the hosts file. Removing...${NC}\n" >&4
 #        	cat $HOSTSFILE | $GREP -v $vip | sort > tmp && mv tmp $HOSTSFILE
 #	fi
-#	printf "${Green}OK!${NC}\n" >&3
+#	printf "${Green}${OK_MARK} OK${NC}\n" >&3
 #	printf "$vip\t$fullhostname\n" >> $HOSTSFILE
 #	sudo killall -HUP dnsmasq	#must refresh to read $HOSTFILE file
 #fi
@@ -2219,7 +2221,7 @@ printf "\t->Verifying that container is running..." >&3
 if ! ( is_container_running "$fullhostname" ); then
 	printf "${Red}NOT RUNNING!${NC}\n" >&3
 else
-	printf "${Green}OK!${NC}\n" >&3
+	printf "${Green}${OK_MARK} OK${NC}\n" >&3
 fi
 
 return 0
