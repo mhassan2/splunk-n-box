@@ -212,8 +212,6 @@ WARNING='\xe2\x9a\xa0'
 
 #Log level is controlled with I/O redirection. Must be first thing executed in a bash script
 # Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
-mkdir -p $LOGS_DIR	#will create if doesnt exisit
-mkdir -p $SPLUNK_LIC_DIR	#will create if doesnt exisit
 #exec >> >(tee -i $SCREENLOGFILE)
 exec 2>&1
 
@@ -4605,22 +4603,25 @@ done
 #printf "%s\n" "This message is seen at verbosity level 5 and above." >&5
 #exit
 #------------------
+#Make sure working directories exist
+mkdir -p $LOGS_DIR
+mkdir -p $SPLUNK_LIC_DIR
+mkdir -p $SPLUNK_APPS_DIR
+mkdir -p $SPLUNK_DATASETS_DIR
 
 #delete log files on restart
 #rm  -fr $CMDLOGBIN $CMDLOGTXT
 printf "\n--------------- Starting new script run. Hosts are grouped by color -------------------\n" > $CMDLOGBIN
 
 clear
-check_root
-check_shell
+check_root		#should not as root
+check_shell		#must have bash
 startup_checks	#contains ggrep install if missing (critical command)
-
 setup_ip_aliases
 display_welcome_screen
 main_menu_inputs
 
-#read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
 
-#<<<<<<<<<<<<<----------   MAIN BEGINS     ---------->>>>>>>>>>>>
+#<<<<<<<<<<<<<----------   MAIN ENDS     ---------->>>>>>>>>>>>
 
 ##### EOF #######
