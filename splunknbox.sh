@@ -589,7 +589,7 @@ do
 	if [  "$c" == "1" ]; then
 		echo
 		for c in $(seq 1 $t); do
-			echo -ne "${LightRed}Throttling high load avg [load:$loadavg max allowed:$MAXLOADAVG cores:$cores]. Pausing ${Yellow}$t${NC} seconds... ${Yellow}$c${NC}\033[0K\r"
+			echo -ne "${LightRed}High load avg [load:$loadavg max allowed:$MAXLOADAVG cores:$cores] Throttling! Pausing ${Yellow}$t${NC} seconds... ${Yellow}$c${NC}\033[0K\r"
         		sleep 1
 		done
 		t=`expr $t + $t`
@@ -1146,10 +1146,10 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #$1=seconds
 
 for c in $(seq 1 $1); do
-	echo -ne "${LightGray}\t->Pausing $1 seconds... ${Yellow}$c\r"  >&3
+	echo -ne "${LightGray}	${Yellow}${ARROW}${NC}Pausing $1 seconds... ${Yellow}$c\r"  >&3
 	sleep 1
 done
-printf "${LightGray}\t->Pausing $1 seconds... ${Green}Done!${NC}\n"  >&3
+printf "${LightGray}	${Yellow}${ARROW}${NC}Pausing $1 seconds... ${Green}Done!${NC}\n"  >&3
 
 return 0
 }	#end pausing()
@@ -1212,11 +1212,11 @@ fi #demo/workshop containers takes little longer to start
 #splunkstate=`docker exec -ti $fullhostname /opt/splunk/bin/splunk status| $GREP -i "not running" `
 splunkstate=`docker exec -ti $fullhostname sh -c "ps xa|$GREP '[s]plunkd -p'" `
 #echo "splunkstate[$splunkstate]"
-echo -ne "\t->Verifying that splunkd is running...\r" >&3
+echo -ne "	${Yellow}${ARROW}${NC}Verifying that splunkd is running...\r" >&3
 if [ -n "$splunkstate" ]; then
-        echo -ne  "\t->Verifying that splunkd is running...${Green}${OK_MARK} OK${NC}                           \n" >&3
+        echo -ne  "	${Yellow}${ARROW}${NC}Verifying that splunkd is running...${Green}${OK_MARK} OK${NC}                           \n" >&3
 else
-        	echo -ne "${NC}\t->Verifying that splunkd is running..${Red}Not running! Attempt ${Yellow}$i${Red} to restart\r${NC}" >&3
+        	echo -ne "${NC}	${Yellow}${ARROW}${NC}Verifying that splunkd is running..${Red}Not running! Attempt ${Yellow}$i${Red} to restart\r${NC}" >&3
         	sleep 30        #pause between attempts to restart
         	CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk start "
         	#echo "cmd[$CMD]"
@@ -1226,7 +1226,7 @@ else
         	#pausing "30"
 			splunkstate=`docker exec -ti $fullhostname sh -c "ps xa|$GREP '[s]plunkd -p'" `
 			if [ -z "$splunkstat" ]; then
-        		echo -ne  "\t->Verifying that splunkd is running...${Green}${OK_MARK} OK${NC}                           \n" >&3
+        		echo -ne  "	${Yellow}${ARROW}${NC}Verifying that splunkd is running...${Green}${OK_MARK} OK${NC}                           \n" >&3
 				return
 
 			fi
@@ -1234,9 +1234,9 @@ fi
 
 #if [ -z "$splunkstate" ]; then
 # printf "${Green}${OK_MARK} OK${NC}\n" >&3
- #       echo -ne  "\t->Verifying that splunkd is running...${Green}${OK_MARK} OK${NC}                           \n" >&3
+ #       echo -ne  "	${Yellow}${ARROW}${NC}Verifying that splunkd is running...${Green}${OK_MARK} OK${NC}                           \n" >&3
 #else
- #       echo -ne  "\t->Verifying that splunkd is running...${Red}NOT${OK_MARK} OK${NC}                          \n" >&3
+ #       echo -ne  "	${Yellow}${ARROW}${NC}Verifying that splunkd is running...${Red}NOT${OK_MARK} OK${NC}                          \n" >&3
 #fi
 
 return 0
@@ -1327,12 +1327,12 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 check_load
 CMD="docker cp $SPLUNK_LIC_DIR  $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
-printf "\t->Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "" "3"
+printf "	${Yellow}${ARROW}${NC}Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$1"
 
 if ( compare "$1" "LM" ); then
-	printf "\t->*LM* host! Forcing immediate splunkd restart.Please wait " >&3
+	printf "	${Yellow}${ARROW}${NC}*LM* host! Forcing immediate splunkd restart.Please wait " >&3
 	docker exec -u splunk -ti $1  /opt/splunk/bin/splunk restart > /dev/null >&1
 	printf "${Green} Done! ${NC}\n" >&3
 fi
@@ -1355,7 +1355,7 @@ logline "$CMD" "$fullhostname"
 printf "${Purple}$fullhostname${NC}: > $CMD\n"  >&4
 
 if ( compare "$CMD" "failed" ); then
-   echo "\t->Trying default password "
+   echo "	${Yellow}${ARROW}${NC}Trying default password "
    CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk edit user admin -password changeme -roles admin -auth $USERADMIN:$USERPASS"
    printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4 ; OUT=`$CMD`
    logline "$CMD" "$fullhostname"
@@ -1433,13 +1433,13 @@ fullhostname=$1
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 if [ "$2" == "b" ]; then
-	printf "\t->Restarting splunkd in the ${White}background${NC} " >&3
+	printf "	${Yellow}${ARROW}${NC}Restarting splunkd in the ${White}background${NC} " >&3
         CMD="docker exec -u splunk -d $fullhostname /opt/splunk/bin/splunk restart "
         OUT=`$CMD`; display_output "$OUT" "The Splunk web interface is at" "3"
    	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$fullhostname"
 else
-	printf "\t->Restarting splunkd. Please wait! " >&3
+	printf "	${Yellow}${ARROW}${NC}Restarting splunkd. Please wait! " >&3
 	CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk restart "
         OUT=`$CMD`; display_output "$OUT" "The Splunk web interface is at" "3"
    	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
@@ -1466,7 +1466,7 @@ if [ -n "$lm" ]; then
   	if [ -n "$lm_ip" ]; then
         	CMD="docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk edit licenser-localslave -master_uri https://$lm_ip:$MGMT_PORT -auth $USERADMIN:$USERPASS"
 		OUT=`$CMD`
-        	printf "\t->Making [$hostname] license-slave using LM:[$lm] " >&3 ; display_output "$OUT" "has been edited" "3"
+        	printf "	${Yellow}${ARROW}${NC}Making [$hostname] license-slave using LM:[$lm] " >&3 ; display_output "$OUT" "has been edited" "3"
 		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$hostname"
         	fi
@@ -1746,7 +1746,7 @@ if [ -n "$dmc" ]; then
 	CMD="docker exec -u splunk -ti $dmc /opt/splunk/bin/splunk add search-server -host $bind_ip_host:$MGMT_PORT -auth $USERADMIN:$USERPASS -remoteUsername $USERADMIN -remotePassword $USERPASS"
         OUT=`$CMD`
         OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
-        printf "\t->Adding [$host] to DMC:[$dmc] " >&3 ; display_output "$OUT" "Peer added" "3"
+        printf "	${Yellow}${ARROW}${NC}Adding [$host] to DMC:[$dmc] " >&3 ; display_output "$OUT" "Peer added" "3"
         printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$dmc"
 fi
@@ -1769,7 +1769,7 @@ custom_web_conf="[settings]\nenableSplunkWebSSL=0\n"
 printf "$custom_web_conf" > $PROJ_DIR/web.conf.demo
 CMD="docker cp $PROJ_DIR/web.conf.demo $fullhostname:/opt/splunk/etc/system/local/web.conf" ; OUT=`$CMD`
 printf "${DarkGray}CMD:[$CMD]${NC}>>[$OUT]\n" >&4
-printf "\t->Configuring demo to be viewed on http://$fullhostname:$SPLUNKWEB_PORT_EXT ${Green} Done!${NC}\n" >&3
+printf "	${Yellow}${ARROW}${NC}Configuring demo to be viewed on http://$fullhostname:$SPLUNKWEB_PORT_EXT ${Green} Done!${NC}\n" >&3
 
 #if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-ITSI" ) ;then
 #	USERPASS="changeme"
@@ -2023,7 +2023,7 @@ else
 fi
 
 #-----check if container is running--------
-printf "\t->Verifying that container is running..." >&3
+printf "	${Yellow}${ARROW}${NC}Verifying that container is running..." >&3
 if ! ( is_container_running "$fullhostname" ); then
 	printf "${Red}NOT RUNNING!${NC}\n" >&3
 else
@@ -2041,19 +2041,19 @@ else
 fi
 
 #custom_login_screen() will not change pass for DEMO-ES* or DEMO-VMWARE*
-printf "\t->Splunk initialization (password, licenses, custom screen, http)..." >&3
+printf "	${Yellow}${ARROW}${NC}Splunk initialization (password, licenses, custom screen, http)..." >&3
 custom_login_screen "$vip" "$fullhostname"
 
 #Misc OS stuff
 if [ -f "$PWD/containers.bashrc" ]; then
-	printf "\t->Copying $PWD/containers.bashrc to $fullhostname:/root/.bashrc\n" >&4
+	printf "	${Yellow}${ARROW}${NC}Copying $PWD/containers.bashrc to $fullhostname:/root/.bashrc\n" >&4
        	CMD=`docker cp $PWD/containers.bashrc $fullhostname:/root/.bashrc`
 fi
 if [ -f "$PWD/containers.vimrc" ]; then
-	printf "\t->Copying $PWD/containers.vimrc to $fullhostname:/root/.vimrc\n" >&4
+	printf "	${Yellow}${ARROW}${NC}Copying $PWD/containers.vimrc to $fullhostname:/root/.vimrc\n" >&4
        	CMD=`docker cp $PWD/containers.vimrc $fullhostname:/root/.vimrc`
 fi
-#printf "\t->Building graphviz dot file ...\n" >&4
+#printf "	${Yellow}${ARROW}${NC}Building graphviz dot file ...\n" >&4
 #build_dot_file
 ##clear
 #dot -Gnewrank -Tpng  file.dot -o test.png
@@ -2064,7 +2064,7 @@ fi
 #DNS stuff to be used with dnsmasq. Need to revisit for OSX  9/29/16
 #Enable for Linux at this point
 #if [ "$os" == "Linux" ]; then
-#	printf "\t->Updating dnsmasq records[$vip  $fullhostname]..." >&3
+#	printf "	${Yellow}${ARROW}${NC}Updating dnsmasq records[$vip  $fullhostname]..." >&3
 #	if [ ! -f $HOSTSFILE ]; then
 #		touch $HOSTSFILE
 #	fi
@@ -2223,7 +2223,7 @@ else
 fi
 
 #-----check if container is running--------
-printf "\t->Verifying that container is running..." >&3
+printf "	${Yellow}${ARROW}${NC}Verifying that container is running..." >&3
 if ! ( is_container_running "$fullhostname" ); then
 	printf "${Red}NOT RUNNING!${NC}\n" >&3
 else
@@ -2859,7 +2859,7 @@ for hostname in `echo $host_names` ; do
 	printf "[${Purple}$hostname${NC}]${LightBlue} Configuring host apps ... ${NC}\n"
 	#install all apps on hostname ---------
 	for app in $LL_APPS; do
-		printf "\t->Installing $app app "
+		printf "	${Yellow}${ARROW}${NC}Installing $app app "
 		CMD="docker cp $SPLUNK_APPS_DIR/$app $hostname:/tmp"; OUT=`$CMD`
 		CMD="docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk install app /tmp/$app -auth $USERADMIN:$USERPASS"
 		printf "\n${DarkGray}CMD:[$CMD]${NC}\n" >&4
@@ -2899,14 +2899,14 @@ echo
 for hostname in `echo $host_names` ; do
 	printf "[${Purple}$hostname${NC}]${LightBlue} Configuring host datasets... ${NC}\n"
 	#install all datasets on hostname -------
-	printf "\t->Indexing tutorial data [tutorialdata.zip] "
+	printf "	${Yellow}${ARROW}${NC}Indexing tutorial data [tutorialdata.zip] "
 	CMD="docker cp $SPLUNK_DATASETS_DIR/tutorialdata.zip $hostname:/tmp"; OUT=`$CMD`
 	CMD="docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk add oneshot /tmp/tutorialdata.zip -auth $USERADMIN:$USERPASS"
 	printf "\n${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	OUT=`$CMD`; display_output "$OUT" "added" "3"
 	logline "$CMD" "$hostname"
 
-	printf "\t->Configuring lookup table [http_status.csv] "
+	printf "	${Yellow}${ARROW}${NC}Configuring lookup table [http_status.csv] "
 	CMD="docker cp $SPLUNK_DATASETS_DIR/http_status.csv $hostname:/opt/splunk/etc/apps/search/lookups"; OUT=`$CMD`
 	printf "[http_status]\nfilename = http_status.csv\n" > transforms.conf.tmp
 	CMD="docker cp transforms.conf.tmp $hostname:/tmp/transforms.conf"; OUT=`$CMD`
@@ -2936,7 +2936,7 @@ create_single_shc() {
 #-----------------------------------------------------------------------------------------------------
 #$1 AUTO or MANUAL mode
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-
+clear
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
 server_list=""    #used by STEP#3
@@ -2962,7 +2962,7 @@ if [ "$mode" == "AUTO" ]; then
 	label="$SHCLUSTERLABEL"
 	#printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
 	printf  "\n"
-	printf "${LightPurple}>>BUILDING SEARCH HEAD CLUSTER${NC}\n"
+	printf "${LightPurple}>>BUILDING SEARCH HEAD CLUSTER (SHC):${NC}\n"
 	printf "${LightPurple}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
 	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:$DEP_SHC_COUNT] SHC:[$SH_BASE:$STD_SHC_COUNT]${NC}\n\n" >&4
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
@@ -3028,7 +3028,7 @@ else
 
 
 	#printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
-	printf "${LightPurple}>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
+	printf "${LightPurple}>>BUILDING SEARCH HEAD CLUSTER (SHC):${NC}\n\n"
 	printf "${LightPurple}==>Starting PHASE1: Creating generic SH hosts${NC}\n"
 	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n\n" >&4
     printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
@@ -3065,7 +3065,7 @@ printf "%b" "$txt" > server.conf.tmp
 CMD="docker cp server.conf.tmp $dep:/tmp/server.conf"; OUT=`$CMD`
 CMD=`docker exec -u splunk -ti $dep  bash -c "cat /tmp/server.conf >> /opt/splunk/etc/system/local/server.conf" `; #OUT=`$CMD`
 
-printf "\t->Adding stanza [shclustering] to server.conf!" >&3 ; display_output "$OUT" "" "3"
+printf "	${Yellow}${ARROW}${NC}Adding stanza [shclustering] to server.conf!" >&3 ; display_output "$OUT" "" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$dep"
 
@@ -3084,7 +3084,7 @@ for i in $members_list ; do
 	CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk init shcluster-config -auth $USERADMIN:$USERPASS -mgmt_uri https://$bind_ip_sh:$MGMT_PORT -replication_port $REPL_PORT -replication_factor $RFACTOR -register_replication_address $bind_ip_sh -conf_deploy_fetch_url https://$bind_ip_dep:$MGMT_PORT -secret $MYSECRET -shcluster_label $label"
 	OUT=`$CMD`
 	OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
-	printf "\t->Initiating shcluster-config " >&3 ; display_output "$OUT" "clustering has been initialized" "3"
+	printf "	${Yellow}${ARROW}${NC}Initiating shcluster-config " >&3 ; display_output "$OUT" "clustering has been initialized" "3"
 	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$i"
 	#-------
@@ -3096,7 +3096,7 @@ for i in $members_list ; do
 		cm_ip=`docker port  $cm| awk '{print $3}'| cut -d":" -f1|head -1`
     	CMD="docker exec -u splunk  -ti $i /opt/splunk/bin/splunk edit cluster-config -mode searchhead -master_uri https://$cm_ip:$MGMT_PORT -secret $MYSECRET -auth $USERADMIN:$USERPASS"
 		OUT=`$CMD`
-		printf "\t->Integrating with Cluster Master (for idx auto discovery) [$cm] " >&3 ; display_output "$OUT" "property has been edited" "3"
+		printf "	${Yellow}${ARROW}${NC}Integrating with Cluster Master (for idx auto discovery) [$cm] " >&3 ; display_output "$OUT" "property has been edited" "3"
 		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$i"
         fi
@@ -3122,7 +3122,7 @@ restart_splunkd "$i"  #last SH (captain) may not be ready yet, so force restart 
 CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk bootstrap shcluster-captain -servers_list "$server_list" -auth $USERADMIN:$USERPASS"
 OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
-printf "\t->Captain bootstrapping (may take time) " >&3 ; display_output "$OUT" "Successfully"  "3"
+printf "	${Yellow}${ARROW}${NC}Captain bootstrapping (may take time) " >&3 ; display_output "$OUT" "Successfully"  "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$i"
 printf "${LightBlue}___________ Finished STEP#3 __________________________${NC}\n" >&3
@@ -3140,8 +3140,8 @@ printf "${LightBlue}___________ Finished STEP#4 (cluster status)__________${NC}\
 END=$(date +%s);
 TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
 printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
-count=`wc -w $CMDLOGBIN| awk '{print $1}' `
-printf "${DarkGray}Number of Splunk config commands issued: [%s]${NC}\n" "$count"
+#count=`wc -w $CMDLOGBIN| awk '{print $1}' `
+#printf "${DarkGray}Number of Splunk config commands issued: [%s]${NC}\n" "$count"
 
 #print_stats $START ${FUNCNAME}
 
@@ -3155,7 +3155,7 @@ create_single_idxc() {
 #$1 AUTO or MANUAL mode
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-
+clear
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
 START=$(date +%s);
@@ -3180,7 +3180,7 @@ if [ "$mode" == "AUTO" ]; then
 	#CMname="CM"; DMCname="DMC"; LMname="LM";  IDXname="IDX"; IDXcount="$STD_IDXC_COUNT";
 	label="$IDXCLUSTERLABEL"
 	#printf "${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
-	printf "${LightPurple}>>BUILDING INDEX CLUSTER${NC}\n"
+	printf "${LightPurple}>>BUILDING INDEX CLUSTER (IDX):${NC}\n"
 	printf "${LightPurple}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
 	printf "${DarkGray}Using base-names DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:$STD_IDXC_COUNT]${NC}\n\n" >&4
     printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
@@ -3252,7 +3252,7 @@ else
 	printf "\n"
 
 	#printf "\n${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
-	printf "${LightPurple}>>BUILDING INDEX CLUSTER${NC}\n"
+	printf "${LightPurple}>>BUILDING INDEX CLUSTER (IDX):${NC}\n"
 	printf "${LightPurple}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
 	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:$IDXcount]${NC}\n\n" >&4
 	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
@@ -3289,7 +3289,7 @@ CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk edit cluster-config  -
 OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
 printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$cm"
-printf "\t->Configuring CM [RF:$RFACTOR SF:$SFACTOR] and cluster label[$label] " >&3 ; display_output "$OUT" "property has been edited" "3"
+printf "	${Yellow}${ARROW}${NC}Configuring CM [RF:$RFACTOR SF:$SFACTOR] and cluster label[$label] " >&3 ; display_output "$OUT" "property has been edited" "3"
 #-------
 restart_splunkd "$cm"
 #assign_server_role "$i" ""
@@ -3307,14 +3307,14 @@ for i in $members_list ; do
 	OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 	printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$i"
-	printf "\t->Make a cluster member " >&3 ; display_output "$OUT" "property has been edited" "3"
+	printf "	${Yellow}${ARROW}${NC}Make a cluster member " >&3 ; display_output "$OUT" "property has been edited" "3"
 	#-------
 	#-------tcp/9997--- disabled 2/15/17 Already in 6.5 image build
         #CMD="docker exec -u splunk  -ti $i /opt/splunk/bin/splunk enable listen $RECV_PORT -auth $USERADMIN:$USERPASS "
         #OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
         #printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
         #logline "$CMD" "$i"
-        #printf "\t->Enabling receiving port [$RECV_PORT] " >&3 ; display_output "$OUT" "Listening for" "3"
+        #printf "	${Yellow}${ARROW}${NC}Enabling receiving port [$RECV_PORT] " >&3 ; display_output "$OUT" "Listening for" "3"
         #-------
 
 	#We dont need to add IDXCs to DMC, just add their CM (which is already done)
@@ -3337,8 +3337,8 @@ printf "${LightBlue}____________ Finished STEP#3 __________________________${NC}
 END=$(date +%s);
 TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
 printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
-count=`wc -w $CMDLOGBIN| awk '{print $1}' `
-printf "${DarkGray}Number of Splunk config commands issued: [%s]${NC}\n" "$count"
+#count=`wc -w $CMDLOGBIN| awk '{print $1}' `
+#printf "${DarkGray}Number of Splunk config commands issued: [%s]${NC}\n" "$count"
 
 #print_stats $START ${FUNCNAME}
 
@@ -3450,9 +3450,10 @@ START_TIME=$(date +%s);
 check_load
 s=""; sites_str=""     			#used with "splunk edit cluster-config" on CM
 SITEnames=""
-
-printf "One DEP server per SHC will be automatically created.\n"
-printf "One CM server will be automatically created for the entire site-2-site cluster.\n"
+clear
+printf "Note:"
+printf "-One DEP server per SHC will be automatically created.\n"
+printf "-One CM server will be automatically created for the entire site-2-site cluster.\n"
 
 if [ "$mode" == "AUTO" ]; then
 	count=3;
@@ -3531,7 +3532,7 @@ OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$cm"
-printf "\t->Setting multi-site to true... " >&3 ; display_output "$OUT" "property has been edited" "3"
+printf "	${Yellow}${ARROW}${NC}Setting multi-site to true... " >&3 ; display_output "$OUT" "property has been edited" "3"
 
 restart_splunkd "$cm"
 is_splunkd_running "$cm"
@@ -3541,7 +3542,7 @@ OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$cm"
-printf "\t->Enabling maintenance-mode... " >&3 ; display_output "$OUT" "aintenance mode set" "3"
+printf "	${Yellow}${ARROW}${NC}Enabling maintenance-mode... " >&3 ; display_output "$OUT" "aintenance mode set" "3"
 
 printf "${Cyan}____________ Finished STEP#1 __________________________________________________${NC}\n" >&3
 
@@ -3560,7 +3561,7 @@ for str in $SITEnames; do
 
 		printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$i"
-		printf "\t->Configuring multi-site clustering for [site:$site location:$str] " >&3
+		printf "	${Yellow}${ARROW}${NC}Configuring multi-site clustering for [site:$site location:$str] " >&3
 		display_output "$OUT" "property has been edited" "3"
 		restart_splunkd "$i" "b"
 	done
@@ -3574,7 +3575,7 @@ for str in $SITEnames; do
         OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 		printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$i"
-		printf "\t->Pointing to CM[$cm] for [site:$site location:$str]" >&3
+		printf "	${Yellow}${ARROW}${NC}Pointing to CM[$cm] for [site:$site location:$str]" >&3
 		display_output "$OUT" "property has been edited" "3"
 		restart_splunkd "$i" "b"
 	done
@@ -3590,7 +3591,7 @@ OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$cm"
-printf "\t->Disabling maintenance-mode..." >&3 ; display_output "$OUT" "No longer"  "3"
+printf "	${Yellow}${ARROW}${NC}Disabling maintenance-mode..." >&3 ; display_output "$OUT" "No longer"  "3"
 #restart_splunkd "$i"
 printf "${Cyan}____________ Finished STEP#4 __________________________________________________${NC}\n" >&3
 
