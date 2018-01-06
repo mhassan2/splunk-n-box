@@ -196,12 +196,12 @@ BoldYellowOnPurple="\033[1;33;44m"
 DEFAULT_YES="\033[1;37mY\033[0m/n"
 DEFAULT_NO="y/\033[1;37mN\033[0m"
 #Emojis
-+  202 ARROW='\xe2\x96\xb6'
-+  203 ARROW_STOP='\xe2\x8f\xaf'
-+  204 REPEAT='\xe2\x8f\xad'
-+  205 CHECK_MARK='\xe2\x9c\x85'
-+  206 OK_BUTTON='\xf0\x9f\x86\x97'
-+  207 WARNING='\xe2\x9a\xa0'
+ARROW='\xe2\x96\xb6'
+ARROW_STOP='\xe2\x8f\xaf'
+REPEAT='\xe2\x8f\xad'
+CHECK_MARK='\xe2\x9c\x85'
+OK_BUTTON='\xf0\x9f\x86\x97'
+WARNING='\xe2\x9a\xa0'
 #---------------------------------------
 
 
@@ -768,6 +768,7 @@ return 0
 startup_checks() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
+printf "${BoldWhiteOnTurquoise}Splunk n' Box. Running startup validation checks...${NC}\n\n"
 detect_os
 
 #----------Gnu grep installed? MacOS only-------------
@@ -980,6 +981,23 @@ if [ "$os" == "Darwin" ]; then
 else
 	printf "\n"
 fi
+
+#-----------Detect script version ---------------------------
+#Need to detect git version stuff as early as possible but after ggrep is installed
+
+#Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
+#screw up things if the $ sign is not the last char
+GIT_VER=`echo "__VERSION: 4.4-223 $" | \
+		$GREP -Po "\d+.\d+-\d+"`
+GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 01:13:25PM -0600 $" | \
+		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
+GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
+		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
+#echo [$GIT_VER]
+#echo [$GIT_DATE]
+#echo [$GIT_AUTHOR]
+#-----------Detect script version ---------------------------
+
 #-----------discovering DNS setting for OSX. Used for container build--
 
 #TO DO:
@@ -1040,19 +1058,6 @@ else
     AWS_EC2="NO"
 fi
 
-#detect_os is executed early so we place git stuff here
-#Must break the line with \ otherwise git clean/smudge scripts will
-#screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 4.4-223 $" | \
-		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 01:13:25PM -0600 $" | \
-		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
-GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
-		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
-
-#echo [$GIT_VER]
-#echo [$GIT_DATE]
-#echo [$GIT_AUTHOR]
 
 return 0
 }	#end detect_os()
@@ -4599,16 +4604,13 @@ done
 #rm  -fr $CMDLOGBIN $CMDLOGTXT
 printf "\n--------------- Starting new script run. Hosts are grouped by color -------------------\n" > $CMDLOGBIN
 
-detect_os	#before welcome_screen to detect which GREP to use
+clear
 check_root
 check_shell
-display_welcome_screen
-clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: Running startup validation checks...${NC}\n"
-printf "\n"
+startup_checks	#contains ggrep install if missing (critical command)
 
-startup_checks
 setup_ip_aliases
+display_welcome_screen
 main_menu_inputs
 
 #read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
