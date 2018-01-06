@@ -617,6 +617,7 @@ if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [wget]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install wget -y"
 	brew link --overwrite wget
+	#if brew link failed due to premission issue; run sudo chown -R `whoami` /usr/local
 else
 	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 fi
