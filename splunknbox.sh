@@ -150,8 +150,6 @@ CMDLOGTXT="$LOGS_DIR/splunknbox.log"			#capture all docker cmds (just ascii txt)
 #SCREENLOGFILE="$LOGS_DIR/splunknbox_screens.log"  #capture all screen shots during execution
 HOSTSFILE="$PWD/docker-hosts.dnsmasq"  	#local host file. optional if dns caching is used
 SPLUNK_LIC_DIR="$PWD/licenses"		#place all your license file here
-SPLUNK_APPS_DIR="$PWD/splunk_apps"		#place all splunk apps here for lunch & learn
-TUTORIAL_DATASETS_DIR="$PWD/tutorial_datasets"		#place all datasets here for lunch & learn
 VOL_DIR="docker-volumes"	#volumes mount point.Full path is dynamic based on OS type
 #-----------------------------------------
 #--------Load control---------------------
@@ -197,6 +195,13 @@ BoldYellowOnPurple="\033[1;33;44m"
 
 DEFAULT_YES="\033[1;37mY\033[0m/n"
 DEFAULT_NO="y/\033[1;37mN\033[0m"
+#Emojis
++  202 ARROW='\xe2\x96\xb6'
++  203 ARROW_STOP='\xe2\x8f\xaf'
++  204 REPEAT='\xe2\x8f\xad'
++  205 CHECK_MARK='\xe2\x9c\x85'
++  206 OK_BUTTON='\xf0\x9f\x86\x97'
++  207 WARNING='\xe2\x9a\xa0'
 #---------------------------------------
 
 
@@ -2827,21 +2832,21 @@ host_names=$1	#list of hostnames to configure
 echo
 printf "${Yellow}Downloading apps...${NC}\n"
 for file in $LL_APPS; do
-	if [ -f $SPLUNK_APPS_DIR/$file ];then
+	if [ -f $file ];then
 		printf "Download file [$file]: [${White}*cached*${NC}]\n"
 	else
 		printf "Download file [$file]: "
-		progress_bar_pkg_download "wget -q -np -O $SPLUNK_APPS_DIR/$file \
+		progress_bar_pkg_download "wget -q -np \
 			https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/splunk_apps/$file"
 	fi
 done
 echo
 for hostname in `echo $host_names` ; do
-	printf "[${Purple}$hostname${NC}]${LightBlue} Installing selected apps ... ${NC}\n"
+	printf "[${Purple}$hostname${NC}]${LightBlue} Configuring host apps ... ${NC}\n"
 	#install all apps on hostname ---------
 	for app in $LL_APPS; do
 		printf "\t->Installing $app app "
-		CMD="docker cp $SPLUNK_APPS_DIR/$app $hostname:/tmp"; OUT=`$CMD`
+		CMD="docker cp $app $hostname:/tmp"; OUT=`$CMD`
 		CMD="docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk install app /tmp/$app -auth $USERADMIN:$USERPASS"
 		printf "\n${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		OUT=`$CMD`;# installed=$(display_output "$OUT" "installed" "2")
@@ -2867,28 +2872,28 @@ host_names=$1	#list of hostnames to configure
 echo
 printf "${Yellow}Downloading datasets...${NC}\n"
 for file in $LL_DATASETS; do
-	if [ -f $TUTORIAL_DATASETS_DIR/$file ];then
+	if [ -f $file ];then
 		printf "Download file [$file]: [${White}*cached*${NC}]\n"
 	else
 		printf "Download file [$file]: "
-		progress_bar_pkg_download "wget -q -np -O $TUTORIAL_DATASETS_DIR/$file\
+		progress_bar_pkg_download "wget -q -np \
 			https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/tutorial_datasets/$file"
 	fi
 done
 echo
 
 for hostname in `echo $host_names` ; do
-	printf "[${Purple}$hostname${NC}]${LightBlue} Installing selected datasets... ${NC}\n"
+	printf "[${Purple}$hostname${NC}]${LightBlue} Configuring host datasets... ${NC}\n"
 	#install all datasets on hostname -------
 	printf "\t->Indexing tutorial data [tutorialdata.zip] "
-	CMD="docker cp $TUTORIAL_DATASETS_DIR/tutorialdata.zip $hostname:/tmp"; OUT=`$CMD`
+	CMD="docker cp tutorialdata.zip $hostname:/tmp"; OUT=`$CMD`
 	CMD="docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk add oneshot /tmp/tutorialdata.zip -auth $USERADMIN:$USERPASS"
 	printf "\n${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	OUT=`$CMD`; display_output "$OUT" "added" "3"
 	logline "$CMD" "$hostname"
 
 	printf "\t->Configuring lookup table [http_status.csv] "
-	CMD="docker cp $TUTORIAL_DATASETS_DIR/http_status.csv $hostname:/opt/splunk/etc/apps/search/lookups"; OUT=`$CMD`
+	CMD="docker cp http_status.csv $hostname:/opt/splunk/etc/apps/search/lookups"; OUT=`$CMD`
 	printf "[http_status]\nfilename = http_status.csv\n" > transforms.conf.tmp
 	CMD="docker cp transforms.conf.tmp $hostname:/tmp/transforms.conf"; OUT=`$CMD`
   	CMD=`docker exec -u splunk -ti $hostname bash -c "cat /tmp/transforms.conf >> /opt/splunk/etc/apps/search/local/transforms.conf" `
