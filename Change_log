@@ -218,7 +218,7 @@ v4.2.4.1   10/12/2017
 -fixed a bug in detecting last IP used. Now it handles stopped containers. IP will not be used is container created but not running
 
 v4.3 12/25/2017
--switched to git versioning x.y-aaaa
+-switched to git versioning $major.$minor-$build
 -moved to new github structure for directories
 -fixed few paths releated to the move (LOGS, LICENSES)
 -disabled SCREENCMDLOG
@@ -229,7 +229,11 @@ v4.4 12/27/2017
 -version stamp will updates VERSION.TXT
 -added colored version numbers
 -fixed some text alignment issue in the Welcome screen
+-Added version detection to startup_check. We need ggrep very early(OSX)
+-Welcome screen now shows after the startup_checks (ver detection uses ggrep)
 -disabled MONITOR container build for now. Will revist later
+-Splunk app & datasets are now cached/dloaded in the new locations
+-added bunch of emoji icons to startup checks
 
 
 
