@@ -204,7 +204,9 @@ REPEAT='\xe2\x8f\xad'
 CHECK_MARK='\xe2\x9c\x85'
 OK_MARK='\xe2\x9c\x85'
 OK_BUTTON='\xf0\x9f\x86\x97'
-WARNING='\xe2\x9a\xa0'
+#WARNING='\xe2\x9a\xa0'
+WARNING='\xe2\x9a\xa0\xef\xb8\x8f'
+DONT_ENTER='\xe2\x9b\x94'
 #---------------------------------------
 
 
@@ -366,8 +368,9 @@ return 0
 #---------------------------------------------------------------------------------------------------------
 show_docker_system_prune() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-echo
-printf "${Red}WARNING! This is a destructive command. May need to restart the script...${NC}\n"
+clear
+printf "${DONT_ENTER}${LightRed} WARNING!\n"
+printf "This is a destructive command. May need to restart the script...${NC}\n"
 docker system prune
 echo
 return
@@ -463,7 +466,8 @@ display_stats_banner
 printf "\n"
 #display_all_containers
 echo
-printf "${Red}WARNING! You are about to remove IP aliases. This will kill any container already binded to IP ${NC}\n"
+printf "${DONT_ENTER} ${LightRed}WARNING! \n"
+printf "You are about to remove IP aliases. This will kill any container already binded to IP ${NC}\n"
 echo
 read -p "Are you sure you want to proceed? [y/N]? " answer
 if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
@@ -481,7 +485,7 @@ if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
         		echo -ne "${NC}Removing: >>  $eth:${Purple}$base_ip.${Yellow}$i\r"
 			done
 			echo
-			printf "\n${Red}You must restart the script to regain functionality!${NC}\n"
+			printf "\n${LightRed}You must restart the script to regain functionality!${NC}\n"
 	elif  [ "$os" == "Linux" ]; then
 			read -p "Enter interface where IP aliases are binded to (default $ETH):  " eth; if [ -z "$eth" ]; then eth="$ETH_LINUX"
                 	sudo ifconfig $eth:$docker_mc_start_octet4 $base_ip.$docker_mc_start_octet4 down;  #special aliases
@@ -490,7 +494,7 @@ if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
                 		sudo ifconfig $eth:$i "$base_ip.$i" down;
         		done
 			echo
-			printf "\n${Red}You must restart the script to regain functionality!${NC}\n"
+			printf "\n${LightRed}You must restart the script to regain functionality!${NC}\n"
 	fi  #elif
 	fi
 	#---------
@@ -807,7 +811,7 @@ fi
 #-----------other scripts running?---------
 
 #-----------docker daemon running check----
-printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if docker daemon is running & version "
+printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if docker daemon is running "
 
 is_running=`docker info|grep Images 2>/dev/null `
 if [ -z "$is_running" ] && [ "$os" == "Darwin" ]; then
@@ -872,11 +876,11 @@ fi
 #-----------Gathering OS memory/cpu info---
 
 #-----------OS memory check-------------------
-printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if we have enough free OS memory [Free:%sgb Total:%sgb  ${LightBlue}%s%%${NC}]..." $os_free_mem $os_total_mem $os_free_mem_perct
+printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if we have enough free OS memory [Free:%sgb Total:%sgb  ${LightBlue}%s%%${NC}] " $os_free_mem $os_total_mem $os_free_mem_perct
 #state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparison
 #WARN if free mem is 20% or less of total mem
 if [ "$os_free_mem_perct" -le "20" ]; then
-	printf "${BrownOrange}WARNING! (May not be a problem)${NC}\n"
+	printf "${BrownOrange}${WARNING} (May not be a problem)${NC}\n"
 	printf "    ${Red}>>${NC} Recommended %sGB+ of free memory for large builds\n" $LOW_MEM_THRESHOLD
 	printf "    ${Red}>>${NC} Modern OSs do not always report unused memory as free\n\n" $os_free_mem $LOW_MEM_THRESHOLD
 	#printf "${White}    7-Change docker default settings! Docker-icon->Preferences->General->pick max CPU/MEM available${NC}\n\n"
@@ -889,7 +893,7 @@ fi
 printf "${Blue}   ${ARROW}${ARROW}${NC} Checking Docker configs for CPUs allocation [Docker:%sgb  OS:%sgb]..." $dockerinfo_cpu $cores
 #state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparison
 if [ "$dockerinfo_cpu" -lt "$cores" ]; then
-	printf "${BrownOrange} WARNING!${NC}\n"
+	printf "${BrownOrange} ${WARNING}${NC}\n"
 	printf "    ${Red}>>${NC} Docker is configured to use %s of the available system %s CPUs\n" $dockerinfo_cpu $cores
 	printf "    ${Red}>>${NC} Please allocate all available system CPUs to Docker (Preferences->Advance)\n\n"
 else
@@ -899,7 +903,7 @@ docker_total_mem_perct=`echo "($dockerinfo_mem * 100) / $os_total_mem"| bc`
 printf "${Blue}   ${ARROW}${ARROW}${NC} Checking Docker configs for MEMORY allocation [Docker:%sgb OS:%sgb  ${LightBlue}%s%%${NC}]..." $dockerinfo_mem $os_total_mem $docker_total_mem_perct
 #WARN if ration docker_configred_mem/os_total-mem < 80%
 if [ "$docker_total_mem_perct" -lt "80" ]; then
-	printf "${BrownOrange} WARNING!${NC}\n" $dockerinfo_mem $os_total_mem
+	printf "${BrownOrange} ${WARNING}${NC}\n" $dockerinfo_mem $os_total_mem
        	printf "    ${Red}>>${NC} Docker is configured to use %sgb of the available system %sgb memory\n" $dockerinfo_mem $os_total_mem
        	printf "    ${Red}>>${NC} Please allocate all available system memory to Docker (Preferences->Advance)\n\n"
 else
@@ -968,8 +972,8 @@ if [ -n "$splunk_is_running" ]; then
        	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		sudo $LOCAL_SPLUNKD stop
 	else
-		printf "    ${Red}WARNING!${NC}\n"
-		printf "    ${Red}>>${NC} Running local splunkd may prevent containers from binding to interfaces!${NC}\n\n"
+		printf "    ${LightRed}WARNING!${NC}\n"
+		printf "    ${LightRed}>>${NC} Running local splunkd may prevent containers from binding to interfaces!${NC}\n\n"
 	fi
 else
 	printf "${Green}${OK_MARK} OK${NC}\n"
@@ -1282,7 +1286,7 @@ done
 #display_all_images "DEMO"
 count=0
 echo
-printf "${BrownOrange}WARNING! Changing the default image means any subsequent container builds (except DEMO images) will use the new splunk image!${NC}\n"
+printf "${BrownOrange}${WARNING} Subsequent container builds (except DEMO images) will use the new splunk image!${NC}\n"
 printf "Current default image is [$DEFAULT_SPLUNK_IMAGE]\n"; echo
 read -p "Select number: " choice
 if [ -n "$choice" ]; then
@@ -2130,7 +2134,8 @@ if [ -n "$choice" ]; then
         	create_splunk_container "$image_name" "$number"
         done
 else
-	printf "${Red}WARNING! This operation will stress your system. Make sure you have enough resources...${NC}\n"
+	printf "${DONT_ENTER}${LightRed} WARNING! \n"
+	printf "This operation will stress your system. Make sure you have enough resources...${NC}\n"
         read -p "Are you sure? [y/N]? " answer
         printf "         **PLEASE WATCH THE LOAD AVERAGE CLOSELY**\n\n"
         if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
@@ -2277,7 +2282,8 @@ if [ -n "$choice" ]; then
                 construct_3rdp_container_from_image "$image_name" "1"
         done
 else
-        printf "${Red}WARNING! This operation will stress your system. Make sure you have enough resources...${NC}\n"
+		printf "${DONT_ENTER}${LightRed} WARNING! \n"
+        printf "This operation will stress your system. Make sure you have enough resources...${NC}\n"
         read -p "Are you sure? [y/N]? " answer
         printf "    **PLEASE WATCH THE LOAD AVERAGE CLOSELY**\n\n"
         if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
@@ -3909,7 +3915,8 @@ if [ -n "$choice" ]; then
         done
        # docker stop $choice
 else
-        printf "${Red}WARNING! This operation may take a long time (~20 mins). Make sure you have enough disk-space...${NC}\n"
+		printf "${DONT_ENTER}${LightRed} WARNING! \n"
+        printf "This operation may take a long time (~20 mins). Make sure you have enough disk-space...${NC}\n"
 	read -p "Are you sure? [Y/n]? " answer
 	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
         	printf "${Yellow}Downloading all demo image(s)...\n${NC}"
@@ -4409,10 +4416,10 @@ clear
 printf "${BoldWhiteOnGreen}WIPE CLEAN ENTIRE SYSTEM MENU ${NC}\n"
 display_stats_banner
 printf "\n"
-printf "${Red}WARNING!${NC}\n"
-printf "${Red}This option will remove IP aliases, delete all containers, delete all images and remove all volumes! ${NC}\n"
-printf "${Red}Use this option only if you want to return the system to clean state! ${NC}\n"
-printf "${Red}Restarting the script will recreate every thing again! ${NC}\n"
+printf "${DONT_ENTER}${LightRed} WARNING!${NC}\n"
+printf "${LightRed}This option will remove IP aliases, delete all containers, delete all images and remove all volumes! ${NC}\n"
+printf "${LightRed}Use this option only if you want to return the system to a clean state! ${NC}\n"
+printf "${LightRed}Restarting the script will recreate every thing again! ${NC}\n"
 printf "\n"
 read -p "Are you sure you want to proceed? [y/N]? " answer
         if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
