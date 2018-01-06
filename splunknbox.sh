@@ -606,7 +606,7 @@ if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [bc]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install bc -y"
 else
-	printf "${Green}Already installed${NC}\n"
+	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 fi
 #----------
 #----------
@@ -616,7 +616,7 @@ if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [wget]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install wget -y"
 else
-	printf "${Green}Already installed${NC}\n"
+	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 fi
 #----------
 #----------
@@ -628,7 +628,7 @@ if [ $condition -eq 0 ]; then
 	progress_bar_pkg_download "sudo curl -o /usr/local/bin/imgcat -O https://raw.githubusercontent.com/gnachman/iTerm2/master/tests/imgcat"
     sudo chmod +x /usr/local/bin/imgcat
 else
-	printf "${Green}Already installed${NC}\n"
+	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 fi
 #----------
 #----------
@@ -638,7 +638,7 @@ if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [timeout]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install timeout -y"
 else
-	printf "${Green}Already installed${NC}\n"
+	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 	alias timeout="gtimeout"
 fi
 #----------
@@ -649,7 +649,7 @@ if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [graphviz]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install graphviz -y"
 else
-	printf "${Green}Already installed${NC}\n"
+	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 fi
 #----------
 
@@ -666,7 +666,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 printf "${LightBlue}   >>${NC}Checking Xcode commandline tools:${NC} "
 cmd=$(xcode-select -p)
 if [ -n $cmd ]; then
-	printf "${Green}Already Installed${NC}\n"
+	printf "${Green}${CHECK_MARK} Installed\n${NC}"
 else
 	printf "${Yellow}Running [xcode-select --install]${NC}\n"
  	cmd=$(xcode-select --install)
@@ -681,7 +681,7 @@ if [ $condition -eq 0 ]; then
 	sed -ie 's/c = getc/c = 13/g' install_brew.rb   #remove prompt in install.rb script
 	progress_bar_pkg_download "/usr/bin/ruby install_brew.rb"
 else
-	printf "${Green}Already installed${NC}\n"
+	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 fi
 #----------
 printf "${LightBlue}   >>${NC}Checking bc package:${NC} "
@@ -690,14 +690,14 @@ if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [bc]${NC}:"
 	progress_bar_pkg_download "brew install bc"
 else
-	printf "${Green}Already installed${NC}\n"
+	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 fi
 #----------
 
 printf "${LightBlue}   >>${NC}Checking pcre package:${NC} "
 cmd=$(brew ls pcre --versions)
 if [ -n "$cmd" ]; then
-	printf "${Green}Already installed${NC}\n"
+	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 else
 	printf "${BrownOrange}Installing [pcre]${NC}:"
 	progress_bar_pkg_download "brew install pcre"
@@ -707,7 +707,7 @@ fi
 printf "${LightBlue}   >>${NC}Checking wget package:${NC} "
 cmd=$(brew ls wget --versions)
 if [ -n "$cmd" ]; then
-	printf "${Green}Already installed${NC}\n"
+	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 else
 	printf "${BrownOrange}Installing [wget]${NC}:"
 	progress_bar_pkg_download "brew install wget"
@@ -716,7 +716,7 @@ fi
 printf "${LightBlue}   >>${NC}Checking ggrep package:${NC} "
 cmd=$(brew ls grep --versions|cut -d" " -f2)
 if [ -n "$cmd" ]; then
-        printf "${Green}Already installed${NC}\n"
+        printf "${Green}${CHECK_MARK} Installed${NC}\n"
 else
 	printf "${BrownOrange}Installing [ggrep]${NC}:"
 	brew tap homebrew/dupes > /dev/null 2>&1
@@ -730,7 +730,7 @@ fi
 printf "${LightBlue}   >>${NC}Checking optional [imagcat] package:${NC} "
 cmd=$(brew ls imgcat --versions)
 if [ -n "$cmd" ]; then
-	printf "${Green}Already installed${NC}\n"
+	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 else
 	printf "${BrownOrange}Installing [imgcat]${NC}:"
 	progress_bar_pkg_download "brew tap eddieantonio/eddieantonio"
@@ -741,7 +741,7 @@ fi
 printf "${LightBlue}   >>${NC}Checking optional [gtimeout] package:${NC} "
 cmd=$(brew ls coreutils --versions)
 if [ -n "$cmd" ]; then
-	printf "${Green}Already installed${NC}\n"
+	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 else
 	printf "${BrownOrange}Installing [coreutils]${NC}:"
 	progress_bar_pkg_download "brew install coreutils"
@@ -752,7 +752,7 @@ fi
 printf "${LightBlue}   >>${NC}Checking optional [graphviz] package:${NC} "
 cmd=$(brew ls graphviz --versions)
 if [ -n "$cmd" ]; then
-	printf "${Green}Already installed${NC}\n"
+	printf "${Green}${CHECK_MARK} Installed${NC}\n"
 else
 	printf "${BrownOrange}Installing [graphviz]${NC}:"
 	progress_bar_pkg_download "brew install graphviz"
@@ -2857,7 +2857,7 @@ for hostname in `echo $host_names` ; do
 		OUT=`$CMD`;# installed=$(display_output "$OUT" "installed" "2")
 		reboot="N"
 		if ( compare "$OUT" "already" ); then
-			printf "${Red}Already installed\n${NC}"
+			printf "${Red}${CHECK_MARK} Installed\n${NC}"
 			reboot="N"
 		else
 			printf "${Green}Done!\n${NC}"
