@@ -4495,11 +4495,13 @@ COLUMNS=$(tput cols)
 LINES=$(tput lines)
 #echo "cols:$COLUMNS"
 #echo "lines:$LINES"
-
+new=""
 colored_git_version=`echo $GIT_VER|awk -F '[.-]' '{print "\033[1;33m"$1"\033[0;33m."$2"\033[1;31m-" $3"\033[0m"}'`
-# Set default message if $1 input not provided
-#x=$(( $LINES - 34 / 2 ))                             #centered in the screen
-#tput cup $x 25                 #set x and y position
+#Dont prompt for upgrade if we cannot get GIT_VER ( missing ggrep)
+if [ -z "$GIT_VER" ]; then
+	new="N"
+	colored_git_version="${LightRed}*UNKNOWN*${NC}     "
+fi
 
 MESSAGE[1]=""
 MESSAGE[2]="Welcome to Splunk N\' Box v$colored_git_version"
@@ -4532,15 +4534,14 @@ for (( i=x; i <= (x + $num_of_msgs); i++)); do
 		printf "\033[0;36m${MESSAGE[$z]}"
 
 done
-
+rm -fr $TMP_DIR/version.txt		#start fresh
 wget -qO $TMP_DIR/version.txt "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
 online_ver=`cat $TMP_DIR/version.txt`
 colored_online_ver=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
 
-new=""
 new=`awk -v n1=$online_ver -v n2=$GIT_VER 'BEGIN {if (n1>n2) print ("Y");}'  `
 
-if [ "$new" == "Y" ]; then
+if [ "$new" == "Y" ] && [ -n "$GIT_VER" ] && [ -n "$online_ver" ]; then
 	#tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
 	tput cup $LINES 0
 	printf "Checking for new version... [found $colored_online_ver${NC}]\n"
@@ -4600,10 +4601,12 @@ maxloglevel=7	 #The highest loglevel we use / allow to be displayed.
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 output_file=""
 while getopts "h?v:s:f:" opt; do
-echo opt[$opt]
     case "$opt" in
     h|\?)
-        echo "HELP!"
+		printf "Usage:\n"
+        printf "\t-v	Set log level\n"
+        printf "\t-s	Skip startup checks. **Use with caution**\n"
+        printf "\t-f	Set log file name\n"
         exit 0
         ;;
     v)  loglevel=$OPTARG
