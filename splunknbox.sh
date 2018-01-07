@@ -776,8 +776,8 @@ startup_checks() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 printf "${BoldWhiteOnTurquoise}Splunk n' Box. Running startup validation checks...${NC}\n\n"
-detect_os
 
+printf "${LightBlue}==> ${NC}$os_banner${NC}\n"
 #-------------------sanity checks -------------------
 check_root		#should not as root
 check_shell		#must have bash
@@ -999,22 +999,6 @@ else
 	printf "\n"
 fi
 
-#-----------Detect script version ---------------------------
-#Need to detect git version stuff as early as possible but after ggrep is installed
-
-#Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
-#screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 4.4-223 $" | \
-		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 01:13:25PM -0600 $" | \
-		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
-GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
-		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
-#echo [$GIT_VER]
-#echo [$GIT_DATE]
-#echo [$GIT_AUTHOR]
-#-----------Detect script version ---------------------------
-
 #-----------discovering DNS setting for OSX. Used for container build--
 
 #TO DO:
@@ -1041,7 +1025,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 uname=`uname -a | awk '{print $1}'`
 if [ "$(uname)" == "Darwin" ]; then
-    	os="Darwin"
+    os="Darwin"
 	START_ALIAS=$START_ALIAS_OSX
 	END_ALIAS=$END_ALIAS_OSX
 	ETH=$ETH_OSX
@@ -1050,29 +1034,29 @@ if [ "$(uname)" == "Darwin" ]; then
 	PROJ_DIR="/Users/${USER}"  #anything that needs to copied to container
 	sys_ver=`system_profiler SPSoftwareDataType|grep "System Version" |awk '{print $5}'`
 	kern_ver=`system_profiler SPSoftwareDataType|grep "Kernel Version" |awk '{print $3,$4}'`
-	printf "${LightBlue}==> ${NC}Detected MacOS [System:$sys_ver Kernel:$kern_ver]${NC}\n"
+	os_banner="Detected MacOS [System:$sys_ver Kernel:$kern_ver]"
 
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
-    	os="Linux"
+    os="Linux"
 	START_ALIAS=$START_ALIAS_LINUX
-        END_ALIAS=$END_ALIAS_LINUX
+    END_ALIAS=$END_ALIAS_LINUX
 	GREP=$GREP_LINUX
 	ETH=$ETH_LINUX
 	MOUNTPOINT="/home/${USER}/$VOL_DIR"
 	PROJ_DIR="/home/${USER}/"
 	release=`lsb_release -r |awk '{print $2}'`
 	kern_ver=`uname -r`
-	printf "${LightBlue}==> ${NC}Detected LINUX [Release:$release Kernel:$kern_ver]${NC}\n"
+	os_banner="Detected LINUX [Release:$release Kernel:$kern_ver]"
 
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
-    	os="Windows"
+    os="Windows"
 fi
 
 #is it AWS EC2 instance?
 if [ -f /sys/hypervisor/uuid ] && [ `head -c 3 /sys/hypervisor/uuid` == ec2 ]; then
 	bios_ver=`sudo dmidecode -s bios-version`
-	printf "${LightBlue}==> ${NC}Detected AWS EC2 instance [BIOS:$bios_ver]${NC}\n"
-    	AWS_EC2="YES"
+	os_banner="Detected AWS EC2 instance [BIOS:$bios_ver]"
+    AWS_EC2="YES"
 	START_ALIAS=$START_ALIAS_OSX
 	END_ALIAS=$END_ALIAS_OSX
 else
@@ -1082,7 +1066,27 @@ fi
 
 return 0
 }	#end detect_os()
-#---------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------
+
+#-----------Detect script version ---------------------------
+detect_ver() {
+#Need to detect git version stuff as early as possible but after ggrep is installed
+
+#Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
+#screw up things if the $ sign is not the last char
+GIT_VER=`echo "__VERSION: 4.4-223 $" | \
+		$GREP -Po "\d+.\d+-\d+"`
+GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 01:13:25PM -0600 $" | \
+		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
+GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
+		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
+#echo [$GIT_VER]
+#echo [$GIT_DATE]
+#echo [$GIT_AUTHOR]
+return 0
+}
+#-----------Detect script version ---------------------------
+
 
 ###### UTILITIES ######
 
@@ -4595,8 +4599,8 @@ maxloglevel=7	 #The highest loglevel we use / allow to be displayed.
 # A POSIX variable
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 output_file=""
-skipchecks="false"
-while getopts "h?v:f:" opt; do
+while getopts "h?v:s:f:" opt; do
+echo opt[$opt]
     case "$opt" in
     h|\?)
         echo "HELP!"
@@ -4604,14 +4608,15 @@ while getopts "h?v:f:" opt; do
         ;;
     v)  loglevel=$OPTARG
         ;;
-	--skip-checks)
-		skipcheck="true"
+    s)  skip_checks=$OPTARG
 		;;
     f)  output_file=$OPTARG
        ;;
     esac
 done
-
+#echo loglevel=[$loglevel]
+#echo skip_checks=[$skip_checks];
+#echo output_file=[$output_file];
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 #echo "loglevel='$loglevel'   output_file='$output_file'    Leftovers: $@"
@@ -4637,11 +4642,13 @@ done
 #delete log files on restart
 #rm  -fr $CMDLOGBIN $CMDLOGTXT
 printf "\n--------------- Starting new script run. Hosts are grouped by color -------------------\n" > $CMDLOGBIN
-
 clear
-if [ $"skipchecks" == "false" ];then
+detect_os						#ggrep OSX is set here
+detect_ver
+if [ -z "$skip_checks" ] || [ "$skip_checks" != "true" ];then
 	startup_checks				#contains ggrep install if missing OSX (critical command)
 fi
+
 display_welcome_screen		#ggrep must installed otherwise ver check will fail
 main_menu_inputs
 
