@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #################################################################################
-#	__VERSION: 4.4-223 $
-#	__DATE: Tue Jan 02,2018 - 01:13:25PM -0600 $
+#	__VERSION: 4.4-240 $
+#	__DATE: Sat Jan 06,2018 - 10:22:24PM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1075,9 +1075,9 @@ detect_ver() {
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 4.4-223 $" | \
+GIT_VER=`echo "__VERSION: 4.4-240 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Tue Jan 02,2018 - 01:13:25PM -0600 $" | \
+GIT_DATE=`echo "__DATE: Sat Jan 06,2018 - 10:22:24PM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
@@ -4535,9 +4535,9 @@ for (( i=x; i <= (x + $num_of_msgs); i++)); do
 		printf "\033[0;36m${MESSAGE[$z]}"
 
 done
-rm -fr $TMP_DIR/version.txt		#start fresh
-wget -qO $TMP_DIR/version.txt "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
-online_ver=`cat $TMP_DIR/version.txt`
+rm -fr $TMP_DIR/online_ver.tmp		#start fresh
+wget -qO $TMP_DIR/online_ver.tmp "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
+online_ver=`cat $TMP_DIR/online_ver.tmp`
 colored_online_ver=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
 
 new=`awk -v n1=$online_ver -v n2=$GIT_VER 'BEGIN {if (n1>n2) print ("Y");}'  `
