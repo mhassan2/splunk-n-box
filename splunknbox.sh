@@ -778,6 +778,16 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 printf "${BoldWhiteOnTurquoise}Splunk n' Box. Running startup validation checks...${NC}\n\n"
 detect_os
 
+#-------------------sanity checks -------------------
+check_root		#should not as root
+check_shell		#must have bash
+#Make sure working directories exist
+mkdir -p $LOGS_DIR
+mkdir -p $SPLUNK_LIC_DIR
+mkdir -p $SPLUNK_APPS_DIR
+mkdir -p $SPLUNK_DATASETS_DIR
+#----------------------------------------------------
+
 #----------Gnu grep installed? MacOS only-------------
 if [ "$os" == "Darwin" ]; then
 	printf "${Blue}   ${ARROW}${ARROW}${NC} Checking for required MacOS packages...\n"
@@ -1012,6 +1022,10 @@ GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 #check $USER
 #Your Mac must be running OS X 10.8 “Mountain Lion” or newer to run Docker software.
 #https://docs.docker.com/engine/installation/mac/
+
+#-------------Create IP aliases if they dont exist -----------
+setup_ip_aliases
+#-------------------------------------------------------------
 
 return 0
 }	#end startup_checks()
@@ -4558,9 +4572,12 @@ return 0
 display_goodbye_msg() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 echo;echo;echo
-printf "\033[31m           0000\033[0m_____________0000________0000000000000000__000000000000000000+\n\033[31m         00000000\033[0m_________00000000______000000000000000__0000000000000000000+\n\033[31m        000\033[0m____000_______000____000_____000_______0000__00______0+\n\033[31m       000\033[0m______000_____000______000_____________0000___00______0+\n\033[31m      0000\033[0m______0000___0000______0000___________0000_____0_____0+\n\033[31m      0000\033[0m______0000___0000______0000__________0000___________0+\n\033[31m      0000\033[0m______0000___0000______0000_________000___0000000000+\n\033[31m      0000\033[0m______0000___0000______0000________0000+\n\033[31m       000\033[0m______000_____000______000________0000+\n\033[31m        000\033[0m____000_______000____000_______00000+\n\033[31m         00000000\033[0m_________00000000_______0000000+\n\033[31m           0000\033[0m_____________0000________000000007;\n"
-echo
-echo
+printf "\033[31m           0000\033[0m_____________0000________0000000000000000__000000000000000000+\n\033[31m         00000000\033[0m_________00000000______000000000000000__0000000000000000000+\n\033[31m        000\033[0m____000_______000____000_____000_______0000__00______0+\n"
+printf "\033[31m       000\033[0m______000_____000______000_____________0000___00______0+\n\033[31m      0000\033[0m______0000___0000______0000___________0000_____0_____0+\n"
+printf "\033[31m      0000\033[0m______0000___0000______0000__________0000___________0+\n\033[31m      0000\033[0m______0000___0000______0000_________000___0000000000+\n"
+printf "\033[31m      0000\033[0m______0000___0000______0000________0000+\n\033[31m       000\033[0m______000_____000______000________0000+\n"
+printf "\033[31m        000\033[0m____000_______000____000_______00000+\n\033[31m         00000000\033[0m_________00000000_______0000000+\n\033[31m           0000\033[0m_____________0000________000000007;\n"
+echo;echo
 return 0
 }	#display_goodbye_msg()
 #---------------------------------------------------------------------------------------------------------------
@@ -4568,16 +4585,17 @@ return 0
 
 #<<<<<<<<<<<<<----------   MAIN BEGINS     ---------->>>>>>>>>>>>
 
-#---------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------
 #The following must start at the beginning for the code since we use I/O redirection for logging
 #
 #http://stackoverflow.com/questions/8455991/elegant-way-for-verbose-mode-in-scripts/8456046
 loglevel=$LOGLEVEL
-maxloglevel=7 #The highest loglevel we use / allow to be displayed.
+maxloglevel=7	 #The highest loglevel we use / allow to be displayed.
 
 # A POSIX variable
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 output_file=""
+skipchecks="false"
 while getopts "h?v:f:" opt; do
     case "$opt" in
     h|\?)
@@ -4586,10 +4604,14 @@ while getopts "h?v:f:" opt; do
         ;;
     v)  loglevel=$OPTARG
         ;;
+	--skip-checks)
+		skipcheck="true"
+		;;
     f)  output_file=$OPTARG
        ;;
     esac
 done
+
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 #echo "loglevel='$loglevel'   output_file='$output_file'    Leftovers: $@"
@@ -4611,22 +4633,16 @@ done
 #printf "%s\n" "This message is seen at verbosity level 5 and above." >&5
 #exit
 #------------------
-#Make sure working directories exist
-mkdir -p $LOGS_DIR
-mkdir -p $SPLUNK_LIC_DIR
-mkdir -p $SPLUNK_APPS_DIR
-mkdir -p $SPLUNK_DATASETS_DIR
 
 #delete log files on restart
 #rm  -fr $CMDLOGBIN $CMDLOGTXT
 printf "\n--------------- Starting new script run. Hosts are grouped by color -------------------\n" > $CMDLOGBIN
 
 clear
-check_root		#should not as root
-check_shell		#must have bash
-startup_checks	#contains ggrep install if missing (critical command)
-setup_ip_aliases
-display_welcome_screen
+if [ $"skipchecks" == "false" ];then
+	startup_checks				#contains ggrep install if missing OSX (critical command)
+fi
+display_welcome_screen		#ggrep must installed otherwise ver check will fail
 main_menu_inputs
 
 
