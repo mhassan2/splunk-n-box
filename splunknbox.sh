@@ -142,7 +142,7 @@ DEP_SHC_COUNT="1"					#default DEP count
 #---------DIRECTORIES & Logs-----------------------------
 LOGLEVEL=3
 FILES_DIR="$PWD" 		#place anything needs to copy to container here
-TMP_DIR="/tmp"	#used as scrach space
+TMP_DIR="$PWD/tmp"	#used as scrach space
 LOGS_DIR="$PWD/logs"		#store generated logs during run
 CMDLOGBIN="$LOGS_DIR/splunknbox_bin.log"		#capture all docker cmds (with color)
 CMDLOGTXT="$LOGS_DIR/splunknbox.log"			#capture all docker cmds (just ascii txt)
@@ -783,6 +783,7 @@ check_root		#should not as root
 check_shell		#must have bash
 #Make sure working directories exist
 mkdir -p $LOGS_DIR
+mkdir -p $TMP_DIR
 mkdir -p $SPLUNK_LIC_DIR
 mkdir -p $SPLUNK_APPS_DIR
 mkdir -p $SPLUNK_DATASETS_DIR
@@ -3079,8 +3080,8 @@ printf "[${Purple}$dep${NC}]${LightBlue} Configuring Deployer ... ${NC}\n"
 bind_ip_dep=`docker inspect --format '{{ .HostConfig }}' $dep| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 txt="\n #-----Modified by Docker Management script ----\n [shclustering]\n pass4SymmKey = $MYSECRET \n shcluster_label = $label\n"
 #printf "%b" "$txt" >> $MOUNTPOINT/$dep/etc/system/local/server.conf	#cheesy fix!
-printf "%b" "$txt" > server.conf.tmp
-CMD="docker cp server.conf.tmp $dep:/tmp/server.conf"; OUT=`$CMD`
+printf "%b" "$txt" > $TMP_DIR/server.conf.tmp
+CMD="docker cp $TMP_DIR/server.conf.tmp $dep:/tmp/server.conf"; OUT=`$CMD`
 CMD=`docker exec -u splunk -ti $dep  bash -c "cat /tmp/server.conf >> /opt/splunk/etc/system/local/server.conf" `; #OUT=`$CMD`
 
 printf "	${Yellow}${ARROW}${NC}Adding stanza [shclustering] to server.conf!" >&3 ; display_output "$OUT" "" "3"
