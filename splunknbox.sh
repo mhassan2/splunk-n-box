@@ -4627,9 +4627,9 @@ while getopts "h?v:s:f:" opt; do
     case "$opt" in
     h|\?)
 		printf "Usage:\n"
-        printf "\t-v	Set log level\n"
-        printf "\t-s	Skip startup checks. **Use with caution**\n"
-        printf "\t-f	Set log file name\n"
+        printf "\t-v[2|3|4|5|6]\tSet log level\n"
+		printf "\t-s[true]\tSkip startup checks (if all requirements are satisfied).${LightRed}**Use with caution***${NC}\n"
+        printf "\t-f[filename]\tSet log file name\n"
         exit 0
         ;;
     v)  loglevel=$OPTARG
