@@ -198,15 +198,19 @@ BoldYellowOnPurple="\033[1;33;44m"
 DEFAULT_YES="\033[1;37mY\033[0m/n"
 DEFAULT_NO="y/\033[1;37mN\033[0m"
 #Emojis
-ARROW='\xe2\x96\xb6'
-ARROW_STOP='\xe2\x8f\xaf'
-REPEAT='\xe2\x8f\xad'
-CHECK_MARK='\xe2\x9c\x85'
-OK_MARK='\xe2\x9c\x85'
-OK_BUTTON='\xf0\x9f\x86\x97'
-#WARNING='\xe2\x9a\xa0'
-WARNING='\xe2\x9a\xa0\xef\xb8\x8f'
-DONT_ENTER='\xe2\x9b\x94'
+ARROW_EMOJI='\xe2\x96\xb6'
+ARROW_STOP_EMOJI='\xe2\x8f\xaf'
+REPEAT_EMOJI='\xe2\x8f\xad'
+CHECK_MARK_EMOJI='\xe2\x9c\x85'
+OK_MARK_EMOJI='\xe2\x9c\x85'
+OK_BUTTON_EMOJI='\xf0\x9f\x86\x97'
+WARNING_EMOJI='\xe2\x9a\xa0\xef\xb8\x8f'
+DONT_ENTER_EMOJI='\xe2\x9b\x94'
+DOLPHIN1_EMOJI="\xf0\x9f\x90\xb3"
+DOLPHIN2_EMOJI="\xf0\x9f\x94\x8b"
+BETTERY_EMOJI="\xf0\x9f\x90\xac"
+YELLOWBOOK_EMOJI="\xf0\x9f\x93\x92"
+
 #---------------------------------------
 
 
@@ -369,7 +373,7 @@ return 0
 show_docker_system_prune() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${DONT_ENTER}${LightRed} WARNING!\n"
+printf "${DONT_ENTER_EMOJI}${LightRed} WARNING!\n"
 printf "This is a destructive command. May need to restart the script...${NC}\n"
 docker system prune
 echo
@@ -466,7 +470,7 @@ display_stats_banner
 printf "\n"
 #display_all_containers
 echo
-printf "${DONT_ENTER} ${LightRed}WARNING! \n"
+printf "${DONT_ENTER_EMOJI} ${LightRed}WARNING! \n"
 printf "You are about to remove IP aliases. This will kill any container already binded to IP ${NC}\n"
 echo
 read -p "Are you sure you want to proceed? [y/N]? " answer
@@ -518,10 +522,10 @@ start_octet4=`echo $START_ALIAS | cut -d"." -f4 `
 end_octet4=`echo $END_ALIAS | cut -d"." -f4 `
 docker_mc_start_octet4=`expr $start_octet4 - 1`
 
-printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if last IP alias is configured on any NIC [$END_ALIAS]..."
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if last IP alias is configured on any NIC [$END_ALIAS]..."
 last_alias=`ifconfig | $GREP $END_ALIAS `
 if [ -n "$last_alias" ]; then
-	printf "${Green}${OK_MARK} OK\n"
+	printf "${Green}${OK_MARK_EMOJI} OK\n"
 else
 	printf "${Red}NOT FOUND!${NC}\n"
 fi
@@ -605,17 +609,17 @@ check_for_ubuntu_pkgs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 #----------
-printf "${Yellow}   ${ARROW}${NC} Checking [bc] package:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking [bc] package:${NC} "
 condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [bc]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install bc -y"
 else
-	printf "${Green}${CHECK_MARK} Installed${NC}\n"
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 fi
 #----------
 #----------
-printf "${Yellow}   ${ARROW}${NC} Checking [wget] package:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking [wget] package:${NC} "
 condition=$(which wget 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [wget]${NC}:"
@@ -623,11 +627,11 @@ if [ $condition -eq 0 ]; then
 	brew link --overwrite wget
 	#if brew link failed due to premission issue; run sudo chown -R `whoami` /usr/local
 else
-	printf "${Green}${CHECK_MARK} Installed${NC}\n"
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 fi
 #----------
 #----------
-printf "${Yellow}   ${ARROW}${NC} Checking optional [imgcat] package:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking optional [imgcat] package:${NC} "
 condition=$(which imgcat 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [imgcat]${NC}:"
@@ -635,28 +639,28 @@ if [ $condition -eq 0 ]; then
 	progress_bar_pkg_download "sudo curl -o /usr/local/bin/imgcat -O https://raw.githubusercontent.com/gnachman/iTerm2/master/tests/imgcat"
     sudo chmod +x /usr/local/bin/imgcat
 else
-	printf "${Green}${CHECK_MARK} Installed${NC}\n"
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 fi
 #----------
 #----------
-printf "${Yellow}   ${ARROW}${NC} Checking optional [timeout] package:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking optional [timeout] package:${NC} "
 condition=$(which timeout 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [timeout]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install timeout -y"
 else
-	printf "${Green}${CHECK_MARK} Installed${NC}\n"
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 	alias timeout="gtimeout"
 fi
 #----------
 #----------
-printf "${Yellow}   ${ARROW}${NC} Checking optional [graphviz] package:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking optional [graphviz] package:${NC} "
 condition=$(which dot 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [graphviz]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install graphviz -y"
 else
-	printf "${Green}${CHECK_MARK} Installed${NC}\n"
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 fi
 #----------
 
@@ -670,16 +674,16 @@ check_for_MACOS_pkgs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 #----------
-printf "${Yellow}   ${ARROW}${NC} Checking Xcode commandline tools:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking Xcode commandline tools:${NC} "
 cmd=$(xcode-select -p)
 if [ -n $cmd ]; then
-	printf "${Green}${CHECK_MARK} Installed\n${NC}"
+	printf "${Green}${CHECK_MARK_EMOJI} Installed\n${NC}"
 else
 	printf "${Yellow}Running [xcode-select --install]${NC}\n"
  	cmd=$(xcode-select --install)
 fi
 
-printf "${Yellow}   ${ARROW}${NC} Checking brew package management:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking brew package management:${NC} "
 condition=$(which brew 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [brew]${NC}:"
@@ -688,42 +692,42 @@ if [ $condition -eq 0 ]; then
 	sed -ie 's/c = getc/c = 13/g' install_brew.rb   #remove prompt in install.rb script
 	progress_bar_pkg_download "/usr/bin/ruby install_brew.rb"
 else
-	printf "${Green}${CHECK_MARK} Installed${NC}\n"
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 fi
 #----------
-printf "${Yellow}   ${ARROW}${NC} Checking bc package:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking bc package:${NC} "
 condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [bc]${NC}:"
 	progress_bar_pkg_download "brew install bc"
 else
-	printf "${Green}${CHECK_MARK} Installed${NC}\n"
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 fi
 #----------
 
-printf "${Yellow}   ${ARROW}${NC} Checking pcre package:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking pcre package:${NC} "
 cmd=$(brew ls pcre --versions)
 if [ -n "$cmd" ]; then
-	printf "${Green}${CHECK_MARK} Installed${NC}\n"
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 else
 	printf "${BrownOrange}Installing [pcre]${NC}:"
 	progress_bar_pkg_download "brew install pcre"
  #	brew install pcre
 fi
 #--------------
-printf "${Yellow}   ${ARROW}${NC} Checking wget package:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking wget package:${NC} "
 cmd=$(brew ls wget --versions)
 if [ -n "$cmd" ]; then
-	printf "${Green}${CHECK_MARK} Installed${NC}\n"
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 else
 	printf "${BrownOrange}Installing [wget]${NC}:"
 	progress_bar_pkg_download "brew install wget"
 fi
 #----------
-printf "${Yellow}   ${ARROW}${NC} Checking ggrep package:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking ggrep package:${NC} "
 cmd=$(brew ls grep --versions|cut -d" " -f2)
 if [ -n "$cmd" ]; then
-        printf "${Green}${CHECK_MARK} Installed${NC}\n"
+        printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 else
 	printf "${BrownOrange}Installing [ggrep]${NC}:"
 	brew tap homebrew/dupes > /dev/null 2>&1
@@ -734,10 +738,10 @@ fi
 #printf "${Yellow}Running [brew list]${NC}\n"
 # brew list --versions
 #----------
-printf "${Yellow}   ${ARROW}${NC} Checking optional [imagcat] package:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking optional [imagcat] package:${NC} "
 cmd=$(brew ls imgcat --versions)
 if [ -n "$cmd" ]; then
-	printf "${Green}${CHECK_MARK} Installed${NC}\n"
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 else
 	printf "${BrownOrange}Installing [imgcat]${NC}:"
 	progress_bar_pkg_download "brew tap eddieantonio/eddieantonio"
@@ -745,10 +749,10 @@ else
 fi
 #----------
 #----------
-printf "${Yellow}   ${ARROW}${NC} Checking optional [gtimeout] package:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking optional [gtimeout] package:${NC} "
 cmd=$(brew ls coreutils --versions)
 if [ -n "$cmd" ]; then
-	printf "${Green}${CHECK_MARK} Installed${NC}\n"
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 else
 	printf "${BrownOrange}Installing [coreutils]${NC}:"
 	progress_bar_pkg_download "brew install coreutils"
@@ -756,10 +760,10 @@ else
 fi
 #----------
 #----------
-printf "${Yellow}   ${ARROW}${NC} Checking optional [graphviz] package:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking optional [graphviz] package:${NC} "
 cmd=$(brew ls graphviz --versions)
 if [ -n "$cmd" ]; then
-	printf "${Green}${CHECK_MARK} Installed${NC}\n"
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 else
 	printf "${BrownOrange}Installing [graphviz]${NC}:"
 	progress_bar_pkg_download "brew install graphviz"
@@ -791,18 +795,18 @@ mkdir -p $SPLUNK_DATASETS_DIR
 
 #----------Gnu grep installed? MacOS only-------------
 if [ "$os" == "Darwin" ]; then
-	printf "${Blue}   ${ARROW}${ARROW}${NC} Checking for required MacOS packages...\n"
+	printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking for required MacOS packages...\n"
 	check_for_MACOS_pkgs
 fi
 if [ "$os" == "Linux" ]; then
-	printf "${Blue}   ${ARROW}${ARROW}${NC} Checking for required Ubuntu Linux packages...\n"
+	printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking for required Ubuntu Linux packages...\n"
 	check_for_ubuntu_pkgs
 fi
 
 #----------Gnu grep installed? MacOS only-------------
 
 #-----------check for another copy of script running?---------
-printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if we have instances of this script running...${NC}"
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if we have instances of this script running...${NC}"
 this_script_name="${0##*/}"
 pid_list=`ps -efa | grep $this_script_name | grep "/bin/bash" |grep -v $$ |awk '{printf $2" " }'`
 #echo "running:  ps -efa | grep splunknbox.sh | grep \"/bin/bash\" |grep -v \$\$ |awk '{printf \$2\" \" }"
@@ -817,12 +821,12 @@ if [ -n "$pid_list" ]; then
         fi
 	printf "\n"
 else
-        printf "${Green}${OK_MARK} OK${NC}\n"
+        printf "${Green}${OK_MARK_EMOJI} OK${NC}\n"
 fi
 #-----------other scripts running?---------
 
 #-----------docker daemon running check----
-printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if docker daemon is running "
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if docker daemon is running "
 
 is_running=`docker info|grep Images 2>/dev/null `
 if [ -z "$is_running" ] && [ "$os" == "Darwin" ]; then
@@ -840,9 +844,10 @@ if [ -n "$is_running" ]; then
         dockerinfo_mem=`echo "$dockerinfo_mem1 / 1" | bc `
         #echo "DOCKER: ver:[$dockerinfo_ver]  cpu:[$dockerinfo_cpu]  totmem:[$dockerinfo_mem] ";exit
 	printf "[ver:$dockerinfo_ver]..."
+	#must use actuall escape code for emoji in awk
 	awk -v n1=$dockerinfo_ver -v n2=$DOCKER_MIN_VER \
 	'BEGIN {if (n1<n2) printf ("\033[0;33mWarning! Recommending %s+\n", n2); else printf ("\033[0;32m\xe2\x9c\x85 OK!\n");}'
-      	#printf "${Green}${OK_MARK} OK${NC}\n"
+      	#printf "${Green}${OK_MARK_EMOJI} OK${NC}\n"
 fi
 #-----------docker daemon running check----
 
@@ -887,43 +892,43 @@ fi
 #-----------Gathering OS memory/cpu info---
 
 #-----------OS memory check-------------------
-printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if we have enough free OS memory [Free:%sgb Total:%sgb  ${LightBlue}%s%%${NC}] " $os_free_mem $os_total_mem $os_free_mem_perct
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if we have enough free OS memory [Free:%sgb Total:%sgb  ${LightBlue}%s%%${NC}] " $os_free_mem $os_total_mem $os_free_mem_perct
 #state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparison
 #WARN if free mem is 20% or less of total mem
 if [ "$os_free_mem_perct" -le "20" ]; then
-	printf "${BrownOrange}${WARNING} (May not be a problem)${NC}\n"
+	printf "${BrownOrange}${WARNING_EMOJI} (May not be a problem)${NC}\n"
 	printf "    ${Red}>>${NC} Recommended %sGB+ of free memory for large builds\n" $LOW_MEM_THRESHOLD
 	printf "    ${Red}>>${NC} Modern OSs do not always report unused memory as free\n\n" $os_free_mem $LOW_MEM_THRESHOLD
 	#printf "${White}    7-Change docker default settings! Docker-icon->Preferences->General->pick max CPU/MEM available${NC}\n\n"
 else
-	printf "${Green}${OK_MARK} OK${NC}\n"
+	printf "${Green}${OK_MARK_EMOJI} OK${NC}\n"
 fi
 #-----------OS memory check-------------------
 
 #-----------docker preferences/config check-------
-printf "${Blue}   ${ARROW}${ARROW}${NC} Checking Docker configs for CPUs allocation [Docker:%sgb  OS:%sgb]..." $dockerinfo_cpu $cores
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking Docker configs for CPUs allocation [Docker:%sgb  OS:%sgb]..." $dockerinfo_cpu $cores
 #state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparison
 if [ "$dockerinfo_cpu" -lt "$cores" ]; then
-	printf "${BrownOrange} ${WARNING}${NC}\n"
+	printf "${BrownOrange} ${WARNING_EMOJI}${NC}\n"
 	printf "    ${Red}>>${NC} Docker is configured to use %s of the available system %s CPUs\n" $dockerinfo_cpu $cores
 	printf "    ${Red}>>${NC} Please allocate all available system CPUs to Docker (Preferences->Advance)\n\n"
 else
-        printf " ${Green}${OK_MARK} OK${NC}\n"
+        printf " ${Green}${OK_MARK_EMOJI} OK${NC}\n"
 fi
 docker_total_mem_perct=`echo "($dockerinfo_mem * 100) / $os_total_mem"| bc`
-printf "${Blue}   ${ARROW}${ARROW}${NC} Checking Docker configs for MEMORY allocation [Docker:%sgb OS:%sgb  ${LightBlue}%s%%${NC}]..." $dockerinfo_mem $os_total_mem $docker_total_mem_perct
-#WARN if ration docker_configred_mem/os_total-mem < 80%
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking Docker configs for MEMORY allocation [Docker:%sgb OS:%sgb  ${LightBlue}%s%%${NC}]..." $dockerinfo_mem $os_total_mem $docker_total_mem_perct
+#WARN if ratio docker_configred_mem/os_total-mem < 80%
 if [ "$docker_total_mem_perct" -lt "80" ]; then
-	printf "${BrownOrange} ${WARNING}${NC}\n" $dockerinfo_mem $os_total_mem
+	printf "${BrownOrange}${WARNING_EMOJI} WARNING${NC}\n" $dockerinfo_mem $os_total_mem
        	printf "    ${Red}>>${NC} Docker is configured to use %sgb of the available system %sgb memory\n" $dockerinfo_mem $os_total_mem
        	printf "    ${Red}>>${NC} Please allocate all available system memory to Docker (Preferences->Advance)\n\n"
 else
-        printf " ${Green}${OK_MARK} OK${NC}\n"
+        printf " ${Green}${OK_MARK_EMOJI} OK${NC}\n"
 fi
 #-----------docker preferences check-------
 
 #-----------splunk image check-------------
-printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if Splunk image is available [$DEFAULT_SPLUNK_IMAGE]..."
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if Splunk image is available [$DEFAULT_SPLUNK_IMAGE]..."
 image_ok=`docker images|grep "$DEFAULT_SPLUNK_IMAGE"`
 if [ -z "$image_ok" ]; then
 	printf "${Red}NOT FOUND!${NC}\n"
@@ -938,29 +943,29 @@ if [ -z "$image_ok" ]; then
 		read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
         fi
 else
-        printf "${Green}${OK_MARK} OK${NC}\n"
+        printf "${Green}${OK_MARK_EMOJI} OK${NC}\n"
 fi
 #-----------splunk image check-------------
 
 #-----------splunk-net check---------------
-printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if docker network is created [$SPLUNKNET]..."
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if docker network is created [$SPLUNKNET]..."
 net=`docker network ls | grep $SPLUNKNET `
 if [ -z "$net" ]; then
 	printf "${Green} Creating...${NC}\n"
         docker network create -o --iptables=true -o --ip-masq -o --ip-forward=true $SPLUNKNET
 else
-       printf "${Green}${OK_MARK} OK${NC}\n"
+       printf "${Green}${OK_MARK_EMOJI} OK${NC}\n"
 fi
 #-----------splunk-net check---------------
 
 #-----------license files/dir check--------
-printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if we have license files *.lic in [$SPLUNK_LIC_DIR]..."
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if we have license files *.lic in [$SPLUNK_LIC_DIR]..."
 if [ ! -d $SPLUNK_LIC_DIR ]; then
     		printf "${Red} DIR DOESN'T EXIST!${NC}\n"
 		printf "    ${Red}>>${NC} Please create $SPLUNK_LIC_DIR and place all *.lic files there.\n"
 		printf "    ${Red}>>${NC} Change the location of LICENSE dir in the config section of the script.${NC}\n\n"
 elif  ls $SPLUNK_LIC_DIR/*.lic 1> /dev/null 2>&1 ; then
-       		printf "${Green}${OK_MARK} OK${NC}\n"
+       		printf "${Green}${OK_MARK_EMOJI} OK${NC}\n"
 	else
         	printf "${Red}NO LIC FILE(S) FOUND!${NC}\n"
 		printf "    ${Red}>>${NC} If *.lic exist, make sure they are readable.${NC}\n\n"
@@ -969,7 +974,7 @@ fi
 
 #-----------local splunkd check------------
 #Little tricky, local splunkd process running on docker-host is different than splunkd inside a container!
-printf "${Blue}   ${ARROW}${ARROW}${NC} Checking if non-docker splunkd process is running [$LOCAL_SPLUNKD]..."
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if non-docker splunkd process is running [$LOCAL_SPLUNKD]..."
 PID=`ps aux | $GREP 'splunkd' | $GREP 'start' | head -1 | awk '{print $2}' `  	#works on OSX & Linux
 
 if [ "$os" == "Darwin" ] && [ -n "$PID" ]; then
@@ -987,15 +992,15 @@ if [ -n "$splunk_is_running" ]; then
 		printf "    ${LightRed}>>${NC} Running local splunkd may prevent containers from binding to interfaces!${NC}\n\n"
 	fi
 else
-	printf "${Green}${OK_MARK} OK${NC}\n"
+	printf "${Green}${OK_MARK_EMOJI} OK${NC}\n"
 fi
 #-----------local splunkd check------------
 
 #-----------discovering DNS setting for OSX. Used for container build--
-printf "${Blue}   ${ARROW}${ARROW}${NC} Checking for dns server configuration "
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking for dns server configuration "
 if [ "$os" == "Darwin" ]; then
         DNSSERVER=`scutil --dns|grep nameserver|awk '{print $3}'|sort -u|tail -1`
-	printf "[$DNSSERVER]...${Green}${OK_MARK} OK${NC}\n"
+	printf "[$DNSSERVER]...${Green}${OK_MARK_EMOJI} OK${NC}\n"
 else
 	printf "\n"
 fi
@@ -1165,10 +1170,10 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #$1=seconds
 
 for c in $(seq 1 $1); do
-	echo -ne "${LightGray}	${Yellow}${ARROW}${NC}Pausing $1 seconds... ${Yellow}$c\r"  >&3
+	echo -ne "${LightGray}	${Yellow}${ARROW_EMOJI}${NC}Pausing $1 seconds... ${Yellow}$c\r"  >&3
 	sleep 1
 done
-printf "${LightGray}	${Yellow}${ARROW}${NC}Pausing $1 seconds... ${Green}Done!${NC}\n"  >&3
+printf "${LightGray}	${Yellow}${ARROW_EMOJI}${NC}Pausing $1 seconds... ${Green}Done!${NC}\n"  >&3
 
 return 0
 }	#end pausing()
@@ -1191,7 +1196,7 @@ size=${#outputmsg}
 #printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} vars outputmsg:[$outputmsg] OKmsg:[$OKmsg]${NC}\n"  >&5
 #echo "result[$1]"
         if ( compare "$outputmsg" "$OKmsg" ) || [ "$size" == 64 ] || [ "$size" == 0 ] ; then
-                printf "${Green}${OK_MARK} OK ${NC}\n"  >&$logging
+                printf "${Green}${OK_MARK_EMOJI} OK ${NC}\n"  >&$logging
         else
                # printf "\n${DarkGray}[%s] ${NC}" "$1"
                 printf "${Red}[%s] ${NC}\n" "$1" >&$logging
@@ -1231,11 +1236,11 @@ fi #demo/workshop containers takes little longer to start
 #splunkstate=`docker exec -ti $fullhostname /opt/splunk/bin/splunk status| $GREP -i "not running" `
 splunkstate=`docker exec -ti $fullhostname sh -c "ps xa|$GREP '[s]plunkd -p'" `
 #echo "splunkstate[$splunkstate]"
-echo -ne "	${Yellow}${ARROW}${NC}Verifying that splunkd is running...\r" >&3
+echo -ne "	${Yellow}${ARROW_EMOJI}${NC}Verifying that splunkd is running...\r" >&3
 if [ -n "$splunkstate" ]; then
-        echo -ne  "	${Yellow}${ARROW}${NC}Verifying that splunkd is running...${Green}${OK_MARK} OK${NC}                           \n" >&3
+        echo -ne  "	${Yellow}${ARROW_EMOJI}${NC}Verifying that splunkd is running...${Green}${OK_MARK_EMOJI} OK${NC}                           \n" >&3
 else
-        	echo -ne "${NC}	${Yellow}${ARROW}${NC}Verifying that splunkd is running..${Red}Not running! Attempt ${Yellow}$i${Red} to restart\r${NC}" >&3
+        	echo -ne "${NC}	${Yellow}${ARROW_EMOJI}${NC}Verifying that splunkd is running..${Red}Not running! Attempt ${Yellow}$i${Red} to restart\r${NC}" >&3
         	sleep 30        #pause between attempts to restart
         	CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk start "
         	#echo "cmd[$CMD]"
@@ -1245,17 +1250,17 @@ else
         	#pausing "30"
 			splunkstate=`docker exec -ti $fullhostname sh -c "ps xa|$GREP '[s]plunkd -p'" `
 			if [ -z "$splunkstat" ]; then
-        		echo -ne  "	${Yellow}${ARROW}${NC}Verifying that splunkd is running...${Green}${OK_MARK} OK${NC}                           \n" >&3
+        		echo -ne  "	${Yellow}${ARROW_EMOJI}${NC}Verifying that splunkd is running...${Green}${OK_MARK_EMOJI} OK${NC}                           \n" >&3
 				return
 
 			fi
 fi
 
 #if [ -z "$splunkstate" ]; then
-# printf "${Green}${OK_MARK} OK${NC}\n" >&3
- #       echo -ne  "	${Yellow}${ARROW}${NC}Verifying that splunkd is running...${Green}${OK_MARK} OK${NC}                           \n" >&3
+# printf "${Green}${OK_MARK_EMOJI} OK${NC}\n" >&3
+ #       echo -ne  "	${Yellow}${ARROW_EMOJI}${NC}Verifying that splunkd is running...${Green}${OK_MARK_EMOJI} OK${NC}                           \n" >&3
 #else
- #       echo -ne  "	${Yellow}${ARROW}${NC}Verifying that splunkd is running...${Red}NOT${OK_MARK} OK${NC}                          \n" >&3
+ #       echo -ne  "	${Yellow}${ARROW_EMOJI}${NC}Verifying that splunkd is running...${Red}NOT${OK_MARK_EMOJI} OK${NC}                          \n" >&3
 #fi
 
 return 0
@@ -1305,7 +1310,7 @@ done
 #display_all_images "DEMO"
 count=0
 echo
-printf "${BrownOrange}${WARNING} Subsequent container builds (except DEMO images) will use the new splunk image!${NC}\n"
+printf "${BrownOrange}${WARNING_EMOJI} Subsequent container builds (except DEMO images) will use the new splunk image!${NC}\n"
 printf "Current default image is [$DEFAULT_SPLUNK_IMAGE]\n"; echo
 read -p "Select number: " choice
 if [ -n "$choice" ]; then
@@ -1346,12 +1351,12 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 check_load
 CMD="docker cp $SPLUNK_LIC_DIR  $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
-printf "	${Yellow}${ARROW}${NC}Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "" "3"
+printf "	${Yellow}${ARROW_EMOJI}${NC}Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$1"
 
 if ( compare "$1" "LM" ); then
-	printf "	${Yellow}${ARROW}${NC}*LM* host! Forcing immediate splunkd restart.Please wait " >&3
+	printf "	${Yellow}${ARROW_EMOJI}${NC}*LM* host! Forcing immediate splunkd restart.Please wait " >&3
 	docker exec -u splunk -ti $1  /opt/splunk/bin/splunk restart > /dev/null >&1
 	printf "${Green} Done! ${NC}\n" >&3
 fi
@@ -1374,7 +1379,7 @@ logline "$CMD" "$fullhostname"
 printf "${Purple}$fullhostname${NC}: > $CMD\n"  >&4
 
 if ( compare "$CMD" "failed" ); then
-   echo "	${Yellow}${ARROW}${NC}Trying default password "
+   echo "	${Yellow}${ARROW_EMOJI}${NC}Trying default password "
    CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk edit user admin -password changeme -roles admin -auth $USERADMIN:$USERPASS"
    printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4 ; OUT=`$CMD`
    logline "$CMD" "$fullhostname"
@@ -1452,13 +1457,13 @@ fullhostname=$1
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 if [ "$2" == "b" ]; then
-	printf "	${Yellow}${ARROW}${NC}Restarting splunkd in the ${White}background${NC} " >&3
+	printf "	${Yellow}${ARROW_EMOJI}${NC}Restarting splunkd in the ${White}background${NC} " >&3
         CMD="docker exec -u splunk -d $fullhostname /opt/splunk/bin/splunk restart "
         OUT=`$CMD`; display_output "$OUT" "The Splunk web interface is at" "3"
    	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$fullhostname"
 else
-	printf "	${Yellow}${ARROW}${NC}Restarting splunkd. Please wait! " >&3
+	printf "	${Yellow}${ARROW_EMOJI}${NC}Restarting splunkd. Please wait! " >&3
 	CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk restart "
         OUT=`$CMD`; display_output "$OUT" "The Splunk web interface is at" "3"
    	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
@@ -1485,7 +1490,7 @@ if [ -n "$lm" ]; then
   	if [ -n "$lm_ip" ]; then
         	CMD="docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk edit licenser-localslave -master_uri https://$lm_ip:$MGMT_PORT -auth $USERADMIN:$USERPASS"
 		OUT=`$CMD`
-        	printf "	${Yellow}${ARROW}${NC}Making [$hostname] license-slave using LM:[$lm] " >&3 ; display_output "$OUT" "has been edited" "3"
+        	printf "	${Yellow}${ARROW_EMOJI}${NC}Making [$hostname] license-slave using LM:[$lm] " >&3 ; display_output "$OUT" "has been edited" "3"
 		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$hostname"
         	fi
@@ -1765,7 +1770,7 @@ if [ -n "$dmc" ]; then
 	CMD="docker exec -u splunk -ti $dmc /opt/splunk/bin/splunk add search-server -host $bind_ip_host:$MGMT_PORT -auth $USERADMIN:$USERPASS -remoteUsername $USERADMIN -remotePassword $USERPASS"
         OUT=`$CMD`
         OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
-        printf "	${Yellow}${ARROW}${NC}Adding [$host] to DMC:[$dmc] " >&3 ; display_output "$OUT" "Peer added" "3"
+        printf "	${Yellow}${ARROW_EMOJI}${NC}Adding [$host] to DMC:[$dmc] " >&3 ; display_output "$OUT" "Peer added" "3"
         printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$dmc"
 fi
@@ -1788,7 +1793,7 @@ custom_web_conf="[settings]\nenableSplunkWebSSL=0\n"
 printf "$custom_web_conf" > $PROJ_DIR/web.conf.demo
 CMD="docker cp $PROJ_DIR/web.conf.demo $fullhostname:/opt/splunk/etc/system/local/web.conf" ; OUT=`$CMD`
 printf "${DarkGray}CMD:[$CMD]${NC}>>[$OUT]\n" >&4
-printf "	${Yellow}${ARROW}${NC}Configuring demo to be viewed on http://$fullhostname:$SPLUNKWEB_PORT_EXT ${Green} Done!${NC}\n" >&3
+printf "	${Yellow}${ARROW_EMOJI}${NC}Configuring demo to be viewed on http://$fullhostname:$SPLUNKWEB_PORT_EXT ${Green} Done!${NC}\n" >&3
 
 #if ( compare "$fullhostname" "DEMO-ES" ) || ( compare "$fullhostname" "DEMO-ITSI" ) ;then
 #	USERPASS="changeme"
@@ -2042,11 +2047,11 @@ else
 fi
 
 #-----check if container is running--------
-printf "	${Yellow}${ARROW}${NC}Verifying that container is running..." >&3
+printf "	${Yellow}${ARROW_EMOJI}${NC}Verifying that container is running..." >&3
 if ! ( is_container_running "$fullhostname" ); then
 	printf "${Red}NOT RUNNING!${NC}\n" >&3
 else
-	printf "${Green}${OK_MARK} OK${NC}\n" >&3
+	printf "${Green}${OK_MARK_EMOJI} OK${NC}\n" >&3
 fi
 
 #-----check if splunkd is running--------
@@ -2060,19 +2065,19 @@ else
 fi
 
 #custom_login_screen() will not change pass for DEMO-ES* or DEMO-VMWARE*
-printf "	${Yellow}${ARROW}${NC}Splunk initialization (password, licenses, custom screen, http)..." >&3
+printf "	${Yellow}${ARROW_EMOJI}${NC}Splunk initialization (password, licenses, custom screen, http)..." >&3
 custom_login_screen "$vip" "$fullhostname"
 
 #Misc OS stuff
 if [ -f "$PWD/containers.bashrc" ]; then
-	printf "	${Yellow}${ARROW}${NC}Copying $PWD/containers.bashrc to $fullhostname:/root/.bashrc\n" >&4
+	printf "	${Yellow}${ARROW_EMOJI}${NC}Copying $PWD/containers.bashrc to $fullhostname:/root/.bashrc\n" >&4
        	CMD=`docker cp $PWD/containers.bashrc $fullhostname:/root/.bashrc`
 fi
 if [ -f "$PWD/containers.vimrc" ]; then
-	printf "	${Yellow}${ARROW}${NC}Copying $PWD/containers.vimrc to $fullhostname:/root/.vimrc\n" >&4
+	printf "	${Yellow}${ARROW_EMOJI}${NC}Copying $PWD/containers.vimrc to $fullhostname:/root/.vimrc\n" >&4
        	CMD=`docker cp $PWD/containers.vimrc $fullhostname:/root/.vimrc`
 fi
-#printf "	${Yellow}${ARROW}${NC}Building graphviz dot file ...\n" >&4
+#printf "	${Yellow}${ARROW_EMOJI}${NC}Building graphviz dot file ...\n" >&4
 #build_dot_file
 ##clear
 #dot -Gnewrank -Tpng  file.dot -o test.png
@@ -2083,7 +2088,7 @@ fi
 #DNS stuff to be used with dnsmasq. Need to revisit for OSX  9/29/16
 #Enable for Linux at this point
 #if [ "$os" == "Linux" ]; then
-#	printf "	${Yellow}${ARROW}${NC}Updating dnsmasq records[$vip  $fullhostname]..." >&3
+#	printf "	${Yellow}${ARROW_EMOJI}${NC}Updating dnsmasq records[$vip  $fullhostname]..." >&3
 #	if [ ! -f $HOSTSFILE ]; then
 #		touch $HOSTSFILE
 #	fi
@@ -2091,7 +2096,7 @@ fi
 #        	printf "\t${Red}[$fullhostname] is already in the hosts file. Removing...${NC}\n" >&4
 #        	cat $HOSTSFILE | $GREP -v $vip | sort > tmp && mv tmp $HOSTSFILE
 #	fi
-#	printf "${Green}${OK_MARK} OK${NC}\n" >&3
+#	printf "${Green}${OK_MARK_EMOJI} OK${NC}\n" >&3
 #	printf "$vip\t$fullhostname\n" >> $HOSTSFILE
 #	sudo killall -HUP dnsmasq	#must refresh to read $HOSTFILE file
 #fi
@@ -2153,7 +2158,7 @@ if [ -n "$choice" ]; then
         	create_splunk_container "$image_name" "$number"
         done
 else
-	printf "${DONT_ENTER}${LightRed} WARNING! \n"
+	printf "${DONT_ENTER_EMOJI}${LightRed} WARNING! \n"
 	printf "This operation will stress your system. Make sure you have enough resources...${NC}\n"
         read -p "Are you sure? [y/N]? " answer
         printf "         **PLEASE WATCH THE LOAD AVERAGE CLOSELY**\n\n"
@@ -2242,11 +2247,11 @@ else
 fi
 
 #-----check if container is running--------
-printf "	${Yellow}${ARROW}${NC}Verifying that container is running..." >&3
+printf "	${Yellow}${ARROW_EMOJI}${NC}Verifying that container is running..." >&3
 if ! ( is_container_running "$fullhostname" ); then
 	printf "${Red}NOT RUNNING!${NC}\n" >&3
 else
-	printf "${Green}${OK_MARK} OK${NC}\n" >&3
+	printf "${Green}${OK_MARK_EMOJI} OK${NC}\n" >&3
 fi
 
 return 0
@@ -2301,7 +2306,7 @@ if [ -n "$choice" ]; then
                 construct_3rdp_container_from_image "$image_name" "1"
         done
 else
-		printf "${DONT_ENTER}${LightRed} WARNING! \n"
+		printf "${DONT_ENTER_EMOJI}${LightRed} WARNING! \n"
         printf "This operation will stress your system. Make sure you have enough resources...${NC}\n"
         read -p "Are you sure? [y/N]? " answer
         printf "    **PLEASE WATCH THE LOAD AVERAGE CLOSELY**\n\n"
@@ -2393,7 +2398,6 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 docker_status() {
-
 dockerinfo=`docker info|head -5|sed -e 's/^M//g'|tr -d '\r'|awk '{printf  "\033[1;1;5;46m" $1 "\033[1;31m" $2 "\033[1;1;5;46m " "\033[0m"}'`
 dockerinfo_str="${LightRed}[$dockerinfo]    "
 dockerinfo_str="      ${YELLOW}[${NC}$dockerinfo${BoldWhiteOnTurquoise}${Yellow}]${NC}\n"
@@ -2886,14 +2890,14 @@ for hostname in `echo $host_names` ; do
 	printf "[${Purple}$hostname${NC}]${LightBlue} Configuring host apps ... ${NC}\n"
 	#install all apps on hostname ---------
 	for app in $LL_APPS; do
-		printf "	${Yellow}${ARROW}${NC}Installing $app app "
+		printf "	${Yellow}${ARROW_EMOJI}${NC}Installing $app app "
 		CMD="docker cp $SPLUNK_APPS_DIR/$app $hostname:/tmp"; OUT=`$CMD`
 		CMD="docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk install app /tmp/$app -auth $USERADMIN:$USERPASS"
 		printf "\n${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		OUT=`$CMD`;# installed=$(display_output "$OUT" "installed" "2")
 		reboot="N"
 		if ( compare "$OUT" "already" ); then
-			printf "${Red}${CHECK_MARK} Installed\n${NC}"
+			printf "${Red}${CHECK_MARK_EMOJI} Installed\n${NC}"
 			reboot="N"
 		else
 			printf "${Green}Done!\n${NC}"
@@ -2926,14 +2930,14 @@ echo
 for hostname in `echo $host_names` ; do
 	printf "[${Purple}$hostname${NC}]${LightBlue} Configuring host datasets... ${NC}\n"
 	#install all datasets on hostname -------
-	printf "	${Yellow}${ARROW}${NC}Indexing tutorial data [tutorialdata.zip] "
+	printf "	${Yellow}${ARROW_EMOJI}${NC}Indexing tutorial data [tutorialdata.zip] "
 	CMD="docker cp $SPLUNK_DATASETS_DIR/tutorialdata.zip $hostname:/tmp"; OUT=`$CMD`
 	CMD="docker exec -u splunk -ti $hostname /opt/splunk/bin/splunk add oneshot /tmp/tutorialdata.zip -auth $USERADMIN:$USERPASS"
 	printf "\n${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	OUT=`$CMD`; display_output "$OUT" "added" "3"
 	logline "$CMD" "$hostname"
 
-	printf "	${Yellow}${ARROW}${NC}Configuring lookup table [http_status.csv] "
+	printf "	${Yellow}${ARROW_EMOJI}${NC}Configuring lookup table [http_status.csv] "
 	CMD="docker cp $SPLUNK_DATASETS_DIR/http_status.csv $hostname:/opt/splunk/etc/apps/search/lookups"; OUT=`$CMD`
 	printf "[http_status]\nfilename = http_status.csv\n" > transforms.conf.tmp
 	CMD="docker cp transforms.conf.tmp $hostname:/tmp/transforms.conf"; OUT=`$CMD`
@@ -3092,7 +3096,7 @@ printf "%b" "$txt" > $TMP_DIR/server.conf.tmp
 CMD="docker cp $TMP_DIR/server.conf.tmp $dep:/tmp/server.conf"; OUT=`$CMD`
 CMD=`docker exec -u splunk -ti $dep  bash -c "cat /tmp/server.conf >> /opt/splunk/etc/system/local/server.conf" `; #OUT=`$CMD`
 
-printf "	${Yellow}${ARROW}${NC}Adding stanza [shclustering] to server.conf!" >&3 ; display_output "$OUT" "" "3"
+printf "	${Yellow}${ARROW_EMOJI}${NC}Adding stanza [shclustering] to server.conf!" >&3 ; display_output "$OUT" "" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$dep"
 
@@ -3111,7 +3115,7 @@ for i in $members_list ; do
 	CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk init shcluster-config -auth $USERADMIN:$USERPASS -mgmt_uri https://$bind_ip_sh:$MGMT_PORT -replication_port $REPL_PORT -replication_factor $RFACTOR -register_replication_address $bind_ip_sh -conf_deploy_fetch_url https://$bind_ip_dep:$MGMT_PORT -secret $MYSECRET -shcluster_label $label"
 	OUT=`$CMD`
 	OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
-	printf "	${Yellow}${ARROW}${NC}Initiating shcluster-config " >&3 ; display_output "$OUT" "clustering has been initialized" "3"
+	printf "	${Yellow}${ARROW_EMOJI}${NC}Initiating shcluster-config " >&3 ; display_output "$OUT" "clustering has been initialized" "3"
 	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$i"
 	#-------
@@ -3123,7 +3127,7 @@ for i in $members_list ; do
 		cm_ip=`docker port  $cm| awk '{print $3}'| cut -d":" -f1|head -1`
     	CMD="docker exec -u splunk  -ti $i /opt/splunk/bin/splunk edit cluster-config -mode searchhead -master_uri https://$cm_ip:$MGMT_PORT -secret $MYSECRET -auth $USERADMIN:$USERPASS"
 		OUT=`$CMD`
-		printf "	${Yellow}${ARROW}${NC}Integrating with Cluster Master (for idx auto discovery) [$cm] " >&3 ; display_output "$OUT" "property has been edited" "3"
+		printf "	${Yellow}${ARROW_EMOJI}${NC}Integrating with Cluster Master (for idx auto discovery) [$cm] " >&3 ; display_output "$OUT" "property has been edited" "3"
 		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$i"
         fi
@@ -3149,7 +3153,7 @@ restart_splunkd "$i"  #last SH (captain) may not be ready yet, so force restart 
 CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk bootstrap shcluster-captain -servers_list "$server_list" -auth $USERADMIN:$USERPASS"
 OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
-printf "	${Yellow}${ARROW}${NC}Captain bootstrapping (may take time) " >&3 ; display_output "$OUT" "Successfully"  "3"
+printf "	${Yellow}${ARROW_EMOJI}${NC}Captain bootstrapping (may take time) " >&3 ; display_output "$OUT" "Successfully"  "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$i"
 printf "${LightBlue}___________ Finished STEP#3 __________________________${NC}\n" >&3
@@ -3316,7 +3320,7 @@ CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk edit cluster-config  -
 OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
 printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$cm"
-printf "	${Yellow}${ARROW}${NC}Configuring CM [RF:$RFACTOR SF:$SFACTOR] and cluster label[$label] " >&3 ; display_output "$OUT" "property has been edited" "3"
+printf "	${Yellow}${ARROW_EMOJI}${NC}Configuring CM [RF:$RFACTOR SF:$SFACTOR] and cluster label[$label] " >&3 ; display_output "$OUT" "property has been edited" "3"
 #-------
 restart_splunkd "$cm"
 #assign_server_role "$i" ""
@@ -3334,14 +3338,14 @@ for i in $members_list ; do
 	OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 	printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 	logline "$CMD" "$i"
-	printf "	${Yellow}${ARROW}${NC}Make a cluster member " >&3 ; display_output "$OUT" "property has been edited" "3"
+	printf "	${Yellow}${ARROW_EMOJI}${NC}Make a cluster member " >&3 ; display_output "$OUT" "property has been edited" "3"
 	#-------
 	#-------tcp/9997--- disabled 2/15/17 Already in 6.5 image build
         #CMD="docker exec -u splunk  -ti $i /opt/splunk/bin/splunk enable listen $RECV_PORT -auth $USERADMIN:$USERPASS "
         #OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
         #printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
         #logline "$CMD" "$i"
-        #printf "	${Yellow}${ARROW}${NC}Enabling receiving port [$RECV_PORT] " >&3 ; display_output "$OUT" "Listening for" "3"
+        #printf "	${Yellow}${ARROW_EMOJI}${NC}Enabling receiving port [$RECV_PORT] " >&3 ; display_output "$OUT" "Listening for" "3"
         #-------
 
 	#We dont need to add IDXCs to DMC, just add their CM (which is already done)
@@ -3559,7 +3563,7 @@ OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$cm"
-printf "	${Yellow}${ARROW}${NC}Setting multi-site to true... " >&3 ; display_output "$OUT" "property has been edited" "3"
+printf "	${Yellow}${ARROW_EMOJI}${NC}Setting multi-site to true... " >&3 ; display_output "$OUT" "property has been edited" "3"
 
 restart_splunkd "$cm"
 is_splunkd_running "$cm"
@@ -3569,7 +3573,7 @@ OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$cm"
-printf "	${Yellow}${ARROW}${NC}Enabling maintenance-mode... " >&3 ; display_output "$OUT" "aintenance mode set" "3"
+printf "	${Yellow}${ARROW_EMOJI}${NC}Enabling maintenance-mode... " >&3 ; display_output "$OUT" "aintenance mode set" "3"
 
 printf "${Cyan}____________ Finished STEP#1 __________________________________________________${NC}\n" >&3
 
@@ -3588,7 +3592,7 @@ for str in $SITEnames; do
 
 		printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$i"
-		printf "	${Yellow}${ARROW}${NC}Configuring multi-site clustering for [site:$site location:$str] " >&3
+		printf "	${Yellow}${ARROW_EMOJI}${NC}Configuring multi-site clustering for [site:$site location:$str] " >&3
 		display_output "$OUT" "property has been edited" "3"
 		restart_splunkd "$i" "b"
 	done
@@ -3602,7 +3606,7 @@ for str in $SITEnames; do
         OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 		printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 		logline "$CMD" "$i"
-		printf "	${Yellow}${ARROW}${NC}Pointing to CM[$cm] for [site:$site location:$str]" >&3
+		printf "	${Yellow}${ARROW_EMOJI}${NC}Pointing to CM[$cm] for [site:$site location:$str]" >&3
 		display_output "$OUT" "property has been edited" "3"
 		restart_splunkd "$i" "b"
 	done
@@ -3618,7 +3622,7 @@ OUT=`$CMD`
 OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
 printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$cm"
-printf "	${Yellow}${ARROW}${NC}Disabling maintenance-mode..." >&3 ; display_output "$OUT" "No longer"  "3"
+printf "	${Yellow}${ARROW_EMOJI}${NC}Disabling maintenance-mode..." >&3 ; display_output "$OUT" "No longer"  "3"
 #restart_splunkd "$i"
 printf "${Cyan}____________ Finished STEP#4 __________________________________________________${NC}\n" >&3
 
@@ -3709,7 +3713,7 @@ fi
 if [ "$1" ]; then
 	printf "=>${White}OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg]${NC}\n"
 else
-	printf "${White}\xf0\x9f\x90\xb3 ${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}\xf0\x9f\x94\x8b ${NC}[FreeMem:${os_free_mem}GB Load:$loadavg] ${White}\xf0\x9f\x90\xac ${NC}[$DEFAULT_SPLUNK_IMAGE] ${White}\xf0\x9f\x93\x92 LogLevel:${NC}[$loglevel]${NC}\n"
+	printf "${White}${DOLPHIN1_EMOJI} ${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}${DOLPHIN2_EMOJI} ${NC}[FreeMem:${os_free_mem}GB Load:$loadavg] ${White}${BATTERY_EMOJI} ${NC}[$DEFAULT_SPLUNK_IMAGE] ${White}${YELLOWBOOK_EMOJI} LogLevel:${NC}[$loglevel]${NC}\n"
 fi
 
 return 0
@@ -3943,7 +3947,7 @@ if [ -n "$choice" ]; then
         done
        # docker stop $choice
 else
-		printf "${DONT_ENTER}${LightRed} WARNING! \n"
+		printf "${DONT_ENTER_EMOJI}${LightRed} WARNING! \n"
         printf "This operation may take a long time (~20 mins). Make sure you have enough disk-space...${NC}\n"
 	read -p "Are you sure? [Y/n]? " answer
 	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
@@ -4444,7 +4448,7 @@ clear
 printf "${BoldWhiteOnGreen}WIPE CLEAN ENTIRE SYSTEM MENU ${NC}\n"
 display_stats_banner
 printf "\n"
-printf "${DONT_ENTER}${LightRed} WARNING!${NC}\n"
+printf "${DONT_ENTER_EMOJI}${LightRed} WARNING!${NC}\n"
 printf "${LightRed}This option will remove IP aliases, delete all containers, delete all images and remove all volumes! ${NC}\n"
 printf "${LightRed}Use this option only if you want to return the system to a clean state! ${NC}\n"
 printf "${LightRed}Restarting the script will recreate every thing again! ${NC}\n"
