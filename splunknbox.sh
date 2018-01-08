@@ -2,8 +2,8 @@
 
 
 #################################################################################
-#	__VERSION: 4.4-243 $
-#	__DATE: Sat Jan 06,2018 - 11:23:03PM -0600 $
+#	__VERSION: 4.4-248 $
+#	__DATE: Sun Jan 07,2018 - 11:23:30PM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1076,9 +1076,9 @@ detect_ver() {
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 4.4-243 $" | \
+GIT_VER=`echo "__VERSION: 4.4-248 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Sat Jan 06,2018 - 11:23:03PM -0600 $" | \
+GIT_DATE=`echo "__DATE: Sun Jan 07,2018 - 11:23:30PM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
