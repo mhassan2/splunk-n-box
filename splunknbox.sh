@@ -2392,6 +2392,15 @@ read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
 return 0
 }	#end display_main_menu_help()
 #---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+docker_status() {
+
+dockerinfo=`docker info|head -5|sed -e 's/^M//g'|tr -d '\r'|awk '{printf  "\033[1;1;5;46m" $1 "\033[1;31m" $2 "\033[1;1;5;46m " "\033[0m"}'`
+dockerinfo_str="${LightRed}[$dockerinfo]    "
+dockerinfo_str="      ${YELLOW}[${NC}$dockerinfo${BoldWhiteOnTurquoise}${Yellow}]${NC}\n"
+printf "$dockerinfo_str"
+}
+#---------------------------------------------------------------------------------------------------------------
 
 #### DISPLAY MENU OPTIONS #####
 
@@ -2400,8 +2409,7 @@ display_main_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function displays user options for the main menu
 clear
-dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU     ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU "; docker_status
 display_stats_banner
 
 tput cup 5 25
@@ -2437,7 +2445,7 @@ display_splunk_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow} MAIN MENU  -> SPLUNK MENU        ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> SPLUNK MENU"; docker_status
 display_stats_banner
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
@@ -2466,7 +2474,7 @@ display_system_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> SYSTEM MENU          ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> SYSTEM MENU"; docker_status
 display_stats_banner
 printf "\n\n"
 
@@ -2486,7 +2494,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DEMOS MENU          ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DEMOs MENU"; docker_status
 display_stats_banner
 printf "\n"
 echo
@@ -2514,7 +2522,7 @@ return 0
 display_3rdparty_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> 3RD PARTY MENU      ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> 3RD PARTY MENU"; docker_status
 display_stats_banner
 printf "\n"
 echo
@@ -2542,7 +2550,7 @@ return 0
 display_clustering_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU       ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"; docker_status
 display_stats_banner
 printf "\n"
 echo
@@ -2568,7 +2576,7 @@ return 0
 display_ll_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> LUNCH & LEARN MENU       ${DarkGray}[$dockerinfo]${NC}\n"
+printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> LUNCH & LEARN MENU"; docker_status
 display_stats_banner
 printf "\n"
 echo
@@ -3702,7 +3710,7 @@ fi
 if [ "$1" ]; then
 	printf "=>${White}OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg]${NC}\n"
 else
-	printf "=>${White}DOCKER:${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg] ${White}Image:${NC}[$DEFAULT_SPLUNK_IMAGE] ${White}LogLevel:${NC}[$loglevel]${NC}\n"
+	printf "${White}\xf0\x9f\x90\xb3 DOCKER:${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}\xf0\x9f\x96\xa5 OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg] ${White}\xf0\x9f\x90\xac Image:${NC}[$DEFAULT_SPLUNK_IMAGE] ${White}\xf0\x9f\x93\x84 LogLevel:${NC}[$loglevel]${NC}\n"
 fi
 
 return 0
@@ -4521,6 +4529,16 @@ MESSAGE[10]="This script is licensed under Apache 2.0 All rights reserved Splunk
 x=$(( $LINES / 2 ))                             #centered in the screen
 num_of_msgs=${#MESSAGE[@]}
 z=0
+
+#-----show splunknbox logo only if imgcat is installed & and jpeg file exist -------
+#	Otherwise skip with no feedback -------------
+condition=$(which imgcat 2>/dev/null | grep -v "not found" | wc -l)
+if [ $condition != "0" ] && [ -e img/splunknbox_large.jpeg ]; then
+	col=$(( ( $COLUMNS - 30 )  / 2 )); row=$(($x - 10)); tput cup $row $col
+	imgcat img/splunknbox_large.jpeg
+fi
+#----------------------------------------------------------------------
+
 for (( i=x; i <= (x + $num_of_msgs); i++)); do
         let z++
 		msg_len=${#MESSAGE[$z]}
