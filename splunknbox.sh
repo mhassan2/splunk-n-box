@@ -3480,8 +3480,8 @@ s=""; sites_str=""     			#used with "splunk edit cluster-config" on CM
 SITEnames=""
 clear
 printf "Note:"
-printf "-One DEP server per SHC will be automatically created.\n"
-printf "-One CM server will be automatically created for the entire site-2-site cluster.\n"
+printf " -One DEP server per SHC will be automatically created.\n"
+printf " -One CM server will be automatically created for the entire site-2-site cluster.\n"
 
 if [ "$mode" == "AUTO" ]; then
 	count=3;
