@@ -4565,7 +4565,7 @@ if [ "$new" == "Y" ] && [ -n "$GIT_VER" ] && [ -n "$online_ver" ]; then
 	tput cup $LINES 0
 	printf "Checking for new version... [found $colored_online_ver${NC}]\n"
 	printf "\033[0m"
-	read -p $"Newer version avialable. Upgrade? [Y/n]? " answer
+	read -p $"Newer version available. Upgrade? [Y/n]? " answer
 	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		tput cup $LINES 0
 		printf "Downloading [$PWD/${0##*/}] >> ${NC}"
