@@ -3710,7 +3710,7 @@ fi
 if [ "$1" ]; then
 	printf "=>${White}OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg]${NC}\n"
 else
-	printf "${White}\xf0\x9f\x90\xb3 DOCKER:${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}\xf0\x9f\x96\xa5 OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg] ${White}\xf0\x9f\x90\xac Image:${NC}[$DEFAULT_SPLUNK_IMAGE] ${White}\xf0\x9f\x93\x84 LogLevel:${NC}[$loglevel]${NC}\n"
+	printf "${White}\xf0\x9f\x90\xb3 ${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}\xf0\x9f\x94\x8b ${NC}[FreeMem:${os_free_mem}GB Load:$loadavg] ${White}\xf0\x9f\x90\xac ${NC}[$DEFAULT_SPLUNK_IMAGE] ${White}\xf0\x9f\x93\x92 LogLevel:${NC}[$loglevel]${NC}\n"
 fi
 
 return 0
