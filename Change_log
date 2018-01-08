@@ -237,6 +237,8 @@ v4.4 12/27/2017
 -Splunk app & datasets are now cached/dloaded in the new locations
 -added bunch of emoji icons to startup checks
 -cleaned up code around docker_status
+-better detection of available OSX memory during starup checks
+-better threasholding around OSX CPU
 
 
 
