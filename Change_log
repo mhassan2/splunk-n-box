@@ -228,14 +228,14 @@ v4.4 12/27/2017
 -version stamp applies to README.md and *.sh
 -version stamp will updates VERSION.TXT
 -added colored version numbers
--fixed some text alignment issue in the Welcome screen
 -Added version detection to startup_check. We need ggrep very early(OSX)
+-fixed some text alignment issue in the Welcome screen
 -Welcome screen now shows after the startup_checks (ver detection uses ggrep/OSX)
+-added splunknbox logo to welcome screen. Error checks used to skip if conditions are not ok
+-added logic to prevent checking for upgrade if cannot extract GIT_VER or no Internet connectivity
 -disabled MONITOR container build for now. Will revist later
 -Splunk app & datasets are now cached/dloaded in the new locations
 -added bunch of emoji icons to startup checks
--added logic to prevent checking for upgrade if cannot extract GIT_VER or no Internet connectivity
--added splunknbox log to welcome screen. Error checks used to skip if conditions are not ok
 -cleaned up code around docker_status
 
 
