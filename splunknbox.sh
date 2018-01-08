@@ -779,7 +779,7 @@ return 0
 startup_checks() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-printf "${BoldWhiteOnTurquoise}Splunk n' Box. Running startup validation checks...${NC}\n\n"
+printf "${BoldWhiteOnTurquoise}Splunk N' Box! Running startup validation checks...${NC}\n"
 
 printf "${LightBlue}==> ${NC}$os_banner${NC}\n"
 #-------------------sanity checks -------------------
@@ -892,7 +892,7 @@ fi
 #-----------Gathering OS memory/cpu info---
 
 #-----------OS memory check-------------------
-printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if we have enough free OS memory [Free:%sgb Total:%sgb  ${LightBlue}%s%%${NC}] " $os_free_mem $os_total_mem $os_free_mem_perct
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if we have enough free OS memory ${Yellow}%s%%${NC} [Free:%sgb Total:%sgb] " $os_free_mem_perct $os_free_mem $os_total_mem
 #state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparison
 #WARN if free mem is 20% or less of total mem
 if [ "$os_free_mem_perct" -le "20" ]; then
@@ -916,7 +916,8 @@ else
         printf " ${Green}${OK_MARK_EMOJI} OK${NC}\n"
 fi
 docker_total_mem_perct=`echo "($dockerinfo_mem * 100) / $os_total_mem"| bc`
-printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking Docker configs for MEMORY allocation [Docker:%sgb OS:%sgb  ${LightBlue}%s%%${NC}]..." $dockerinfo_mem $os_total_mem $docker_total_mem_perct
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking Docker configs for MEMORY allocation ${Yellow}%s%%${NC} [Docker:%sgb OS:%sgb]..." $docker_total_mem_perct $dockerinfo_mem $os_total_mem
+
 #WARN if ratio docker_configred_mem/os_total-mem < 80%
 if [ "$docker_total_mem_perct" -lt "80" ]; then
 	printf "${BrownOrange}${WARNING_EMOJI} WARNING${NC}\n" $dockerinfo_mem $os_total_mem
@@ -4615,7 +4616,6 @@ return 0
 
 #---------------------------------------------------------------------------------------------------
 #The following must start at the beginning for the code since we use I/O redirection for logging
-#
 #http://stackoverflow.com/questions/8455991/elegant-way-for-verbose-mode-in-scripts/8456046
 loglevel=$LOGLEVEL
 maxloglevel=7	 #The highest loglevel we use / allow to be displayed.
@@ -4640,9 +4640,7 @@ while getopts "h?v:s:f:" opt; do
        ;;
     esac
 done
-#echo loglevel=[$loglevel]
-#echo skip_checks=[$skip_checks];
-#echo output_file=[$output_file];
+
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 #echo "loglevel='$loglevel'   output_file='$output_file'    Leftovers: $@"
