@@ -235,6 +235,9 @@ v4.4 12/27/2017
 -Splunk app & datasets are now cached/dloaded in the new locations
 -added bunch of emoji icons to startup checks
 -added logic to prevent checking for upgrade if cannot extract GIT_VER or no Internet connectivity
+-added splunknbox log to welcome screen. Error checks used to skip if conditions are not ok
+-cleaned up code around docker_status
+
 
 
 
