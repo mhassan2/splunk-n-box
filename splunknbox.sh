@@ -198,18 +198,20 @@ BoldYellowOnPurple="\033[1;33;44m"
 DEFAULT_YES="\033[1;37mY\033[0m/n"
 DEFAULT_NO="y/\033[1;37mN\033[0m"
 #Emojis
-ARROW_EMOJI='\xe2\x96\xb6'
-ARROW_STOP_EMOJI='\xe2\x8f\xaf'
-REPEAT_EMOJI='\xe2\x8f\xad'
-CHECK_MARK_EMOJI='\xe2\x9c\x85'
-OK_MARK_EMOJI='\xe2\x9c\x85'
-OK_BUTTON_EMOJI='\xf0\x9f\x86\x97'
-WARNING_EMOJI='\xe2\x9a\xa0\xef\xb8\x8f'
-DONT_ENTER_EMOJI='\xe2\x9b\x94'
+ARROW_EMOJI="\xe2\x96\xb6"
+ARROW_STOP_EMOJI="\xe2\x8f\xaf"
+REPEAT_EMOJI="\xe2\x8f\xad"
+CHECK_MARK_EMOJI="\xe2\x9c\x85"
+OK_MARK_EMOJI="\xe2\x9c\x85"
+OK_BUTTON_EMOJI="\xf0\x9f\x86\x97"
+WARNING_EMOJI="\xe2\x9a\xa0\xef\xb8\x8f"
+BULB_EMOJI="\xf0\x9f\x92\xa1"
+DONT_ENTER_EMOJI="\xe2\x9b\x94"
 DOLPHIN1_EMOJI="\xf0\x9f\x90\xb3"
 DOLPHIN2_EMOJI="\xf0\x9f\x94\x8b"
 BETTERY_EMOJI="\xf0\x9f\x90\xac"
 YELLOWBOOK_EMOJI="\xf0\x9f\x93\x92"
+YELLOW_LEFTHAND_EMOJI="\xf0\x9f\x91\x89"
 
 #---------------------------------------
 
@@ -883,8 +885,9 @@ elif [ "$os" == "Darwin" ]; then
                 os_unused_mem=`echo $os_unused_mem | tr -d '[[:alpha:]]'`  #strip G
         fi
         #echo "MEM: used:[$os_used_mem] wired:[$os_wired_mem]  unused:[$os_unused_mem]"
-	os_free_mem=$os_unused_mem
-        os_total_mem=`echo $os_used_mem + $os_wired_mem + $os_unused_mem | bc`
+		os_free_mem=$os_unused_mem
+        #os_total_mem=`echo $os_used_mem + $os_wired_mem + $os_unused_mem | bc`
+		os_total_mem=`hostinfo|grep "memory available"| awk '{print $4}'`
         os_free_mem_perct=`echo "($os_free_mem * 100) / $os_total_mem"| bc`
       #  echo "MEM: TOTAL:[$os_total_mem] UNUSED:[$os_unused_mem] %=[$os_free_mem_perct]     USED:[$os_used_mem] wired:[$os_wired_mem]"
 fi
@@ -897,8 +900,8 @@ printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if we have enough f
 #WARN if free mem is 20% or less of total mem
 if [ "$os_free_mem_perct" -le "20" ]; then
 	printf "${BrownOrange}${WARNING_EMOJI} (May not be a problem)${NC}\n"
-	printf "    ${Red}>>${NC} Recommended %sGB+ of free memory for large builds\n" $LOW_MEM_THRESHOLD
-	printf "    ${Red}>>${NC} Modern OSs do not always report unused memory as free\n\n" $os_free_mem $LOW_MEM_THRESHOLD
+	printf "\t${YELLOW_LEFTHAND_EMOJI}${NC} Recommended %sGB+ of free memory for large builds\n" $LOW_MEM_THRESHOLD
+	printf "\t${BULB_EMOJI}${NC} Modern OSs do not always report unused memory as free\n\n" $os_free_mem $LOW_MEM_THRESHOLD
 	#printf "${White}    7-Change docker default settings! Docker-icon->Preferences->General->pick max CPU/MEM available${NC}\n\n"
 else
 	printf "${Green}${OK_MARK_EMOJI} OK${NC}\n"
@@ -906,25 +909,36 @@ fi
 #-----------OS memory check-------------------
 
 #-----------docker preferences/config check-------
-printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking Docker configs for CPUs allocation [Docker:%sgb  OS:%sgb]..." $dockerinfo_cpu $cores
+docker_total_cpu_perct=`echo "($dockerinfo_cpu * 100) / $cores"| bc`
+printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking Docker configs for CPUs allocation ${Yellow}%s%%${NC} [Docker:%sgb  OS:%sgb]..." $docker_total_cpu_perct $dockerinfo_cpu $cores
 #state=`echo "$os_free_mem < $LOW_MEM_THRESHOLD"|bc` #float comparison
-if [ "$dockerinfo_cpu" -lt "$cores" ]; then
-	printf "${BrownOrange} ${WARNING_EMOJI}${NC}\n"
-	printf "    ${Red}>>${NC} Docker is configured to use %s of the available system %s CPUs\n" $dockerinfo_cpu $cores
-	printf "    ${Red}>>${NC} Please allocate all available system CPUs to Docker (Preferences->Advance)\n\n"
+if [ "$docker_total_cpu_perct" -lt "70" ]; then
+	printf "${LightRed}${DONT_ENTER_EMOJI} ALERT${NC}\n"
+	printf "\t${YELLOW_LEFTHAND_EMOJI}${NC} Docker is configured to use %s of the available system %s CPUs\n" $dockerinfo_cpu $cores
+	printf "\t${YELLOW_LEFTHAND_EMOJI}${NC} Please allocate all available system CPUs to Docker (Preferences->Advance)\n\n"
+elif [ "$docker_total_cpu_perct" -lt "80" ]; then
+	printf "${BrownOrange}${WARNING_EMOJI} WARNING${NC}\n"
+	printf "\t${YELLOW_LEFTHAND_EMOJI}${NC} Docker is configured to use %s of the available system %s CPUs\n" $dockerinfo_cpu $cores
+	printf "\t${YELLOW_LEFTHAND_EMOJI}${NC} Please allocate all available system CPUs to Docker (Preferences->Advance)\n\n"
 else
+
         printf " ${Green}${OK_MARK_EMOJI} OK${NC}\n"
 fi
 docker_total_mem_perct=`echo "($dockerinfo_mem * 100) / $os_total_mem"| bc`
 printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking Docker configs for MEMORY allocation ${Yellow}%s%%${NC} [Docker:%sgb OS:%sgb]..." $docker_total_mem_perct $dockerinfo_mem $os_total_mem
 
 #WARN if ratio docker_configred_mem/os_total-mem < 80%
-if [ "$docker_total_mem_perct" -lt "80" ]; then
+if [ "$docker_total_mem_perct" -lt "70" ]; then
+	printf "${LightRed}${DONT_ENTER_EMOJI} ALERT${NC}\n" $dockerinfo_mem $os_total_mem
+    printf "\t${YELLOW_LEFTHAND_EMOJI}${NC} Docker is configured to use %sgb of the available system %sgb memory\n" $dockerinfo_mem $os_total_mem
+    printf "\t${YELLOW_LEFTHAND_EMOJI}${NC} Please allocate all available system memory to Docker (Preferences->Advance)\n\n"
+elif [ "$docker_total_mem_perct" -lt "80" ]; then
 	printf "${BrownOrange}${WARNING_EMOJI} WARNING${NC}\n" $dockerinfo_mem $os_total_mem
-       	printf "    ${Red}>>${NC} Docker is configured to use %sgb of the available system %sgb memory\n" $dockerinfo_mem $os_total_mem
-       	printf "    ${Red}>>${NC} Please allocate all available system memory to Docker (Preferences->Advance)\n\n"
+    printf "\t${YELLOW_LEFTHAND_EMOJI}${NC} Docker is configured to use %sgb of the available system %sgb memory\n" $dockerinfo_mem $os_total_mem
+    printf "\t${YELLOW_LEFTHAND_EMOJI}${NC} Please allocate all available system memory to Docker (Preferences->Advance)\n\n"
 else
-        printf " ${Green}${OK_MARK_EMOJI} OK${NC}\n"
+
+    printf " ${Green}${OK_MARK_EMOJI} OK${NC}\n"
 fi
 #-----------docker preferences check-------
 
@@ -933,13 +947,13 @@ printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if Splunk image is 
 image_ok=`docker images|grep "$DEFAULT_SPLUNK_IMAGE"`
 if [ -z "$image_ok" ]; then
 	printf "${Red}NOT FOUND!${NC}\n"
-	read -p "    >> Download image [$DEFAULT_SPLUNK_IMAGE]? [Y/n]? " answer
+	read -p "    >> Downloading image [$DEFAULT_SPLUNK_IMAGE]? [Y/n]? " answer
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		#printf "    ${Red}>>${NC} Downloading from https://hub.docker.com/r/mhassan/splunk/\n"
 		progress_bar_image_download "$DEFAULT_SPLUNK_IMAGE"
                 printf "\n${NC}"
         else
-			printf "    ${Red}>> WARNNING! Many functions will fail without ($DEFAULT_SPLUNK_IMAGE). It is critical to download this splunk image....${NC}\n"
+			printf "    ${Red}>> ${WARNING_EMOJI}WARNNING! Many functions will fail without ($DEFAULT_SPLUNK_IMAGE). It is critical to download this splunk image....${NC}\n"
                 printf "    See https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=splunknbox&starCount=0\n"
 		read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
         fi
@@ -962,14 +976,14 @@ fi
 #-----------license files/dir check--------
 printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if we have license files *.lic in [$SPLUNK_LIC_DIR]..."
 if [ ! -d $SPLUNK_LIC_DIR ]; then
-    		printf "${Red} DIR DOESN'T EXIST!${NC}\n"
-		printf "    ${Red}>>${NC} Please create $SPLUNK_LIC_DIR and place all *.lic files there.\n"
-		printf "    ${Red}>>${NC} Change the location of LICENSE dir in the config section of the script.${NC}\n\n"
+    	printf "${Red} DIR DOESN'T EXIST!${NC}\n"
+		printf "\t${YELLOW_LEFTHAND_EMOJI}${NC} Please create $SPLUNK_LIC_DIR and place all *.lic files there.\n"
+		printf "\t${YELLOW_LEFTHAND_EMOJI}${NC} Change the location of LICENSE dir in the config section of the script.${NC}\n\n"
 elif  ls $SPLUNK_LIC_DIR/*.lic 1> /dev/null 2>&1 ; then
-       		printf "${Green}${OK_MARK_EMOJI} OK${NC}\n"
+       	printf "${Green}${OK_MARK_EMOJI} OK${NC}\n"
 	else
-        	printf "${Red}NO LIC FILE(S) FOUND!${NC}\n"
-		printf "    ${Red}>>${NC} If *.lic exist, make sure they are readable.${NC}\n\n"
+        printf "${Red}NO LIC FILE(S) FOUND!${NC}\n"
+		printf "\t${YELLOW_LEFTHAND_EMOJI}${NC} If *.lic exist, make sure they are readable.${NC}\n\n"
 fi
 #-----------license files/dir check--------
 
@@ -989,7 +1003,7 @@ if [ -n "$splunk_is_running" ]; then
        	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		sudo $LOCAL_SPLUNKD stop
 	else
-		printf "    ${LightRed}WARNING!${NC}\n"
+		printf "    ${LightRed}${WARNING_EMOJI}WARNING!${NC}\n"
 		printf "    ${LightRed}>>${NC} Running local splunkd may prevent containers from binding to interfaces!${NC}\n\n"
 	fi
 else
