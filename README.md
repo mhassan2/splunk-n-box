@@ -1,5 +1,5 @@
 ### **** ATTN.: ver 4.4 is major update that requires new directory structure. The cleanest was to upgrade is to start new download 
-#### **** From you home directory type:   ``` git clone https://github.com/mhassan2/splunk-n-box ```
+### **** From you home directory type:   ``` git clone https://github.com/mhassan2/splunk-n-box ```
 <br><br>
 
 ## Videos:
