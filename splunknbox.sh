@@ -845,7 +845,7 @@ if [ -n "$is_running" ]; then
         dockerinfo_mem1=`docker info| $GREP  'Total Memory'| awk '{printf $3}'|sed 's/GiB//g'| tr -d '\n' `
         dockerinfo_mem=`echo "$dockerinfo_mem1 / 1" | bc `
         #echo "DOCKER: ver:[$dockerinfo_ver]  cpu:[$dockerinfo_cpu]  totmem:[$dockerinfo_mem] ";exit
-	printf "[ver:$dockerinfo_ver]..."
+	printf "${Yellow}[ver:$dockerinfo_ver]${NC}..."
 	#must use actuall escape code for emoji in awk
 	awk -v n1=$dockerinfo_ver -v n2=$DOCKER_MIN_VER \
 	'BEGIN {if (n1<n2) printf ("\033[0;33mWarning! Recommending %s+\n", n2); else printf ("\033[0;32m\xe2\x9c\x85 OK!\n");}'
@@ -1055,7 +1055,7 @@ if [ "$(uname)" == "Darwin" ]; then
 	PROJ_DIR="/Users/${USER}"  #anything that needs to copied to container
 	sys_ver=`system_profiler SPSoftwareDataType|grep "System Version" |awk '{print $5}'`
 	kern_ver=`system_profiler SPSoftwareDataType|grep "Kernel Version" |awk '{print $3,$4}'`
-	os_banner="Detected MacOS [System:$sys_ver Kernel:$kern_ver]"
+	os_banner="Detected MacOS [System:$sys_ver Kernel:${Yellow}$kern_ver${NC}]"
 
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
     os="Linux"
@@ -1067,7 +1067,7 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	PROJ_DIR="/home/${USER}/"
 	release=`lsb_release -r |awk '{print $2}'`
 	kern_ver=`uname -r`
-	os_banner="Detected LINUX [Release:$release Kernel:$kern_ver]"
+	os_banner="Detected LINUX [Release:$release Kernel:${Yellow}$kern_ver${NC}]"
 
 elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
     os="Windows"
@@ -1076,7 +1076,7 @@ fi
 #is it AWS EC2 instance?
 if [ -f /sys/hypervisor/uuid ] && [ `head -c 3 /sys/hypervisor/uuid` == ec2 ]; then
 	bios_ver=`sudo dmidecode -s bios-version`
-	os_banner="Detected AWS EC2 instance [BIOS:$bios_ver]"
+	os_banner="Detected AWS EC2 instance [BIOS:${Yellow}$bios_ver${NC}]"
     AWS_EC2="YES"
 	START_ALIAS=$START_ALIAS_OSX
 	END_ALIAS=$END_ALIAS_OSX
