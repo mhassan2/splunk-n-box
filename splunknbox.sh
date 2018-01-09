@@ -81,7 +81,7 @@ DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_7.0.1"
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
 
 #Available splunk demos registry.splunk.com
-REPO_DEMO_IMAGES="workshop-boss-of-the-soc demo-azure demo-uba demo-dbconnect demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi demo-healthcare workshop-splunking-endpoint workshop-ransomware-splunklive-2017 demo-connected-cars workshop-elastic-stack-lab"
+REPO_DEMO_IMAGES="workshop-boss-of-the-soc demo-azure demo-dbconnect demo-pci demo-itsi demo-es demo-vmware demo-citrix demo-cisco demo-stream demo-pan demo-aws demo-ms demo-unix demo-fraud demo-oi demo-healthcare workshop-splunking-endpoint workshop-ransomware-splunklive-2017 demo-connected-cars workshop-elastic-stack-lab"
 REPO_DEMO_IMAGES=$(echo "$REPO_DEMO_IMAGES" | tr " " "\n"|sort -u|tr "\n" " ")
 
 #3rd party images will be renamed to 3rd-* after each docker pull
@@ -207,8 +207,9 @@ WARNING_EMOJI="\xe2\x9a\xa0\xef\xb8\x8f"
 BULB_EMOJI="\xf0\x9f\x92\xa1"
 DONT_ENTER_EMOJI="\xe2\x9b\x94"
 DOLPHIN1_EMOJI="\xf0\x9f\x90\xb3"
-DOLPHIN2_EMOJI="\xf0\x9f\x94\x8b"
-BETTERY_EMOJI="\xf0\x9f\x90\xac"
+DOLPHIN2_EMOJI="\xf0\x9f\x90\xac"
+BATTERY_EMOJI="\xf0\x9f\x94\x8b"
+OPTICALDISK_EMOJI="\xf0\x9f\x92\xbf"
 YELLOWBOOK_EMOJI="\xf0\x9f\x93\x92"
 YELLOW_LEFTHAND_EMOJI="\xf0\x9f\x91\x89"
 
@@ -1292,30 +1293,33 @@ printf "\n"
 
 #count=`wc -l $CMD`
 
-printf "Retrieving list from: [https://hub.docker.com/u/splunknbox/]...\n\n"
+printf "Retrieving list from: [https://hub.docker.com/u/splunknbox/]...\n"
 CMD="docker search splunknbox"; OUT=`$CMD`
 #printf "$OUT" #| awk '{printf $1}'
 
 retrieved_images_list=`printf "$OUT"|grep -v NAME|awk '{print $1" "}'| sort | tr -d '\n' `
 declare -a list=($retrieved_images_list)
-printf "${Purple}     		IMAGE NAME${NC}		    CREATED	SIZE			AUTHOR\n"
-printf "${Purple} -------------------------------------${NC}   ------------  --------   ---------------------------------------\n"
+#printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd   Ver    Internal IP%-3s       Image used%-10s     URL${NC}\n"
+printf "${BoldWhiteOnRed}             IMAGE NAME%-22s CREATED%-7s SIZE%-15s AUTHOR%-20s${NC}\n"
+printf "${White} -------------------------------------      ------------  --------   ---------------------------------------\n"
 counter=1
 #count=`docker images --format "{{.ID}}" | wc -l`
 for image_name in $retrieved_images_list; do
-        printf "${Purple}%-2s${NC}) ${Purple}%-40s${NC}" "$counter" "$image_name"
+	if [ "$image_name" == "$DEFAULT_SPLUNK_IMAGE" ]; then
+    	printf "${Purple}%-2s${NC})${YELLOW_LEFTHAND_EMOJI} ${Purple}%-40s${NC}" "$counter" "$image_name"
+	else
+    	printf "${Purple}%-2s${NC})  ${Purple}%-40s${NC}" "$counter" "$image_name"
+	fi
 	created=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $4,$5,$6}'`
 	size=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $7,$8}'`
-        if [ -n "$created" ]; then
-        	author=`docker inspect $image_name |grep -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
-                printf "%-12s %-7s %-10s ${NC}\n" "$created" "$size" "$author"
-        else
-                printf "${DarkGray}NOT CACHED! ${NC}\n"
-        fi
-        let counter++
+    if [ -n "$created" ]; then
+        author=`docker inspect $image_name |grep -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
+        printf "%-12s %-7s %-10s ${NC}\n" "$created" "$size" "$author"
+    else
+        printf "${DarkGray}NOT CACHED! ${NC}\n"
+    fi
+    let counter++
 done
-
-
 #count=`docker images |grep -i "splunk_"|wc -l`
 #if [ $count == 0 ]; then
 #        printf "\nNo images to list!\n"
@@ -1324,16 +1328,13 @@ done
 #display_all_images "DEMO"
 count=0
 echo
-printf "${BrownOrange}${WARNING_EMOJI} Subsequent container builds (except DEMO images) will use the new splunk image!${NC}\n"
-printf "Current default image is [$DEFAULT_SPLUNK_IMAGE]\n"; echo
-read -p "Select number: " choice
+read -p "Select a number: " choice
 if [ -n "$choice" ]; then
 		START=$(date +%s)
 		image_name=(${list[$choice - 1]})
 		progress_bar_image_download "$image_name"
-       		printf "Changing default image from [$DEFAULT_SPLUNK_IMAGE] to [${Yellow}$image_name${NC}]\n"
 		DEFAULT_SPLUNK_IMAGE="$image_name"
-		echo
+		printf "${BrownOrange}${WARNING_EMOJI} Subsequent container builds (except DEMOs) will use the new splunk image ${Yellow}[$image_name]${NC}\n"
 fi
 
 return 0
@@ -2466,7 +2467,7 @@ printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> SP
 display_stats_banner
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
-printf "${Red}S${NC}) ${Red}S${NC}HOW all images details ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
+printf "${Red}S${NC}) ${Red}S${NC}HOW all images details ${DarkGray}[custom view]${NC}\n"
 printf "${Red}R${NC}) ${Red}R${NC}EMOVE image(s) to recover disk-space (will extend build times) ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
 printf "${Red}F${NC}) DE${Red}F${NC}AULT Splunk images ${DarkGray}[currently: $DEFAULT_SPLUNK_IMAGE]${NC}\n"
 printf "\n"
@@ -3727,7 +3728,7 @@ fi
 if [ "$1" ]; then
 	printf "=>${White}OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg]${NC}\n"
 else
-	printf "${White}${DOLPHIN1_EMOJI} ${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}${DOLPHIN2_EMOJI} ${NC}[FreeMem:${os_free_mem}GB Load:$loadavg] ${White}${BATTERY_EMOJI} ${NC}[$DEFAULT_SPLUNK_IMAGE] ${White}${YELLOWBOOK_EMOJI} LogLevel:${NC}[$loglevel]${NC}\n"
+	printf "${White}${DOLPHIN1_EMOJI}${NC} [ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}${BATTERY_EMOJI}${NC} [FreeMem:${os_free_mem}GB Load:$loadavg] ${White}${OPTICALDISK_EMOJI}${NC} [$DEFAULT_SPLUNK_IMAGE] ${White}${YELLOWBOOK_EMOJI} LogLevel:${NC}[$loglevel]${NC}\n"
 fi
 
 return 0
@@ -3777,16 +3778,16 @@ else
 	read -p "You are not connected to [$SPLUNK_DOCKER_HUB]. Would you like to login? [Y/n]? " answer
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		read -p "Enter your username (default $user)? " username
-        	if [ -z "$username" ];then username=$USER; fi
+    	if [ -z "$username" ];then username=$USER; fi
 		read -s -p 'Enter your password (use O2 or HOD password)? ' passwd
 		CMD=`docker login -u $username -p $passwd $SPLUNK_DOCKER_HUB`
-        	if ( compare "$CMD" "Login Succeeded" );then
-               		printf "${Green}Login Succeeded!\n"
+        if ( compare "$CMD" "Login Succeeded" );then
+            printf "${Green}Login Succeeded!\n"
 		else
-               		printf "${LightRed}Login failed! Demo image download will fail\n"
+            printf "${LightRed}Login failed! Demo image download will fail\n"
 		fi
 	else
-               	printf "You still can use any cached images but further downloads will fail...\n"
+        printf "You still can use any cached images but further downloads will fail...\n"
 	fi
 fi
 read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
@@ -3917,13 +3918,12 @@ clear
 #-----------show images details
 printf "${BoldYellowOnBlue}Manage Images -> DOWNLOAD DEMO IMAGES MENU ${NC}\n"
 display_stats_banner
-printf "\n"
-printf "${BrownOrange}This option requires access to splunk internal docker hub ($SPLUNK_DOCKER_HUB)\n"
-printf "${BrownOrange}*Depending on time of the day downloads may take a while. Cached images are not downloaded! ${NC}\n"
+#printf "${BrownOrange}*Depending on time of the day downloads may take a while. Cached images are not downloaded! ${NC}\n"
 printf "\n"
 printf "Demo images available from $SPLUNK_DOCKER_HUB:\n"
-printf "${Purple}     		IMAGE NAME${NC}		    CREATED	SIZE			AUTHOR\n"
-printf "${Purple} -------------------------------------${NC}   ------------  --------   ---------------------------------------\n"
+printf "${BoldWhiteOnRed}             IMAGE NAME%-22s SIZE%-15s AUTHOR%-20s${NC}\n"
+printf "${White} -------------------------------------      --------   ---------------------------------------\n"
+
 counter=1
 #count=`docker images --format "{{.ID}}" | wc -l`
 for image_name in $REPO_DEMO_IMAGES; do
@@ -3941,13 +3941,11 @@ for image_name in $REPO_DEMO_IMAGES; do
         let counter++
 done
 
-echo
+printf "${BrownOrange}${BULB_EMOJI} You're required to login into splunk internal docker. You will prompted if creds are not cached${NC}\n"
 login_to_splunk_hub
 
 #build array of images list
 declare -a list=($REPO_DEMO_IMAGES)
-
-echo
 choice=""
 read -p $'Choose number to download. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
@@ -4207,8 +4205,8 @@ if [ "$AWS_EC2" == "YES" ]; then
 	done
 fi
 printf "Current list of all $type containers on this system:\n"
-printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd   Ver    Internal IP%-3s       Image used%-10s     URL${NC}\n"
-printf "   ---------------%-3s --------- ------- ------- ----------%-3s ------------------%-3s---------------------------${NC}\n"
+printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd%-2s Ver%-2s Internal IP%-3s Image used%-15s     URL%-13s${NC}\n"
+printf "   ---------------%-3s --------- ------- ------- ----------%-3s------------------%-3s---------------------------${NC}\n"
 
 i=0
 hosts_sorted=`docker ps -a --format {{.Names}}| egrep -i "$type"| sort`
