@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#	__VERSION: 4.4-286 $
-#	__DATE: Sat Jan 13,2018 - 11:23:25PM -0600 $
+#	__VERSION: 4.5-1 $
+#	__DATE: Sat Jan 13,2018 - 11:23:34PM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -148,7 +148,7 @@ CMDLOGTXT="$LOGS_DIR/splunknbox.log"			#capture all docker cmds (just ascii txt)
 #LOGFILE="${0##*/}.log"   				#log file will be this_script_name.log
 #SCREENLOGFILE="$LOGS_DIR/splunknbox_screens.log"  #capture all screen shots during execution
 HOSTSFILE="$PWD/docker-hosts.dnsmasq"  	#local host file. optional if dns caching is used
-SPLUNK_LIC_DIR="$PWD/licenses"		#place all your license file here
+SPLUNK_LIC_DIR="$PWD/splunk_licenses"		#place all your license file here
 VOL_DIR="docker-volumes"	#volumes mount point.Full path is dynamic based on OS type
 SPLUNK_APPS_DIR="$PWD/splunk_apps"
 SPLUNK_DATASETS_DIR="$PWD/tutorial_datasets"
@@ -1095,9 +1095,9 @@ detect_ver() {
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 4.4-286 $" | \
+GIT_VER=`echo "__VERSION: 4.5-1 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Sat Jan 13,2018 - 11:23:25PM -0600 $" | \
+GIT_DATE=`echo "__DATE: Sat Jan 13,2018 - 11:23:34PM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
