@@ -137,7 +137,7 @@ https://msdn.microsoft.com/en-us/commandline/wsl/user_support<br>
 - Default docker settings on OSX are limited. Please change to take advantage of all available memory and CPU (under preferences).
 
 
-:exclamation:_The following steps are automated but you can skip and execute manually if you wish:_<br>
+:hand:_The following steps are automated but you can skip and execute manually if you wish:_<br>
 
 
 Install Xcode Command Line Tools: https://hackercodex.com/guide/mac-osx-mavericks-10.9-configuration/<br>
