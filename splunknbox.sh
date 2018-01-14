@@ -4548,9 +4548,9 @@ z=0
 #-----show splunknbox logo only if imgcat is installed & and jpeg file exist -------
 #	Otherwise skip with no feedback -------------
 condition=$(which imgcat 2>/dev/null | grep -v "not found" | wc -l)
-if [ $condition != "0" ] && [ -e img/splunknbox_large.jpeg ]; then
-	col=$(( ( $COLUMNS - 30 )  / 2 )); row=$(($x - 10)); tput cup $row $col
-	imgcat img/splunknbox_large.jpeg
+if [ $condition != "0" ] && [ -e img/splunknbox_large.png ]; then
+	col=$(( ( $COLUMNS - 13 )  / 2 )); row=$(($x - 9)); tput cup $row $col
+	imgcat img/splunknbox_large.png
 fi
 #----------------------------------------------------------------------
 
@@ -4677,6 +4677,7 @@ done
 #delete log files on restart
 #rm  -fr $CMDLOGBIN $CMDLOGTXT
 printf "\n--------------- Starting new script run. Hosts are grouped by color -------------------\n" > $CMDLOGBIN
+tput setab 0
 clear
 detect_os						#ggrep OSX is set here
 detect_ver
