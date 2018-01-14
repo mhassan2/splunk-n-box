@@ -1,10 +1,13 @@
 #!/bin/bash
+#############################################################################
 #       $VERSION: [v4.4-23] $
 #       $DATE:    [Sun Dec 31,2017 - 09:21:24PM -0600] $
 #       $AUTHOR:  [mhassan2 <mhassan@splunk.com>] $
 #
 #set -x
 #This function build .dot file for graphviz
+#############################################################################
+
 rm -fr run.dot run.png
 gCOUNTER=0    #used to identify cluster number in dot file
 #---------------------------------------------------------------------------------
