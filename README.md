@@ -1,5 +1,5 @@
-### **** ATTN.: 
-### Ver 4.4 is major update that requires new directory structure. The cleanest was to upgrade is to start new download. 
+### **** ATTN.:
+### Ver 4.5 is major update that requires new directory structure. The cleanest was to upgrade is to start new download.
 ### From you home directory type:   ``` git clone https://github.com/mhassan2/splunk-n-box ```
 <br><br>
 
@@ -42,11 +42,16 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 - AWS EC2 aware (shows the NATed IPs)<br>
 
 
-## Where to get it?
+## Where to install?
 
 Source code is posted here: https://github.com/mhassan2/splunk-n-box<br>
 
-Please download and install in your lab. The script was tested on Ubuntu 16.04 and Macbook Pro El Captin 10.11.6. I am guessing running on similar Linux distribution will not be a problem.<br>
+```Ruby
+cd ~
+git clone https://github.com/mhassan2/splunk-n-box
+cd splunk-n-box
+./splunknbox.sh
+```
 
 ## How does it work?
 
