@@ -665,9 +665,17 @@ else
 	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 fi
 #----------
+#----------
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking optional [tmux] package:${NC} "
+condition=$(which tmux 2>/dev/null | grep -v "not found" | wc -l)
+if [ $condition -eq 0 ]; then
+	printf "${BrownOrange}Installing [tmux]${NC}:"
+	progress_bar_pkg_download "sudo apt-get install tmux -y"
+else
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
+fi
+#----------
 
-
-echo
 return 0
 }	#end check_for_ubuntu_pkgs()
 #---------------------------------------------------------------------------------------------------------------
@@ -769,6 +777,16 @@ if [ -n "$cmd" ]; then
 else
 	printf "${BrownOrange}Installing [graphviz]${NC}:"
 	progress_bar_pkg_download "brew install graphviz"
+fi
+#----------
+#----------
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking optional [tmux] package:${NC} "
+cmd=$(brew ls tmux --versions)
+if [ -n "$cmd" ]; then
+	printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
+else
+	printf "${BrownOrange}Installing [tmux]${NC}:"
+	progress_bar_pkg_download "brew install tmux"
 fi
 #----------
 
@@ -2779,6 +2797,15 @@ done
 return 0
 }	#end 3rdparty_menu_inputs()
 #---------------------------------------------------------------------------------------------------------------
+_pass_to_tmux() {
+    _FUNC_TO_PASS="${1}"
+    _IFS_BACKUP="${IFS}"
+    IFS=$'\n'
+    for i in $(type ${_FUNC_TO_PASS} | tail -n +2); do
+        tmux send-keys "${i}" C-m
+    done
+    IFS="${_IFS_BACKUP}"
+}
 #---------------------------------------------------------------------------------------------------------------
 clustering_menu_inputs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
@@ -2791,10 +2818,25 @@ do
         read -p "Enter choice: " choice
         case "$choice" in
                 \? ) display_clustering_menu_help;;
-				1 ) create_single_idxc "AUTO" ;;
-                2 ) create_single_shc  "AUTO" ;;
+				1 ) if [ "$graphics" == "true" ];then
+						tmux new-session -d  './splunknbox.sh -g true -s true -c 1'
+						tmux split-window -h
+        				tmux send-keys "./scripts/viz.sh" C-m
+						#tmux attach-session
+						tmux -CC attach
+					fi;
+				#	create_single_idxc "AUTO";
+					;;
+				2 ) if [ "$graphics" == "true" ];then
+				#		_pass_to_tmux "create_single_idxc AUTO"
+						tmux new-session -d './splunknbox.sh -g true -s true -c 2'
+						tmux split-window -h './scripts/viz.sh'
+						tmux attach-session
+					fi;
+				#	create_single_shc "AUTO";
+					;;
                 3 ) build_single_site "AUTO" ;;
-                4 ) build_multi_site_cluster "AUTO" ;;
+                4 ) build_multi_site "AUTO" ;;
                 5 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
 		    		create_single_idxc;;
 				6 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
@@ -2802,7 +2844,7 @@ do
                 7 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
 		    		build_single_site;;
                 8 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    		build_multi_site_cluster;;
+		    		build_multi_site;;
 
 	        	b|B) return 0;;
         esac  #end case ---------------------------
@@ -3485,7 +3527,7 @@ return 0
 }	#build_single_site()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
-build_multi_site_cluster() {
+build_multi_site() {
 #This function creates site-2-site cluster
 #http://docs.splunk.com/Documentation/Splunk/6.4.3/Indexer/Migratetomultisite
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
@@ -3644,7 +3686,7 @@ printf "${Cyan}____________ Finished STEP#4 ____________________________________
 #print_stats $START_TIME ${FUNCNAME}
 
 return 0
-}	#build_multi_site_cluster()
+}	#build_multi_site()
 #---------------------------------------------------------------------------------------------------------------
 
 
@@ -4634,7 +4676,7 @@ maxloglevel=7	 #The highest loglevel we use / allow to be displayed.
 # A POSIX variable
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 output_file=""
-while getopts "h?v:s:f:" opt; do
+while getopts "h?v:s:g:c:f:" opt; do
     case "$opt" in
     h|\?)
 		printf "Usage:\n"
@@ -4646,6 +4688,10 @@ while getopts "h?v:s:f:" opt; do
     v)  loglevel=$OPTARG
         ;;
     s)  skip_checks=$OPTARG
+		;;
+    g)  graphics=$OPTARG
+		;;
+    c)  cluster=$OPTARG
 		;;
     f)  output_file=$OPTARG
        ;;
@@ -4685,6 +4731,16 @@ if [ -z "$skip_checks" ] || [ "$skip_checks" != "true" ];then
 	startup_checks				#contains ggrep install if missing OSX (critical command)
 fi
 
+if [ "$cluster" == "1" ];then
+	create_single_idxc "AUTO"
+elif [ "$cluster" == "2" ];then
+	create_single_shc "AUTO"
+elif [ "$cluster" == "3" ];then
+	build_single_site "AUTO"
+elif [ "$cluster" == "4" ];then
+	build_multi_site "AUTO"
+
+fi
 display_welcome_screen		#ggrep must installed otherwise ver check will fail
 main_menu_inputs
 
