@@ -235,10 +235,12 @@ v4.4 12/27/2017
 -added logic to prevent checking for upgrade if cannot extract GIT_VER or no Internet connectivity
 -disabled MONITOR container build for now. Will revist later
 -Splunk app & datasets are now cached/dloaded in the new locations
--added bunch of emoji icons to startup checks
+-added bunch of emoji icons to startup checks (and thru out the code)
 -cleaned up code around docker_status
+-added CLI switch to skip checks (speed up startup when you know all requirements are ok)
 -better detection of available OSX memory during starup checks
 -better threasholding around OSX CPU
+-made splunknbox_logo.png transperant
 
 
 
