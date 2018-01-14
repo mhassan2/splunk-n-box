@@ -4,11 +4,11 @@
 <br><br>
 
 ## Videos:
- &#x1F534;     Splunk N' Box full presentation (.conf2017): https://youtu.be/tXeFwWTXtD4<br>
+ :link: Splunk N' Box full presentation (.conf2017): https://youtu.be/tXeFwWTXtD4<br>
 
- &#x1F535;     Run Splunk n' Box on USB stick:  https://youtu.be/qTAS1gvIGxM<Br>
+ :link: Run Splunk n' Box on USB stick:  https://youtu.be/qTAS1gvIGxM<Br>
 
- &#x1F535;     In-depth docker video: https://youtu.be/rfjmeakbeH8?t=0s<br>
+ :link: In-depth docker video: https://youtu.be/rfjmeakbeH8?t=0s<br>
 
 
 
@@ -42,7 +42,7 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 - AWS EC2 aware (shows the NATed IPs)<br>
 
 
-## Where to install?
+## How to install?
 
 Source code is posted here: https://github.com/mhassan2/splunk-n-box<br>
 
@@ -70,7 +70,7 @@ All splunk images (with multiple versions) are pre-built and posted to docker hu
 https://hub.docker.com/r/splunknboxk/splunk_x.x.x/
 ```
 
-## Linux installation:
+## Linux installation note:
 
 For different linux distributions/versions see:  https://docs.docker.com/engine/installation/<br>
 
@@ -91,7 +91,7 @@ If you want the docker-host to be able to resolve host IPs (optional) install dn
 Change DNSSERVER="192.168.2.100"  to point the caching DNS server. This does not work on OSX yet!<br>
 
 
-## Windows10 installtion:
+## Windows10 installtion note:
 
 1- Install Windows 10 WSL (Windows Subsystem for Linux)<br>
 https://msdn.microsoft.com/en-us/commandline/wsl/install_guide<br>
