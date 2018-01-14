@@ -4548,9 +4548,9 @@ z=0
 #-----show splunknbox logo only if imgcat is installed & and jpeg file exist -------
 #	Otherwise skip with no feedback -------------
 condition=$(which imgcat 2>/dev/null | grep -v "not found" | wc -l)
-if [ $condition != "0" ] && [ -e img/splunknbox_large.png ]; then
+if [ $condition != "0" ] && [ -e img/splunknbox_logo.png ]; then
 	col=$(( ( $COLUMNS - 13 )  / 2 )); row=$(($x - 9)); tput cup $row $col
-	imgcat img/splunknbox_large.png
+	imgcat img/splunknbox_logo.png
 fi
 #----------------------------------------------------------------------
 
