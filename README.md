@@ -50,6 +50,7 @@ Source code is posted here: https://github.com/mhassan2/splunk-n-box<br>
 cd ~
 git clone https://github.com/mhassan2/splunk-n-box
 cd splunk-n-box
+cp <your_valid_lic_files> splunk_licenses/
 ./splunknbox.sh
 ```
 
@@ -152,8 +153,6 @@ Install brew packages management: http://www.howtogeek.com/211541/homebrew-for-o
 
 ```
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-```
-```
 brew update
 ```
 
