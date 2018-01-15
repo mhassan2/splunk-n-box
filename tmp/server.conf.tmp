@@ -1,0 +1,5 @@
+
+ #-----Modified by Docker Management script ----
+ [shclustering]
+ pass4SymmKey = mysecret 
+ shcluster_label = shcluster1
