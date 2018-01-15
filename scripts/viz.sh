@@ -538,7 +538,9 @@ while true; do
 #	clear
 	tput sgr0 #; tput cup 0 0
 	#$SCRIPTSDIR/imgcat.sh $TMPDIR/run.png
-	imgcat $TMPDIR/run.png
+	if [ -f $TMPDIR/run.png ]; then
+		imgcat $TMPDIR/run.png
+	fi
 	pausing "5"
 	#open $TMPDIR/run.png
 	main_loop
