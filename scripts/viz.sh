@@ -16,9 +16,9 @@ rm -fr $TMPDIR/run.dot $TMPDIR/run.png $TMPDIR/shc_memebers.tmp $TMPDIR/idxc_mem
 
 name=`uname -a | awk '{print $1}'`
 if [ "$(uname)" == "Darwin" ]; then
-	$GREP="/usr/local/bin/ggrep"  #you MUST install Gnu grep on OSX
+	GREP="/usr/local/bin/ggrep"  #you MUST install Gnu grep on OSX
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
-	$GREP="/bin/grep"
+	GREP="/bin/grep"
 fi
 
 gCOUNTER=0    #used to identify cluster number in dot file
