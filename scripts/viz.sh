@@ -14,6 +14,13 @@ SCRIPTSDIR="$PWD/scripts"
 
 rm -fr $TMPDIR/run.dot $TMPDIR/run.png $TMPDIR/shc_memebers.tmp $TMPDIR/idxc_memebers.tmp
 
+name=`uname -a | awk '{print $1}'`
+if [ "$(uname)" == "Darwin" ]; then
+	$GREP="/usr/local/bin/ggrep"  #you MUST install Gnu grep on OSX
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+	$GREP="/bin/grep"
+fi
+
 gCOUNTER=0    #used to identify cluster number in dot file
 #---------------------------------------------------------------------------------
 pausing() {
@@ -46,7 +53,7 @@ return 0
 is_splunkd_running() {
 fullhostname=$1
 #if-then-else has reverse boolean representaiton
-is_running=`docker exec -ti $1 sh -c "ps xa|grep '[s]plunkd -p'" `
+is_running=`docker exec -ti $1 sh -c "ps xa|$GREP '[s]plunkd -p'" `
 if ( is_container_running "$1" ) && [ -z "$is_running" ]; then   #check if not empty
 	return 1    #empty. splunkd not running
 else
@@ -159,7 +166,7 @@ function format_print_node() {
 name="$1"
 role="$2"		#used if supplied to us
 #echo "**** name[$name]  role[$role]"
-host_ip=`docker inspect --format '{{ .HostConfig }}' "$name"| ggrep -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+host_ip=`docker inspect --format '{{ .HostConfig }}' "$name"| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 
 pendwith=1
 if  ! ( is_container_running "$name" ); then      #return=1 if running
@@ -243,7 +250,7 @@ function build_generic_subgraph() {
 generic_members="$1"
 #for i in `echo $1`;do      #loop thru all hosts
 #	#echo "build_generic_subgraph(): Checking host[$i]...."
-#	single=`echo $i|grep -v "SH"|grep -v "IDX" | grep -v "CM"`
+#	single=`echo $i|$GREP -v "SH"|$GREP -v "IDX" | $GREP -v "CM"`
 #	#members=$members" $single"
 #	members=$members" $single"
 #	#members="$1"
@@ -297,12 +304,12 @@ declare -a shc_record
 for i in `echo $1`;do      #loop thru ALL system hosts
 	#echo "Evaluating [$i]"
 	if ( compare  "$i" "SH" ) && ( is_splunkd_running "$i" ); then
-   		shc_list=`gtimeout --foreground 10s docker exec -u splunk -ti $i /opt/splunk/bin/splunk show shcluster-status -auth admin:hello| grep -i label|awk '{print $3}'| sort | uniq -c `
-		captain=`echo "$shc_list" | grep -v " 1 "| awk '{print $2}'| sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `
+   		shc_list=`gtimeout --foreground 10s docker exec -u splunk -ti $i /opt/splunk/bin/splunk show shcluster-status -auth admin:hello| $GREP -i label|awk '{print $3}'| sort | uniq -c `
+		captain=`echo "$shc_list" | $GREP -v " 1 "| awk '{print $2}'| sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `
 		shc_members=`echo "$shc_list" | awk '{print $2}' |sed -e 's/^M//g' | tr -d '\r' | tr '\n' ' '`
-		curr_label=`docker exec -ti $i  sh -c "grep label /opt/splunk/etc/system/local/server.conf"| sed 's/shcluster_label = //g'|sed -e 's/^M//g' | tr -d '\r' | tr '\n' ' '`
-		dep_ip=`docker exec -u splunk -ti $i /opt/splunk/bin/splunk list shcluster-config  -auth admin:hello|grep deploy_fetch|sed 's/conf_deploy_fetch_url:https:\/\///g'|sed 's/:8089//g'|sed -e 's/^M//g' | tr -d '\r' | tr '\n' ' '|awk '{print $1}' `
-		dep=`docker ps -a|grep "$dep_ip"| awk -F' ' '{print $NF}'` #clean spaces
+		curr_label=`docker exec -ti $i  sh -c "$GREP label /opt/splunk/etc/system/local/server.conf"| sed 's/shcluster_label = //g'|sed -e 's/^M//g' | tr -d '\r' | tr '\n' ' '`
+		dep_ip=`docker exec -u splunk -ti $i /opt/splunk/bin/splunk list shcluster-config  -auth admin:hello|$GREP deploy_fetch|sed 's/conf_deploy_fetch_url:https:\/\///g'|sed 's/:8089//g'|sed -e 's/^M//g' | tr -d '\r' | tr '\n' ' '|awk '{print $1}' `
+		dep=`docker ps -a|$GREP "$dep_ip"| awk -F' ' '{print $NF}'` #clean spaces
 		curr_label=`echo "$curr_label"| awk -F' ' '{print $NF}'` #clean spaces
 		#----------------------------
 		#label change means new cluster started.
@@ -410,11 +417,11 @@ for i in `echo $1`;do      #loop thru all hosts
 		#echo "build_idxc_subgraph(): Checking host[$i]...."
 		curr_cm="$i"   #capture the name
 		#---build the idxc members list ----
-   		idxc_list=`gtimeout --foreground 10s docker exec -u splunk -ti "$curr_cm" /opt/splunk/bin/splunk show cluster-status -auth admin:hello| grep IDX|awk '{print $1}'| sort | uniq -c `
+   		idxc_list=`gtimeout --foreground 10s docker exec -u splunk -ti "$curr_cm" /opt/splunk/bin/splunk show cluster-status -auth admin:hello| $GREP IDX|awk '{print $1}'| sort | uniq -c `
 		#echo "idxc_list> [$idxc_list]"
 		idxc_members=`echo "$idxc_list" | awk '{print $2}' |sed -e 's/^M//g' | tr -d '\r' | tr  '\n' ' ' `
 		#echo "idxc_members> [$idxc_members]"
-		curr_label=`docker exec -ti $i  sh -c "grep label /opt/splunk/etc/system/local/server.conf"| sed 's/shcluster_label = //g'|sed -e 's/^M//g' | tr -d '\r' | tr '\n' ' '`
+		curr_label=`docker exec -ti $i  sh -c "$GREP label /opt/splunk/etc/system/local/server.conf"| sed 's/shcluster_label = //g'|sed -e 's/^M//g' | tr -d '\r' | tr '\n' ' '`
 		curr_label=`echo "$curr_label"| awk -F' ' '{print $NF}'` #clean spaces
 		#------------------------------------
 		#CM change means new cluster started.
