@@ -3030,13 +3030,13 @@ curr_row=""; curr_col=""
 curr_pos=(${rowscols[0]})
 curr_row=`echo $curr_pos|cut -d ";" -f1 `
 curr_col=`echo $curr_pos|cut -d ";" -f2 `
-#x=$(($pos + 1))
+x=$(($pos + 1))
 ROWS=$(tput lines)
 height_limit=$(( $ROWS - 2 ))
-printf "${Yellow}[$curr_row,$curr_col]${NC}"
+#printf "${Yellow}[$curr_row,$curr_col]${NC}"
 if [[ $curr_row -gt $height_limit ]]; then
 #	echo "---end of screen reached ---"
-	clear_screen_from "$curr_row" "0"
+	clear_screen_from "$x" "0"
 fi
 
 # Reset original terminal settings.
@@ -3073,7 +3073,8 @@ color="$2"
 text="$3"
 
 tput cup $pos 0
-printf "($pos,0)$color${text}${NC}\n"
+printf "$color${text}${NC}\n"
+#printf "($pos,0)$color${text}${NC}\n"
 x=$(($pos + 1))
 #tput smcup	#save screen
 clear_screen_from "$x" "0"
@@ -3117,8 +3118,8 @@ lm_list=`docker ps -a --filter name="LM|lm" --format "{{.Names}}"|sort| tr '\n' 
 cm_list=`docker ps -a --filter name="CM|cm" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
 
 clear
-display_title "1" "${BoldWhiteOnGreen}" ">>BUILDING SEARCH HEAD CLUSTER (SHC) :"
-display_title "2" "${LightPurple}" "------------------------------------"
+display_title "1" "${BoldWhiteOnBlue}" "   -- BUILDING SEARCH HEAD CLUSTER (SHC) --            "
+#display_title "2" "${LightPurple}" "------------------------------------"
 
 #printf "${LightPurple}>>BUILDING SEARCH HEAD CLUSTER (SHC):${NC}\n"
 #printf "${LightPurple}------------------------------------------${NC}\n\n"
@@ -3129,11 +3130,11 @@ if [ "$mode" == "AUTO" ]; then
     #DEPname="DEP"; DEPcount="1"; SHname="SH"; SHcount="$STD_SHC_COUNT";
 	label="$SHCLUSTERLABEL"
 	#printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
-	display_title "3" "${BoldWhiteOnYellow}" "=>PHASE1: Creating generic SH hosts"
+	display_title "3" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
 	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:$DEP_SHC_COUNT] SHC:[$SH_BASE:$STD_SHC_COUNT]${NC}\n\n" >&4
-	display_title "5" "${LightBlue}" "___________ Creating hosts __________________________"
 
 	#Basic services. Sequence is very important!
+	display_title "5" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts      " >&3
     create_splunk_container "$DMC_BASE" "1" ; dmc=$gLIST
     create_splunk_container "$LM_BASE" "1" ; lm=$gLIST
     make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
@@ -3141,6 +3142,7 @@ if [ "$mode" == "AUTO" ]; then
     make_lic_slave $lm $dep ; make_dmc_search_peer $dmc $dep
 
 	#The rest of SHs
+	display_title "5" "${BoldWhiteOnYellow}" "=> STEP#2: Creating SH hosts                  " >&3
     create_splunk_container "$SH_BASE" "$STD_SHC_COUNT" ; members_list="$gLIST"
 else
 	#Error checking (values should already have been passed at this point)
@@ -3192,12 +3194,12 @@ else
 	#fi
 	#printf "\n"
 
+	display_title "3" "${BoldWhiteOnYellow}" "=> PHASE2: Creating generic hosts               "
 
 	#printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
 	#printf "${LightPurple}>>BUILDING SEARCH HEAD CLUSTER (SHC):${NC}\n\n"
-	display_title "3" "${LightPurple}" "=>PHASE1: Creating generic SH hosts"
 	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n\n" >&4
-	display_title "5" "${LightBlue}" "___________ Creating hosts __________________________"
+	display_title "5" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts      " >&3
 	if [ "$build_dmc" == "1" ]; then
             create_splunk_container "$dmc" "1"; dmc=$gLIST
     fi
@@ -3210,14 +3212,14 @@ else
         create_splunk_container "$DEPname" "$DEP_SHC_COUNT" ; dep="$gLIST"
 		make_lic_slave $lm $dep
         make_dmc_search_peer $dmc $dep
+		display_title "5" "${BoldWhiteOnYellow}" "=> STEP#2: Creating SH hosts                  " >&3
         create_splunk_container "$SHname" "$SHcount" ; members_list="$gLIST"
 fi
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
 
 get_cursor_pos
-display_title "3" "${BoldWhiteOnYellow}" "=>PHASE2: Converting generic SH hosts into SHC"
-
-display_title "5" "${LightBlue}" "___________ STEP#1 (deployer configuration) ____________________________" >&3
+display_title "3" "${BoldWhiteOnGreen}" "=> PHASE2: Converting generic SH hosts into SHC "
+display_title "5" "${BoldWhiteOnGreen}" "=> STEP#1: Deployer configuration               " >&3
 
 ## from this point on all hosts should be created and ready. Next steps are SHCluster configurations ##########
 #DEPLOYER CONFIGURATION: (create [shclustering] stanza; set SecretKey and restart) -----
@@ -3240,7 +3242,7 @@ restart_splunkd "$dep"
 
 printf "${LightBlue}___________ Finished STEP#1 __________________________${NC}\n" >&3
 
-display_title "5" "${LightBlue}" "___________ STEP#2 (members configs) ________" >&3
+display_title "5" "${BoldWhiteOnGreen}" "=> STEP#2: Cluster members configureations      " >&3
 printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}After members_list loop> param2:[$2] members_list:[$members_list] sh_list:[$sh_list]${NC}\n" >&5
 for i in $members_list ; do
 	check_load	#throttle during SHC build
@@ -3281,7 +3283,7 @@ server_list=`echo ${server_list%?}`  # remove last comma in string
 printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} server_list:[$server_list]________${NC}\n" >&5
 printf "${LightBlue}___________ Finished STEP#2 __________________________${NC}\n" >&3
 
-display_title "5" "${LightBlue}" "___________ STEP#3 (configuring captain) ____" >&3
+display_title "5" "${BoldWhiteOnGreen}" "=> STEP#3: Captain configuration                " >&3
 printf "[${Purple}$i${NC}]${LightBlue} Configuring as Captain (last SH created)...${NC}\n"
 
 restart_splunkd "$i"  #last SH (captain) may not be ready yet, so force restart again
@@ -3294,19 +3296,21 @@ printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$i"
 printf "${LightBlue}___________ Finished STEP#3 __________________________${NC}\n" >&3
 
-display_title "5" "${LightBlue}" "___________ STEP#4 (cluster status)__________" >&3
-printf "[${Purple}$i${NC}]${LightBlue}==> Checking SHC status (on captain)...${NC}"
+display_title "5" "${BoldWhiteOnGreen}" "=> STEP#3: Verifying cluster statu              " >&3
+printf "[${Purple}$i${NC}]${LightBlue} Checking SHC status (on captain)...${NC}"
 
 CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk show shcluster-status -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`
 display_output "$OUT" "Captain" "2"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$i"
+echo
 printf "${LightBlue}___________ Finished STEP#4 (cluster status)__________${NC}\n\n" >&3
 
 END=$(date +%s);
 TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
 printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
+echo
 #count=`wc -w $CMDLOGBIN| awk '{print $1}' `
 #printf "${DarkGray}Number of Splunk config commands issued: [%s]${NC}\n" "$count"
 
