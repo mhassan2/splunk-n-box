@@ -181,9 +181,12 @@ Blue="\033[0;34m";              LightBlue="\033[1;34m"
 Purple="\033[0;35m";            LightPurple="\033[1;35m"
 Cyan="\033[0;36m";              LightCyan="\033[1;36m"
 LightGray="\033[0;37m";         DarkGray="\033[1;30m"
-BlackOnGreen="\033[30;48;5;82m"
-WhiteOnBurg="\033[30;48;5;88m"
 
+BlackOnGreen="\033[30;48;5;82m"
+BlackOnBurg="\033[30;48;5;88m"
+WhiteOnBurg="\033[37;48;5;88m"
+YellowOnBurg="\033[11;48;5;88m"
+GreenOnBurg="\033[32;48;5;88m"
 BoldWhiteOnRed="\033[1;1;5;41m"
 BoldWhiteOnGreen="\033[1;1;5;42m"
 BoldWhiteOnYellow="\033[1;1;5;43m"
@@ -1306,7 +1309,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #This function will set the splunk version to use for building containers.
 
 clear
-printf "${BoldYellowOnBlue}Manage Images -> CHANGE DEFAULT SPLUNK IMAGE MENU         ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE IMAGES -> CHANGE DEFUALT SPLUNK IMAGE MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -1348,13 +1351,17 @@ done
 #display_all_images "DEMO"
 count=0
 echo
-read -p "Select a number: " choice
+choice=""
+read -p $'Choose a number <\033[1;32mB\e[0m:Go Back>: ' choice
+if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 if [ -n "$choice" ]; then
 		START=$(date +%s)
 		image_name=(${list[$choice - 1]})
 		progress_bar_image_download "$image_name"
 		DEFAULT_SPLUNK_IMAGE="$image_name"
 		printf "${BrownOrange}${WARNING_EMOJI} Subsequent container builds (except DEMOs) will use the new splunk image ${Yellow}[$image_name]${NC}\n"
+	else
+		return 0
 fi
 
 return 0
@@ -1427,7 +1434,7 @@ return 0
 reset_all_splunk_passwords() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnBlue}RESET SPLUNK INSTANCES PASSWORD MENU                       ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> RESET SPLUNK INSTANCES PASSWORD MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -1450,6 +1457,7 @@ add_splunk_licenses() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${BoldWhiteOnBlue}ADD SPLUNK LICENSE MENU                                    ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> ADD SPLUNK LICENSE MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -1470,7 +1478,7 @@ return 0
 restart_all_splunkd() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnBlue}RESTART SPLUNK MENU                                        ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> RESTART SPLUNK INSTANCES MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -1570,7 +1578,7 @@ add_os_utils_to_demos() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #Add missing OS utils to all non-demo containers
 clear
-printf "${BoldWhiteOnGreen}ADD OS UTILS MENU                                         ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> ADD OS UTILS MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -1619,7 +1627,7 @@ dmc_list=`docker ps -a --filter name="DMC|dmc" --format "{{.Names}}"|sort`
 demo_list=`docker ps -a --filter name="DEMO|demo|WORKSHOP|workshop" --format "{{.Names}}"|sort`
 rdparty_list=`docker ps -a --filter name="3RDP|3rdp" --format "{{.Names}}"|sort`
 
-printf "${BoldWhiteOnYellow}ALL CONTAINERS GROUPED BY ROLE MENU                      ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> GROUP CONTAINERS BY ROLE MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -2154,7 +2162,8 @@ create_demo_container_from_list() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
-printf "${BoldYellowOnBlue}Manage containers -> CREATE & DOWNLOAD SPLUNK'S DEMO CONTAINERS MENU ${NC}\n"docker_status
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE CONTAINERS -> CREATE & DOWNLOAD DEMO CONTAINERS MENU"
+docker_status
 display_stats_banner
 printf "\n"
 printf "Demo images available from $SPLUNK_DOCKER_HUB:\n"
@@ -2307,7 +2316,7 @@ create_3rdp_container_from_list() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
-printf "${BoldYellowOnBlue}Manage containers -> CREATE 3RD PARTY CONTAINER MENU      ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE CONTAINERS -> CRREATE 3RD PARTY CONTAINERS MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -2458,25 +2467,49 @@ return
 
 #---------------------------------------------------------------------------------------------------------------
 screen_footer() {
-str="$1"
+Containers=$1; Running=$2; Paused=$3; Stopped=$4; Images=$5
+
+str="${WhiteOnBurg}Containers: ${GreenOnBurg}$Containers ${WhiteOnBurg}Running: ${GreenOnBurg}$Running ${WhiteOnBurg}Paused: ${GreenOnBurg}$Paused ${WhiteOnBurg}Stopped: ${GreenOnBurg}$Stopped ${WhiteOnBurg}Images: ${GreenOnBurg}$Images"
+#rows and cols are also detected in redraw function with a trap
 ROWS=$(tput lines)
 COLUMNS=$(tput cols)
+
 tput sc
-size=$((${#str} - 148))
-len=$(($COLUMNS - $size))
+#echo $str|wc -c;exit
+size=$((${#str}))
+size=$(($size - 140 ))	#remove escape code char count
+#dont pad if screen width less that str size
+if [ "$size" -gt "$COLUMNS" ]; then
+	len=1
+else
+	len=$(($COLUMNS - $size))
+fi
+
 pad=`printf '\x20%.0s' $(seq 1 $len)`
-tput cup $ROWS 0; printf "${BoldWhiteOnTurquoise} Docker status:${YELLOW}[${NC}$str${BoldWhiteOnTurquoise}${Yellow}]$pad${NC}"
+#tput cup $ROWS 0; printf "($COLUMNS-$size=$len)${WhiteOnBurg} Docker status:${YellowOnBurg} [${NC}$str${WhiteOnBurg}${YellowOnBurg}]$pad${NC}"
+tput cup $ROWS 0;printf "${WhiteOnBurg} Docker status:${YellowOnBurg} [${NC}$str${WhiteOnBurg}${YellowOnBurg}]$pad${NC}"
+
 tput rc
 return
 }	#end screen_footer()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 docker_status() {
-dockerinfo=`docker info|head -5|sed -e 's/^M//g'|tr -d '\r'|awk '{printf  "\033[1;1;5;46m" $1 "\033[1;31m" $2 "\033[1;1;5;46m " "\033[0m"}'`
+#\033[37;48;5;88m  \033[37;48;5;88m
+Containers=`docker info| $GREP -i Containers| awk '{print $2}'`
+Running=`docker info| $GREP -i Running| awk '{print $2}'`
+Paused=`docker info| $GREP -i Paused| awk '{print $2}'`
+Stopped=`docker info| $GREP -i Stopped| awk '{print $2}'`
+Images=`docker info| $GREP -i Images| awk '{print $2}'`
+dockerinfo="Containers: $Containers Running:$Running Paused:$Paused Stopped:$Stopped Images:$Images"
+#dockerinfo=`docker info|head -5|sed -e 's/^M//g'|tr -d '\r'|awk '{printf  "\033[37;48;5;88m " $1 " \033[32;48;5;88m"  $2 "\033[37;48;5;88m"  "\033[0m"}'`
+#dockerinfo=`docker info|head -5|sed -e 's/^M//g'|tr -d '\r'|awk '{printf  "\033[37;48;5;88m" $1 "\033[38;48;5;88m" $2 "\033[38;48;5;88m " "\033[0m"}'`
+#dockerinfo=`docker info|head -5|sed -e 's/^M//g'|tr -d '\r'|awk '{printf  "\033[1;1;5;46m" $1 "\033[1;31m" $2 "\033[1;1;5;46m " "\033[0m"}'`
 #dockerinfo_str="      ${YELLOW}[${NC}$dockerinfo${BoldWhiteOnTurquoise}${Yellow}]${NC}"
 #dockerinfo_str="${YELLOW}[${NC}$dockerinfo${BoldWhiteOnTurquoise}${Yellow}]${NC}"
 #tput cup 0 45; printf "($ROWS,$COLUMNS)$dockerinfo_str"
-screen_footer "$dockerinfo"
+#screen_footer "${dockerinfo}"
+screen_footer "$Containers" "$Running" "$Paused" "$Stopped" "$Images"
 return
 }	#end docker_status()
 #---------------------------------------------------------------------------------------------------------------
@@ -4087,7 +4120,7 @@ download_demo_image() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
-printf "${BoldYellowOnBlue}Manage Images -> DOWNLOAD DEMO IMAGES MENU                ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DOWNLOAD DEMO IMAGES MENU"
 docker_status
 display_stats_banner
 #printf "${BrownOrange}*Depending on time of the day downloads may take a while. Cached images are not downloaded! ${NC}\n"
@@ -4154,7 +4187,7 @@ download_3rdparty_image() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
-printf "${BoldYellowOnBlue}Manage Images -> DOWNLOAD 3RD PARTY IMAGES MENU           ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DOWNLOAD 3RD PARTY IMAGES MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -4221,7 +4254,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type=$1         #container type (ex DEMO, 3RDPARTY, empty for ALL)
 
 clear
-printf "${BoldWhiteOnYellow}LIST $type CONTAINERS MENU                                ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> LIST $type CONTAINERS MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -4242,7 +4275,7 @@ start_containers() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type=$1
 clear
-printf "${BoldWhiteOnYellow}START $type CONTAINERS MENU                              ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> START $type CONTAINERS MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -4285,7 +4318,7 @@ stop_containers() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type=$1
 clear
-printf "${BoldWhiteOnYellow}STOP $type CONTAINERS MENU                               ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> STOP $type CONTAINERS MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -4328,7 +4361,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type=$1
 
 clear
-printf "${BoldWhiteOnYellow}DELETE $type CONTAINERS MENU                             ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DELETE $type CONTAINERS MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -4509,7 +4542,7 @@ remove_images() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 type=$1
-printf "${BoldWhiteOnRed}REMOVE $type IMAGES MENU                                    ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> REMOVE $type IMAGES MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -4565,7 +4598,7 @@ show_all_images() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type=$1
 clear
-printf "${BoldWhiteOnRed}SHOW $type IMAGES MENU                                      ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> SHOW $type IMAGES MENU"
 docker_status
 display_stats_banner
 printf "\n"
@@ -4636,7 +4669,7 @@ return 0
 wipe_entire_system() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnGreen}WIPE CLEAN ENTIRE SYSTEM MENU                              ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> WIPE CLEAN SPLUNK N' BOX SYSTEM MENU"
 docker_status
 display_stats_banner
 printf "\n"
