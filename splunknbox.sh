@@ -467,7 +467,8 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #Delete ip aliases on the interface (OS dependent)
 
 clear
-printf "${BoldWhiteOnGreen}REMOVE IP ALIASES MENU ${NC}\n"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> REMOVE iP ALIASES"
+docker_status
 display_stats_banner
 printf "\n"
 #display_all_containers
@@ -1305,7 +1306,8 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #This function will set the splunk version to use for building containers.
 
 clear
-printf "${BoldYellowOnBlue}Manage Images -> CHANGE DEFAULT SPLUNK IMAGE MENU ${NC}\n"
+printf "${BoldYellowOnBlue}Manage Images -> CHANGE DEFAULT SPLUNK IMAGE MENU         ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 
@@ -1425,7 +1427,8 @@ return 0
 reset_all_splunk_passwords() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnBlue}RESET SPLUNK INSTANCES PASSWORD MENU ${NC}\n"
+printf "${BoldWhiteOnBlue}RESET SPLUNK INSTANCES PASSWORD MENU                       ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 display_all_containers
@@ -1446,7 +1449,8 @@ return 0
 add_splunk_licenses() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnBlue}ADD SPLUNK LICENSE MENU ${NC}\n"
+printf "${BoldWhiteOnBlue}ADD SPLUNK LICENSE MENU                                    ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 display_all_containers
@@ -1466,7 +1470,8 @@ return 0
 restart_all_splunkd() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnBlue}RESTART SPLUNK MENU ${NC}\n"
+printf "${BoldWhiteOnBlue}RESTART SPLUNK MENU                                        ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 display_all_containers
@@ -1489,7 +1494,7 @@ fullhostname=$1
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-get_cursor_pos
+check_display_limit
 
 if [ "$2" == "b" ]; then
 	printf " ${LightBlue}${ARROW_EMOJI}${NC}Restarting splunkd in the ${White}background${NC} " >&3
@@ -1517,7 +1522,7 @@ make_lic_slave() {
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-get_cursor_pos
+check_display_limit
 check_load
 lm=$1; hostname=$2;
 if [ -n "$lm" ]; then
@@ -1565,7 +1570,8 @@ add_os_utils_to_demos() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #Add missing OS utils to all non-demo containers
 clear
-printf "${BoldWhiteOnGreen}ADD OS UTILS MENU ${NC}\n"
+printf "${BoldWhiteOnGreen}ADD OS UTILS MENU                                         ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 printf "${BrownOrange}This option will add OS packages [vim net-tools telnet dnsutils] to all running demo containers only...\n"
@@ -1613,7 +1619,8 @@ dmc_list=`docker ps -a --filter name="DMC|dmc" --format "{{.Names}}"|sort`
 demo_list=`docker ps -a --filter name="DEMO|demo|WORKSHOP|workshop" --format "{{.Names}}"|sort`
 rdparty_list=`docker ps -a --filter name="3RDP|3rdp" --format "{{.Names}}"|sort`
 
-printf "${BoldWhiteOnYellow}ALL CONTAINERS GROUPED BY ROLE MENU ${NC}\n"
+printf "${BoldWhiteOnYellow}ALL CONTAINERS GROUPED BY ROLE MENU                      ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 #display_all_containers "DEMO"
@@ -1800,7 +1807,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #Always check if $dmc exist before processing
 
 dmc=$1; host=$2
-get_cursor_pos
+check_display_limit
 
 #adding search peer in DMC
 if [ -n "$dmc" ]; then
@@ -1998,7 +2005,7 @@ fi
 #fi
 #--------------------
 for (( a = 1; a <= count; a++ ))  ; do
-get_cursor_pos
+	check_display_limit
 	calc_next_seq_fullhostname_ip "$basename" "$count"	#function will return global $vip
 	construct_splunk_container $vip $fullhostname $lic_master $cluster_label $bindip_monitor
 	gLIST="$gLIST""$fullhostname "		#append last host create to the global LIST
@@ -2147,7 +2154,7 @@ create_demo_container_from_list() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
-printf "${BoldYellowOnBlue}Manage containers -> CREATE & DOWNLOAD SPLUNK'S DEMO CONTAINERS MENU ${NC}\n"
+printf "${BoldYellowOnBlue}Manage containers -> CREATE & DOWNLOAD SPLUNK'S DEMO CONTAINERS MENU ${NC}\n"docker_status
 display_stats_banner
 printf "\n"
 printf "Demo images available from $SPLUNK_DOCKER_HUB:\n"
@@ -2300,7 +2307,8 @@ create_3rdp_container_from_list() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
-printf "${BoldYellowOnBlue}Manage containers -> CREATE 3RD PARTY CONTAINER MENU ${NC}\n"
+printf "${BoldYellowOnBlue}Manage containers -> CREATE 3RD PARTY CONTAINER MENU      ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 printf "${BrownOrange}*Depending on the time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
@@ -2435,12 +2443,42 @@ return 0
 }	#end display_main_menu_help()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
+screen_header() {
+color="$1"
+str="$2"
+ROWS=$(tput lines)
+COLUMNS=$(tput cols)
+size=$((${#str} + 3))
+len=$(($COLUMNS - $size))
+pad=`printf '\x20%.0s' $(seq 1 $len)`
+tput cup 0 0; printf "$color ${str}$pad${NC}\n"
+return
+}	#end screen_header()
+#---------------------------------------------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------------------------------------------
+screen_footer() {
+str="$1"
+ROWS=$(tput lines)
+COLUMNS=$(tput cols)
+tput sc
+size=$((${#str} - 148))
+len=$(($COLUMNS - $size))
+pad=`printf '\x20%.0s' $(seq 1 $len)`
+tput cup $ROWS 0; printf "${BoldWhiteOnTurquoise} Docker status:${YELLOW}[${NC}$str${BoldWhiteOnTurquoise}${Yellow}]$pad${NC}"
+tput rc
+return
+}	#end screen_footer()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
 docker_status() {
 dockerinfo=`docker info|head -5|sed -e 's/^M//g'|tr -d '\r'|awk '{printf  "\033[1;1;5;46m" $1 "\033[1;31m" $2 "\033[1;1;5;46m " "\033[0m"}'`
-dockerinfo_str="${LightRed}[$dockerinfo]    "
-dockerinfo_str="      ${YELLOW}[${NC}$dockerinfo${BoldWhiteOnTurquoise}${Yellow}]${NC}\n"
-printf "$dockerinfo_str"
-}
+#dockerinfo_str="      ${YELLOW}[${NC}$dockerinfo${BoldWhiteOnTurquoise}${Yellow}]${NC}"
+#dockerinfo_str="${YELLOW}[${NC}$dockerinfo${BoldWhiteOnTurquoise}${Yellow}]${NC}"
+#tput cup 0 45; printf "($ROWS,$COLUMNS)$dockerinfo_str"
+screen_footer "$dockerinfo"
+return
+}	#end docker_status()
 #---------------------------------------------------------------------------------------------------------------
 
 #### DISPLAY MENU OPTIONS #####
@@ -2450,7 +2488,8 @@ display_main_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function displays user options for the main menu
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU "; docker_status
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU"
+docker_status
 display_stats_banner
 
 tput cup 5 25
@@ -2486,7 +2525,8 @@ display_splunk_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> SPLUNK MENU"; docker_status
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU  -> SPLUNK MENU"
+docker_status
 display_stats_banner
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
@@ -2515,7 +2555,8 @@ display_system_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> SYSTEM MENU"; docker_status
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> SYSTEM MENU"
+docker_status
 display_stats_banner
 printf "\n\n"
 
@@ -2535,7 +2576,8 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DEMOs MENU"; docker_status
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DEMOs MENU"
+docker_status
 display_stats_banner
 printf "\n"
 echo
@@ -2563,7 +2605,8 @@ return 0
 display_3rdparty_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> 3RD PARTY MENU"; docker_status
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> 3RD PARTY MENU"
+docker_status
 display_stats_banner
 printf "\n"
 echo
@@ -2591,7 +2634,8 @@ return 0
 display_clustering_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"; docker_status
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
+docker_status
 display_stats_banner
 printf "\n"
 echo
@@ -2617,7 +2661,8 @@ return 0
 display_ll_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnTurquoise}Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> LUNCH & LEARN MENU"; docker_status
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> LUNCH & LEARN MENU"
+docker_status
 display_stats_banner
 printf "\n"
 echo
@@ -2884,7 +2929,8 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 installtype=$1
 type=""
 clear
-printf "${BoldWhiteOnYellow}CONFIGURE LUNCH & LEARN CONTAINERS APPS/DATASETS MENU ${NC}\n"
+printf "${BoldWhiteOnYellow}CONFIGURE LUNCH & LEARN CONTAINERS APPS/DATASETS MENU    ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 display_all_containers
@@ -3003,7 +3049,7 @@ done
 #---------------------------------------------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------------------------------------------
-get_cursor_pos() {
+check_display_limit() {
 
 # Get current settings.
 if ! termios="$(stty -g 2>/dev/null)" ; then
@@ -3041,7 +3087,7 @@ fi
 
 # Reset original terminal settings.
 stty "$termios"
-}	#end get_cursor_pos()
+}	#end check_display_limit()
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
 clear_screen_from() {
@@ -3102,6 +3148,10 @@ if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 server_list=""    #used by STEP#3
 START=$(date +%s);
 
+clear
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
+docker_status
+
 #Extract parms from $1, if not we will prompt user later
 lm=`echo $1| $GREP -Po '(\s*\w*-*LM\d+)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
 cm=`echo $1| $GREP -Po '(\s*\w*-*CM\d+)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
@@ -3117,8 +3167,6 @@ sh_list=`docker ps -a --filter name="$SHname" --format "{{.Names}}"|sort| tr '\n
 lm_list=`docker ps -a --filter name="LM|lm" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
 cm_list=`docker ps -a --filter name="CM|cm" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
 
-clear
-display_title "1" "${BoldWhiteOnBlue}" "   -- BUILDING SEARCH HEAD CLUSTER (SHC) --            "
 #display_title "2" "${LightPurple}" "------------------------------------"
 
 #printf "${LightPurple}>>BUILDING SEARCH HEAD CLUSTER (SHC):${NC}\n"
@@ -3130,7 +3178,8 @@ if [ "$mode" == "AUTO" ]; then
     #DEPname="DEP"; DEPcount="1"; SHname="SH"; SHcount="$STD_SHC_COUNT";
 	label="$SHCLUSTERLABEL"
 	#printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
-	display_title "3" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
+	display_title "1" "${BoldWhiteOnBlue}" "   -- BUILDING SEARCH HEAD CLUSTER (SHC) --[$mode]     "
+	display_title "4" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
 	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:$DEP_SHC_COUNT] SHC:[$SH_BASE:$STD_SHC_COUNT]${NC}\n\n" >&4
 
 	#Basic services. Sequence is very important!
@@ -3144,7 +3193,8 @@ if [ "$mode" == "AUTO" ]; then
 	#The rest of SHs
 	display_title "5" "${BoldWhiteOnYellow}" "=> STEP#2: Creating SH hosts                  " >&3
     create_splunk_container "$SH_BASE" "$STD_SHC_COUNT" ; members_list="$gLIST"
-else
+else  ## MANUAL MODE ###
+	display_title "1" "${BoldWhiteOnBlue}" "   -- BUILDING SEARCH HEAD CLUSTER (SHC) --[$mode]     "
 	#Error checking (values should already have been passed at this point)
 	if [ -z "$label" ]; then
         read -p "Need to know SH cluster label ($SHCLUSTERLABEL)> " label ;
@@ -3193,11 +3243,8 @@ else
 	#	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 	#fi
 	#printf "\n"
-
-	display_title "3" "${BoldWhiteOnYellow}" "=> PHASE2: Creating generic hosts               "
-
-	#printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
-	#printf "${LightPurple}>>BUILDING SEARCH HEAD CLUSTER (SHC):${NC}\n\n"
+	clear_screen_from "2" "0"
+	display_title "4" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
 	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n\n" >&4
 	display_title "5" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts      " >&3
 	if [ "$build_dmc" == "1" ]; then
@@ -3217,8 +3264,7 @@ else
 fi
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
 
-get_cursor_pos
-display_title "3" "${BoldWhiteOnGreen}" "=> PHASE2: Converting generic SH hosts into SHC "
+display_title "4" "${BoldWhiteOnGreen}" "=> PHASE2: Converting generic SH hosts into SHC "
 display_title "5" "${BoldWhiteOnGreen}" "=> STEP#1: Deployer configuration               " >&3
 
 ## from this point on all hosts should be created and ready. Next steps are SHCluster configurations ##########
@@ -3296,7 +3342,7 @@ printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$i"
 printf "${LightBlue}___________ Finished STEP#3 __________________________${NC}\n" >&3
 
-display_title "5" "${BoldWhiteOnGreen}" "=> STEP#3: Verifying cluster statu              " >&3
+display_title "5" "${BoldWhiteOnGreen}" "=> STEP#3: Verifying SHC cluster status         " >&3
 printf "[${Purple}$i${NC}]${LightBlue} Checking SHC status (on captain)...${NC}"
 
 CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk show shcluster-status -auth $USERADMIN:$USERPASS "
@@ -3331,6 +3377,10 @@ if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
 START=$(date +%s);
 #$1 CMbasename:count   $2 IDXbasename:count  $3 LMbasename:count
+clear
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
+docker_status
+display_title "1" "${BoldWhiteOnBlue}" "   -- BUILDING INDEX CLUSTER (IDXC) --[$mode]          "
 
 check_load
 #Extract values from $1 if passed to us!
@@ -3351,12 +3401,11 @@ if [ "$mode" == "AUTO" ]; then
 	#CMname="CM"; DMCname="DMC"; LMname="LM";  IDXname="IDX"; IDXcount="$STD_IDXC_COUNT";
 	label="$IDXCLUSTERLABEL"
 	#printf "${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
-	printf "${LightPurple}>>BUILDING INDEX CLUSTER (IDX):${NC}\n"
-	printf "${LightPurple}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
+	display_title "4" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
 	printf "${DarkGray}Using base-names DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:$STD_IDXC_COUNT]${NC}\n\n" >&4
-    printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 
 	#Basic services. Sequence is very important!
+	display_title "5" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts      " >&3
 	create_splunk_container "$DMC_BASE" "1" ; dmc=$gLIST
 	create_splunk_container "$LM_BASE" "1" ; lm=$gLIST
 	make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
@@ -3364,6 +3413,7 @@ if [ "$mode" == "AUTO" ]; then
 	make_lic_slave $lm $cm ; make_dmc_search_peer $dmc $cm
 
 	#The rest of IDXs
+	display_title "5" "${BoldWhiteOnYellow}" "=> STEP#2: Creating IDX hosts                " >&3
     create_splunk_container "$IDX_BASE" "$STD_IDXC_COUNT" ; members_list="$gLIST"
 else
 	#Anything passed to function; user will NOT be prompted for it!
@@ -3422,11 +3472,10 @@ else
 
 	printf "\n"
 
-	#printf "\n${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
-	printf "${LightPurple}>>BUILDING INDEX CLUSTER (IDX):${NC}\n"
-	printf "${LightPurple}==>Starting PHASE1: Creating generic IDX hosts${NC}\n"
+	clear_screen_from "2" "0"
+	display_title "4" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
+	display_title "5" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts      " >&3
 	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:$IDXcount]${NC}\n\n" >&4
-	printf "${LightBlue}___________ Creating hosts __________________________${NC}\n"
 	if [ "$build_dmc" == "1" ]; then
                 create_splunk_container "$dmc" "1"; dmc=$gLIST
     fi
@@ -3442,6 +3491,8 @@ else
     fi
 
 	#create the remaining IDXs
+	clear_screen_from "2" "0"
+	display_title "5" "${BoldWhiteOnYellow}" "=> STEP#2: Creating IDX hosts                " >&3
     create_splunk_container "$IDXname" "$IDXcount" ; members_list="$gLIST"
 
 fi
@@ -3449,10 +3500,8 @@ fi
 
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
 printf "\n"
-printf "${LightPurple}==>Starting PHASE2: Converting generic IDX hosts into IDXC${NC}\n"
-
-printf "${LightBlue}____________ Starting STEP#1 (Configuring IDX Cluster Master) __${NC}\n" >&3
-printf "[${Purple}$cm${NC}]${LightBlue} Configuring Cluster Master... ${NC}\n"
+display_title "4" "${BoldWhiteOnGreen}" "=> PHASE2: Converting generic IDX hosts into IDXC "
+display_title "5" "${BoldWhiteOnGreen}" "=> STEP#1: ClusterMaster configuration            " >&3
 
 #-------CM config---
 bind_ip_cm=`docker inspect --format '{{ .HostConfig }}' $cm| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
@@ -3466,7 +3515,7 @@ restart_splunkd "$cm"
 #assign_server_role "$i" ""
 printf "${LightBlue}____________ Finished STEP#1 __________________________${NC}\n" >&3
 
-printf "${LightBlue}____________ Starting STEP#2 (configuring IDXC nodes) ___${NC}\n" >&3
+display_title "5" "${BoldWhiteOnGreen}" "=> STEP#2: IDXC nodes configuration               " >&3
 for i in $members_list ; do
 	check_load	#throttle during IDXC build
 
@@ -3497,7 +3546,8 @@ for i in $members_list ; do
 done
 printf "${LightBlue}____________ Finished STEP#2 __________________________${NC}\n" >&3
 
-printf "${LightBlue}____________ Starting STEP#3 (IDXC status) ____________${NC}\n" >&3
+display_title "5" "${BoldWhiteOnGreen}" "=> STEP#3: Verifying IDXC status                " >&3
+
 printf "[${Purple}$cm${NC}]${LightBlue}==> Checking IDXC status...${NC}"
 CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk show cluster-status -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`; display_output "$OUT" "Replication factor" "2"
@@ -3527,6 +3577,9 @@ build_single_site() {
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
+clear
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
+docker_tatus
 check_load
 START_TIME=$(date +%s);
 #extract these values from $1 if passed to us!
@@ -3534,7 +3587,6 @@ lm=`echo $1| $GREP -Po '(\s*\w*-*LM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]
 cm=`echo $1| $GREP -Po '(\s*\w*-*CM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
 CMname=`echo $1| $GREP -Po '(\s*\w*-*CM)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
 CMcount=`echo $1| $GREP -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space:]]' `
-
 #cm_list=`docker ps -a --filter name="$CMname" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
 
 if [ "$1" == "AUTO" ]; then
@@ -3544,8 +3596,10 @@ if [ "$1" == "AUTO" ]; then
 	shc_label="$SHCLUSTERLABEL"
 	idxc_label="$IDXCLUSTERLABEL"
 	site="SITE01"
+	display_title "1" "${BoldWhiteOnBlue}" "   -- BUILDING SINGLE SITE CLUSTER ($site) --[$mode]   "
 else
 	mode="MANUAL"
+	display_title "1" "${BoldWhiteOnBlue}" "   -- BUILDING SINGLE SITE CLUSTER ($site) --[$mode]   "
 	read -p "Enter SH cluster label (default $SHCLUSTERLABEL): " shc_label
     shc_label=`echo $shc_label| tr '[a-z]' '[A-Z]'`; if [ -z "$shc_label" ]; then shc_label="$SHCLUSTERLABEL";  fi
 
@@ -3584,8 +3638,7 @@ printf "\n"
 
 
 #printf "${Yellow}==>[$mode] Building single-site ($site)...${NC}\n\n"
-printf "${LightPurple}==>Building single-site ($site)...${NC}\n\n"
-printf "${LightBlue}____________ Building basic services [LM, DMC, CM] ___________________${NC}\n" >&3
+display_title "4" "${BoldWhiteOnYellow}" "=> PHASE1: Building basic services [LM,DMC,CM]    "
 #Basic services
 #Sequence is very important!
 create_splunk_container "$site$DMC_BASE" "1" ; dmc=$gLIST
@@ -3600,6 +3653,7 @@ make_lic_slave $lm $hf ; #make_dmc_search_peer $dmc $hf
 
 printf "${LightBlue}____________ Finished building basic services ___________________${NC}\n\n" >&3
 
+display_title "4" "${BoldWhiteOnGreen}" "=> PHASE2: Building IDXC & SHC                    "
 create_single_idxc "$site$IDX_BASE:$IDXcount $dmc $cm:1 $lm LABEL:$idxc_label"
 create_single_shc "$site$SH_BASE:$SHcount $site$DEP_BASE:1 $dmc $cm $lm LABEL:$shc_label"
 
@@ -4041,7 +4095,8 @@ download_demo_image() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
-printf "${BoldYellowOnBlue}Manage Images -> DOWNLOAD DEMO IMAGES MENU ${NC}\n"
+printf "${BoldYellowOnBlue}Manage Images -> DOWNLOAD DEMO IMAGES MENU                ${NC}\n"
+docker_status
 display_stats_banner
 #printf "${BrownOrange}*Depending on time of the day downloads may take a while. Cached images are not downloaded! ${NC}\n"
 printf "\n"
@@ -4107,7 +4162,8 @@ download_3rdparty_image() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
-printf "${BoldYellowOnBlue}Manage Images -> DOWNLOAD 3RD PARTY IMAGES MENU ${NC}\n"
+printf "${BoldYellowOnBlue}Manage Images -> DOWNLOAD 3RD PARTY IMAGES MENU           ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 printf "${BrownOrange}*Depending on time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
@@ -4173,7 +4229,8 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type=$1         #container type (ex DEMO, 3RDPARTY, empty for ALL)
 
 clear
-printf "${BoldWhiteOnYellow}LIST $type CONTAINERS MENU ${NC}\n"
+printf "${BoldWhiteOnYellow}LIST $type CONTAINERS MENU                                ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 display_all_containers "$type"
@@ -4193,7 +4250,8 @@ start_containers() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type=$1
 clear
-printf "${BoldWhiteOnYellow}START $type CONTAINERS MENU ${NC}\n"
+printf "${BoldWhiteOnYellow}START $type CONTAINERS MENU                              ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 display_all_containers "$type"
@@ -4235,7 +4293,8 @@ stop_containers() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type=$1
 clear
-printf "${BoldWhiteOnYellow}STOP $type CONTAINERS MENU ${NC}\n"
+printf "${BoldWhiteOnYellow}STOP $type CONTAINERS MENU                               ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 display_all_containers "$type"
@@ -4277,7 +4336,8 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type=$1
 
 clear
-printf "${BoldWhiteOnYellow}DELETE $type CONTAINERS MENU ${NC}\n"
+printf "${BoldWhiteOnYellow}DELETE $type CONTAINERS MENU                             ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 display_all_containers "$type"
@@ -4457,7 +4517,8 @@ remove_images() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 type=$1
-printf "${BoldWhiteOnRed}REMOVE $type IMAGES MENU ${NC}\n"
+printf "${BoldWhiteOnRed}REMOVE $type IMAGES MENU                                    ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 printf "Current list of all $type images downloaded on this system:\n"
@@ -4512,7 +4573,8 @@ show_all_images() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type=$1
 clear
-printf "${BoldWhiteOnRed}SHOW $type IMAGES MENU ${NC}\n"
+printf "${BoldWhiteOnRed}SHOW $type IMAGES MENU                                      ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 printf "Current list of $type images downloaded on this system:\n"
@@ -4582,7 +4644,8 @@ return 0
 wipe_entire_system() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-printf "${BoldWhiteOnGreen}WIPE CLEAN ENTIRE SYSTEM MENU ${NC}\n"
+printf "${BoldWhiteOnGreen}WIPE CLEAN ENTIRE SYSTEM MENU                              ${NC}\n"
+docker_status
 display_stats_banner
 printf "\n"
 printf "${DONT_ENTER_EMOJI}${LightRed} WARNING!${NC}\n"
@@ -4748,9 +4811,9 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 redraw() {
-        #echo "Width = $(tput cols) Height = $(tput lines)"
-		Width = $(tput cols)
-		Height = $(tput lines)
+#This function will execute when the term is resized
+read ROWS COLUMNS < <(stty size)
+#echo "$ROWS $COLUMNS"
 }
 #---------------------------------------------------------------------------------------------------------------
 
