@@ -2448,7 +2448,7 @@ color="$1"
 str="$2"
 ROWS=$(tput lines)
 COLUMNS=$(tput cols)
-size=$((${#str} + 3))
+size=$((${#str} - 9 ))
 len=$(($COLUMNS - $size))
 pad=`printf '\x20%.0s' $(seq 1 $len)`
 tput cup 0 0; printf "$color ${str}$pad${NC}\n"
@@ -3167,18 +3167,12 @@ sh_list=`docker ps -a --filter name="$SHname" --format "{{.Names}}"|sort| tr '\n
 lm_list=`docker ps -a --filter name="LM|lm" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
 cm_list=`docker ps -a --filter name="CM|cm" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
 
-#display_title "2" "${LightPurple}" "------------------------------------"
-
-#printf "${LightPurple}>>BUILDING SEARCH HEAD CLUSTER (SHC):${NC}\n"
-#printf "${LightPurple}------------------------------------------${NC}\n\n"
-#saved_cursor=$(tput sc)
 if [ "$mode" == "AUTO" ]; then
 #	tput rc		#restore cursor from saved pos
 #	tput cup $saved_cursor 0
     #DEPname="DEP"; DEPcount="1"; SHname="SH"; SHcount="$STD_SHC_COUNT";
 	label="$SHCLUSTERLABEL"
-	#printf "\n${Yellow}[$mode]>>BUILDING SEARCH HEAD CLUSTER!${NC}\n\n"
-	display_title "1" "${BoldWhiteOnBlue}" "   -- BUILDING SEARCH HEAD CLUSTER (SHC) --[$mode]     "
+	display_title "2" "${BoldWhiteOnBlue}" "   -- BUILDING SEARCH HEAD CLUSTER (SHC) --[$mode]     "
 	display_title "4" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
 	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:$DEP_SHC_COUNT] SHC:[$SH_BASE:$STD_SHC_COUNT]${NC}\n\n" >&4
 
@@ -3194,7 +3188,7 @@ if [ "$mode" == "AUTO" ]; then
 	display_title "5" "${BoldWhiteOnYellow}" "=> STEP#2: Creating SH hosts                  " >&3
     create_splunk_container "$SH_BASE" "$STD_SHC_COUNT" ; members_list="$gLIST"
 else  ## MANUAL MODE ###
-	display_title "1" "${BoldWhiteOnBlue}" "   -- BUILDING SEARCH HEAD CLUSTER (SHC) --[$mode]     "
+	display_title "2" "${BoldWhiteOnBlue}" "   -- BUILDING SEARCH HEAD CLUSTER (SHC) --[$mode]     "
 	#Error checking (values should already have been passed at this point)
 	if [ -z "$label" ]; then
         read -p "Need to know SH cluster label ($SHCLUSTERLABEL)> " label ;
@@ -3243,7 +3237,7 @@ else  ## MANUAL MODE ###
 	#	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 	#fi
 	#printf "\n"
-	clear_screen_from "2" "0"
+	clear_screen_from "3" "0"
 	display_title "4" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
 	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n\n" >&4
 	display_title "5" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts      " >&3
@@ -3380,7 +3374,7 @@ START=$(date +%s);
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
 docker_status
-display_title "1" "${BoldWhiteOnBlue}" "   -- BUILDING INDEX CLUSTER (IDXC) --[$mode]          "
+display_title "2" "${BoldWhiteOnBlue}" "   -- BUILDING INDEX CLUSTER (IDXC) --[$mode]          "
 
 check_load
 #Extract values from $1 if passed to us!
@@ -3400,7 +3394,6 @@ idx_list=`docker ps -a --filter name="$IDXname" --format "{{.Names}}"|sort| tr '
 if [ "$mode" == "AUTO" ]; then
 	#CMname="CM"; DMCname="DMC"; LMname="LM";  IDXname="IDX"; IDXcount="$STD_IDXC_COUNT";
 	label="$IDXCLUSTERLABEL"
-	#printf "${Yellow}[$mode]>>BUILDING INDEX CLUSTER${NC}\n"
 	display_title "4" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
 	printf "${DarkGray}Using base-names DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:$STD_IDXC_COUNT]${NC}\n\n" >&4
 
@@ -3472,7 +3465,7 @@ else
 
 	printf "\n"
 
-	clear_screen_from "2" "0"
+	clear_screen_from "3" "0"
 	display_title "4" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
 	display_title "5" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts      " >&3
 	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:$IDXcount]${NC}\n\n" >&4
@@ -3491,7 +3484,7 @@ else
     fi
 
 	#create the remaining IDXs
-	clear_screen_from "2" "0"
+	clear_screen_from "3" "0"
 	display_title "5" "${BoldWhiteOnYellow}" "=> STEP#2: Creating IDX hosts                " >&3
     create_splunk_container "$IDXname" "$IDXcount" ; members_list="$gLIST"
 
@@ -3596,10 +3589,10 @@ if [ "$1" == "AUTO" ]; then
 	shc_label="$SHCLUSTERLABEL"
 	idxc_label="$IDXCLUSTERLABEL"
 	site="SITE01"
-	display_title "1" "${BoldWhiteOnBlue}" "   -- BUILDING SINGLE SITE CLUSTER ($site) --[$mode]   "
+	display_title "2" "${BoldWhiteOnBlue}" "   -- BUILDING SINGLE SITE CLUSTER ($site) --[$mode]   "
 else
 	mode="MANUAL"
-	display_title "1" "${BoldWhiteOnBlue}" "   -- BUILDING SINGLE SITE CLUSTER ($site) --[$mode]   "
+	display_title "2" "${BoldWhiteOnBlue}" "   -- BUILDING SINGLE SITE CLUSTER ($site) --[$mode]   "
 	read -p "Enter SH cluster label (default $SHCLUSTERLABEL): " shc_label
     shc_label=`echo $shc_label| tr '[a-z]' '[A-Z]'`; if [ -z "$shc_label" ]; then shc_label="$SHCLUSTERLABEL";  fi
 
@@ -3637,7 +3630,6 @@ printf "\n"
 printf "\n"
 
 
-#printf "${Yellow}==>[$mode] Building single-site ($site)...${NC}\n\n"
 display_title "4" "${BoldWhiteOnYellow}" "=> PHASE1: Building basic services [LM,DMC,CM]    "
 #Basic services
 #Sequence is very important!
