@@ -1407,12 +1407,12 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear_if_limit_reached_from "$R_ROLL"
 check_load
 CMD="docker cp $SPLUNK_LIC_DIR  $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
-printf " ${LightBlue}${ARROW_EMOJI}${NC}Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "" "3"
+printf " ${LightBlue}${ARROW_EMOJI}${NC}Copying license file(s)." >&3 ; display_output "$OUT" "" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$1"
 
 if ( compare "$1" "LM" ); then
-	printf " ${LightBlue}${ARROW_EMOJI}${NC}*LM* host! Forcing immediate splunkd restart.Please wait " >&3
+	printf " ${LightBlue}${ARROW_EMOJI}${NC}*LM* Forcing splunkd restart.Please wait " >&3
 	docker exec -u splunk -ti $1  /opt/splunk/bin/splunk restart > /dev/null >&1
 	printf "${Green} Done! ${NC}\n" >&3
 fi
@@ -2096,7 +2096,7 @@ CMD="docker run -d \
 if [ "$fullhostname" == "$MASTER_CONTAINER" ]; then
 	printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${Yellow}Creating docker monitor container.This is created once in the entire system! ${NC} "
 else
-	printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating new splunk docker container ${NC} "
+	printf "[${LightGreen}$fullhostname${NC}:${Green}$vip${NC}] ${LightBlue}Creating splunk container ${NC} "
 fi
 OUT=`$CMD` ; display_output "$OUT" "" "2"
 #CMD=`echo $CMD | sed 's/\t//g' `;
@@ -2128,7 +2128,7 @@ else
 fi
 
 #custom_login_screen() will not change pass for DEMO-ES* or DEMO-VMWARE*
-printf " ${LightBlue}${ARROW_EMOJI}${NC}Splunk initialization (password, licenses, custom screen, http)..." >&3
+printf " ${LightBlue}${ARROW_EMOJI}${NC}Splunk initialization." >&3
 custom_login_screen "$vip" "$fullhostname"
 
 #Misc OS stuff
@@ -3121,7 +3121,7 @@ curr_col=`echo $curr_pos|cut -d ";" -f2 `
 #x=$(($pos + 1))
 ROWS=$(tput lines)
 height_limit=$(( $ROWS - 2 ))
-printf "${Yellow}[R:$curr_row L:$height_limit]${NC}"
+#printf "${Yellow}[R:$curr_row L:$height_limit]${NC}"  #DEBUG
 if [[ $curr_row -ge $height_limit ]]; then
 	printf "${LightRed}---end of screen reached ---"; sleep 2
 	if [ -n "$prompt" ]; then
@@ -3175,6 +3175,7 @@ return
 #------------------------------------------------------------------------------------------------------
 configure_deployer() {
 dep="$1"
+tput_el_ed_from "$R_ROLL"
 printf "[${Purple}$dep${NC}]${LightBlue} Configuring Deployer ... ${NC}\n"
 bind_ip_dep=`docker inspect --format '{{ .HostConfig }}' $dep| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 txt="\n #-----Modified by Docker Management script ----\n [shclustering]\n pass4SymmKey = $MYSECRET \n shcluster_label = $label\n"
@@ -3259,7 +3260,7 @@ return
 }	#end configure_captain()
 #-----------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------
-checks_shc_status() {
+check_shc_status() {
 members_list="$1"
 
 tput_el_ed_from "$R_ROLL"
@@ -3293,7 +3294,8 @@ if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
 server_list=""    #used by STEP#3
 START=$(date +%s);
-clear
+
+tput_el_ed_from "$R_BUILD"
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
 
 #Extract parms from $1, if not we will prompt user later
@@ -3466,8 +3468,8 @@ configure_idxc_members() {
 members_list="$1"
 label="$2"
 lm="$3"
-
 tput_el_ed_from "$R_ROLL"
+
 for member in $members_list ; do
 	check_load	#throttle during IDXC build
 	printf "[${Purple}$member${NC}]${LightBlue} Making search peer... ${NC}\n"
@@ -3520,7 +3522,8 @@ create_single_idxc() {
 #$1 AUTO or MANUAL mode
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-clear
+
+tput_el_ed_from "$R_BUILD"
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
 START=$(date +%s);
@@ -3686,7 +3689,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
 check_load
-START_TIME=$(date +%s);
+START2=$(date +%s);
 #extract these values from $1 if passed to us!
 lm=`echo $1| $GREP -Po '(\s*\w*-*LM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
 cm=`echo $1| $GREP -Po '(\s*\w*-*CM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
@@ -3697,14 +3700,14 @@ CMcount=`echo $1| $GREP -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space:]]' `
 if [ "$1" == "AUTO" ]; then
 	mode="AUTO"
 	site="SITE01"
-	printf_from "$R_SITE" "${BoldWhiteOnYellow}" "-- BUILDING SINGLE SITE CLUSTER --[$site][AUTO]  "
+	printf_from "$R_SITE" "${BoldWhiteOnPink}" "-- BUILDING SINGLE SITE CLUSTER --[$site][AUTO]  "
 	IDXcount="$STD_IDXC_COUNT"
 	SHcount="$STD_SHC_COUNT"
 	shc_label="$SHCLUSTERLABEL"
 	idxc_label="$IDXCLUSTERLABEL"
 else
 	mode="MANUAL"
-	printf_from "$R_SITE" "${BoldWhiteOnYellow}" "-- BUILDING SINGLE SITE CLUSTER --[$site][MANUAL]"
+	printf_from "$R_SITE" "${BoldWhiteOnPink}" "-- BUILDING SINGLE SITE CLUSTER --[$site][MANUAL]"
 	read -p "Enter SH cluster label (default $SHCLUSTERLABEL): " shc_label
     shc_label=`echo $shc_label| tr '[a-z]' '[A-Z]'`; if [ -z "$shc_label" ]; then shc_label="$SHCLUSTERLABEL";  fi
 
@@ -3761,7 +3764,7 @@ create_single_shc "$site$SH_BASE:$SHcount $site$DEP_BASE:1 $dmc $cm $lm LABEL:$s
 
 #print_stats $START_TIME ${FUNCNAME}
 END=$(date +%s);
-TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
+TIME=`echo $((END-START2)) | awk '{print int($1/60)":"int($1%60)}'`
 printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
 
 
@@ -3776,7 +3779,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
 
 mode=$1		#either "AUTO" or "MANUAL"
-START_TIME=$(date +%s);
+START3=$(date +%s);
 
 check_load
 s=""; sites_str=""     			#used with "splunk edit cluster-config" on CM
@@ -3794,7 +3797,7 @@ if [ "$mode" == "AUTO" ]; then
     sites_str="site1,site2,site3"
 	first_site=`echo $SITEnames|awk '{print $1}'`		#where basic services CM,LM resides
 	cm=$first_site"CM01"
-	printf_from "$R_SITE" "${BoldWhiteOnBlue}"   "   -- BUILDING MULTI SITE CLUSTER  --[$site]      "
+	printf_from "$R_SITE" "${BoldWhiteOnPink}"   "   -- BUILDING MULTI SITE CLUSTER  --[$site]      "
 else
 	read -p "How many LOCATIONS to build (default 3)?  " count
     if [ -z "$count" ]; then count=3; fi
@@ -3825,7 +3828,7 @@ fi
 
 #------- Finished capturing sites names/basic services names ------------------
 
-printf_from "$R_SITE" "${BoldWhiteOnBlue}"   "   -- BUILDING MULTI SITE CLUSTER  --[$site]      "
+printf_from "$R_SITE" "${BoldWhiteOnPink}"   "   -- BUILDING MULTI SITE CLUSTER  --[$site]      "
 #printf "\n\n${BoldYellowOnBlue}[$mode] Building site-to-site cluster...${NC}\n"
 printf "${DarkGray}Using Locations:[$SITEnames] CM:[$cm] First_site:[$first_site] ${NC}\n\n" >&4
 
@@ -4721,22 +4724,35 @@ if [ $count == 0 ]; then
         return 0
 fi
 if [ "$type" == "3RDP" ]; then
-	id_list=$(docker images  -a| grep -v "REPOSITORY" | egrep -iv "DEMO|WORKSHOP"| grep -iv "splunk"| awk '{print $3}'| tr '\n' ' ')
+	id_list=$(docker images  -a| grep -v "REPOSITORY" |sort|egrep -iv "DEMO|WORKSHOP"| grep -iv "splunk"| awk '{print $3}'| tr '\n' ' ')
 
 elif [ "$type" == "DEMO" ] || [ "$type" == "WORKSHOP" ]; then
-	id_list=$(docker images  -a| grep -v "REPOSITORY" | egrep -i "DEMO|WORKSHOP" | awk '{print $3}'| tr '\n' ' ')
+	id_list=$(docker images  -a| grep -v "REPOSITORY" |sort| egrep -i "DEMO|WORKSHOP" | awk '{print $3}'| tr '\n' ' ')
 else
-	id_list=$(docker images  -a| grep -v "REPOSITORY" | awk '{print $3}'| tr '\n' ' ')
+	id_list=$(docker images  -a| grep -v "REPOSITORY"|sort | awk '{print $3}'| tr '\n' ' ')
 fi
+
+tput cup 3 0
+printf "${BoldWhiteOnRed}        Image%-13s Tag%-7s Created%-6s Size%-8s Repository%-2s                   ${NC}\n"
+
 count=0
 for id in $id_list; do
-        let count++
-        imagename=`docker images|grep  $id | awk '{print $1}'`
-        imagetag=`docker images|grep  $id | awk '{print $2}'`
-        created=`docker images|grep  $id | awk '{print $4,$5,$6}'`
-        size=`docker images|grep  $id | awk '{print $7,$8}'`
-        sizebytes=`docker images|grep  $id | awk '{print $7,$8}'`
-        printf "${LightBlue}$count) ${NC}Name:${LightBlue}%-50s ${NC}Tag:${LightBlue}%-10s ${NC}Size:${LightBlue}%-10s ${NC}Created:${LightBlue}%-15s ${NC}\n" "$imagename" "$imagetag" "$size" "$created"
+    let count++
+    imagename=`docker images|grep  $id | awk '{print $1}' | rev | cut -d"/" -f1 | rev`
+    repo=`docker images|grep  $id | awk '{print $1}' | cut -d"/" -f1 `
+    imagetag=`docker images|grep  $id | awk '{print $2}'`
+    created=`docker images|grep  $id | awk '{print $4,$5,$6}'`
+    size=`docker images|grep  $id | awk '{print $7,$8}'`
+    sizebytes=`docker images|grep  $id | awk '{print $7,$8}'`
+	fmt_i="%-2s"
+	fmt_imagename="%-20s"
+	fmt_imagetag="%-10s"
+	fmt_created="%-15s"
+	fmt_size="%-12s"
+	fmt_repo="%-12s"
+    printf "${LightCyan}$fmt_i) $fmt_imagename $fmt_imagetag $fmt_created $fmt_size $fmt_repo ${NC}\n" \
+			"$count" "$imagename" "$imagetag" "$created" "$size" "$repo"
+	clear_if_limit_reached_from "3" "p"
 done
 printf "count: %s\n\n" $count
 
@@ -4932,6 +4948,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 redraw() {
 #This function will execute when the term is resized
+tput setab 0
 read ROWS COLUMNS < <(stty size)
 #echo "$ROWS $COLUMNS"
 }
