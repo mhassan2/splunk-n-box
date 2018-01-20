@@ -170,6 +170,15 @@ LOCAL_SPLUNKD="/opt/splunk/bin/splunk"  #don't run local splunkd instance on doc
 LOW_MEM_THRESHOLD=6.0				#threshold of recommended free system memory in GB
 DOCKER_MIN_VER=1.13.1				#min recommended docker version
 #----------------------------------------
+#--tput (R,0) locations ---------
+R_TITLE="0"
+R_STATUS="1"
+R_SITE="2"
+R_BUILD="3"
+R_PHASE="4"
+R_STEP="5"
+R_ROLL="7"
+
 #--------COLORES ESCAPE CODES------------
 #for i in `seq 1 100`; do printf "\033[48;5;${i}m${i} "; done
 NC='\033[0m' # No Color
@@ -475,7 +484,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> REMOVE iP ALIASES"
-display_stats_banner
 printf "\n"
 #display_all_containers
 echo
@@ -1208,6 +1216,7 @@ return 0
 pausing() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #$1=seconds
+#return #debug
 
 for c in $(seq 1 $1); do
 	echo -ne " ${LighBlue}${ARROW_EMOJI}${NC}Pausing $1 seconds... ${Yellow}$c\r"  >&3
@@ -1265,6 +1274,7 @@ return 0
 is_splunkd_running() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
+clear_if_limit_reached_from "$R_ROLL"
 fullhostname=$1
 check_load
 
@@ -1313,7 +1323,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE IMAGES -> CHANGE DEFUALT SPLUNK IMAGE MENU"
-display_stats_banner
 printf "\n"
 
 #count=`wc -l $CMD`
@@ -1344,6 +1353,7 @@ for image_name in $retrieved_images_list; do
         printf "${DarkGray}NOT CACHED! ${NC}\n"
     fi
     let counter++
+	clear_if_limit_reached_from "$R_ROLL"
 done
 #count=`docker images |grep -i "splunk_"|wc -l`
 #if [ $count == 0 ]; then
@@ -1380,6 +1390,7 @@ for i in `docker ps --format "{{.Names}}"`; do
         if($3=="not")           {$3="\033[31m" $3 "\033[0m" }  \
         if($3=="running")       {$3="\033[32m" $3 "\033[0m" } ; \
         print $1,$2,$3,$4,$5 }'
+		clear_if_limit_reached_from "$R_ROLL"
 done
 return 0
 }	#end splunkd_status_all()
@@ -1393,6 +1404,7 @@ add_license_file() {
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
+clear_if_limit_reached_from "$R_ROLL"
 check_load
 CMD="docker cp $SPLUNK_LIC_DIR  $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
 printf " ${LightBlue}${ARROW_EMOJI}${NC}Copying license file(s). Will override if later became license-slave " >&3 ; display_output "$OUT" "" "3"
@@ -1437,7 +1449,6 @@ reset_all_splunk_passwords() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> RESET SPLUNK INSTANCES PASSWORD MENU"
-display_stats_banner
 printf "\n"
 display_all_containers
 
@@ -1448,6 +1459,7 @@ for host_name in `docker ps --format "{{.Names}}"`; do
                 printf "${Purple}$host_name${NC}: Admin password reset to [hello]\n"
                 reset_splunk_passwd $host_name
         fi
+		clear_if_limit_reached_from "$R_ROLL"
 done
 echo
 return 0
@@ -1459,7 +1471,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 printf "${BoldWhiteOnBlue}ADD SPLUNK LICENSE MENU                                    ${NC}\n"
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> ADD SPLUNK LICENSE MENU"
-display_stats_banner
 printf "\n"
 display_all_containers
 
@@ -1470,6 +1481,7 @@ for host_name in `docker ps --format "{{.Names}}"`; do
 		printf "${Purple}$host_name${NC}:"
 		add_license_file $host_name
         fi
+		clear_if_limit_reached_from "$R_ROLL"
 done
 return 0
 }	#end add_splunk_licenses()
@@ -1479,7 +1491,6 @@ restart_all_splunkd() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> RESTART SPLUNK INSTANCES MENU"
-display_stats_banner
 printf "\n"
 display_all_containers
 
@@ -1490,6 +1501,7 @@ for host_name in `docker ps --format "{{.Names}}"`; do
 		printf "${Purple}$host_name${NC}:"
      		restart_splunkd "$host_name"
         fi
+		clear_if_limit_reached_from "$R_ROLL"
 done
 return 0
 }	#end restart_all_splunkd()
@@ -1501,7 +1513,7 @@ fullhostname=$1
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-clear_if_limit_reached_from
+clear_if_limit_reached_from "$R_ROLL"
 
 if [ "$2" == "b" ]; then
 	printf " ${LightBlue}${ARROW_EMOJI}${NC}Restarting splunkd in the ${White}background${NC} " >&3
@@ -1529,7 +1541,7 @@ make_lic_slave() {
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-clear_if_limit_reached_from
+clear_if_limit_reached_from "$R_ROLL"
 check_load
 lm=$1; hostname=$2;
 if [ -n "$lm" ]; then
@@ -1554,6 +1566,7 @@ check_host_exist() {		 ####### NOT USED YET ########
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
+clear_if_limit_reached_from "$R_ROLL"
 printf "${Purple}[$1] Host check >>> "
 basename=$(printf '%s' "$1" | tr -d '0123456789')  #strip numbers
 if [ -z "$2" ]; then
@@ -1578,7 +1591,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #Add missing OS utils to all non-demo containers
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> ADD OS UTILS MENU"
-display_stats_banner
 printf "\n"
 printf "${BrownOrange}This option will add OS packages [vim net-tools telnet dnsutils] to all running demo containers only...\n"
 printf "${BrownOrange}Might be useful if you will be doing a lot of manual splunk configuration, however, it will increase container's size! ${NC}\n"
@@ -1626,7 +1638,6 @@ demo_list=`docker ps -a --filter name="DEMO|demo|WORKSHOP|workshop" --format "{{
 rdparty_list=`docker ps -a --filter name="3RDP|3rdp" --format "{{.Names}}"|sort`
 
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> GROUP CONTAINERS BY ROLE MENU"
-display_stats_banner
 printf "\n"
 #display_all_containers "DEMO"
 printf "${LightBlue}LMs${NC}: " ;      	printf "%-5s " $lm_list;echo
@@ -1812,7 +1823,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #Always check if $dmc exist before processing
 
 dmc=$1; host=$2
-clear_if_limit_reached_from
+clear_if_limit_reached_from "$R_ROLL"
 
 #adding search peer in DMC
 if [ -n "$dmc" ]; then
@@ -2009,9 +2020,9 @@ fi
 #	bind_ip_monitor=`docker inspect --format '{{ .HostConfig }}' $MASTER_CONTAINER| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 #fi
 #--------------------
-print_from "2" "${BoldWhiteOnBlue}" "   -- BUILDING CONTAINERS --                           "
+#printf_from "$R_BUILD" "${BoldWhiteOnBlue}" "   -- BUILDING CONTAINERS --                           "
 for (( a = 1; a <= count; a++ ))  ; do
-	clear_if_limit_reached_from "4"
+	clear_if_limit_reached_from "$R_ROLL"		#clearing anything below (6,0) when screen limit reached
 	calc_next_seq_fullhostname_ip "$basename" "$count"	#function will return global $vip
 	construct_splunk_container $vip $fullhostname $lic_master $cluster_label $bindip_monitor
 	gLIST="$gLIST""$fullhostname "		#append last host create to the global LIST
@@ -2153,6 +2164,7 @@ fi
 #	sudo killall -HUP dnsmasq	#must refresh to read $HOSTFILE file
 #fi
 #tput cup 0 45; imgcat ~/splunk-n-box/tmp/run.png
+docker_status
 return 0
 }	#end construct_splunk_container()
 #---------------------------------------------------------------------------------
@@ -2162,7 +2174,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 #-----------show images details
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE CONTAINERS -> CREATE & DOWNLOAD DEMO CONTAINERS MENU"
-display_stats_banner
 printf "\n"
 printf "Demo images available from $SPLUNK_DOCKER_HUB:\n"
 printf "${Purple}     		IMAGE NAME${NC}		    CREATED	SIZE			AUTHOR\n"
@@ -2315,7 +2326,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 #-----------show images details
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE CONTAINERS -> CRREATE 3RD PARTY CONTAINERS MENU"
-display_stats_banner
 printf "\n"
 printf "${BrownOrange}*Depending on the time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
 printf "\n"
@@ -2458,6 +2468,7 @@ size=$((${#str} - 9 ))
 len=$(($COLUMNS - $size))
 pad=`printf '\x20%.0s' $(seq 1 $len)`
 tput cup 0 0; printf "$color ${str}$pad${NC}\n"
+tput cup 1 0; display_stats_banner
 docker_status
 return
 }	#end screen_header()
@@ -2535,7 +2546,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #This function displays user options for the main menu
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU"
-display_stats_banner
 
 tput cup 5 25
 tput rev  # Set reverse video mode
@@ -2571,7 +2581,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU  -> SPLUNK MENU"
-display_stats_banner
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
 printf "${Red}S${NC}) ${Red}S${NC}HOW all images details ${DarkGray}[custom view]${NC}\n"
@@ -2599,7 +2608,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> SYSTEM MENU"
-display_stats_banner
 printf "\n\n"
 
 printf "${BoldWhiteOnGreen}Manage System:${NC}\n"
@@ -2619,7 +2627,6 @@ return 0
 display_demos_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DEMOs MENU"
-display_stats_banner
 printf "\n"
 echo
 printf "${BoldWhiteOnRed}Manage Demo Images:${NC}\n"
@@ -2647,7 +2654,6 @@ display_3rdparty_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> 3RD PARTY MENU"
-display_stats_banner
 printf "\n"
 echo
 printf "${BoldWhiteOnRed}Manage 3rd Party Images:${NC}\n"
@@ -2675,7 +2681,6 @@ display_clustering_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
-display_stats_banner
 printf "\n"
 echo
 printf "${BoldWhiteOnBlue}AUTOMATIC BUILDS (components: R3/S2 1-CM 1-DEP 1-DMC 1-UF 3-SHC 3-IDXC): ${NC}\n"
@@ -2701,7 +2706,6 @@ display_ll_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> LUNCH & LEARN MENU"
-display_stats_banner
 printf "\n"
 echo
 printf "${BoldWhiteOnYellow}Files to install for Lunch & Learn: ${NC}\n"
@@ -2968,8 +2972,6 @@ installtype=$1
 type=""
 clear
 printf "${BoldWhiteOnYellow}CONFIGURE LUNCH & LEARN CONTAINERS APPS/DATASETS MENU    ${NC}\n"
-docker_status
-display_stats_banner
 printf "\n"
 display_all_containers
 echo
@@ -3088,8 +3090,8 @@ done
 
 #---------------------------------------------------------------------------------------------------------------
 clear_if_limit_reached_from() {
-pos="$1"
-prompt="$2"
+pos="$1"	#row where will clear from if condition met
+prompt="$2"	#if set & limit reached prompt user "to continue"
 
 # Get current settings.
 if ! termios="$(stty -g 2>/dev/null)" ; then
@@ -3116,16 +3118,16 @@ curr_row=""; curr_col=""
 curr_pos=(${rowscols[0]})
 curr_row=`echo $curr_pos|cut -d ";" -f1 `
 curr_col=`echo $curr_pos|cut -d ";" -f2 `
-x=$(($pos + 1))
+#x=$(($pos + 1))
 ROWS=$(tput lines)
 height_limit=$(( $ROWS - 2 ))
-#printf "${Yellow}[C:$curr_row L:$height_limit]${NC}"
+printf "${Yellow}[R:$curr_row L:$height_limit]${NC}"
 if [[ $curr_row -ge $height_limit ]]; then
-#	echo "---end of screen reached ---"
+	printf "${LightRed}---end of screen reached ---"; sleep 2
 	if [ -n "$prompt" ]; then
 		read -p "<ENTER> to show more.." answer
 	fi
-	tput_el_ed_from "$x" "0"
+	tput_el_ed_from "$pos" "0"
 fi
 
 # Reset original terminal settings.
@@ -3140,26 +3142,16 @@ x=$1; y=$2
 ROWS=$(tput lines)
 height_limit=$(( $ROWS - 2 ))
 tput cup $x $y
-#echo "($x,$y)Delete $height_limit lines below starting from $x ";sleep 3
-#tput dl $height_limit	#delete x lines below including x
-#tput ed
-#el=\E[K
 #xterm in OSX does not honor ed and el (bug)
 printf '\E[K'	#tput ed  (clear to end of display)
 printf '\E[J'   #tput el  (clear to end of line)
 
-#for ((i=1; i<$height_limit; i++)) do
-#	echo "*"
-#	tput el
-#done
-#tput cup $(($x + 1)) $y
-tput cup $x $y
 return
-}
+}	#end tput_el_ed_from()
 #------------------------------------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------------------------------
-print_from() {
+printf_from() {
 	#display msg from row=pos and clear everything after it
 pos="$1"
 color="$2"
@@ -3170,14 +3162,120 @@ printf "$color${text}${NC}\n"
 #printf "($pos,0)$color${text}${NC}\n"
 x=$(($pos + 1))
 #tput smcup	#save screen
-tput_el_ed_from "$x" "0"
+#tput_el_ed_from "$x" "0"
 #tput rmcup	#restore screen
 docker_status
 
 return
-}	#end print_from()
-#-----------------------------------------------------------------------------------------------------------------------#------------------------------------------------------------------------------------------------------
+}	#end printf_from()
+#------------------------------------------------------------------------------------------------------
 #### CLUSTERS ######
+
+
+#------------------------------------------------------------------------------------------------------
+configure_deployer() {
+dep="$1"
+printf "[${Purple}$dep${NC}]${LightBlue} Configuring Deployer ... ${NC}\n"
+bind_ip_dep=`docker inspect --format '{{ .HostConfig }}' $dep| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+txt="\n #-----Modified by Docker Management script ----\n [shclustering]\n pass4SymmKey = $MYSECRET \n shcluster_label = $label\n"
+#printf "%b" "$txt" >> $MOUNTPOINT/$dep/etc/system/local/server.conf	#cheesy fix!
+printf "%b" "$txt" > $TMP_DIR/server.conf.tmp
+CMD="docker cp $TMP_DIR/server.conf.tmp $dep:/tmp/server.conf"; OUT=`$CMD`
+CMD=`docker exec -u splunk -ti $dep  bash -c "cat /tmp/server.conf >> /opt/splunk/etc/system/local/server.conf" `; #OUT=`$CMD`
+
+printf " ${Yellow}${ARROW_EMOJI}${NC}Adding stanza [shclustering] to server.conf!" >&3 ; display_output "$OUT" "" "3"
+printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+logline "$CMD" "$dep"
+restart_splunkd "$dep"
+return
+}	#end configure_deployer()
+#------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------
+configure_shc_members() {
+members_list="$1"
+cm="$2"
+dmc="$3"
+lm="$4"
+
+tput_el_ed_from "$R_ROLL"
+for member in $members_list ; do
+	#$members_list  $i  $bind_ip_sh $bin_ip_dep $cm  $cm_ip $dmc $lm $server_list
+	check_load	#throttle during SHC build
+
+	#-------member config---
+ 	printf "[${Purple}$member${NC}]${LightBlue} Making cluster member...${NC}\n"
+    bind_ip_sh=`docker inspect --format '{{ .HostConfig }}' $member| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+	CMD="docker exec -u splunk -ti $member /opt/splunk/bin/splunk init shcluster-config -auth $USERADMIN:$USERPASS -mgmt_uri https://$bind_ip_sh:$MGMT_PORT -replication_port $REPL_PORT -replication_factor $RFACTOR -register_replication_address $bind_ip_sh -conf_deploy_fetch_url https://$bind_ip_dep:$MGMT_PORT -secret $MYSECRET -shcluster_label $label"
+	OUT=`$CMD`
+	OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
+	printf "${Yellow}${ARROW_EMOJI}${NC}Initiating shcluster-config " >&3 ; display_output "$OUT" "clustering has been initialized" "3"
+	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+	logline "$CMD" "$member"
+	#-------member config---
+	#-------auto discovery---
+	# if cm exist (passed to us); configure search peers for idx auto discovery
+	if [ -n "$cm" ]; then
+		#another method of getting bind IP (showing published ports:IPs).Container must be RUNNING!
+		cm_ip=`docker port  $cm| awk '{print $3}'| cut -d":" -f1|head -1`
+    	CMD="docker exec -u splunk  -ti $member /opt/splunk/bin/splunk edit cluster-config -mode searchhead -master_uri https://$cm_ip:$MGMT_PORT -secret $MYSECRET -auth $USERADMIN:$USERPASS"
+		OUT=`$CMD`
+		printf "${Yellow}${ARROW_EMOJI}${NC}Integrating with Cluster Master (for idx auto discovery) [$cm] " >&3 ; display_output "$OUT" "property has been edited" "3"
+		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+		logline "$CMD" "$member"
+    fi
+	#-------auto discovery---
+
+    make_dmc_search_peer "$dmc" "$member"
+	make_lic_slave "$lm" "$member"
+	restart_splunkd "$member" "b"
+
+	#assign_server_role "$i" "dmc_group_search_head"
+	gserver_list="$gserver_list""https://$bind_ip_sh:$MGMT_PORT,"   #used by STEP#3 gserverlist:Global
+done
+
+server_list=`echo ${server_list%?}`  # remove last comma in string
+printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} server_list:[$gserver_list]________${NC}\n" >&5
+return
+}	#end configure_shc_members()
+#-----------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------
+configure_captain() {
+members_list="$1"
+tput_el_ed_from "$R_ROLL"
+
+captain=`echo $members_list | cut -d " " -f3 `	#captain is last SH created
+#echo "[$members_list] [$captain]"; sleep 10
+
+printf "[${Purple}$captain${NC}]${LightBlue} Configuring as Captain (last SH created)...${NC}\n"
+restart_splunkd "$captain"  # captain may not be ready yet, so force restart again
+
+CMD="docker exec -u splunk -ti $captain /opt/splunk/bin/splunk bootstrap shcluster-captain -servers_list "$gserver_list" -auth $USERADMIN:$USERPASS"
+OUT=`$CMD`
+OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
+printf "${Yellow}${ARROW_EMOJI}${NC}Captain bootstrapping (may take time) " >&3 ; display_output "$OUT" "Successfully"  "3"
+printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+logline "$CMD" "$captain"
+return
+}	#end configure_captain()
+#-----------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------
+checks_shc_status() {
+members_list="$1"
+
+tput_el_ed_from "$R_ROLL"
+captain=`echo $members_list | cut -d " " -f3 `	#captain is last SH created
+printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#4: Verifying SHC cluster status           "
+tput_el_ed_from "$R_ROLL"
+printf "[${Purple}$captain${NC}]${LightBlue} Checking SHC status (on captain)...${NC}"
+
+CMD="docker exec -u splunk -ti $captain /opt/splunk/bin/splunk show shcluster-status -auth $USERADMIN:$USERPASS "
+OUT=`$CMD`
+display_output "$OUT" "Captain" "2"
+printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+logline "$CMD" "$captain"
+return
+}	#end check_shc_status()
+#-----------------------------------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------------------------------------------
 create_single_shc() {
@@ -3195,7 +3293,6 @@ if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
 server_list=""    #used by STEP#3
 START=$(date +%s);
-
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
 
@@ -3219,12 +3316,13 @@ if [ "$mode" == "AUTO" ]; then
 #	tput cup $saved_cursor 0
     #DEPname="DEP"; DEPcount="1"; SHname="SH"; SHcount="$STD_SHC_COUNT";
 	label="$SHCLUSTERLABEL"
-	print_from "2" "${BoldWhiteOnBlue}" "   -- BUILDING SEARCH HEAD CLUSTER (SHC) --[$mode]     "
-	print_from "4" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
+	printf_from "$R_BUILD" "${BoldWhiteOnBlue}"   "   -- BUILDING SEARCH HEAD CLUSTER (SHC) --[AUTO] "
+	printf_from "$R_PHASE" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts                 "
 	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:$DEP_SHC_COUNT] SHC:[$SH_BASE:$STD_SHC_COUNT]${NC}\n\n" >&4
 
 	#Basic services. Sequence is very important!
-	print_from "5" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts      " >&3
+	printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts          "
+	tput_el_ed_from "$R_ROLL"
     create_splunk_container "$DMC_BASE" "1" ; dmc=$gLIST
     create_splunk_container "$LM_BASE" "1" ; lm=$gLIST
     make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
@@ -3232,10 +3330,11 @@ if [ "$mode" == "AUTO" ]; then
     make_lic_slave $lm $dep ; make_dmc_search_peer $dmc $dep
 
 	#The rest of SHs
-	print_from "5" "${BoldWhiteOnYellow}" "=> STEP#2: Creating SH hosts                  " >&3
+	printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#2: Creating SH hosts                      "
+	tput_el_ed_from "$R_ROLL"
     create_splunk_container "$SH_BASE" "$STD_SHC_COUNT" ; members_list="$gLIST"
 else  ## MANUAL MODE ###
-	print_from "2" "${BoldWhiteOnBlue}" "   -- BUILDING SEARCH HEAD CLUSTER (SHC) --[$mode]     "
+	printf_from "$R_BUILD" "${BoldWhiteOnBlue}"   "  -- BUILDING SEARCH HEAD CLUSTER (SHC) --[MANUAL]"
 	#Error checking (values should already have been passed at this point)
 	if [ -z "$label" ]; then
         read -p "Need to know SH cluster label ($SHCLUSTERLABEL)> " label ;
@@ -3284,10 +3383,10 @@ else  ## MANUAL MODE ###
 	#	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 	#fi
 	#printf "\n"
-	tput_el_ed_from "3" "0"
-	print_from "4" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
+	printf_from "$R_PHASE" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts                 "
 	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n\n" >&4
-	print_from "5" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts      " >&3
+	printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts          "
+	tput_el_ed_from "$R_ROLL"
 	if [ "$build_dmc" == "1" ]; then
             create_splunk_container "$dmc" "1"; dmc=$gLIST
     fi
@@ -3297,101 +3396,39 @@ else  ## MANUAL MODE ###
             make_dmc_search_peer $dmc $lm
 	fi
 
+		tput_el_ed_from "$R_ROLL"
         create_splunk_container "$DEPname" "$DEP_SHC_COUNT" ; dep="$gLIST"
 		make_lic_slave $lm $dep
         make_dmc_search_peer $dmc $dep
-		print_from "5" "${BoldWhiteOnYellow}" "=> STEP#2: Creating SH hosts                  " >&3
+
+		printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#2: Creating SH hosts                      "
         create_splunk_container "$SHname" "$SHcount" ; members_list="$gLIST"
 fi
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
 
-print_from "4" "${BoldWhiteOnGreen}" "=> PHASE2: Converting generic SH hosts into SHC "
-print_from "5" "${BoldWhiteOnGreen}" "=> STEP#1: Deployer configuration               " >&3
-
 ## from this point on all hosts should be created and ready. Next steps are SHCluster configurations ##########
 #DEPLOYER CONFIGURATION: (create [shclustering] stanza; set SecretKey and restart) -----
-print_from "6" "${DarkGray}" "Configuring SHC with created hosts: DEPLOYER[$dep]  MEMBERS[$members_list]" >&3
-
-#---------
-printf "[${Purple}$dep${NC}]${LightBlue} Configuring Deployer ... ${NC}\n"
-bind_ip_dep=`docker inspect --format '{{ .HostConfig }}' $dep| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-txt="\n #-----Modified by Docker Management script ----\n [shclustering]\n pass4SymmKey = $MYSECRET \n shcluster_label = $label\n"
-#printf "%b" "$txt" >> $MOUNTPOINT/$dep/etc/system/local/server.conf	#cheesy fix!
-printf "%b" "$txt" > $TMP_DIR/server.conf.tmp
-CMD="docker cp $TMP_DIR/server.conf.tmp $dep:/tmp/server.conf"; OUT=`$CMD`
-CMD=`docker exec -u splunk -ti $dep  bash -c "cat /tmp/server.conf >> /opt/splunk/etc/system/local/server.conf" `; #OUT=`$CMD`
-
-printf " ${Yellow}${ARROW_EMOJI}${NC}Adding stanza [shclustering] to server.conf!" >&3 ; display_output "$OUT" "" "3"
-printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
-logline "$CMD" "$dep"
-
-restart_splunkd "$dep"
+printf_from "$R_PHASE" "${BoldWhiteOnGreen}" "=> PHASE2: Converting generic SH hosts into SHC   "
+printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#1: Deployer configuration                 "
+printf_from "$R_ROLL" "${DarkGray}" "Configuring SHC with created hosts: DEPLOYER[$dep]  MEMBERS[$members_list]" >&3
+configure_deployer "$dep"
 
 printf "${LightBlue}___________ Finished STEP#1 __________________________${NC}\n" >&3
 
-print_from "5" "${BoldWhiteOnGreen}" "=> STEP#2: Cluster members configureations      " >&3
+printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#2: Cluster members configureations        "
 printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}After members_list loop> param2:[$2] members_list:[$members_list] sh_list:[$sh_list]${NC}\n" >&5
-for i in $members_list ; do
-	check_load	#throttle during SHC build
 
-	#-------member config---
- 	printf "[${Purple}$i${NC}]${LightBlue} Making cluster member...${NC}\n"
-    bind_ip_sh=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-	CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk init shcluster-config -auth $USERADMIN:$USERPASS -mgmt_uri https://$bind_ip_sh:$MGMT_PORT -replication_port $REPL_PORT -replication_factor $RFACTOR -register_replication_address $bind_ip_sh -conf_deploy_fetch_url https://$bind_ip_dep:$MGMT_PORT -secret $MYSECRET -shcluster_label $label"
-	OUT=`$CMD`
-	OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
-	printf "${Yellow}${ARROW_EMOJI}${NC}Initiating shcluster-config " >&3 ; display_output "$OUT" "clustering has been initialized" "3"
-	printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
-	logline "$CMD" "$i"
-	#-------
-
-	#-------auto discovery---
-	# if cm exist (passed to us); configure search peers for idx auto discovery
-	if [ -n "$cm" ]; then
-		#another method of getting bind IP (showing published ports:IPs).Container must be RUNNING!
-		cm_ip=`docker port  $cm| awk '{print $3}'| cut -d":" -f1|head -1`
-    	CMD="docker exec -u splunk  -ti $i /opt/splunk/bin/splunk edit cluster-config -mode searchhead -master_uri https://$cm_ip:$MGMT_PORT -secret $MYSECRET -auth $USERADMIN:$USERPASS"
-		OUT=`$CMD`
-		printf "${Yellow}${ARROW_EMOJI}${NC}Integrating with Cluster Master (for idx auto discovery) [$cm] " >&3 ; display_output "$OUT" "property has been edited" "3"
-		printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
-		logline "$CMD" "$i"
-        fi
-	#-------
-
-    make_dmc_search_peer $dmc $i
-	make_lic_slave $lm $i
-	restart_splunkd "$i" "b"
-
-	#assign_server_role "$i" "dmc_group_search_head"
-	server_list="$server_list""https://$bind_ip_sh:$MGMT_PORT,"   #used by STEP#3
-
-done
-server_list=`echo ${server_list%?}`  # remove last comma in string
-printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple} server_list:[$server_list]________${NC}\n" >&5
+configure_shc_members "$members_list" "$cm" "$dmc" "$lm"
 printf "${LightBlue}___________ Finished STEP#2 __________________________${NC}\n" >&3
 
-print_from "5" "${BoldWhiteOnGreen}" "=> STEP#3: Captain configuration                " >&3
-printf "[${Purple}$i${NC}]${LightBlue} Configuring as Captain (last SH created)...${NC}\n"
+printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#3: Captain configuration                  "
+configure_captain "$members_list"
 
-restart_splunkd "$i"  #last SH (captain) may not be ready yet, so force restart again
-
-CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk bootstrap shcluster-captain -servers_list "$server_list" -auth $USERADMIN:$USERPASS"
-OUT=`$CMD`
-OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
-printf "${Yellow}${ARROW_EMOJI}${NC}Captain bootstrapping (may take time) " >&3 ; display_output "$OUT" "Successfully"  "3"
-printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
-logline "$CMD" "$i"
 printf "${LightBlue}___________ Finished STEP#3 __________________________${NC}\n" >&3
 
-print_from "5" "${BoldWhiteOnGreen}" "=> STEP#3: Verifying SHC cluster status         " >&3
-printf "[${Purple}$i${NC}]${LightBlue} Checking SHC status (on captain)...${NC}"
+check_shc_status "$members_list"
 
-CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk show shcluster-status -auth $USERADMIN:$USERPASS "
-OUT=`$CMD`
-display_output "$OUT" "Captain" "2"
-printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
-logline "$CMD" "$i"
-echo
+
 printf "${LightBlue}___________ Finished STEP#4 (cluster status)__________${NC}\n\n" >&3
 
 END=$(date +%s);
@@ -3407,6 +3444,76 @@ return 0
 }	#create_single_shc()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
+configure_cm() {
+cm="$1"
+label="$2"
+
+tput_el_ed_from "$R_ROLL"
+#-------CM config---
+CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk edit cluster-config  -mode master -replication_factor $RFACTOR -search_factor $SFACTOR -secret $MYSECRET -cluster_label $label -auth $USERADMIN:$USERPASS "
+OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
+printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
+logline "$CMD" "$cm"
+printf " ${Yellow}${ARROW_EMOJI}${NC}Configuring CM [RF:$RFACTOR SF:$SFACTOR] and cluster label[$label] " >&3 ; display_output "$OUT" "property has been edited" "3"
+#-------
+restart_splunkd "$cm"
+#assign_server_role "$i" ""
+return
+}	#end configure_cm()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+configure_idxc_members() {
+members_list="$1"
+label="$2"
+lm="$3"
+
+tput_el_ed_from "$R_ROLL"
+for member in $members_list ; do
+	check_load	#throttle during IDXC build
+	printf "[${Purple}$member${NC}]${LightBlue} Making search peer... ${NC}\n"
+	bind_ip_cm=`docker inspect --format '{{ .HostConfig }}' $cm| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+    bind_ip_idx=`docker inspect --format '{{ .HostConfig }}' $member| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+	#-------member config----
+    CMD="docker exec -u splunk -ti $member /opt/splunk/bin/splunk edit cluster-config -mode slave -master_uri https://$bind_ip_cm:$MGMT_PORT -replication_port $REPL_PORT -register_replication_address $bind_ip_idx -cluster_label $label -secret $MYSECRET -auth $USERADMIN:$USERPASS "
+	OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
+	printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
+	logline "$CMD" "$member"
+	printf " ${Yellow}${ARROW_EMOJI}${NC}Make a cluster member " >&3 ; display_output "$OUT" "property has been edited" "3"
+	#-------
+
+	#-------tcp/9997--- disabled 2/15/17 Already in 6.5 image build
+        #CMD="docker exec -u splunk  -ti $i /opt/splunk/bin/splunk enable listen $RECV_PORT -auth $USERADMIN:$USERPASS "
+        #OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
+        #printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
+        #logline "$CMD" "$i"
+        #printf "	${Yellow}${ARROW_EMOJI}${NC}Enabling receiving port [$RECV_PORT] " >&3 ; display_output "$OUT" "Listening for" "3"
+        #-------
+
+	#We dont need to add IDXCs to DMC, just add their CM (which is already done)
+
+	make_lic_slave $lm $member
+	restart_splunkd "$member" "b"
+
+	#assign_server_role "$member" "dmc_group_indexer"
+done
+
+return
+}	#end configure_idxc_members()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+check_idxc_status() {
+cm="$1"
+tput_el_ed_from "$R_ROLL"
+
+printf "[${Purple}$cm${NC}]${LightBlue}==> Checking IDXC status...${NC}"
+CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk show cluster-status -auth $USERADMIN:$USERPASS "
+OUT=`$CMD`; display_output "$OUT" "Replication factor" "2"
+printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
+logline "$CMD" "$cm"
+return
+}	#end check_idxc_status()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
 create_single_idxc() {
 #This function creates single IDX cluster. Details are parsed from $1
 #example call: create_single_idxc "$siteIDX:$IDXcount $cm:1 $lm $label"
@@ -3418,9 +3525,7 @@ if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
 START=$(date +%s);
 #$1 CMbasename:count   $2 IDXbasename:count  $3 LMbasename:count
-clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
-print_from "2" "${BoldWhiteOnBlue}" "   -- BUILDING INDEX CLUSTER (IDXC) --[$mode]          "
 
 check_load
 #Extract values from $1 if passed to us!
@@ -3438,13 +3543,15 @@ idx_list=`docker ps -a --filter name="$IDXname" --format "{{.Names}}"|sort| tr '
 
 #------- big if ------------------
 if [ "$mode" == "AUTO" ]; then
+	printf_from "$R_BUILD" "${BoldWhiteOnBlue}"  "   -- BUILDING INDEX CLUSTER (IDXC) --[AUTO]      "
 	#CMname="CM"; DMCname="DMC"; LMname="LM";  IDXname="IDX"; IDXcount="$STD_IDXC_COUNT";
 	label="$IDXCLUSTERLABEL"
-	print_from "4" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
 	printf "${DarkGray}Using base-names DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:$STD_IDXC_COUNT]${NC}\n\n" >&4
 
 	#Basic services. Sequence is very important!
-	print_from "5" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts      " >&3
+	printf_from "$R_PHASE" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts                 "
+	printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts          "
+	tput_el_ed_from "$R_ROLL"
 	create_splunk_container "$DMC_BASE" "1" ; dmc=$gLIST
 	create_splunk_container "$LM_BASE" "1" ; lm=$gLIST
 	make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
@@ -3452,9 +3559,11 @@ if [ "$mode" == "AUTO" ]; then
 	make_lic_slave $lm $cm ; make_dmc_search_peer $dmc $cm
 
 	#The rest of IDXs
-	print_from "5" "${BoldWhiteOnYellow}" "=> STEP#2: Creating IDX hosts                " >&3
+	printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#2: Creating IDX hosts                "
+	tput_el_ed_from "$R_ROLL"
     create_splunk_container "$IDX_BASE" "$STD_IDXC_COUNT" ; members_list="$gLIST"
 else
+	printf_from "$R_BUILD" "${BoldWhiteOnBlue}"   "   -- BUILDING INDEX CLUSTER (IDXC) --[MANUAL]    "
 	#Anything passed to function; user will NOT be prompted for it!
 	if [ -z "$label" ]; then
         read -p "Need to know IDX cluster label (default $SHCLUSTERLABEL)? " label ;
@@ -3496,7 +3605,6 @@ else
             fi
     fi
 
-	printf "\n"
 	#printf "${Yellow}The following single IDX Cluster will be created[$mode]:${NC}\n"
 	#printf "Cluster Label: ${Green}%s${NC}\n" $label
 	#printf "Cluster Master Base Hostname: ${Green}%s${NC}\n" $cm
@@ -3509,11 +3617,10 @@ else
 	#	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 	#fi
 
-	printf "\n"
 
-	tput_el_ed_from "3" "0"
-	print_from "4" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts             "
-	print_from "5" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts      " >&3
+	printf_from "$R_PHASE" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts                 "
+	printf_from "$R_STEP" "${BoldWhiteOnYellow}"  "=> STEP#1: Creating administrative hosts          "
+	tput_el_ed_from "$R_ROLL"
 	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:$IDXcount]${NC}\n\n" >&4
 	if [ "$build_dmc" == "1" ]; then
                 create_splunk_container "$dmc" "1"; dmc=$gLIST
@@ -3530,68 +3637,28 @@ else
     fi
 
 	#create the remaining IDXs
-	tput_el_ed_from "3" "0"
-	print_from "5" "${BoldWhiteOnYellow}" "=> STEP#2: Creating IDX hosts                " >&3
+	printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#2: Creating IDX hosts                     "
+	tput_el_ed_from "$R_ROLL"
     create_splunk_container "$IDXname" "$IDXcount" ; members_list="$gLIST"
 
 fi
 #------- big if ------------------
 
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
-printf "\n"
-print_from "4" "${BoldWhiteOnGreen}" "=> PHASE2: Converting generic IDX hosts into IDXC "
-print_from "5" "${BoldWhiteOnGreen}" "=> STEP#1: ClusterMaster configuration            " >&3
 
-#-------CM config---
-bind_ip_cm=`docker inspect --format '{{ .HostConfig }}' $cm| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk edit cluster-config  -mode master -replication_factor $RFACTOR -search_factor $SFACTOR -secret $MYSECRET -cluster_label $label -auth $USERADMIN:$USERPASS "
-OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
-printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
-logline "$CMD" "$cm"
-printf " ${Yellow}${ARROW_EMOJI}${NC}Configuring CM [RF:$RFACTOR SF:$SFACTOR] and cluster label[$label] " >&3 ; display_output "$OUT" "property has been edited" "3"
-#-------
-restart_splunkd "$cm"
-#assign_server_role "$i" ""
+printf_from "$R_PHASE" "${BoldWhiteOnGreen}"  "=> PHASE2: Converting generic IDX hosts into IDXC "
+printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#1: ClusterMaster configuration            "
+configure_cm "$cm" "$label"
 printf "${LightBlue}____________ Finished STEP#1 __________________________${NC}\n" >&3
 
-print_from "5" "${BoldWhiteOnGreen}" "=> STEP#2: IDXC nodes configuration               " >&3
-for i in $members_list ; do
-	check_load	#throttle during IDXC build
 
-	printf "[${Purple}$i${NC}]${LightBlue} Making search peer... ${NC}\n"
-    bind_ip_idx=`docker inspect --format '{{ .HostConfig }}' $i| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-
-	#-------member config----
-    CMD="docker exec -u splunk -ti $i /opt/splunk/bin/splunk edit cluster-config -mode slave -master_uri https://$bind_ip_cm:$MGMT_PORT -replication_port $REPL_PORT -register_replication_address $bind_ip_idx -cluster_label $label -secret $MYSECRET -auth $USERADMIN:$USERPASS "
-	OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
-	printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
-	logline "$CMD" "$i"
-	printf " ${Yellow}${ARROW_EMOJI}${NC}Make a cluster member " >&3 ; display_output "$OUT" "property has been edited" "3"
-	#-------
-	#-------tcp/9997--- disabled 2/15/17 Already in 6.5 image build
-        #CMD="docker exec -u splunk  -ti $i /opt/splunk/bin/splunk enable listen $RECV_PORT -auth $USERADMIN:$USERPASS "
-        #OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `    #clean up
-        #printf "\t${DarkGray}CMD:[$CMD]${NC}\n" >&4
-        #logline "$CMD" "$i"
-        #printf "	${Yellow}${ARROW_EMOJI}${NC}Enabling receiving port [$RECV_PORT] " >&3 ; display_output "$OUT" "Listening for" "3"
-        #-------
-
-	#We dont need to add IDXCs to DMC, just add their CM (which is already done)
-
-	make_lic_slave $lm $i
-	restart_splunkd "$i" "b"
-
-	#assign_server_role "$i" "dmc_group_indexer"
-done
+printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#2: IDXC nodes configuration               "
+configure_idxc_members "$members_list" "$label" "$lm"
 printf "${LightBlue}____________ Finished STEP#2 __________________________${NC}\n" >&3
 
-print_from "5" "${BoldWhiteOnGreen}" "=> STEP#3: Verifying IDXC status                " >&3
+printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#3: Verifying IDXC status                  "
+check_idxc_status "$cm"
 
-printf "[${Purple}$cm${NC}]${LightBlue}==> Checking IDXC status...${NC}"
-CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk show cluster-status -auth $USERADMIN:$USERPASS "
-OUT=`$CMD`; display_output "$OUT" "Replication factor" "2"
-printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
-logline "$CMD" "$cm"
 printf "${LightBlue}____________ Finished STEP#3 __________________________${NC}\n\n" >&3
 
 END=$(date +%s);
@@ -3629,15 +3696,15 @@ CMcount=`echo $1| $GREP -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space:]]' `
 
 if [ "$1" == "AUTO" ]; then
 	mode="AUTO"
+	site="SITE01"
+	printf_from "$R_SITE" "${BoldWhiteOnYellow}" "-- BUILDING SINGLE SITE CLUSTER --[$site][AUTO]  "
 	IDXcount="$STD_IDXC_COUNT"
 	SHcount="$STD_SHC_COUNT"
 	shc_label="$SHCLUSTERLABEL"
 	idxc_label="$IDXCLUSTERLABEL"
-	site="SITE01"
-	print_from "2" "${BoldWhiteOnBlue}" "   -- BUILDING SINGLE SITE CLUSTER ($site) --[$mode]   "
 else
 	mode="MANUAL"
-	print_from "2" "${BoldWhiteOnBlue}" "   -- BUILDING SINGLE SITE CLUSTER ($site) --[$mode]   "
+	printf_from "$R_SITE" "${BoldWhiteOnYellow}" "-- BUILDING SINGLE SITE CLUSTER --[$site][MANUAL]"
 	read -p "Enter SH cluster label (default $SHCLUSTERLABEL): " shc_label
     shc_label=`echo $shc_label| tr '[a-z]' '[A-Z]'`; if [ -z "$shc_label" ]; then shc_label="$SHCLUSTERLABEL";  fi
 
@@ -3655,8 +3722,6 @@ else
 fi
 
 #assign_server_role "$lm" "dmc_group_license_master"
-echo
-printf "\n"
 #printf "${Yellow}The following single site will be created [$mode]:${NC}\n"
 #printf "Site Name: ${Green}%s${NC}\n" $site
 #printf "SH Cluster Label: ${Green}%s${NC}\n" $shc_label
@@ -3672,12 +3737,11 @@ printf "\n"
 #	read -p $'Hit <\033[1;32mENTER>\e[0m:Confirm \033[1;32m <B>\e[0m:Go Back  > ' choice
 #	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 #fi
-printf "\n"
 
-
-print_from "4" "${BoldWhiteOnYellow}" "=> PHASE1: Building basic services [LM,DMC,CM]    "
 #Basic services
 #Sequence is very important!
+tput_el_ed_from "$R_ROLL"
+printf_from "$R_PHASE" "${BoldWhiteOnYellow}" "=> PHASE1: Building basic services [LM,DMC,CM]    "
 create_splunk_container "$site$DMC_BASE" "1" ; dmc=$gLIST
 create_splunk_container "$site$LM_BASE" "1" ; lm=$gLIST
 make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
@@ -3690,11 +3754,15 @@ make_lic_slave $lm $hf ; #make_dmc_search_peer $dmc $hf
 
 printf "${LightBlue}____________ Finished building basic services ___________________${NC}\n\n" >&3
 
-print_from "4" "${BoldWhiteOnGreen}" "=> PHASE2: Building IDXC & SHC                    "
+tput_el_ed_from "$R_ROLL"
+printf_from "$R_PHASE" "${BoldWhiteOnGreen}"  "=> PHASE2: Building IDXC & SHC                    "
 create_single_idxc "$site$IDX_BASE:$IDXcount $dmc $cm:1 $lm LABEL:$idxc_label"
 create_single_shc "$site$SH_BASE:$SHcount $site$DEP_BASE:1 $dmc $cm $lm LABEL:$shc_label"
 
 #print_stats $START_TIME ${FUNCNAME}
+END=$(date +%s);
+TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
+printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
 
 
 return 0
@@ -3705,6 +3773,7 @@ build_multi_site() {
 #This function creates site-2-site cluster
 #http://docs.splunk.com/Documentation/Splunk/6.4.3/Indexer/Migratetomultisite
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
 
 mode=$1		#either "AUTO" or "MANUAL"
 START_TIME=$(date +%s);
@@ -3713,9 +3782,9 @@ check_load
 s=""; sites_str=""     			#used with "splunk edit cluster-config" on CM
 SITEnames=""
 clear
-printf "Note:"
-printf " -One DEP server per SHC will be automatically created.\n"
-printf " -One CM server will be automatically created for the entire site-2-site cluster.\n"
+#printf "Note:"
+#printf " -One DEP server per SHC will be automatically created.\n"
+#printf " -One CM server will be automatically created for the entire site-2-site cluster.\n"
 
 if [ "$mode" == "AUTO" ]; then
 	count=3;
@@ -3725,6 +3794,7 @@ if [ "$mode" == "AUTO" ]; then
     sites_str="site1,site2,site3"
 	first_site=`echo $SITEnames|awk '{print $1}'`		#where basic services CM,LM resides
 	cm=$first_site"CM01"
+	printf_from "$R_SITE" "${BoldWhiteOnBlue}"   "   -- BUILDING MULTI SITE CLUSTER  --[$site]      "
 else
 	read -p "How many LOCATIONS to build (default 3)?  " count
     if [ -z "$count" ]; then count=3; fi
@@ -3755,7 +3825,8 @@ fi
 
 #------- Finished capturing sites names/basic services names ------------------
 
-printf "\n\n${BoldYellowOnBlue}[$mode] Building site-to-site cluster...${NC}\n"
+printf_from "$R_SITE" "${BoldWhiteOnBlue}"   "   -- BUILDING MULTI SITE CLUSTER  --[$site]      "
+#printf "\n\n${BoldYellowOnBlue}[$mode] Building site-to-site cluster...${NC}\n"
 printf "${DarkGray}Using Locations:[$SITEnames] CM:[$cm] First_site:[$first_site] ${NC}\n\n" >&4
 
 printf "\n\n${Yellow}Creating cluster basic services [only in $first_site]${NC}\n"
@@ -4133,7 +4204,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 #-----------show images details
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DOWNLOAD DEMO IMAGES MENU"
-display_stats_banner
 #printf "${BrownOrange}*Depending on time of the day downloads may take a while. Cached images are not downloaded! ${NC}\n"
 printf "\n"
 printf "Demo images available from $SPLUNK_DOCKER_HUB:\n"
@@ -4199,7 +4269,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 #-----------show images details
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DOWNLOAD 3RD PARTY IMAGES MENU"
-display_stats_banner
 printf "\n"
 printf "${BrownOrange}*Depending on time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
 printf "\n"
@@ -4265,8 +4334,7 @@ type=$1         #container type (ex DEMO, 3RDPARTY, empty for ALL)
 
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> LIST $type CONTAINERS MENU"
-display_stats_banner
-print_from "2" "${BoldWhiteOnBlue}" "   -- LISTING CONTAINERS --                            "
+printf_from "$R_BUILD" "${BoldWhiteOnBlue}" "   -- LISTING CONTAINERS --                            "
 display_all_containers "$type" "$tagged"
 count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
 if [ $count == 0 ]; then
@@ -4283,8 +4351,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type=$1
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> START $type CONTAINERS MENU"
-display_stats_banner
-print_from "2" "${BoldWhiteOnBlue}" "   -- STARTING CONTAINERS --                           "
+printf_from "$R_BUILD" "${BoldWhiteOnBlue}" "   -- STARTING CONTAINERS --                           "
 display_all_containers "$type"
 
 echo
@@ -4302,7 +4369,7 @@ read -p $'Choose number to start. You can select multiple numbers <\033[1;32mENT
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
-		tput_el_ed_from "4"
+		tput_el_ed_from "$R_ROLL"
         printf "${Yellow}Starting selected $type containers...\n${NC}"
         for id in `echo $choice`; do
             #printf "${Purple} ${list[$id - 1]}:${NC}\n"
@@ -4312,7 +4379,7 @@ if [ -n "$choice" ]; then
 			docker_status
         done
 else
-		tput_el_ed_from "4"
+		tput_el_ed_from "$R_ROLL"
         printf "${Yellow}Starting all $type containers...\n${NC}"
 		#docker start $(docker ps -a --format "{{.Names}}")
 		docker start $(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' ')
@@ -4332,8 +4399,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type=$1
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> STOP $type CONTAINERS MENU"
-display_stats_banner
-print_from "2" "${BoldWhiteOnBlue}" "   -- STOPPING CONTAINERS --                           "
+printf_from "$R_BUILD" "${BoldWhiteOnBlue}" "   -- STOPPING CONTAINERS --                           "
 display_all_containers "$type"
 echo
 count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
@@ -4349,7 +4415,7 @@ read -p $'Choose number to stop. You can select multiple numbers <\033[1;32mENTE
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
-	tput_el_ed_from "4"
+	tput_el_ed_from "$R_ROLL"
     printf "${Yellow}Stopping selected $type containers...\n${NC}"
     for id in `echo $choice`; do
         #printf "${Purple} ${list[$id - 1]}:${NC}\n"
@@ -4358,7 +4424,7 @@ if [ -n "$choice" ]; then
 		clear_if_limit_reached_from "4"
 	done
 else
-	tput_el_ed_from "4"
+	tput_el_ed_from "$R_ROLL"
     printf "${Yellow}Stopping all $type containers...\n${NC}"
     # docker stop $(docker ps -aq);
 	docker stop $(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' ')
@@ -4379,8 +4445,7 @@ type=$1
 
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DELETE $type CONTAINERS MENU"
-display_stats_banner
-print_from "2" "${BoldWhiteOnBlue}" "   -- DELETING CONTAINERS --                           "
+printf_from "$R_BUILD" "${BoldWhiteOnBlue}" "   -- DELETING CONTAINERS --                           "
 display_all_containers "$type"
 
 count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
@@ -4396,7 +4461,7 @@ read -p $'Choose number to delete. You can select multiple numbers <\033[1;32mEN
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
 if [ -n "$choice" ]; then
-		tput_el_ed_from "4"
+		tput_el_ed_from "$R_ROLL"
         printf "${Yellow}Deleting selected $type containers...\n${NC}"
         for id in `echo $choice`; do
                 hostname=${list[$id - 1]}
@@ -4407,7 +4472,7 @@ if [ -n "$choice" ]; then
         done
        # docker stop $choice
 else
-		tput_el_ed_from "4"
+		tput_el_ed_from "$R_ROLL"
         printf "${Yellow}Deleting all $type containers and volumes...\n${NC}"
        # docker rm -v -f $(docker ps -a --format "{{.Names}}");
 		docker rm -v -f $(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' ')
@@ -4579,7 +4644,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 type=$1
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> REMOVE $type IMAGES MENU"
-display_stats_banner
 printf "\n"
 printf "Current list of all $type images downloaded on this system:\n"
 display_all_images "$type"
@@ -4634,7 +4698,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type=$1
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> SHOW $type IMAGES MENU"
-display_stats_banner
 printf "\n"
 printf "Current list of $type images downloaded on this system:\n"
 display_all_images "$type"
@@ -4704,7 +4767,6 @@ wipe_entire_system() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> WIPE CLEAN SPLUNK N' BOX SYSTEM MENU"
-display_stats_banner
 printf "\n"
 printf "${DONT_ENTER_EMOJI}${LightRed} WARNING!${NC}\n"
 printf "${LightRed}This option will remove IP aliases, delete all containers, delete all images and remove all volumes! ${NC}\n"
