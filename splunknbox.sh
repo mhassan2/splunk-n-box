@@ -181,6 +181,7 @@ R_ROLL="7"
 
 #--------COLORES ESCAPE CODES------------
 #for i in `seq 1 100`; do printf "\033[48;5;${i}m${i} "; done
+#https://misc.flogisoft.com/bash/tip_colors_and_formatting
 NC='\033[0m' # No Color
 Black="\033[0;30m";             White="\033[1;37m"
 Red="\033[0;31m";               LightRed="\033[1;31m"
@@ -191,15 +192,15 @@ Purple="\033[0;35m";            LightPurple="\033[1;35m"
 Cyan="\033[0;36m";              LightCyan="\033[1;36m"
 LightGray="\033[0;37m";         DarkGray="\033[1;30m"
 
-BlackOnGreen="\033[30;48;5;82m"
-BlackOnBurg="\033[30;48;5;88m"
-WhiteOnBurg="\033[37;48;5;88m"
+WhiteOnLightBlue="\033[48;5;12m"
+WhiteOnOrange="\033[48;5;166m"
 
-LightCyanOnBurg="\033[36;48;5;88m"
-OrangeBrownOnBurg="\033[33;48;5;88m"
+#used for docker status bar.
+WhiteOnGray="\033[97;5;100m"
+LightRedOnGray="\033[91;5;100m";	RedOnGray="\033[31;5;100m"
+LightGreenOnGray="\033[92;5;100m"
+LightYellowOnGray="\033[93;5;100m"
 
-YellowOnBurg="\033[11;48;5;88m"
-GreenOnBurg="\033[32;48;5;88m"
 BoldWhiteOnRed="\033[1;1;5;41m"
 BoldWhiteOnGreen="\033[1;1;5;42m"
 BoldWhiteOnYellow="\033[1;1;5;43m"
@@ -1407,7 +1408,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear_if_limit_reached_from "$R_ROLL"
 check_load
 CMD="docker cp $SPLUNK_LIC_DIR  $1:/opt/splunk/etc/licenses/enterprise"; OUT=`$CMD`
-printf " ${LightBlue}${ARROW_EMOJI}${NC}Copying license file(s)." >&3 ; display_output "$OUT" "" "3"
+printf " ${LightBlue}${ARROW_EMOJI}${NC}Copying license file(s)..." >&3 ; display_output "$OUT" "" "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$1"
 
@@ -2128,7 +2129,7 @@ else
 fi
 
 #custom_login_screen() will not change pass for DEMO-ES* or DEMO-VMWARE*
-printf " ${LightBlue}${ARROW_EMOJI}${NC}Splunk initialization." >&3
+printf " ${LightBlue}${ARROW_EMOJI}${NC}Splunk initialization..." >&3
 custom_login_screen "$vip" "$fullhostname"
 
 #Misc OS stuff
@@ -2478,25 +2479,30 @@ return
 screen_footer() {
 Containers=$1; Running=$2; Paused=$3; Stopped=$4; Images=$5; loadavg="$6"
 
-str="${WhiteOnBurg}Containers: ${GreenOnBurg}$Containers ${WhiteOnBurg}Running: ${GreenOnBurg}$Running ${WhiteOnBurg}Paused: ${GreenOnBurg}$Paused ${WhiteOnBurg}Stopped: ${GreenOnBurg}$Stopped ${WhiteOnBurg}Images: ${GreenOnBurg}$Images"
+str="${WhiteOnGray}Docker:[Containers: ${LightGreenOnGray}$Containers ${WhiteOnGray}Running: ${LightGreenOnGray}$Running ${WhiteOnGray}Paused: ${LightGreenOnGray}$Paused ${WhiteOnGray}Stopped: ${LightGreenOnGray}$Stopped ${WhiteOnGray}Images: ${LightGreenOnGray}$Images] ${WhiteOnGray}Load:[$loadavg${WhiteOnGray}]"
 #rows and cols are also detected in redraw function with a trap
 ROWS=$(tput lines)
 COLUMNS=$(tput cols)
-
 tput sc
-#echo $str|wc -c;exit
-size=$((${#str}))
-size=$(($size - 127 ))	#remove escape code char count
+
+#size=$((${#str}))
+#size=`printf "$str"|wc -c` #get char count without the escape codes
+#size=$(($size - 1 ))	#remove escape code char count
+#this pitch solution was found here (with modification)
+#https://unix.stackexchange.com/questions/140251/strip-color-on-os-x-with-bsd-sed-or-any-other-tool
+size=$(echo $str| sed $'s,\\\\033\\[[0-9;]*[a-zA-Z],,g'|wc -c| tr -d '[:space:]')
+#echo "[$size]";exit
+
 #dont pad if screen width less that str size
 if [ "$size" -gt "$COLUMNS" ]; then
 	len=1
 else
 	len=$(($COLUMNS - $size))
 fi
-
 pad=`printf '\x20%.0s' $(seq 1 $len)`
-#tput cup $ROWS 0; printf "($COLUMNS-$size=$len)${WhiteOnBurg}Load:[$loadavg] ${WhiteOnBurg} Docker status:${YellowOnBurg} [${NC}$str${WhiteOnBurg}${YellowOnBurg}] $pad${NC}"
-tput cup $ROWS 0;printf "${WhiteOnBurg} Docker status:${YellowOnBurg} [${NC}$str${WhiteOnBurg}${YellowOnBurg}]  Load:[$loadavg] $pad${NC}"
+#tput cup $ROWS 0;printf "[$COLUMNS-$size=$len]$str$pad${NC}"
+tput cup $ROWS 0;printf "$str$pad${NC}"
+
 
 tput rc
 return
@@ -2521,15 +2527,15 @@ elif [ "$os" == "Linux" ]; then
 fi
 
 load=`echo "$loadavg/1" | bc `   #convert float to int
-#load=10
+load=4
 #c=`echo " $load > $MAXLOADAVG" | bc `;
-#if [  "$c" == "1" ]; then
+
 if [[ "$load" -ge "$cores" ]]; then
-	loadavg="${LightCyanOnBurg}$loadavg"
+	loadavg="${RedOnGray}$loadavg${NC}"
 elif [[ "$load" -ge "$cores/2" ]]; then
-	loadavg="${BrownOrangeOnBurg}$loadavg${NC}"
+	loadavg="${LightYellowOnGray}$loadavg${NC}"
 else
-	loadavg="${GreenOnBurg}$loadavg${NC}"
+	loadavg="${LightGreenOnGray}$loadavg${NC}"
 fi
 
 
@@ -4230,7 +4236,7 @@ for image_name in $REPO_DEMO_IMAGES; do
         let counter++
 done
 
-printf "${BrownOrange}${BULB_EMOJI} You're required to login into splunk internal docker. You will prompted if creds are not cached${NC}\n"
+printf "${BrownOrange}${BULB_EMOJI} You're required to login into splunk registery. You will prompted if creds are not cached${NC}\n"
 login_to_splunk_hub
 
 #build array of images list
@@ -4527,7 +4533,8 @@ for host in $hosts_sorted ; do
     bind_ip=`docker inspect --format '{{ .HostConfig }}' "$id"| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
     hoststate=`docker ps -a --filter id="$id" --format "{{.Status}}" | awk '{print $1}'`
     hostname=`docker ps -a --filter id="$id" --format "{{.Names}}"`
-    imagename=`docker ps -a --filter id="$id" --format "{{.Image}}" | cut -d'/' -f2-3`  #remove repository name
+    #imagename=`docker ps -a --filter id="$id" --format "{{.Image}}" | cut -d'/' -f2-3`  #remove repository name
+    imagename=`docker ps -a --filter id="$id" --format "{{.Image}}"|rev| cut -d'/' -f1|rev`  #img only
     splunkd_ver=`docker exec "$hostname" /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
     host_line[$i]="$bind_ip"
     if [ "$AWS_EC2" == "YES" ]; then
