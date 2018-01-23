@@ -171,13 +171,18 @@ LOW_MEM_THRESHOLD=6.0				#threshold of recommended free system memory in GB
 DOCKER_MIN_VER=1.13.1				#min recommended docker version
 #----------------------------------------
 #--tput (R,0) locations ---------
-R_TITLE="0"
-R_STATUS="1"
-R_SITE="2"
-R_BUILD="3"
+R_HEADER="0"
+R_BANNER="1"
+R_BUILD_SITE="2"
+R_BUILD_CLUSTER="3"
 R_PHASE="4"
-R_STEP="5"
-R_ROLL="7"
+R_STEP1="5"
+R_STEP2="6"
+R_STEP3="7"
+R_STEP4="8"
+R_ROLL="9"
+MAXLEN="55"		#fill until for status msgs
+C_PROGRESS="55"
 
 #--------COLORES ESCAPE CODES------------
 #for i in `seq 1 100`; do printf "\033[48;5;${i}m${i} "; done
@@ -196,18 +201,22 @@ WhiteOnLightBlue="\033[48;5;12m"
 WhiteOnOrange="\033[48;5;166m"
 
 #used for docker status bar.
-WhiteOnGray="\033[97;5;100m"
-LightRedOnGray="\033[91;5;100m";	RedOnGray="\033[31;5;100m"
-LightGreenOnGray="\033[92;5;100m"
-LightYellowOnGray="\033[93;5;100m"
+Gray1="241"
+Gray2="100"
+WhiteOnGray1="\033[97;48;5;${Gray1}m";		WhiteOnGray2="\033[97;48;5;${Gray2}m"
+LightRedOnGray1="\033[91;48;5;${Gray1}m";	LightRedOnGray2="\033[91;48;5;${Gray2}m";
+RedOnGray1="\033[31;48;5;${Gray1}m";		RedOnGray2="\033[31;48;5;${Gray2}m"
+LightGreenOnGray1="\033[92;48;5;${Gray1}m";LightGreenOnGray2="\033[92;48;5;${Gray2}m"
+LightYellowOnGray1="\033[93;48;5;${Gray1}m";LightYellowOnGray2="\033[93;48;5;${Gray2}m"
 
+#used for phase/step titles displays
 BoldWhiteOnRed="\033[1;1;5;41m"
 BoldWhiteOnGreen="\033[1;1;5;42m"
 BoldWhiteOnYellow="\033[1;1;5;43m"
 BoldWhiteOnBlue="\033[1;1;5;44m"
+BoldWhiteOnLightBlue="\033[1;1;5;104m"
 BoldWhiteOnPink="\033[1;1;5;45m"
 BoldWhiteOnTurquoise="\033[1;1;5;46m"
-
 BoldYellowOnBlue="\033[1;33;44m"
 BoldYellowOnPurple="\033[1;33;44m"
 
@@ -1533,8 +1542,6 @@ fi
 return 0
 }	#end restart_splunkd()
 #---------------------------------------------------------------------------------------------------------------
-
-
 #---------------------------------------------------------------------------------------------------------------
 make_lic_slave() {
 # This function designate $hostname as license-slave using LM (License Manager)
@@ -1572,13 +1579,13 @@ printf "${Purple}[$1] Host check >>> "
 basename=$(printf '%s' "$1" | tr -d '0123456789')  #strip numbers
 if [ -z "$2" ]; then
         printf "${LightPurple}Group is empty >>> creating host ${NC}\n";
-        create_splunk_container $basename 1
+        create_splunk_container "$basename" "1"
 else if ( compare "$2" "$1" ); then
                 printf "${Purple}Found in group. No action. ${NC}\n";
                 return 0
         else
                 printf "${LightPurple}Not found in group >>> Using basename to create next in sequence ${NC}\n";
-                create_splunk_container $basename 1
+                create_splunk_container "$basename" "1"
                 num=`echo $?`    #last host seq number created
                 return $num
         fi
@@ -1976,25 +1983,26 @@ return 0
 create_splunk_container() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function creates generic splunk containers. Role is assigned later
-#inputs:$1:basehostname: (ex IDX, SH,HF) just the base (no numbers)
-#	 	$2:hostcount:     how many containers to create from this host type (ie name)
-#	 	$3:lic_master		if provided dont copy license, make host license-slave
-# 	 	$4:cluster_label	cluster label in web.conf, use if provided
-#outputs: $gLIST:  global var compare the list of hostname just got created
+#inputs:
+#	 $1:basehostname: (ex IDX, SH,HF) just the base (no numbers)
+#	 $2:hostcount:     how many containers to create from this host type (ie name)
+#	 $3:lic_master		if provided dont copy license, make host license-slave
+# 	 $4:cluster_label	cluster label in web.conf, use if provided
+#outputs:
+#	$gLIST:  global var compare the list of hostname just got created
+#
 
 basename=$1; hostcount=$2; lic_master=$3; cluster_label=$4
 count=0;starting=0; ending=0;basename=$BASEHOSTNAME;  octet4=0
 gLIST=""   #build global list of hosts created by this session. Used somewhere else
 
-#Another method to figure out the starting octet4
-# OCTET4FILE=`iptables -t nat -L |$GREP DNAT | awk '{print $5}'  | sort -u|tail -1|cut -d"." -f4`
 printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}  basename[$basename]  hostcount[$hostcount] ${NC}\n" >&5
 
 #---If not passed; prompt user to get basename and count ----
-if [ -z "$1" ]; then
+if [ -z "$basename" ]; then
         read -p ">>>> Enter BASE HOSTNAME (default: $BASEHOSTNAME)?: " basename
 else
-        basename=$1
+        basename=$basename
 fi
 if [ -z "$basename" ]; then
         basename=$BASEHOSTNAME
@@ -2004,7 +2012,7 @@ fi
 #always convert to upper case before creating
 basename=`echo $basename| tr '[a-z]' '[A-Z]'`
 
-if [ -z "$2" ]; then
+if [ -z "$hostcount" ]; then
         read -p ">>>> How many hosts to create (default 1)? " count
 		if [ -z "$count" ]; then count=1;  fi  #user accepted default 1
 else
@@ -2021,7 +2029,7 @@ fi
 #	bind_ip_monitor=`docker inspect --format '{{ .HostConfig }}' $MASTER_CONTAINER| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
 #fi
 #--------------------
-#printf_from "$R_BUILD" "${BoldWhiteOnBlue}" "   -- BUILDING CONTAINERS --                           "
+#printf_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}" "   -- BUILDING CONTAINERS --                           "
 for (( a = 1; a <= count; a++ ))  ; do
 	clear_if_limit_reached_from "$R_ROLL"		#clearing anything below (6,0) when screen limit reached
 	calc_next_seq_fullhostname_ip "$basename" "$count"	#function will return global $vip
@@ -2058,8 +2066,8 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #	-reset password and setup splunk's login screen
 #   -configure container's OS related items if needed
 
-START=$(date +%s);
 vip=$1;  fullhostname=$2;lic_master=$3; cluster_label=$4;
+START=$(date +%s);
 fullhostname=`echo $fullhostname| tr -d '[[:space:]]'`	#trim white space if they exist
 
 check_load		#throttle back if high load
@@ -2086,7 +2094,8 @@ fi
 
 CMD="docker run -d \
 	--network=$SPLUNKNET --hostname=$fullhostname --name=$fullhostname --dns=$DNSSERVER \
-	-p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT_EXT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT -p $vip:$HEC_PORT:$HEC_PORT \
+	-p $vip:$SPLUNKWEB_PORT:$SPLUNKWEB_PORT_EXT -p $vip:$MGMT_PORT:$MGMT_PORT -p $vip:$SSHD_PORT:$SSHD_PORT \
+	-p $vip:$HEC_PORT:$HEC_PORT \
 	-p $vip:$RECV_PORT:$RECV_PORT -p $vip:$REPL_PORT:$REPL_PORT -p $vip:$APP_SERVER_PORT:$APP_SERVER_PORT \
 	-p $vip:$APP_KEY_VALUE_PORT:$APP_KEY_VALUE_PORT --env SPLUNK_START_ARGS="--accept-license" \
 	--env SPLUNK_ENABLE_LISTEN=$RECV_PORT --env SPLUNK_SERVER_NAME=$fullhostname \
@@ -2187,10 +2196,10 @@ for image_name in $REPO_DEMO_IMAGES; do
         printf "${Purple}%-2s${NC}) ${Purple}%-40s${NC}" "$counter" "$image_name"
 	image_name="$SPLUNK_DOCKER_HUB/sales-engineering/$image_name"
 #	echo "cached[$cached]\n"
-	created=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $4,$5,$6}'`
-	size=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $7,$8}'`
+	created=`docker images "$image_name" | $GREP -v REPOSITORY | awk '{print $4,$5,$6}'`
+	size=`docker images "$image_name" | $GREP -v REPOSITORY | awk '{print $7,$8}'`
         if [ -n "$created" ]; then
-        	author=`docker inspect $image_name |grep -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
+        	author=`docker inspect $image_name |$GREP -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
                 printf "%-12s %-7s %-10s ${NC}\n" "$created" "$size" "$author"
         else
                 printf "${DarkGray}NOT CACHED! ${NC}\n"
@@ -2254,7 +2263,7 @@ mkdir -m 777 -p $MOUNTPOINT/$fullhostname
 basename=`echo $image_name | sed 's/^.*\///g' | tr '[a-z]' '[A-Z]' `
 basename="3RDP-$basename"
 
-cached=`docker images|grep $image_name`
+cached=`docker images|$GREP $image_name`
 if [ -z "$cached" ]; then
         progress_bar_image_download "$image_name"
 fi
@@ -2337,9 +2346,9 @@ printf "${Purple} -----------\t\t ${NC}---------------------------- \t\t -------
 counter=1
 for i in `echo $REPO_3RDPARTY_IMAGES ` ; do
         printf "${Purple}$counter${NC})${Purple} $i${DarkGray}\t\t"
-        cached=`docker images|grep $i| awk '{print $4,$5,$6" "$7,$8}'`
+        cached=`docker images|$GREP $i| awk '{print $4,$5,$6" "$7,$8}'`
         if [ -n "$cached" ]; then
-                author=`docker inspect $i|grep -i author|cut -d":" -f1-3|sed 's/,//g'`
+                author=`docker inspect $i|$GREP -i author|cut -d":" -f1-3|sed 's/,//g'`
                 printf "${White}$cached $author${NC}\n"
         else
                 printf "${DarkGray}NOT CACHED!${NC}\n"
@@ -2359,7 +2368,7 @@ if [ -n "$choice" ]; then
         printf "${Yellow}Creating selected 3rd party containers(s)...${NC}\n"
         for id in `echo $choice`; do
                 image_name=(${list[$id - 1]})
-                cached=`docker images|grep $image_name`
+                cached=`docker images|$GREP $image_name`
                 if [ -z "$cached" ]; then
                 printf "${NC}Using ${Purple}[$id:$image_name]:${NC}\n"
                         progress_bar_image_download "$image_name"
@@ -2460,6 +2469,45 @@ return 0
 }	#end display_main_menu_help()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
+show_progress() {
+r_pos="$1"
+c_pos="$2"
+item="$3"
+pass="$4"
+
+todo_str="              "
+done_str="||||||||||||||"
+#build todo_strne w/colors
+#for i in {57..31}; do
+#		let c=$c+1
+#		#done_str="\033[48;5;${i}m\033[1;34m▓\033[0m"$done_str
+#		done_str="\033[48;5;${i}m  \033[0m"$done_str
+#done
+tput sc	#save cursor
+#get $pass string size
+max=0
+for i in $pass ; do let max=$max+1; done
+index=0;c=0
+tput cup $r_pos $c_pos; echo  "                         "  #clear to end of line (tput el doesnt work!)
+for i in $pass; do
+    let index=$index+1
+    done_len=$((index * ${#done_str} / max))
+    let todo_len=${#done_str}-$done_len
+    percent=$((index * 100 / max))
+	if [ "$i" == "$item" ]; then
+		#color="\033[1;${c}m"
+		tput cup $r_pos $c_pos
+    	echo -ne "[\033[48;5;2m${done_str:0:$done_len}\033[48;5;1m${todo_str:0:$todo_len}\033[0m]\033[1;34m %$percent\033[0m\r"
+    	#printf "[\033[48;5;2m${done_str:0:$done_len}\033[48;5;1m${todo_str:0:$todo_len}\033[0m]\033[1;34m %%$percent\033[0m"
+   		# printf "[${done_str:0:$done_len} ${todo_str:0:$todo_len}] ${percent}% \n"
+		#let c=$c-1	#gradually increase the color value
+	fi;
+done
+tput rc	#restore cursor
+
+}	#end show_progress()
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
 screen_header() {
 color="$1"
 str="$2"
@@ -2468,22 +2516,28 @@ COLUMNS=$(tput cols)
 size=$((${#str} - 9 ))
 len=$(($COLUMNS - $size))
 pad=`printf '\x20%.0s' $(seq 1 $len)`
-tput cup 0 0; printf "$color ${str}$pad${NC}\n"
-tput cup 1 0; display_stats_banner
+tput cup $R_HEADER 0; printf "$color ${str}$pad${NC}\n"
+tput cup $R_BANNER 0; display_stats_banner
 docker_status
 return
 }	#end screen_header()
 #---------------------------------------------------------------------------------------------------------------
-
 #---------------------------------------------------------------------------------------------------------------
 screen_footer() {
 Containers=$1; Running=$2; Paused=$3; Stopped=$4; Images=$5; loadavg="$6"
-
-str="${WhiteOnGray}Docker:[Containers: ${LightGreenOnGray}$Containers ${WhiteOnGray}Running: ${LightGreenOnGray}$Running ${WhiteOnGray}Paused: ${LightGreenOnGray}$Paused ${WhiteOnGray}Stopped: ${LightGreenOnGray}$Stopped ${WhiteOnGray}Images: ${LightGreenOnGray}$Images] ${WhiteOnGray}Load:[$loadavg${WhiteOnGray}]"
+#gProgress=$(show_progress "sh2" "sh1 sh2 sh3" )
+str="${WhiteOnGray1}Docker:[Containers: ${LightGreenOnGray1}$Containers ${WhiteOnGray1} \
+Running: ${LightGreenOnGray1}$Running ${WhiteOnGray1} \
+Paused: ${LightGreenOnGray1}$Paused ${WhiteOnGray1} \
+Stopped: ${LightGreenOnGray1}$Stopped ${WhiteOnGray1} \
+Images: ${LightGreenOnGray1}$Images] ${WhiteOnGray1} \
+${WhiteOnGray1} Load:[$loadavg${WhiteOnGray1}] ${WhiteOnGray1}"
+#Progress:\"$gProgress\""
+#Progress:$progress"
+#printf "$progress";exit
 #rows and cols are also detected in redraw function with a trap
 ROWS=$(tput lines)
 COLUMNS=$(tput cols)
-tput sc
 
 #size=$((${#str}))
 #size=`printf "$str"|wc -c` #get char count without the escape codes
@@ -2493,6 +2547,7 @@ tput sc
 size=$(echo $str| sed $'s,\\\\033\\[[0-9;]*[a-zA-Z],,g'|wc -c| tr -d '[:space:]')
 #echo "[$size]";exit
 
+tput sc
 #dont pad if screen width less that str size
 if [ "$size" -gt "$COLUMNS" ]; then
 	len=1
@@ -2502,9 +2557,8 @@ fi
 pad=`printf '\x20%.0s' $(seq 1 $len)`
 #tput cup $ROWS 0;printf "[$COLUMNS-$size=$len]$str$pad${NC}"
 tput cup $ROWS 0;printf "$str$pad${NC}"
-
-
 tput rc
+
 return
 }	#end screen_footer()
 #---------------------------------------------------------------------------------------------------------------
@@ -2527,22 +2581,120 @@ elif [ "$os" == "Linux" ]; then
 fi
 
 load=`echo "$loadavg/1" | bc `   #convert float to int
-load=4
+#load=10
 #c=`echo " $load > $MAXLOADAVG" | bc `;
 
 if [[ "$load" -ge "$cores" ]]; then
-	loadavg="${RedOnGray}$loadavg${NC}"
+	loadavg="${RedOnGray1}$loadavg"
 elif [[ "$load" -ge "$cores/2" ]]; then
-	loadavg="${LightYellowOnGray}$loadavg${NC}"
+	loadavg="${LightYellowOnGray1}$loadavg"
 else
-	loadavg="${LightGreenOnGray}$loadavg${NC}"
+	loadavg="${LightGreenOnGray1}$loadavg"
 fi
 
-
 screen_footer "$Containers" "$Running" "$Paused" "$Stopped" "$Images" "${loadavg}"
+#screen_footer "$Containers" "$Running" "$Paused" "$Stopped" "$Images" "${loadavg}"
 return
 }	#end docker_status()
 #---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
+clear_if_limit_reached_from() {
+pos="$1"	#row where will clear from if condition met
+prompt="$2"	#if set & limit reached prompt user "to continue"
+
+# Get current settings.
+if ! termios="$(stty -g 2>/dev/null)" ; then
+    echo "Not running in a terminal." >&2
+    exit 1
+fi
+
+# Restore terminal settings when the script exits.
+trap "stty '$termios'" EXIT
+
+# Disable ICANON ECHO. Should probably also disable CREAD.
+stty -icanon -echo
+
+# Request cursor coordinates
+printf '\033[6n'
+
+# Read response from standard input; note, it ends at R, not at newline
+read -d "R" rowscols
+
+# Clean up the rowscols (from \033[rows;cols -- the R at end was eaten)
+rowscols="${rowscols//[^0-9;]/}"
+rowscols=("${rowscols/ /;/ }")
+curr_row=""; curr_col=""
+curr_pos=(${rowscols[0]})
+curr_row=`echo $curr_pos|cut -d ";" -f1 `
+curr_col=`echo $curr_pos|cut -d ";" -f2 `
+#x=$(($pos + 1))
+ROWS=$(tput lines)
+height_limit=$(( $ROWS - 2 ))
+#printf "${Yellow}[R:$curr_row L:$height_limit]${NC}"  #DEBUG
+if [[ $curr_row -ge $height_limit ]]; then
+	printf "${LightRed}---end of screen reached ---"; sleep 2
+	if [ -n "$prompt" ]; then
+		read -p "<ENTER> to show more.." answer
+	fi
+	tput_el_ed_from "$pos" "0"
+fi
+
+# Reset original terminal settings.
+stty "$termios"
+docker_status
+}	#end clear_if_limit_reached_from()
+#----------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------
+printf_from() {
+	#display msg from row=pos and clear everything after it
+pos="$1"		#row where should start displaying msg
+color="$2"		#color code for msg
+text="$3"		#acutall msg to display
+progress_item="$4"
+progress_list="$5"
+tput cup $pos 0
+size=$((${#text}))
+len=$(($size - 4))	#take out color ESC codes
+#echo "[size:$size vs len:$len vs MAXLEN:$MAXLEN]"
+#dont pad if strlen > maxlen
+if [ "$size" -gt "$MAXLEN" ]; then
+	len=1
+else
+	len=$(($MAXLEN - $size))
+fi
+pad=`printf '\x20%.0s' $(seq 1 $len)`
+#printf "[$MAXLEN-$size=$len]${color}$text$pad${NC}"
+printf "$color${text}$pad${NC}"
+#printf "${text}$pad${NC}"; #show_progress "p4" "p1 p2 p3 p4 p5"
+
+
+#printf "$color${text}${NC}"; show_progress "$progress_item" "$progress_list"
+#printf "$color${text}${NC}\n"
+#printf "($pos,0)$color${text}${NC}\n"
+x=$(($pos + 1))
+#tput smcup	#save screen
+#tput_el_ed_from "$x" "0"
+#tput rmcup	#restore screen
+docker_status
+
+return
+}	#end printf_from()
+#------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------
+tput_el_ed_from() {
+	#clear screen staring at (x,y)
+x=$1; y=$2
+ROWS=$(tput lines)
+height_limit=$(( $ROWS - 2 ))
+tput cup $x $y
+#xterm in OSX does not honor ed and el (bug)
+printf '\E[K'	#tput ed  (clear to end of display)
+printf '\E[J'   #tput el  (clear to end of line)
+
+return
+}	#end tput_el_ed_from()
+#------------------------------------------------------------------------------------------------------
+
 
 #### DISPLAY MENU OPTIONS #####
 
@@ -3094,87 +3246,7 @@ done
 }	#end install_ll_datasets()
 #---------------------------------------------------------------------------------------------------------------
 
-#---------------------------------------------------------------------------------------------------------------
-clear_if_limit_reached_from() {
-pos="$1"	#row where will clear from if condition met
-prompt="$2"	#if set & limit reached prompt user "to continue"
 
-# Get current settings.
-if ! termios="$(stty -g 2>/dev/null)" ; then
-    echo "Not running in a terminal." >&2
-    exit 1
-fi
-
-# Restore terminal settings when the script exits.
-trap "stty '$termios'" EXIT
-
-# Disable ICANON ECHO. Should probably also disable CREAD.
-stty -icanon -echo
-
-# Request cursor coordinates
-printf '\033[6n'
-
-# Read response from standard input; note, it ends at R, not at newline
-read -d "R" rowscols
-
-# Clean up the rowscols (from \033[rows;cols -- the R at end was eaten)
-rowscols="${rowscols//[^0-9;]/}"
-rowscols=("${rowscols/ /;/ }")
-curr_row=""; curr_col=""
-curr_pos=(${rowscols[0]})
-curr_row=`echo $curr_pos|cut -d ";" -f1 `
-curr_col=`echo $curr_pos|cut -d ";" -f2 `
-#x=$(($pos + 1))
-ROWS=$(tput lines)
-height_limit=$(( $ROWS - 2 ))
-#printf "${Yellow}[R:$curr_row L:$height_limit]${NC}"  #DEBUG
-if [[ $curr_row -ge $height_limit ]]; then
-	printf "${LightRed}---end of screen reached ---"; sleep 2
-	if [ -n "$prompt" ]; then
-		read -p "<ENTER> to show more.." answer
-	fi
-	tput_el_ed_from "$pos" "0"
-fi
-
-# Reset original terminal settings.
-stty "$termios"
-docker_status
-}	#end clear_if_limit_reached_from()
-#----------------------------------------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------------------------------------
-tput_el_ed_from() {
-	#clear screen staring at (x,y)
-x=$1; y=$2
-ROWS=$(tput lines)
-height_limit=$(( $ROWS - 2 ))
-tput cup $x $y
-#xterm in OSX does not honor ed and el (bug)
-printf '\E[K'	#tput ed  (clear to end of display)
-printf '\E[J'   #tput el  (clear to end of line)
-
-return
-}	#end tput_el_ed_from()
-#------------------------------------------------------------------------------------------------------
-
-#------------------------------------------------------------------------------------------------------
-printf_from() {
-	#display msg from row=pos and clear everything after it
-pos="$1"
-color="$2"
-text="$3"
-
-tput cup $pos 0
-printf "$color${text}${NC}\n"
-#printf "($pos,0)$color${text}${NC}\n"
-x=$(($pos + 1))
-#tput smcup	#save screen
-#tput_el_ed_from "$x" "0"
-#tput rmcup	#restore screen
-docker_status
-
-return
-}	#end printf_from()
-#------------------------------------------------------------------------------------------------------
 #### CLUSTERS ######
 
 
@@ -3271,7 +3343,7 @@ members_list="$1"
 
 tput_el_ed_from "$R_ROLL"
 captain=`echo $members_list | cut -d " " -f3 `	#captain is last SH created
-printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#4: Verifying SHC cluster status           "
+printf_from "$R_STEP4" "${BoldWhiteOnGreen}"  "=> STEP#4: Verifying SHC cluster status"
 tput_el_ed_from "$R_ROLL"
 printf "[${Purple}$captain${NC}]${LightBlue} Checking SHC status (on captain)...${NC}"
 
@@ -3301,8 +3373,8 @@ if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 server_list=""    #used by STEP#3
 START=$(date +%s);
 
-tput_el_ed_from "$R_BUILD"
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
+tput_el_ed_from "$R_BUILD_CLUSTER"
 
 #Extract parms from $1, if not we will prompt user later
 lm=`echo $1| $GREP -Po '(\s*\w*-*LM\d+)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
@@ -3324,12 +3396,14 @@ if [ "$mode" == "AUTO" ]; then
 #	tput cup $saved_cursor 0
     #DEPname="DEP"; DEPcount="1"; SHname="SH"; SHcount="$STD_SHC_COUNT";
 	label="$SHCLUSTERLABEL"
-	printf_from "$R_BUILD" "${BoldWhiteOnBlue}"   "   -- BUILDING SEARCH HEAD CLUSTER (SHC) --[AUTO] "
-	printf_from "$R_PHASE" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts                 "
+	printf_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}"  "BUILDING SEARCH HEAD CLUSTER (SHC) --[AUTO]"
+	printf_from "$R_PHASE" "${BoldWhiteOnBlue}" "=> PHASE1: Creating generic hosts"
 	printf "${DarkGray}Using DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$label] DEP:[$DEP_BASE:$DEP_SHC_COUNT] SHC:[$SH_BASE:$STD_SHC_COUNT]${NC}\n\n" >&4
 
 	#Basic services. Sequence is very important!
-	printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts          "
+	printf_from "$R_STEP1" "${BoldWhiteOnBlue}" "=> STEP#1: Creating administrative hosts"
+
+	#gProgressList="dmc lm dep"
 	tput_el_ed_from "$R_ROLL"
     create_splunk_container "$DMC_BASE" "1" ; dmc=$gLIST
     create_splunk_container "$LM_BASE" "1" ; lm=$gLIST
@@ -3338,11 +3412,11 @@ if [ "$mode" == "AUTO" ]; then
     make_lic_slave $lm $dep ; make_dmc_search_peer $dmc $dep
 
 	#The rest of SHs
-	printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#2: Creating SH hosts                      "
+	printf_from "$R_STEP2" "${BoldWhiteOnBlue}" "=> STEP#2: Creating SH hosts"
 	tput_el_ed_from "$R_ROLL"
     create_splunk_container "$SH_BASE" "$STD_SHC_COUNT" ; members_list="$gLIST"
 else  ## MANUAL MODE ###
-	printf_from "$R_BUILD" "${BoldWhiteOnBlue}"   "  -- BUILDING SEARCH HEAD CLUSTER (SHC) --[MANUAL]"
+	printf_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}"   "BUILDING SEARCH HEAD CLUSTER (SHC) --[MANUAL]"
 	#Error checking (values should already have been passed at this point)
 	if [ -z "$label" ]; then
         read -p "Need to know SH cluster label ($SHCLUSTERLABEL)> " label ;
@@ -3391,9 +3465,9 @@ else  ## MANUAL MODE ###
 	#	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 	#fi
 	#printf "\n"
-	printf_from "$R_PHASE" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts                 "
+	printf_from "$R_PHASE" "${BoldWhiteOnBlue}" "=> PHASE1: Creating generic hosts"
 	printf "${DarkGray}Using DMC[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] DEP:[$DEPname:$DEP_SHC_COUNT] SHC:[$SHname:$SHcount]${NC}\n\n" >&4
-	printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts          "
+	printf_from "$R_STEP1" "${BoldWhiteOnBlue}" "=> STEP#1: Creating administrative hosts"
 	tput_el_ed_from "$R_ROLL"
 	if [ "$build_dmc" == "1" ]; then
             create_splunk_container "$dmc" "1"; dmc=$gLIST
@@ -3409,27 +3483,27 @@ else  ## MANUAL MODE ###
 		make_lic_slave $lm $dep
         make_dmc_search_peer $dmc $dep
 
-		printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#2: Creating SH hosts                      "
+		printf_from "$R_STEP2" "${BoldWhiteOnBlue}" "=> STEP#2: Creating SH hosts"
         create_splunk_container "$SHname" "$SHcount" ; members_list="$gLIST"
 fi
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
 
 ## from this point on all hosts should be created and ready. Next steps are SHCluster configurations ##########
 #DEPLOYER CONFIGURATION: (create [shclustering] stanza; set SecretKey and restart) -----
-printf_from "$R_PHASE" "${BoldWhiteOnGreen}" "=> PHASE2: Converting generic SH hosts into SHC   "
-printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#1: Deployer configuration                 "
+printf_from "$R_PHASE" "${BoldWhiteOnBlue}" "=> PHASE2: Converting generic SH hosts into SHC"
+printf_from "$R_STEP1" "${BoldWhiteOnBlue}" "=> STEP#1: Deployer configuration"
 printf_from "$R_ROLL" "${DarkGray}" "Configuring SHC with created hosts: DEPLOYER[$dep]  MEMBERS[$members_list]" >&3
 configure_deployer "$dep"
 
 printf "${LightBlue}___________ Finished STEP#1 __________________________${NC}\n" >&3
 
-printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#2: Cluster members configureations        "
+printf_from "$R_STEP2" "${BoldWhiteOnBlue}"  "=> STEP#2: Cluster members configureations"
 printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}After members_list loop> param2:[$2] members_list:[$members_list] sh_list:[$sh_list]${NC}\n" >&5
 
 configure_shc_members "$members_list" "$cm" "$dmc" "$lm"
 printf "${LightBlue}___________ Finished STEP#2 __________________________${NC}\n" >&3
 
-printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#3: Captain configuration                  "
+printf_from "$R_STEP3" "${BoldWhiteOnBlue}"  "=> STEP#3: Captain configuration"
 configure_captain "$members_list"
 
 printf "${LightBlue}___________ Finished STEP#3 __________________________${NC}\n" >&3
@@ -3529,7 +3603,7 @@ create_single_idxc() {
 
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-tput_el_ed_from "$R_BUILD"
+tput_el_ed_from "$R_BUILD_CLUSTER"
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
 START=$(date +%s);
@@ -3552,14 +3626,14 @@ idx_list=`docker ps -a --filter name="$IDXname" --format "{{.Names}}"|sort| tr '
 
 #------- big if ------------------
 if [ "$mode" == "AUTO" ]; then
-	printf_from "$R_BUILD" "${BoldWhiteOnBlue}"  "   -- BUILDING INDEX CLUSTER (IDXC) --[AUTO]      "
+	printf_from "$R_BUILD_CLUSTER" "${BoldWhiteOnLightBlue}"  "BUILDING INDEX CLUSTER (IDXC) --[AUTO]"
 	#CMname="CM"; DMCname="DMC"; LMname="LM";  IDXname="IDX"; IDXcount="$STD_IDXC_COUNT";
 	label="$IDXCLUSTERLABEL"
 	printf "${DarkGray}Using base-names DMC:[$DMC_BASE] LM:[$LM_BASE] CM:[$CM_BASE] LABEL:[$IDXCLUSTERLABEL] IDXC:[$IDX_BASE:$STD_IDXC_COUNT]${NC}\n\n" >&4
 
 	#Basic services. Sequence is very important!
-	printf_from "$R_PHASE" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts                 "
-	printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#1: Creating administrative hosts          "
+	printf_from "$R_PHASE" "${BoldWhiteOnLightBlue}" "=> PHASE1: Creating generic hosts"
+	printf_from "$R_STEP1" "${BoldWhiteOnLightBlue}" "=> STEP#1: Creating administrative hosts"
 	tput_el_ed_from "$R_ROLL"
 	create_splunk_container "$DMC_BASE" "1" ; dmc=$gLIST
 	create_splunk_container "$LM_BASE" "1" ; lm=$gLIST
@@ -3568,11 +3642,11 @@ if [ "$mode" == "AUTO" ]; then
 	make_lic_slave $lm $cm ; make_dmc_search_peer $dmc $cm
 
 	#The rest of IDXs
-	printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#2: Creating IDX hosts                "
+	printf_from "$R_STEP2" "${BoldWhiteOnLightBlue}" "=> STEP#2: Creating IDX hosts"
 	tput_el_ed_from "$R_ROLL"
     create_splunk_container "$IDX_BASE" "$STD_IDXC_COUNT" ; members_list="$gLIST"
 else
-	printf_from "$R_BUILD" "${BoldWhiteOnBlue}"   "   -- BUILDING INDEX CLUSTER (IDXC) --[MANUAL]    "
+	printf_from "$R_BUILD_CLUSTER" "${BoldWhiteOnLightBlue}"   "BUILDING INDEX CLUSTER (IDXC) --[MANUAL]"
 	#Anything passed to function; user will NOT be prompted for it!
 	if [ -z "$label" ]; then
         read -p "Need to know IDX cluster label (default $SHCLUSTERLABEL)? " label ;
@@ -3627,8 +3701,8 @@ else
 	#fi
 
 
-	printf_from "$R_PHASE" "${BoldWhiteOnYellow}" "=> PHASE1: Creating generic hosts                 "
-	printf_from "$R_STEP" "${BoldWhiteOnYellow}"  "=> STEP#1: Creating administrative hosts          "
+	printf_from "$R_PHASE" "${BoldWhiteOLightBlue}" "=> PHASE1: Creating generic hosts"
+	printf_from "$R_STEP1" "${BoldWhiteOnLightBlue}" "=> STEP#1: Creating administrative hosts"
 	tput_el_ed_from "$R_ROLL"
 	printf "${DarkGray}Using DMC:[$dmc] LM:[$lm] CM:[$cm] LABEL:[$label] IDXC:[$IDXname:$IDXcount]${NC}\n\n" >&4
 	if [ "$build_dmc" == "1" ]; then
@@ -3646,7 +3720,7 @@ else
     fi
 
 	#create the remaining IDXs
-	printf_from "$R_STEP" "${BoldWhiteOnYellow}" "=> STEP#2: Creating IDX hosts                     "
+	printf_from "$R_STEP2" "${BoldWhiteOnLightBlue}" "=> STEP#2: Creating IDX hosts                     "
 	tput_el_ed_from "$R_ROLL"
     create_splunk_container "$IDXname" "$IDXcount" ; members_list="$gLIST"
 
@@ -3655,17 +3729,17 @@ fi
 
 printf "${LightBlue}___________ Finished creating hosts __________________________${NC}\n"
 
-printf_from "$R_PHASE" "${BoldWhiteOnGreen}"  "=> PHASE2: Converting generic IDX hosts into IDXC "
-printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#1: ClusterMaster configuration            "
+printf_from "$R_PHASE" "${BoldWhiteOnLightBlue}"  "=> PHASE2: Converting generic IDX hosts into IDXC"
+printf_from "$R_STEP1" "${BoldWhiteOnKightBlue}"  "=> STEP#1: ClusterMaster configuration"
 configure_cm "$cm" "$label"
 printf "${LightBlue}____________ Finished STEP#1 __________________________${NC}\n" >&3
 
 
-printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#2: IDXC nodes configuration               "
+printf_from "$R_STEP2" "${BoldWhiteOnLightBlue}"  "=> STEP#2: IDXC nodes configuration"
 configure_idxc_members "$members_list" "$label" "$lm"
 printf "${LightBlue}____________ Finished STEP#2 __________________________${NC}\n" >&3
 
-printf_from "$R_STEP" "${BoldWhiteOnGreen}"  "=> STEP#3: Verifying IDXC status                  "
+printf_from "$R_STEP3" "${BoldWhiteOnLightBlue}"  "=> STEP#3: Verifying IDXC status"
 check_idxc_status "$cm"
 
 printf "${LightBlue}____________ Finished STEP#3 __________________________${NC}\n\n" >&3
@@ -3706,14 +3780,14 @@ CMcount=`echo $1| $GREP -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space:]]' `
 if [ "$1" == "AUTO" ]; then
 	mode="AUTO"
 	site="SITE01"
-	printf_from "$R_SITE" "${BoldWhiteOnPink}" "-- BUILDING SINGLE SITE CLUSTER --[$site][AUTO]  "
+	printf_from "$R_BUILD_SITE" "${BoldWhiteOnPink}" "BUILDING SINGLE SITE CLUSTER --[$site][AUTO]"
 	IDXcount="$STD_IDXC_COUNT"
 	SHcount="$STD_SHC_COUNT"
 	shc_label="$SHCLUSTERLABEL"
 	idxc_label="$IDXCLUSTERLABEL"
 else
 	mode="MANUAL"
-	printf_from "$R_SITE" "${BoldWhiteOnPink}" "-- BUILDING SINGLE SITE CLUSTER --[$site][MANUAL]"
+	printf_from "$R_BUILD_SITE" "${BoldWhiteOnPink}" "BUILDING SINGLE SITE CLUSTER --[$site][MANUAL]"
 	read -p "Enter SH cluster label (default $SHCLUSTERLABEL): " shc_label
     shc_label=`echo $shc_label| tr '[a-z]' '[A-Z]'`; if [ -z "$shc_label" ]; then shc_label="$SHCLUSTERLABEL";  fi
 
@@ -3749,8 +3823,8 @@ fi
 
 #Basic services
 #Sequence is very important!
-tput_el_ed_from "$R_ROLL"
 printf_from "$R_PHASE" "${BoldWhiteOnYellow}" "=> PHASE1: Building basic services [LM,DMC,CM]    "
+tput_el_ed_from "$R_ROLL"
 create_splunk_container "$site$DMC_BASE" "1" ; dmc=$gLIST
 create_splunk_container "$site$LM_BASE" "1" ; lm=$gLIST
 make_lic_slave $lm $dmc ; make_dmc_search_peer $dmc $lm
@@ -3763,8 +3837,8 @@ make_lic_slave $lm $hf ; #make_dmc_search_peer $dmc $hf
 
 printf "${LightBlue}____________ Finished building basic services ___________________${NC}\n\n" >&3
 
+printf_from "$R_PHASE" "${BoldWhiteOnYellow}"  "=> PHASE2: Building IDXC & SHC"
 tput_el_ed_from "$R_ROLL"
-printf_from "$R_PHASE" "${BoldWhiteOnGreen}"  "=> PHASE2: Building IDXC & SHC                    "
 create_single_idxc "$site$IDX_BASE:$IDXcount $dmc $cm:1 $lm LABEL:$idxc_label"
 create_single_shc "$site$SH_BASE:$SHcount $site$DEP_BASE:1 $dmc $cm $lm LABEL:$shc_label"
 
@@ -3803,7 +3877,7 @@ if [ "$mode" == "AUTO" ]; then
     sites_str="site1,site2,site3"
 	first_site=`echo $SITEnames|awk '{print $1}'`		#where basic services CM,LM resides
 	cm=$first_site"CM01"
-	printf_from "$R_SITE" "${BoldWhiteOnPink}"   "   -- BUILDING MULTI SITE CLUSTER  --[$site]      "
+	printf_from "$R_BUILD_SITE" "${BoldWhiteOnPink}"   "BUILDING MULTI SITE CLUSTER  --[$site]"
 else
 	read -p "How many LOCATIONS to build (default 3)?  " count
     if [ -z "$count" ]; then count=3; fi
@@ -3834,7 +3908,7 @@ fi
 
 #------- Finished capturing sites names/basic services names ------------------
 
-printf_from "$R_SITE" "${BoldWhiteOnPink}"   "   -- BUILDING MULTI SITE CLUSTER  --[$site]      "
+printf_from "$R_BUILD_SITE" "${BoldWhiteOnPink}"   "BUILDING MULTI SITE CLUSTER  --[$site]"
 #printf "\n\n${BoldYellowOnBlue}[$mode] Building site-to-site cluster...${NC}\n"
 printf "${DarkGray}Using Locations:[$SITEnames] CM:[$cm] First_site:[$first_site] ${NC}\n\n" >&4
 
@@ -3956,13 +4030,13 @@ TIME=`echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'`
 
 echo
 #get unique host list  (mpty lines removed)
-grep exec $CMDLOGTXT | awk '{print $5}'|grep -v -e '^[[:space:]]*$'|sort -u > tmp1
+$GREP "exec" $CMDLOGTXT | awk '{print $5}'|$GREP -v -e '^[[:space:]]*$'|sort -u > tmp1
 
 printf "${LightBlue}   HOST         NUMBER OF CMDS${NC}\n"  >&3
 printf "${LightBlue}============    =============${NC}\n"   >&3
 for host_name in `cat tmp1`; do
-    count=`grep $host_name $CMDLOGTXT|grep exec|wc -l`;
-    cmd_list=`grep exec $CMDLOGTXT| grep $host_name| awk '{print $6,$7,$8}'| sed 's/\$//g'|sed 's/\/opt\/splunk\/bin\/splunk //g'| sort | uniq -c|sed 's/\r\n/ /g'|awk '{printf "[%s:%s %s]", $1,$2,$3}' `
+    count=`$GREP "$host_name" $CMDLOGTXT|$GREP  "exec"|wc -l`;
+    cmd_list=`$GREP "exec" $CMDLOGTXT| $GREP $host_name| awk '{print $6,$7,$8}'| sed 's/\$//g'|sed 's/\/opt\/splunk\/bin\/splunk //g'| sort | uniq -c|sed 's/\r\n/ /g'|awk '{printf "[%s:%s %s]", $1,$2,$3}' `
 
     printf "${LightBlue}%-15s %7s ${NC}\n" $host_name $count >&3
     printf "${DarkGray}$cmd_list${NC}\n" >&4
@@ -4107,7 +4181,7 @@ local spinstr='|/-\'
 i=0;  gTIMEOUT=""
 SECONDS=0	#bash built-in function
 #loop until spawn process exists (assuming job is completed)
-while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+while [ "$(ps a | awk '{print $1}' | $GREP $pid)" ]; do
 	local temp=${spinstr#?}
        # printf " [%c]  " "$spinstr"
 	#printf "\033[48;5;${i}m\x41\\"
@@ -4153,7 +4227,7 @@ fi
 
 #docker pull hub.docker.com/r/mhassan/splunk
 #echo "[docker pull $hub$image_name]"
-cached=`docker images | grep $image_name`
+cached=`docker images | $GREP $image_name`
 if [ -z "$cached" ]; then
 	t_start=$(date +%s)
       	#printf "    ${Purple}$image_name:${NC}["
@@ -4161,9 +4235,9 @@ if [ -z "$cached" ]; then
 	check_status=""
       	#(docker pull $hub$image_name >/dev/null) &
       	(docker pull $hub$image_name > "tmp.$$") &
-	background_pid=`ps xa|grep "docker pull $hub$image"| awk '{print $1}'`
+	background_pid=`ps xa|$GREP "docker pull $hub$image"| awk '{print $1}'`
 	spinner $background_pid
-	check_status=`grep -i "Digest" tmp.$$`
+	check_status=`$GREP -i "Digest" tmp.$$`
 
 	t_end=$(date +%s)
 	t_total=`echo $((t_end-t_start))|awk '{print int($1/60)":"int($1%60)}'`
@@ -4225,10 +4299,10 @@ for image_name in $REPO_DEMO_IMAGES; do
         printf "${Purple}%-2s${NC}) ${Purple}%-40s${NC}" "$counter" "$image_name"
 	image_name="$SPLUNK_DOCKER_HUB/sales-engineering/$image_name"
 #	echo "cached[$cached]\n"
-	created=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $4,$5,$6}'`
-	size=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $7,$8}'`
+	created=`docker images "$image_name" | $GREP -v REPOSITORY | awk '{print $4,$5,$6}'`
+	size=`docker images "$image_name" | $GREP -v REPOSITORY | awk '{print $7,$8}'`
         if [ -n "$created" ]; then
-        	author=`docker inspect $image_name |grep -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
+        	author=`docker inspect $image_name |$GREP  -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
                 printf "%-12s %-7s %-10s ${NC}\n" "$created" "$size" "$author"
         else
                 printf "${DarkGray}NOT CACHED! ${NC}\n"
@@ -4288,10 +4362,10 @@ counter=1
 #count=`docker images --format "{{.ID}}" | wc -l`
 for image_name in $REPO_3RDPARTY_IMAGES; do
         printf "${Purple}%-2s${NC}) ${Purple}%-40s${NC}" "$counter" "$image_name"
-	created=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $4,$5,$6}'`
-	size=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $7,$8}'`
+	created=`docker images "$image_name" | $GREP -v REPOSITORY | awk '{print $4,$5,$6}'`
+	size=`docker images "$image_name" | $GREP -v REPOSITORY | awk '{print $7,$8}'`
         if [ -n "$created" ]; then
-        	author=`docker inspect "$image_name" |grep -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
+        	author=`docker inspect "$image_name" |$GREP -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
                 printf "%-12s %-7s %-10s ${NC}\n" "$created" "$size" "$author"
         else
                 printf "${DarkGray}NOT CACHED! ${NC}\n"
@@ -4343,7 +4417,8 @@ type=$1         #container type (ex DEMO, 3RDPARTY, empty for ALL)
 
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> LIST $type CONTAINERS MENU"
-printf_from "$R_BUILD" "${BoldWhiteOnBlue}" "   -- LISTING CONTAINERS --                            "
+printf_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}" "   -- LISTING CONTAINERS -- "
+printf "\n"
 display_all_containers "$type" "$tagged"
 count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
 if [ $count == 0 ]; then
@@ -4360,7 +4435,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type=$1
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> START $type CONTAINERS MENU"
-printf_from "$R_BUILD" "${BoldWhiteOnBlue}" "   -- STARTING CONTAINERS --                           "
+printf_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}" "   -- STARTING CONTAINERS --"; printf "\n"
 display_all_containers "$type"
 
 echo
@@ -4377,25 +4452,21 @@ choice=""
 read -p $'Choose number to start. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
-if [ -n "$choice" ]; then
-		tput_el_ed_from "$R_ROLL"
-        printf "${Yellow}Starting selected $type containers...\n${NC}"
-        for id in `echo $choice`; do
-            #printf "${Purple} ${list[$id - 1]}:${NC}\n"
-            hostname=${list[$id - 1]}
-			docker start "$hostname"
-			clear_if_limit_reached_from "4"
-			docker_status
-        done
-else
-		tput_el_ed_from "$R_ROLL"
-        printf "${Yellow}Starting all $type containers...\n${NC}"
-		#docker start $(docker ps -a --format "{{.Names}}")
-		docker start $(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' ')
-		clear_if_limit_reached_from "4"
-		docker_status
-        rm -fr $HOSTSFILE
+if [ -z "$choice" ]; then
+	choice=$(seq 1 $count)		#All is selected
 fi
+tput_el_ed_from "$R_ROLL"
+printf "${Yellow}Starting selected $type containers...\n${NC}"
+#printf "${Yellow}Starting all $type containers...\n${NC}"
+for id in `echo $choice`; do
+	#printf "${Purple} ${list[$id - 1]}:${NC}\n"
+	hostname=${list[$id - 1]}
+    docker start "$hostname"
+	docker_status
+	show_progress "$R_BUILD_CLUSTER" "$C_PROGRESS" "$id" "$choice"
+	clear_if_limit_reached_from "$R_STEP2" "p"
+done
+
 read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
 list_all_containers "$type"
 
@@ -4408,7 +4479,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type=$1
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> STOP $type CONTAINERS MENU"
-printf_from "$R_BUILD" "${BoldWhiteOnBlue}" "   -- STOPPING CONTAINERS --                           "
+printf_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}" "   -- STOPPING CONTAINERS -- "; printf "\n"
 display_all_containers "$type"
 echo
 count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
@@ -4418,28 +4489,27 @@ if [ $count == 0 ]; then
 fi
 #build array of containers list
 declare -a list=($(docker ps -a --filter name="$type" --format "{{.Names}}" | sort | tr '\n' ' '))
+#list_str=`printf '%s ' "${list[@]}"`	#convert array to str for show_progress below
 
 choice=""
 read -p $'Choose number to stop. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
-if [ -n "$choice" ]; then
-	tput_el_ed_from "$R_ROLL"
-    printf "${Yellow}Stopping selected $type containers...\n${NC}"
-    for id in `echo $choice`; do
-        #printf "${Purple} ${list[$id - 1]}:${NC}\n"
-    	hostname=${list[$id - 1]}
-        docker stop "$hostname"
-		clear_if_limit_reached_from "4"
-	done
-else
-	tput_el_ed_from "$R_ROLL"
-    printf "${Yellow}Stopping all $type containers...\n${NC}"
-    # docker stop $(docker ps -aq);
-	docker stop $(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' ')
-	clear_if_limit_reached_from "4"
-    rm -fr $HOSTSFILE
+if [ -z "$choice" ]; then
+	choice=$(seq 1 $count)		#All is selected
 fi
+tput_el_ed_from "$R_ROLL"
+printf "${Yellow}Stopping selected $type containers...\n${NC}"
+#printf "${Yellow}Stopping all $type containers...\n${NC}"
+for id in `echo $choice`; do
+	#printf "${Purple} ${list[$id - 1]}:${NC}\n"
+	hostname=${list[$id - 1]}
+    docker stop "$hostname"
+	docker_status
+	show_progress "$R_BUILD_CLUSTER" "$C_PROGRESS" "$id" "$choice"
+	clear_if_limit_reached_from "$R_STEP2" "p"
+done
+#	docker stop $(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' ')
 echo
 read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
 list_all_containers "$type"
@@ -4454,7 +4524,7 @@ type=$1
 
 clear
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DELETE $type CONTAINERS MENU"
-printf_from "$R_BUILD" "${BoldWhiteOnBlue}" "   -- DELETING CONTAINERS --                           "
+printf_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}" "   -- DELETING CONTAINERS --"; printf "\n"
 display_all_containers "$type"
 
 count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
@@ -4469,26 +4539,23 @@ choice=""
 read -p $'Choose number to delete. You can select multiple numbers <\033[1;32mENTER\e[0m:All \033[1;32m B\e[0m:Go Back> ' choice
 if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
 
-if [ -n "$choice" ]; then
-		tput_el_ed_from "$R_ROLL"
-        printf "${Yellow}Deleting selected $type containers...\n${NC}"
-        for id in `echo $choice`; do
-                hostname=${list[$id - 1]}
-                #printf "${Purple}$hostname${NC}\n"
-                docker rm -v -f "$hostname"
-				docker_status
-				clear_if_limit_reached_from "4"
-        done
-       # docker stop $choice
-else
-		tput_el_ed_from "$R_ROLL"
-        printf "${Yellow}Deleting all $type containers and volumes...\n${NC}"
-       # docker rm -v -f $(docker ps -a --format "{{.Names}}");
-		docker rm -v -f $(docker ps -a --filter name="$type" --format "{{.Names}}" | tr '\n' ' ')
-        rm -fr $HOSTSFILE
-		docker_status
-#       delete_all_volumes
+if [ -z "$choice" ]; then
+	choice=$(seq 1 $count)		#All is selected
 fi
+tput_el_ed_from "$R_ROLL"
+printf "${Yellow}Deleting selected $type containers...\n${NC}"
+#printf "${Yellow}Stopping all $type containers...\n${NC}"
+for id in `echo $choice`; do
+	#printf "${Purple} ${list[$id - 1]}:${NC}\n"
+	hostname=${list[$id - 1]}
+    #docker stop "$hostname"
+    docker rm -v -f "$hostname"
+	docker_status
+	show_progress "$R_BUILD_CLUSTER" "$C_PROGRESS" "$id" "$choice"
+	clear_if_limit_reached_from "$R_STEP2" "p"
+done
+
+
 read -p $'\033[1;32mHit <ENTER> to show new status (some change need time to take effect)...\e[0m'
 list_all_containers "$type"
 
@@ -4514,14 +4581,13 @@ if [ "$AWS_EC2" == "YES" ]; then
 		echo  "$external_ip $i"  >> aws_eip_mapping.tmp
 	done
 fi
-tput cup 3 0
 printf "${BoldWhiteOnRed}  Host(container)%-7s State%-1s Splunkd%-1s Ver%-2s Internal IP%-2s Image used%-15s     URL%-13s${NC}\n"
-
-i=0
+#tput_el_ed_from "$R_BUILD_CLUSTER"
+ctr=0
 hosts_sorted=`docker ps -a --format {{.Names}}| egrep -i "$type"| sort`
 
 for host in $hosts_sorted ; do
-    let i++	#container display counter (starts at zero now that we have special DOCKER-MONITOR)
+    let ctr++	#container display counter (starts at zero now that we have special DOCKER-MONITOR)
     id=`docker ps -a --no-trunc --filter  name="^/$host$" --format {{.ID}}`
     #These operations take long time execute
     #cpu_percent=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $2}'`
@@ -4536,9 +4602,9 @@ for host in $hosts_sorted ; do
     #imagename=`docker ps -a --filter id="$id" --format "{{.Image}}" | cut -d'/' -f2-3`  #remove repository name
     imagename=`docker ps -a --filter id="$id" --format "{{.Image}}"|rev| cut -d'/' -f1|rev`  #img only
     splunkd_ver=`docker exec "$hostname" /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
-    host_line[$i]="$bind_ip"
+    host_line[$ctr]="$bind_ip"
     if [ "$AWS_EC2" == "YES" ]; then
-		eip=`grep "$bind_ip" aws_eip_mapping.tmp | awk '{print $2}'`
+		eip=`$GREP "$bind_ip" aws_eip_mapping.tmp | awk '{print $2}'`
 	    eip="$bind_ip $eip:$SPLUNKWEB_PORT_EXT"
 	else
 		eip="http://$bind_ip:$SPLUNKWEB_PORT_EXT"
@@ -4573,7 +4639,7 @@ for host in $hosts_sorted ; do
         splunkstate="${Red}N/A${NC}"
     fi
 	#indentation:
-	fmt_i="%-2s"
+	fmt_ctr="%-2s"
 	if ( compare "$tagged" "$hostname"  ); then
 		fmt_hostname="${DONT_ENTER_EMOJI}${DarkGray} %-18s"
 		hoststate="${DarkGray} ** ${NC}"
@@ -4594,29 +4660,29 @@ for host in $hosts_sorted ; do
 	fmt_eip="%-30s"
 
     if ( compare "$host_name" "DEMO" ) || ( compare "$host_name" "WORKSHOP" ) ; then
-        	printf "${LightCyan}$fmt_i) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
-			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
+        	printf "${LightCyan}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
+			"$ctr" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
    	elif ( compare "$hostname" "3RDP" ); then
 			open_ports=`docker port $hostname|$GREP -Po "\d+/tcp|udp"|tr -d '\n'| sed 's/tcp/tcp /g' `
-        	printf "${LightPurple}$fmt_i) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
-			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$open_ports"
+        	printf "${LightPurple}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
+			"$ctr" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$open_ports"
 		#for y in $open_ports; do printf "%80s\n" "$y"; done
 
     elif ( compare "$hostname" "DEP" ); then
-        	printf "${LightBlue}$fmt_i) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
-			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
+        	printf "${LightBlue}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
+			"$ctr" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
 
     elif ( compare "$hostname" "CM" ); then
-        	printf "${LightBlue}$fmt_i) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
-			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
+        	printf "${LightBlue}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
+			"$ctr" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
 
     elif ( compare "$hostname" "DMC" ); then
-        	printf "${LightBlue}$fmt_i) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
-			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
+        	printf "${LightBlue}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
+			"$ctr" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
 
     else 	###generic
-        	printf "${LightBlue}$fmt_i) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
-			"$i" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
+        	printf "${LightBlue}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
+			"$ctr" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
    	fi
 
   	if [ -z "$bind_ip" ]; then
@@ -4625,10 +4691,11 @@ for host in $hosts_sorted ; do
         printf "${NC}\n"
     fi
 
-	clear_if_limit_reached_from "3" "p"
+	show_progress "$R_BUILD_CLUSTER" "$C_PROGRESS" "$host" "$hosts_sorted"
+	clear_if_limit_reached_from "$R_STEP2" "p"
 done
 
-printf "count: %s\n\n" $i
+printf "count: %s\n\n" $ctr
 docker_status
 #only for the Mac
 #if [ "$os" == "Darwin" ]; then
@@ -4660,11 +4727,11 @@ display_all_images "$type"
 echo
 
 if [ "$type" == "3RDP" ]; then
-	id_list=$(docker images  -a| grep -v "REPOSITORY" | egrep -iv "DEMO|WORKSHOP"| grep -iv "splunk"| awk '{print $3}'| tr '\n' ' ')
+	id_list=$(docker images  -a| $GREP -v "REPOSITORY" | egrep -iv "DEMO|WORKSHOP"| $GREP -iv "splunk"| awk '{print $3}'| tr '\n' ' ')
 elif [ "$type" == "DEMO" ]; then
-	id_list=$(docker images  -a| grep -v "REPOSITORY" | egrep -i "DEMO|WORKSHOP" | awk '{print $3}'| tr '\n' ' ')
+	id_list=$(docker images  -a| $GREP -v "REPOSITORY" | egrep -i "DEMO|WORKSHOP" | awk '{print $3}'| tr '\n' ' ')
 else
-	id_list=$(docker images  -a| grep -v "REPOSITORY" | awk '{print $3}'| tr '\n' ' ')
+	id_list=$(docker images  -a| $GREP -v "REPOSITORY" | awk '{print $3}'| tr '\n' ' ')
 fi
 
 #build array of images list
@@ -4684,7 +4751,7 @@ if [ -n "$choice" ]; then
         printf "${Yellow}Deleting selected $type image(s)...\n${NC}"
         for id in `echo $choice`; do
                #echo "$id : ${list[$id - 1]}"
-        	imagename=`docker images|grep  ${list[$id -1]} | awk '{print $1}'`
+        	imagename=`docker images|$GREP  ${list[$id -1]} | awk '{print $1}'`
                	printf "${Purple}Deleting:$imagename${NC}\n"
                	#printf "${Purple} ${list[$id - 1]}:${NC}\n"
                	docker rmi -f ${list[$id - 1]}
@@ -4731,12 +4798,12 @@ if [ $count == 0 ]; then
         return 0
 fi
 if [ "$type" == "3RDP" ]; then
-	id_list=$(docker images  -a| grep -v "REPOSITORY" |sort|egrep -iv "DEMO|WORKSHOP"| grep -iv "splunk"| awk '{print $3}'| tr '\n' ' ')
+	id_list=$(docker images  -a|$GREP -v "REPOSITORY"|sort|egrep -iv "DEMO|WORKSHOP"|$GREP -iv "splunk"|awk '{print $3}'| tr '\n' ' ')
 
 elif [ "$type" == "DEMO" ] || [ "$type" == "WORKSHOP" ]; then
-	id_list=$(docker images  -a| grep -v "REPOSITORY" |sort| egrep -i "DEMO|WORKSHOP" | awk '{print $3}'| tr '\n' ' ')
+	id_list=$(docker images  -a| $GREP -v "REPOSITORY" |sort| egrep -i "DEMO|WORKSHOP" | awk '{print $3}'| tr '\n' ' ')
 else
-	id_list=$(docker images  -a| grep -v "REPOSITORY"|sort | awk '{print $3}'| tr '\n' ' ')
+	id_list=$(docker images  -a| $GREP -v "REPOSITORY"|sort | awk '{print $3}'| tr '\n' ' ')
 fi
 
 tput cup 3 0
@@ -4745,12 +4812,12 @@ printf "${BoldWhiteOnRed}        Image%-13s Tag%-7s Created%-6s Size%-8s Reposit
 count=0
 for id in $id_list; do
     let count++
-    imagename=`docker images|grep  $id | awk '{print $1}' | rev | cut -d"/" -f1 | rev`
-    repo=`docker images|grep  $id | awk '{print $1}' | cut -d"/" -f1 `
-    imagetag=`docker images|grep  $id | awk '{print $2}'`
-    created=`docker images|grep  $id | awk '{print $4,$5,$6}'`
-    size=`docker images|grep  $id | awk '{print $7,$8}'`
-    sizebytes=`docker images|grep  $id | awk '{print $7,$8}'`
+    imagename=`docker images|$GREP  $id | awk '{print $1}' | rev | cut -d"/" -f1 | rev`
+    repo=`docker images|$GREP  $id | awk '{print $1}' | cut -d"/" -f1 `
+    imagetag=`docker images|$GREP  $id | awk '{print $2}'`
+    created=`docker images|$GREP  $id | awk '{print $4,$5,$6}'`
+    size=`docker images|$GREP  $id | awk '{print $7,$8}'`
+    sizebytes=`docker images|$GREP  $id | awk '{print $7,$8}'`
 	fmt_i="%-2s"
 	fmt_imagename="%-20s"
 	fmt_imagetag="%-10s"
@@ -4878,7 +4945,7 @@ z=0
 
 #-----show splunknbox logo only if imgcat is installed & and jpeg file exist -------
 #	Otherwise skip with no feedback -------------
-condition=$(which imgcat 2>/dev/null | grep -v "not found" | wc -l)
+condition=$(which imgcat 2>/dev/null | $GREP -v "not found" | wc -l)
 if [ $condition != "0" ] && [ -e img/splunknbox_logo.png ]; then
 	col=$(( ( $COLUMNS - 13 )  / 2 )); row=$(($x - 9)); tput cup $row $col
 	imgcat img/splunknbox_logo.png
