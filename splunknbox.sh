@@ -432,7 +432,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 read -p "    >> Should I attempt to start [may not work with all MacOS versions]? [Y/n]? " answer
 if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 	open -a /Applications/Docker.app ; pausing 30
-        is_running=`docker info|grep Images`
+        is_running=`docker info|$GREP Images`
         if [ -z "$is_running" ]; then
                 printf "${Red}Did not work! Please start docker from the UI...exiting...${NC}\n\n"
                 printf "    ${Red}>>${NC} installation https://docs.docker.com/v1.10/mac/step_one/ ${NC}\n"
@@ -452,7 +452,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 read -p "    >> Should I attempt to start [may not work with all MacOS versions]? [Y/n]? " answer
 if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
         start docker ; pausing 30
-        is_running=`docker info|grep Images`
+        is_running=`docker info|$GREP Images`
         if [ -z "$is_running" ]; then
                 printf "${Red}Did not work! Please start docker from the UI... Exiting!${NC}\n\n"
 		printf "    ${Red}>>${NC} installation: https://docs.docker.com/engine/installation/ ${NC}\n"
@@ -607,10 +607,10 @@ do
 	#sudo memory_pressure -l warn| head -n 28
 		loadavg=`sysctl -n vm.loadavg | awk '{print $2}'`
 		LOADFACTOR=$LOADFACTOR_OSX
-		os_free_mem=`top -l 1 | head -n 10 | grep PhysMem | awk '{print $2}' | sed 's/G//g' `
+		os_free_mem=`top -l 1 | head -n 10 | $GREP PhysMem | awk '{print $2}' | sed 's/G//g' `
 	else
         	loadavg=`cat /proc/loadavg |awk '{print $1}'|sed 's/,//g'`
-        	os_free_mem=`free -g|grep -i mem|awk '{print $2}' `
+        	os_free_mem=`free -g|$GREP -i mem|awk '{print $2}' `
 	fi
 
 	load=${loadavg%.*}
@@ -637,7 +637,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 #----------
 printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking [bc] package:${NC} "
-condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
+condition=$(which bc 2>/dev/null | $GREP -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [bc]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install bc -y"
@@ -647,7 +647,7 @@ fi
 #----------
 #----------
 printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking [wget] package:${NC} "
-condition=$(which wget 2>/dev/null | grep -v "not found" | wc -l)
+condition=$(which wget 2>/dev/null | $GREP -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [wget]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install wget -y"
@@ -659,7 +659,7 @@ fi
 #----------
 #----------
 printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking optional [imgcat] package:${NC} "
-condition=$(which imgcat 2>/dev/null | grep -v "not found" | wc -l)
+condition=$(which imgcat 2>/dev/null | $GREP -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [imgcat]${NC}:"
 	#progress_bar_pkg_download "sudo apt-get install imgcat -y"
@@ -671,7 +671,7 @@ fi
 #----------
 #----------
 printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking optional [timeout] package:${NC} "
-condition=$(which timeout 2>/dev/null | grep -v "not found" | wc -l)
+condition=$(which timeout 2>/dev/null | $GREP -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [timeout]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install timeout -y"
@@ -682,7 +682,7 @@ fi
 #----------
 #----------
 printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking optional [graphviz] package:${NC} "
-condition=$(which dot 2>/dev/null | grep -v "not found" | wc -l)
+condition=$(which dot 2>/dev/null | $GREP -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [graphviz]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install graphviz -y"
@@ -692,7 +692,7 @@ fi
 #----------
 #----------
 printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking optional [tmux] package:${NC} "
-condition=$(which tmux 2>/dev/null | grep -v "not found" | wc -l)
+condition=$(which tmux 2>/dev/null | $GREP -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [tmux]${NC}:"
 	progress_bar_pkg_download "sudo apt-get install tmux -y"
@@ -719,7 +719,7 @@ else
 fi
 
 printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking brew package management:${NC} "
-condition=$(which brew 2>/dev/null | grep -v "not found" | wc -l)
+condition=$(which brew 2>/dev/null | $GREP -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [brew]${NC}:"
 	#get brew ruby install script
@@ -731,7 +731,7 @@ else
 fi
 #----------
 printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking bc package:${NC} "
-condition=$(which bc 2>/dev/null | grep -v "not found" | wc -l)
+condition=$(which bc 2>/dev/null | $GREP -v "not found" | wc -l)
 if [ $condition -eq 0 ]; then
 	printf "${BrownOrange}Installing [bc]${NC}:"
 	progress_bar_pkg_download "brew install bc"
@@ -760,7 +760,7 @@ else
 fi
 #----------
 printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking ggrep package:${NC} "
-cmd=$(brew ls grep --versions|cut -d" " -f2)
+cmd=$(brew ls $GREP --versions|cut -d" " -f2)
 if [ -n "$cmd" ]; then
         printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
 else
@@ -853,7 +853,7 @@ fi
 #-----------check for another copy of script running?---------
 printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if we have instances of this script running...${NC}"
 this_script_name="${0##*/}"
-pid_list=`ps -efa | grep $this_script_name | grep "/bin/bash" |grep -v $$ |awk '{printf $2" " }'`
+pid_list=`ps -efa | $GREP "$this_script_name" | $GREP "/bin/bash" |$GREP -v $$ |awk '{printf $2" " }'`
 #echo "running:  ps -efa | grep splunknbox.sh | grep \"/bin/bash\" |grep -v \$\$ |awk '{printf \$2\" \" }"
 if [ -n "$pid_list" ]; then
 	printf "\n"
@@ -862,7 +862,7 @@ if [ -n "$pid_list" ]; then
         if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
                 sudo kill -9 $pid_list
 		#kill any stray docker pull requests
-		kill $(ps -ax|grep "docker pull"|grep -v "grep"|awk '{print $1}') >/dev/null 2>&1
+		kill $(ps -ax|$GREP "docker pull"|$GREP -v "grep"|awk '{print $1}') >/dev/null 2>&1
         fi
 	printf "\n"
 else
@@ -873,7 +873,7 @@ fi
 #-----------docker daemon running check----
 printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if docker daemon is running "
 
-is_running=`docker info|grep Images 2>/dev/null `
+is_running=`docker info|$GREP Images 2>/dev/null `
 if [ -z "$is_running" ] && [ "$os" == "Darwin" ]; then
         printf "${Red}NOT RUNNING!${NC}\n"
 		start_docker_mac
@@ -899,28 +899,28 @@ fi
 #-----------Gathering OS memory/cpu info---
 if [ "$os" == "Linux" ]; then
         cores=`$GREP -c ^processor /proc/cpuinfo`
-	os_used_mem=`free -g|grep -i mem|awk '{print $3}' `
-        os_free_mem=`free -g|grep -i mem|awk '{print $4}' `
-        os_total_mem=`free -g|grep -i mem|awk '{print $2}' `
+	os_used_mem=`free -g|$GREP -i mem|awk '{print $3}' `
+        os_free_mem=`free -g|$GREP -i mem|awk '{print $4}' `
+        os_total_mem=`free -g|$GREP -i mem|awk '{print $2}' `
         os_free_mem_perct=`echo "($os_free_mem * 100) / $os_total_mem"| bc`
 
 elif [ "$os" == "Darwin" ]; then
         cores=`sysctl -n hw.ncpu`
-        os_used_mem=`top -l 1 -s 0|grep PhysMem|tr -d '[[:punct:]]'|awk '{print $2}' `
+        os_used_mem=`top -l 1 -s 0|$GREP PhysMem|tr -d '[[:punct:]]'|awk '{print $2}' `
 	if ( compare "$os_used_mem" "M" ); then
 		os_used_mem=`echo $os_used_mem | tr -d '[[:alpha:]]'`  #strip M
 		os_used_mem=`printf "%0.1f\n" $(bc -q <<< scale=6\;$os_used_mem/1024)` #convert float from MB to GB
 	else
 		os_used_mem=`echo $os_used_mem | tr -d '[[:alpha:]]'`  #strip G
 	fi
-        os_wired_mem=`top -l 1 -s 0|grep PhysMem|tr -d '[[:punct:]]'|awk '{print $4}' `
+        os_wired_mem=`top -l 1 -s 0|$GREP PhysMem|tr -d '[[:punct:]]'|awk '{print $4}' `
 	if ( compare "$os_wired_mem" "M" ); then
                 os_wired_mem=`echo $os_wired_mem | tr -d '[[:alpha:]]'`  #strip M
 		os_wired_mem=`printf "%0.1f\n" $(bc -q <<< scale=6\;$os_wired_mem/1024)` #convert float from MB to GB
         else
                 os_wired_mem=`echo $os_wired_mem | tr -d '[[:alpha:]]'`  #strip G
         fi
-        os_unused_mem=`top -l 1 -s 0|grep PhysMem|tr -d '[[:punct:]]'|awk '{print $6}' `
+        os_unused_mem=`top -l 1 -s 0|$GREP PhysMem|tr -d '[[:punct:]]'|awk '{print $6}' `
 	if ( compare "$os_unused_mem" "M" ); then
                 os_unused_mem=`echo $os_unused_mem | tr -d '[[:alpha:]]'`  #strip M
 		os_unused_mem=`printf "%0.1f\n" $(bc -q <<< scale=6\;$os_unused_mem/1024)` #convert float from MB to GB
@@ -930,7 +930,7 @@ elif [ "$os" == "Darwin" ]; then
         #echo "MEM: used:[$os_used_mem] wired:[$os_wired_mem]  unused:[$os_unused_mem]"
 		os_free_mem=$os_unused_mem
         #os_total_mem=`echo $os_used_mem + $os_wired_mem + $os_unused_mem | bc`
-		os_total_mem=`hostinfo|grep "memory available"| awk '{print $4}'`
+		os_total_mem=`hostinfo|$GREP "memory available"| awk '{print $4}'`
         os_free_mem_perct=`echo "($os_free_mem * 100) / $os_total_mem"| bc`
       #  echo "MEM: TOTAL:[$os_total_mem] UNUSED:[$os_unused_mem] %=[$os_free_mem_perct]     USED:[$os_used_mem] wired:[$os_wired_mem]"
 fi
@@ -987,7 +987,7 @@ fi
 
 #-----------splunk image check-------------
 printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if Splunk image is available [$DEFAULT_SPLUNK_IMAGE]..."
-image_ok=`docker images|grep "$DEFAULT_SPLUNK_IMAGE"`
+image_ok=`docker images|$GREP "$DEFAULT_SPLUNK_IMAGE"`
 if [ -z "$image_ok" ]; then
 	printf "${Red}NOT FOUND!${NC}\n"
 	read -p "    >> Downloading image [$DEFAULT_SPLUNK_IMAGE]? [Y/n]? " answer
@@ -1007,7 +1007,7 @@ fi
 
 #-----------splunk-net check---------------
 printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking if docker network is created [$SPLUNKNET]..."
-net=`docker network ls | grep $SPLUNKNET `
+net=`docker network ls | $GREP $SPLUNKNET `
 if [ -z "$net" ]; then
 	printf "${Green} Creating...${NC}\n"
         docker network create -o --iptables=true -o --ip-masq -o --ip-forward=true $SPLUNKNET
@@ -1038,7 +1038,7 @@ PID=`ps aux | $GREP 'splunkd' | $GREP 'start' | head -1 | awk '{print $2}' `  	#
 if [ "$os" == "Darwin" ] && [ -n "$PID" ]; then
 	splunk_is_running="$PID"
 elif [ "$os" == "Linux" ] && [ -n "$PID" ]; then
-	splunk_is_running=`cat /proc/$PID/cgroup|head -n 1|grep -v docker`	#works on Linux only
+	splunk_is_running=`cat /proc/$PID/cgroup|head -n 1|$GREP -v docker`	#works on Linux only
 fi
 if [ -n "$splunk_is_running" ]; then
 	printf "${Red}Running [$PID]${NC}\n"
@@ -1057,7 +1057,7 @@ fi
 #-----------discovering DNS setting for OSX. Used for container build--
 printf "${Blue}   ${ARROW_EMOJI}${ARROW_EMOJI}${NC} Checking for dns server configuration "
 if [ "$os" == "Darwin" ]; then
-        DNSSERVER=`scutil --dns|grep nameserver|awk '{print $3}'|sort -u|tail -1`
+        DNSSERVER=`scutil --dns|$GREP nameserver|awk '{print $3}'|sort -u|tail -1`
 	printf "[$DNSSERVER]...${Green}${OK_MARK_EMOJI} OK${NC}\n"
 else
 	printf "\n"
@@ -1096,8 +1096,8 @@ if [ "$(uname)" == "Darwin" ]; then
 	GREP=$GREP_OSX		#for Darwin http://www.heystephenwood.com/2013/09/install-gnu-grep-on-mac-osx.html
 	MOUNTPOINT="/Users/${USER}/$VOL_DIR"
 	PROJ_DIR="/Users/${USER}"  #anything that needs to copied to container
-	sys_ver=`system_profiler SPSoftwareDataType|grep "System Version" |awk '{print $5}'`
-	kern_ver=`system_profiler SPSoftwareDataType|grep "Kernel Version" |awk '{print $3,$4}'`
+	sys_ver=`system_profiler SPSoftwareDataType|$GREP "System Version" |awk '{print $5}'`
+	kern_ver=`system_profiler SPSoftwareDataType|$GREP "Kernel Version" |awk '{print $3,$4}'`
 	os_banner="Detected MacOS [System:$sys_ver Kernel:${Yellow}$kern_ver${NC}]"
 
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
@@ -1341,7 +1341,7 @@ printf "Retrieving list from: [https://hub.docker.com/u/splunknbox/]...\n"
 CMD="docker search splunknbox"; OUT=`$CMD`
 #printf "$OUT" #| awk '{printf $1}'
 
-retrieved_images_list=`printf "$OUT"|grep -v NAME|awk '{print $1" "}'| sort | tr -d '\n' `
+retrieved_images_list=`printf "$OUT"|$GREP -v NAME|awk '{print $1" "}'| sort | tr -d '\n' `
 declare -a list=($retrieved_images_list)
 #printf " ${BoldWhiteOnRed}  Host(container)%-5s State%-2s Splunkd   Ver    Internal IP%-3s       Image used%-10s     URL${NC}\n"
 printf "${BoldWhiteOnRed}             IMAGE NAME%-22s CREATED%-7s SIZE%-15s AUTHOR%-20s${NC}\n"
@@ -1354,10 +1354,10 @@ for image_name in $retrieved_images_list; do
 	else
     	printf "${Purple}%-2s${NC})  ${Purple}%-40s${NC}" "$counter" "$image_name"
 	fi
-	created=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $4,$5,$6}'`
-	size=`docker images "$image_name" | grep -v REPOSITORY | awk '{print $7,$8}'`
+	created=`docker images "$image_name" | $GREP -v REPOSITORY | awk '{print $4,$5,$6}'`
+	size=`docker images "$image_name" | $GREP -v REPOSITORY | awk '{print $7,$8}'`
     if [ -n "$created" ]; then
-        author=`docker inspect $image_name |grep -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
+        author=`docker inspect $image_name |$GREP -i author| cut -d":" -f2|sed 's/"//g'|sed 's/,//g'`
         printf "%-12s %-7s %-10s ${NC}\n" "$created" "$size" "$author"
     else
         printf "${DarkGray}NOT CACHED! ${NC}\n"
@@ -1610,12 +1610,12 @@ else
 	return 0
 fi
 
-count=`docker ps -a|egrep -i "DEMO|WORKSHOP"| grep -v "IMAGE"| wc -l`
+count=`docker ps -a|egrep -i "DEMO|WORKSHOP"| $GREP -v "IMAGE"| wc -l`
 if [ $count == 0 ]; then
         printf "\nNo running demo containers found!\n"; printf "\n"
         return 0
 fi;
-for id in $(docker ps -a|egrep -i "DEMO|WORKSHOP"|grep -v "PORTS"|awk '{print $1}'); do
+for id in $(docker ps -a|egrep -i "DEMO|WORKSHOP"|$GREP -v "PORTS"|awk '{print $1}'); do
     	hostname=`docker ps -a --filter id=$id --format "{{.Names}}"`
 	printf "${Purple}$hostname:${NC}\n"
 	#install stuff you will need in  background
