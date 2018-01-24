@@ -1153,9 +1153,16 @@ return 0
 }
 #-----------Detect script version ---------------------------
 
-
 ###### UTILITIES ######
 
+#-----------------------------------------------------------------------------------------------------
+timer() {
+local start_time="$1"
+local end_time=$(date +%s);
+echo $(($end_time - $start_time)) | awk '{print int($1/60)":"int($1%60)}'
+return
+}	#end timer()
+#-----------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 change_loglevel() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
@@ -3307,7 +3314,7 @@ printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 update_progress "$R_STEP3" "$C_PROGRESS" "1" "1 2"	"$(timer "$start_time")"
 logline "$CMD" "$dep"
 restart_splunkd "$dep"
-update_progress "$R_STEP4" "$C_PROGRESS" "2" "1 2"	"$(timer "$start_time")"
+update_progress "$R_STEP3" "$C_PROGRESS" "2" "1 2"	"$(timer "$start_time")"
 return
 }	#end configure_deployer()
 #------------------------------------------------------------------------------------------------------
@@ -3379,7 +3386,7 @@ OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
 printf "${Yellow}${ARROW_EMOJI}${NC}Captain bootstrapping (may take time) " >&3 ; display_output "$OUT" "Successfully"  "3"
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$captain"
-update_progress "$R_STEP4" "$C_PROGRESS" "2" "1 2"	"$(timer "$start_time")"
+update_progress "$R_STEP5" "$C_PROGRESS" "2" "1 2"	"$(timer "$start_time")"
 return
 }	#end configure_captain()
 #-----------------------------------------------------------------------------------------------------
@@ -3402,14 +3409,6 @@ update_progress "$R_STEP6" "$C_PROGRESS" "1" "1"	"$(timer "$start_time")"
 return
 }	#end check_shc_status()
 #-----------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------
-timer() {
-local start_time="$1"
-local end_time=$(date +%s);
-echo $(($end_time - $start_time)) | awk '{print int($1/60)":"int($1%60)}'
-return
-}	#end timer()
-#-----------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 create_single_shc() {
 #This function creates single Search Head Cluster. Details is passed using $1
@@ -3424,6 +3423,7 @@ create_single_shc() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
+local TIME_START=$(date +%s);
 
 #display all title with zero progress    ### DONT USE CLEAR ####
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> CREATING SINGLE SHC"
@@ -3597,17 +3597,16 @@ printf_from "$R_STEP6" "${BoldWhiteOnLightBlue}"  "=> STEP#6: Verifying SHC clus
 check_shc_status "$members_list"
 #--Finished STEP#4 Check SHC status---
 
-
-#---Time calucations ----
-TIME_END_SHC=$(date +%s);
-TIME=`echo $((TIME_END_SHC-TIME_START_SHC)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
 echo
+#---Time calucations ----
+TIME_END=$(date +%s);
+TIME=`echo $((TIME_END - TIME_START)) | awk '{print int($1/60)":"int($1%60)}'`
+printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
 #count=`wc -w $CMDLOGBIN| awk '{print $1}' `
 #printf "${DarkGray}Number of Splunk config commands issued: [%s]${NC}\n" "$count"
 
 #print_stats $START ${FUNCNAME}
-docker_status
+docker_status "$TIME"
 
 return 0
 }	#create_single_shc()
@@ -3685,16 +3684,15 @@ return
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 create_single_idxc() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function creates single IDX cluster. Details are parsed from $1
 #example call: create_single_idxc "$siteIDX:$IDXcount $cm:1 $lm $label"
 #$1 AUTO or MANUAL mode
 
-_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-
 tput_el_ed_from "$R_BUILD_CLUSTER"
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
-TIME_START_IDCX=$(date +%s);
+local TIME_START=$(date +%s);
 #$1 CMbasename:count   $2 IDXbasename:count  $3 LMbasename:count
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> CREATING SINGLE IDXC"
 tput_el_ed_from "$R_BUILD_CLUSTER"
@@ -3711,8 +3709,6 @@ printf_from "$R_STEP4" "${BoldWhiteOnBlue}"  "=> STEP#4: IDXC nodes configuratio
 update_progress "$R_STEP4" "$C_PROGRESS" "" "idx1 idx2 idx3"
 printf_from "$R_STEP5" "${BoldWhiteOnBlue}"  "=> STEP#5: Verifying IDXC status"
 update_progress "$R_STEP5" "$C_PROGRESS" ""  "1"
-
-
 
 
 check_load
@@ -3857,15 +3853,15 @@ printf_from "$R_STEP5" "${BoldWhiteOnLightBlue}"  "=> STEP#5: Verifying IDXC sta
 check_idxc_status "$cm"
 #--Finsihed STEP#5 Verifying IDXC status---
 
-
-TIME_END_IDXC=$(date +%s);
-TIME=`echo $((TIME_END_IDXC-TIME_START_IDXC)) | awk '{print int($1/60)":"int($1%60)}'`
+echo
+TIME_END=$(date +%s);
+TIME=`echo $((TIME_END - TIME_START)) | awk '{print int($1/60)":"int($1%60)}'`
 printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
 #count=`wc -w $CMDLOGBIN| awk '{print $1}' `
 #printf "${DarkGray}Number of Splunk config commands issued: [%s]${NC}\n" "$count"
 
 #print_stats $START ${FUNCNAME}
-docker_status
+docker_status "$TIME"
 
 return 0
 }	#end create_single_idxc()
