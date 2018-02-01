@@ -1308,11 +1308,11 @@ fi #demo/workshop containers takes little longer to start
 #splunkstate=`docker exec -ti $fullhostname /opt/splunk/bin/splunk status| $GREP -i "not running" `
 splunkstate=`docker exec -ti $fullhostname sh -c "ps xa|$GREP '[s]plunkd -p'" `
 #echo "splunkstate[$splunkstate]"
-echo -ne " ${LightBlue}${ARROW_EMOJI}${NC}Verifying that splunkd is running...\r" >&3
+echo -ne " ${LightBlue}${ARROW_EMOJI}${NC}Verifying splunkd is running...\r" >&3
 if [ -n "$splunkstate" ]; then
-        echo -ne  " ${LightBlue}${ARROW_EMOJI}${NC}Verifying that splunkd is running...${Green}${OK_MARK_EMOJI} OK${NC}                           \n" >&3
+        echo -ne  " ${LightBlue}${ARROW_EMOJI}${NC}Verifying splunkd is running...${Green}${OK_MARK_EMOJI} OK${NC}                           \n" >&3
 else
-        	echo -ne "${NC}	${LightBlue}${ARROW_EMOJI}${NC}Verifying that splunkd is running..${Red}Not running! Attempt ${Yellow}$i${Red} to restart\r${NC}" >&3
+        	echo -ne "${NC}	${LightBlue}${ARROW_EMOJI}${NC}Verifying splunkd is running..${Red}Not running! Attempt ${Yellow}$i${Red} to restart\r${NC}" >&3
         	sleep 30        #pause between attempts to restart
         	CMD="docker exec -u splunk -ti $fullhostname /opt/splunk/bin/splunk start "
         	#echo "cmd[$CMD]"
@@ -1322,7 +1322,7 @@ else
         	#pausing "30"
 			splunkstate=`docker exec -ti $fullhostname sh -c "ps xa|$GREP '[s]plunkd -p'" `
 			if [ -z "$splunkstat" ]; then
-        		echo -ne  " ${LightBlue}${ARROW_EMOJI}${NC}Verifying that splunkd is running...${Green}${OK_MARK_EMOJI} OK${NC}                           \n" >&3
+        		echo -ne  " ${LightBlue}${ARROW_EMOJI}${NC}Verifying splunkd is running...${Green}${OK_MARK_EMOJI} OK${NC}                           \n" >&3
 				return
 
 			fi
@@ -1330,9 +1330,9 @@ fi
 
 #if [ -z "$splunkstate" ]; then
 # printf "${Green}${OK_MARK_EMOJI} OK${NC}\n" >&3
- #       echo -ne  "	${Yellow}${ARROW_EMOJI}${NC}Verifying that splunkd is running...${Green}${OK_MARK_EMOJI} OK${NC}                           \n" >&3
+ #       echo -ne  "	${Yellow}${ARROW_EMOJI}${NC}Verifying splunkd is running...${Green}${OK_MARK_EMOJI} OK${NC}                           \n" >&3
 #else
- #       echo -ne  "	${Yellow}${ARROW_EMOJI}${NC}Verifying that splunkd is running...${Red}NOT${OK_MARK_EMOJI} OK${NC}                          \n" >&3
+ #       echo -ne  "	${Yellow}${ARROW_EMOJI}${NC}Verifying splunkd is running...${Red}NOT${OK_MARK_EMOJI} OK${NC}                          \n" >&3
 #fi
 
 return 0
@@ -2143,7 +2143,7 @@ else
 fi
 
 #-----check if container is running--------
-printf " ${LightBlue}${ARROW_EMOJI}${NC}Verifying that container is running..." >&3
+printf " ${LightBlue}${ARROW_EMOJI}${NC}Verifying container is running..." >&3
 if ! ( is_container_running "$fullhostname" ); then
 	printf "${Red}NOT RUNNING!${NC}\n" >&3
 else
@@ -2343,7 +2343,7 @@ else
 fi
 
 #-----check if container is running--------
-printf " ${LightBlue}${ARROW_EMOJI}${NC}Verifying that container is running..." >&3
+printf " ${LightBlue}${ARROW_EMOJI}${NC}Verifying container is running..." >&3
 if ! ( is_container_running "$fullhostname" ); then
 	printf "${Red}NOT RUNNING!${NC}\n" >&3
 else
@@ -3097,27 +3097,14 @@ do
         read -p "Enter choice: " choice
         case "$choice" in
                 \? ) display_clustering_menu_help;;
-				1 ) #if [ "$graphics" == "true" ];then
-						#tmux new-session -d  './splunknbox.sh -g true -s true -c 1'
-						#tmux split-window -h
-        				#tmux send-keys "./scripts/viz.sh" C-m
-						#tmux attach-session
-						#tmux -CC attach
-					#fi;
-				#	create_single_idxc "AUTO";
-					create_single_idxc "$IDX_BASE:$STD_IDXC_COUNT DMC:1 CM:1 LM:1 LABEL:$IDXCLUSTERLABEL"
+				1 ) create_single_idxc "$IDX_BASE:$STD_IDXC_COUNT DMC:1 CM:1 LM:1 LABEL:$IDXCLUSTERLABEL"
 					;;
-				2 ) #if [ "$graphics" == "true" ];then
-						#tmux new-session -d './splunknbox.sh -g true -s true -c 2'
-						#tmux split-window -h './scripts/viz.sh'
-						#tmux attach-session
-					#fi;
-				#	create_single_shc "AUTO";
-					create_single_shc "$SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 DMC:1 LM:1 LABEL:$SHCLUSTERLABEL"
+				2 ) create_single_shc "STL$SH_BASE:$STD_SHC_COUNT STL$DEP_BASE:1 STLDMC:1 STLLM:1 LABEL:STL$SHCLUSTERLABEL"
 					;;
-                3 ) build_single_site "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 DMC:1 CM:1 LM:1 LABEL:$IDXCLUSTERLABEL"
-   				;;
-                4 ) build_multi_site "AUTO" ;;
+                3 ) build_single_site "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 DMC:1 CM:1 LM:1 LABEL:STL$IDXCLUSTERLABEL" "STL"
+   					;;
+                4 ) build_multi_site "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 DMC:1 CM:1 LM:1 LABEL:STL$IDXCLUSTERLABEL" "STL LON HKG"
+					;;
                 5 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
 		    		create_single_idxc;;
 				6 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
@@ -3291,6 +3278,59 @@ done
 
 #### CLUSTERS ######
 
+#---------------------------------------------------------------------------------------------------------------
+create_single_idxc_input() {
+
+#create_single_shc "STL$SH_BASE:$STD_SHC_COUNT STL$DEP_BASE:1 STLDMC:1 STLLM:1 LABEL:STL$SHCLUSTERLABEL"
+#create_single_idxc "$IDX_BASE:$STD_IDXC_COUNT DMC:1 CM:1 LM:1 LABEL:$IDXCLUSTERLABEL"
+#build_single_site "STL$IDX_BASE:$STD_IDXC_COUNT STL$SH_BASE:$STD_SHC_COUNT STL$DEP_BASE:1 STLDMC:1 CM:1 STLLM:1 LABEL:STL$IDXCLUSTERLABEL"
+
+tput_el_ed_from "$R_ROLL"
+read -p "Enter IDX cluster label (default $SHCLUSTERLABEL)? " label ;
+label=`echo $label| tr '[a-z]' '[A-Z]'`; if [ -z "$label" ]; then label="$SHCLUSTERLABEL"; fi
+
+read -p "Enter indexer host basename (default $IDX_BASE)? " IDXname ;
+IDXname=`echo $IDXname| tr '[a-z]' '[A-Z]'` ; if [ -z "$IDXname" ]; then IDXname="$IDX_BASE"; fi
+read -p "How many indexers in this cluster (default 3)? " IDXcount;
+if [ -z "$IDXcount" ]; then IDXcount="$STD_IDXC_COUNT"; fi
+
+printf "Current list of LMs: [$lm_list]\n"
+read -p "Choose LM from existing list or hit <ENTER> to create new one (default $LM_BASE)? " lm
+lm=`echo $lm| tr '[a-z]' '[A-Z]'`
+    if [ -z "$lm" ]; then
+        lm="$LM_BASE"
+    fi
+
+printf "Current list of CMs: [$cm_list]\n"
+read -p "Choose CM from existing list or hit <ENTER> to create new one (default $CM_BASE)? " cm ;
+cm=`echo $cm| tr '[a-z]' '[A-Z]'`
+        if [ -z "$cm" ]; then
+            cm="$CM_BASE"
+        fi
+
+read -p "Enter DMC host basename (default $DMC_BASE)? " dmc ;
+dmc=`echo $dmc| tr '[a-z]' '[A-Z]'`
+        if [ -z "$dmc" ]; then
+            dmc="$DMC_BASE"; build_dmc=1;
+        fi
+
+	#printf "${Yellow}The following single IDX Cluster will be created[$mode]:${NC}\n"
+	#printf "Cluster Label: ${Green}%s${NC}\n" $label
+	#printf "Cluster Master Base Hostname: ${Green}%s${NC}\n" $cm
+	#printf "DMC Base Hostname: ${Green}%s${NC}\n" $dmc
+	#printf "License Master Base Hostname: ${Green}%s${NC}\n" $lm
+	#printf "IDX Base Hostname: ${Green}%s${NC}\n" $IDXname
+	#printf "Number of Indexers: ${Green}%s${NC}\n" $IDXcount
+	#if [ "$mode" == "MANUAL" ]; then
+	#	read -p $'Hit <\033[1;32mENTER>\e[0m:Confirm \033[1;32m <B>\e[0m:Go Back ? ' choice
+	#	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
+	#fi
+return
+}	#create_single_idxc_input()
+#---------------------------------------------------------------------------------------------------------------
+
+
+
 
 #------------------------------------------------------------------------------------------------------
 configure_deployer() {
@@ -3429,6 +3469,7 @@ tput_el_ed_from "$R_STEP1"
 
 #initialize statuses screen
 #printf_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}"  "BUILDING SEARCH HEAD CLUSTER (SHC) --[$1]"
+printf_from "$R_BUILD_SITE" "${BoldWhiteOnPink}" "BUILDING INDEPENDENT STAND ALONE SEARCH HEAD CLUSTER"
 printf_from "$R_STEP1" "${BoldWhiteOnBlue}" "=> STEP#1: Creating administrative hosts"
 update_progress "$R_STEP1" "$C_PROGRESS" "" "dmc lm dep"
 printf_from "$R_STEP2" "${BoldWhiteOnBlue}" "=> STEP#2: Creating shc hosts"
@@ -3510,26 +3551,32 @@ cm_list=`docker ps -a --filter name="CM|cm" --format "{{.Names}}"|sort| tr '\n' 
 printf "${DarkGray}Using DMC[$DMCname] LM:[$LMname] CM:[$CMname] LABEL:[$label] DEP:[$DEPname:$DEPcount] SHC:[$SHname:$SHcount]${NC}\n\n" >&4
 
 local start_time=$(date +%s);
+local START_TIME=$(date +%s);
 #--Starting STEP#1 administrative hosts---
 printf_from "$R_STEP1" "${BoldWhiteOnLightBlue}" "=> STEP#1: Creating administrative hosts [DMC,LM,DEP]"
 tput_el_ed_from "$R_ROLL"
 create_splunk_container "$DMCname" "$DMCcount" "no"; dmc=$gLIST
 update_progress "$R_STEP1" "$C_PROGRESS" "dmc" "dmc lm dep" "$(timer "$start_time")"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
+
 create_splunk_container "$LMname" "$LMcount" "no"; lm="$gLIST"
 make_lic_slave $lm $dmc  #for previous step since lm was not ready yet
 make_dmc_search_peer $dmc $lm
 update_progress "$R_STEP1" "$C_PROGRESS" "lm" "dmc lm dep" "$(timer "$start_time")"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "2" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 
 tput_el_ed_from "$R_ROLL"
 create_splunk_container "$DEPname" "$DEPcount" "no"; dep="$gLIST"
 make_lic_slave $lm $dep; make_dmc_search_peer $dmc $dep
 update_progress "$R_STEP1" "$C_PROGRESS" "dep" "dmc lm dep" "$(timer "$start_time")"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "3" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 #--Finished STEP#1 administrative hosts---
 
 #--Starting STEP#2 Creating SH hosts---
 printf_from "$R_STEP2" "${BoldWhiteOnLightBlue}" "=> STEP#2: Creating shc hosts [$SHcount]"
 tput_el_ed_from "$R_ROLL"
 create_splunk_container "$SHname" "$SHcount" "yes" "$R_STEP2"; members_list="$gLIST"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "4" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 #--Finished STEP#2 Creating SH hosts---
 
 
@@ -3541,6 +3588,7 @@ create_splunk_container "$SHname" "$SHcount" "yes" "$R_STEP2"; members_list="$gL
 printf_from "$R_STEP3" "${BoldWhiteOnLightBlue}" "=> STEP#3: Deployer configuration"
 printf_from "$R_ROLL" "${DarkGray}" "Configuring SHC with created hosts: DEPLOYER[$dep]  MEMBERS[$members_list]" >&3
 configure_deployer "$dep" "$label" "$R_STEP3"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 #--Finished STEP#1 Deployer configuration---
 
 printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}After members_list loop> param2:[$2] members_list:[$members_list] sh_list:[$sh_list]${NC}\n" >&5
@@ -3548,29 +3596,28 @@ printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}After members_list
 #--Starting STEP#2 Cluster members configuration---
 printf_from "$R_STEP4" "${BoldWhiteOnLightBlue}"  "=> STEP#4: shc members configurations"
 configure_shc_members "$members_list" "$cm" "$dmc" "$lm" "$R_STEP4"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 #--Finished STEP#2 Cluster members configuration---
 
 #--Starting STEP#3 Captain configuration---
 printf_from "$R_STEP5" "${BoldWhiteOnLightBlue}"  "=> STEP#5: Captain configuration"
 configure_captain "$members_list" "$R_STEP5"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 #--Finished STEP#3 Captain configuration---
 
 
 #--Starting STEP#4 Check SHC status---
 printf_from "$R_STEP6" "${BoldWhiteOnLightBlue}"  "=> STEP#6: Verifying shc cluster status"
 check_shc_status "$members_list" "$R_STEP6"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "8" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 #--Finished STEP#4 Check SHC status---
 
 echo
-#---Time calucations ----
-TIME_END=$(date +%s);
-TIME=`echo $((TIME_END - TIME_START)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
 #count=`wc -w $CMDLOGBIN| awk '{print $1}' `
 #printf "${DarkGray}Number of Splunk config commands issued: [%s]${NC}\n" "$count"
 
 #print_stats $START ${FUNCNAME}
-docker_status "$TIME"
+docker_status
 
 return 0
 }	#create_single_shc()
@@ -3656,13 +3703,13 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 tput_el_ed_from "$R_STEP1"
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
-local TIME_START=$(date +%s);
 #$1 CMbasename:count   $2 IDXbasename:count  $3 LMbasename:count
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> CREATING STAND-ALONE IDXC"
 tput_el_ed_from "$R_STEP1"
 
 #initialize statuses screen
 #printf_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}"  "BUILDING INDEX CLUSTER (IDXC) --[$1]"
+printf_from "$R_BUILD_SITE" "${BoldWhiteOnPink}" "BUILDING INDEPENDENT STAND ALONE INDEXER CLUSTER"
 printf_from "$R_STEP1" "${BoldWhiteOnBlue}" "=> STEP#1: Creating idxc administrative hosts"
 update_progress "$R_STEP1" "$C_PROGRESS" "" "dmc lm cm"
 printf_from "$R_STEP2" "${BoldWhiteOnBlue}" "=> STEP#2: Creating idxc hosts"
@@ -3696,107 +3743,57 @@ cm_list=`docker ps -a --filter name="$CMname" --format "{{.Names}}"|sort| tr '\n
 lm_list=`docker ps -a --filter name="$LMname" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'` #global list
 idx_list=`docker ps -a --filter name="$IDXname" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
 
-#Anything passed to function; user will NOT be prompted for it!
-#tput_el_ed_from "$R_ROLL"
-#if [ -z "$label" ]; then
-#    read -p "Enter IDX cluster label (default $SHCLUSTERLABEL)? " label ;
-#    label=`echo $label| tr '[a-z]' '[A-Z]'`; if [ -z "$label" ]; then label="$SHCLUSTERLABEL"; fi
-#fi
-#if [ -z "$IDXname" ] || [ -z "$IDXcount" ]; then
-#    read -p "Enter indexer host basename (default $IDX_BASE)? " IDXname ;
-#    IDXname=`echo $IDXname| tr '[a-z]' '[A-Z]'` ; if [ -z "$IDXname" ]; then IDXname="$IDX_BASE"; fi
-#	read -p "How many indexers in this cluster (default 3)? " IDXcount;
-#    if [ -z "$IDXcount" ]; then IDXcount="$STD_IDXC_COUNT"; fi
-#fi
-#if [ -z "$LMname" ]; then
-#    printf "Current list of LMs: [$lm_list]\n"
-#    read -p "Choose LM from existing list or hit <ENTER> to create new one (default $LM_BASE)? " lm
-#	lm=`echo $lm| tr '[a-z]' '[A-Z]'`
-#    if [ -z "$lm" ]; then
-#        lm="$LM_BASE"; build_lm=1;
-#    else
-#        build_lm=1;
-#    fi
-#fi
-#if [ -z "$CMname" ]; then
-#        printf "Current list of CMs: [$cm_list]\n"
-#        read -p "Choose CM from existing list or hit <ENTER> to create new one (default $CM_BASE)? " cm ;
-#		cm=`echo $cm| tr '[a-z]' '[A-Z]'`
-#        if [ -z "$cm" ]; then
-#            cm="$CM_BASE"; build_cm=1;
-#        else
-#            build_cm=1;
-#        fi
-#fi
-#if [ -z "$DMCname" ]; then
-#        read -p "Enter DMC host basename (default $DMC_BASE)? " dmc ;
-#        dmc=`echo $dmc| tr '[a-z]' '[A-Z]'`
-#        if [ -z "$dmc" ]; then
-#            dmc="$DMC_BASE"; build_dmc=1;
-#        else
-#            build_dmc=1;
-#        fi
-#fi
-
-	#printf "${Yellow}The following single IDX Cluster will be created[$mode]:${NC}\n"
-	#printf "Cluster Label: ${Green}%s${NC}\n" $label
-	#printf "Cluster Master Base Hostname: ${Green}%s${NC}\n" $cm
-	#printf "DMC Base Hostname: ${Green}%s${NC}\n" $dmc
-	#printf "License Master Base Hostname: ${Green}%s${NC}\n" $lm
-	#printf "IDX Base Hostname: ${Green}%s${NC}\n" $IDXname
-	#printf "Number of Indexers: ${Green}%s${NC}\n" $IDXcount
-	#if [ "$mode" == "MANUAL" ]; then
-	#	read -p $'Hit <\033[1;32mENTER>\e[0m:Confirm \033[1;32m <B>\e[0m:Go Back ? ' choice
-	#	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
-	#fi
-
-
 printf "${DarkGray}Using DMC:[$DMCname] LM:[$LMname] CM:[$CMname] LABEL:[$label] IDXC:[$IDXname:$IDXcount]${NC}\n\n" >&4
 local start_time=$(date +%s);
+local START_TIME=$(date +%s);
 #--Starting STEP#1 administrative hosts---
 printf_from "$R_STEP1" "${BoldWhiteOnLightBlue}" "=> STEP#1: Creating administrative hosts [DMC,LM,CM]"
 tput_el_ed_from "$R_ROLL"
 create_splunk_container "$DMCname" "$DMCcount" "no"; dmc=$gLIST
 update_progress "$R_STEP1" "$C_PROGRESS" "dmc" "dmc lm cm" "$(timer "$start_time")"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
 
 create_splunk_container "$LMname" "$LMcount" "no"; lm=$gLIST
 make_lic_slave $lm $dmc; make_dmc_search_peer $dmc $lm
 update_progress "$R_STEP1" "$C_PROGRESS" "lm" "dmc lm cm"  "$(timer "$start_time")"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "2" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
 
 create_splunk_container "$CMname" "$CMcount" "no"; cm=$gLIST
 make_lic_slave $lm $cm; make_dmc_search_peer $dmc $cm
 update_progress "$R_STEP1" "$C_PROGRESS" "cm" "dmc lm cm" "$(timer "$start_time")"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "3" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
 
 #create the remaining IDXs
 printf_from "$R_STEP2" "${BoldWhiteOnLightBlue}" "=> STEP#2: Creating idxc hosts [$IDXcount]"
 tput_el_ed_from "$R_ROLL"
 create_splunk_container "$IDXname" "$IDXcount" "yes" "$R_STEP2" ; members_list="$gLIST"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "4" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
 #--Finished STEP#1 administrative hosts---
 
 #--Starting STEP#3 ClusterMaster configuration---
 printf_from "$R_STEP3" "${BoldWhiteOnLightBlue}"  "=> STEP#3: Cluster Master configuration"
 configure_cm "$cm" "$label" "$R_STEP3"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
 #--Finished STEP#3 ClusterMaster configuration---
 
 #--Starting STEP#4 IDXC nodes configuration---
 printf_from "$R_STEP4" "${BoldWhiteOnLightBlue}"  "=> STEP#4: idxc nodes configuration"
 configure_idxc_members "$members_list" "$label" "$lm" "$cm" "$R_STEP4"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
 #--Finished STEP#4 IDXC nodes configuration---
 
 #--Starting STEP#5 Verifying IDXC status---
 printf_from "$R_STEP5" "${BoldWhiteOnLightBlue}"  "=> STEP#5: Verifying idxc status"
 check_idxc_status "$cm" "$R_STEP5"
+update_progress "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
 #--Finsihed STEP#5 Verifying IDXC status---
 
 echo
-TIME_END=$(date +%s);
-TIME=`echo $((TIME_END - TIME_START)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
 #count=`wc -w $CMDLOGBIN| awk '{print $1}' `
 #printf "${DarkGray}Number of Splunk config commands issued: [%s]${NC}\n" "$count"
 
 #print_stats $START ${FUNCNAME}
-docker_status "$TIME"
+docker_status
 
 return 0
 }	#end create_single_idxc()
@@ -3806,27 +3803,11 @@ return 0
 
 #---------------------------------------------------------------------------------------------------------------
 build_single_site() {
+_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function will build 1 CM and 1 LM then calls create_splunk_container ()
 # Expected parameters: "$cm $lm $siteIDX:$IDXcount $siteSH:$SHcount $siteDEP:1"
 #$1 AUTO or MANUAL mode
 
-_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-
-clear
-screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> SINGLE SITE CLUSTER"
-printf_from "$R_BUILD_SITE" "${BoldWhiteOnPink}" "BUILDING SINGLE SITE CLUSTER --[$site]"
-tput_el_ed_from "$R_ROLL"
-
-#initialize statuses screen
-#printf_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}"  "BUILDING INDEX CLUSTER (IDXC) --[$1]"
-printf_from "$R_STEP1" "${BoldWhiteOnYellow}" "=> STEP#1: Creating basic services"
-update_progress "$R_STEP1" "$C_PROGRESS" "" "dmc lm cm dep"
-printf_from "$R_STEP2" "${BoldWhiteOnYellow}" "=> STEP#2: Building IDXC"
-update_progress "$R_STEP2" "$C_PROGRESS" "" "idxc shc"
-printf_from "$R_STEP3" "${BoldWhiteOnYellow}" "=> STEP#3: Building SHC"
-update_progress "$R_STEP3" "$C_PROGRESS" "" "idxc shc"
-
-check_load
 #extract these values from $1 if passed to us!
 LMname=`echo $1| $GREP -Po '(\s*\w*-*LM)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
 LMcount=`echo $1| $GREP -Po '(\s*\w*-*LM):\K(\d+)'| tr -d '[[:space:]]' `
@@ -3841,6 +3822,30 @@ IDXname=`echo $1| $GREP -Po '(\s*\w*-*IDX)'| tr -d '[[:space:]]' | tr '[a-z]' '[
 IDXcount=`echo $1| $GREP -Po '(\s*\w*-*IDX):\K(\d+)'| tr -d '[[:space:]]' `
 SHname=`echo $1| $GREP -Po '(\s*\w*-*SH)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
 SHcount=`echo $1| $GREP -Po '(\s*\w*-*SH):\K(\d+)'| tr -d '[[:space:]]' `
+SITEname="$2"
+LMname="$SITEname$LMname"
+DMCname="$SITEname$DMCname"
+DEPname="$SITEname$DEPname"
+CMname="$SITEname$CMname"
+IDXname="$SITEname$IDXname"
+SHname="$SITEname$SHname"
+
+
+clear
+screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> SINGLE SITE CLUSTER"
+tput_el_ed_from "$R_ROLL"
+
+#initialize statuses screen
+#printf_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}"  "BUILDING INDEX CLUSTER (IDXC) --[$1]"
+printf_from "$R_BUILD_SITE" "${BoldWhiteOnPink}" "BUILDING SINGLE SITE CLUSTER --[$SITEname]"
+printf_from "$R_STEP1" "${BoldWhiteOnYellow}" "=> STEP#1: Creating basic services"
+update_progress "$R_STEP1" "$C_PROGRESS" "" "dmc lm cm dep"
+printf_from "$R_STEP2" "${BoldWhiteOnYellow}" "=> STEP#2: Building IDXC"
+update_progress "$R_STEP2" "$C_PROGRESS" "" "idxc shc"
+printf_from "$R_STEP3" "${BoldWhiteOnYellow}" "=> STEP#3: Building SHC"
+update_progress "$R_STEP3" "$C_PROGRESS" "" "idxc shc"
+
+check_load
 
 
 
@@ -3863,24 +3868,24 @@ SHcount=`echo $1| $GREP -Po '(\s*\w*-*SH):\K(\d+)'| tr -d '[[:space:]]' `
 
 
 #assign_server_role "$lm" "dmc_group_license_master"
-if [ "$mode" == "MANUAL" ]; then
-	tput_el_ed_from "$R_ROLL"
-	printf "${Yellow}The following single site will be created [$mode]:${NC}\n"
-	printf "Site Name: ${Green}%s${NC}\n" $site
-	printf "SH Cluster Label: ${Green}%s${NC}\n" $shc_label
-	printf "IDX Cluster Label: ${Green}%s${NC}\n" $idxc_label
-	printf "Cluster Master Base Hostname: ${Green}%s-CM${NC}\n" $site
-	printf "DMC Base Hostname: ${Green}%s-DMC${NC}\n" $site
-	printf "License Master Base Hostname: ${Green}%s-LM${NC}\n" $site
-	printf "IDX Base Hostname: ${Green}%s-IDX${NC}\n" $site
-	printf "Number of Indexers: ${Green}%s${NC}\n" $IDXcount
-	printf "SH Base Hostname: ${Green}%s-SH${NC}\n" $site
-	printf "Number of Search Heads: ${Green}%s${NC}\n" $SHcount
-	if [ "$mode" == "MANUAL" ]; then
-		read -p $'Hit <\033[1;32mENTER>\e[0m:Confirm \033[1;32m <B>\e[0m:Go Back  > ' choice
-	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
-	fi
-fi
+#if [ "$mode" == "MANUAL" ]; then
+#	tput_el_ed_from "$R_ROLL"
+#	printf "${Yellow}The following single site will be created [$mode]:${NC}\n"
+#	printf "Site Name: ${Green}%s${NC}\n" $site
+#	printf "SH Cluster Label: ${Green}%s${NC}\n" $shc_label
+#	printf "IDX Cluster Label: ${Green}%s${NC}\n" $idxc_label
+#	printf "Cluster Master Base Hostname: ${Green}%s-CM${NC}\n" $site
+#	printf "DMC Base Hostname: ${Green}%s-DMC${NC}\n" $site
+#	printf "License Master Base Hostname: ${Green}%s-LM${NC}\n" $site
+#	printf "IDX Base Hostname: ${Green}%s-IDX${NC}\n" $site
+#	printf "Number of Indexers: ${Green}%s${NC}\n" $IDXcount
+#	printf "SH Base Hostname: ${Green}%s-SH${NC}\n" $site
+#	printf "Number of Search Heads: ${Green}%s${NC}\n" $SHcount
+#	if [ "$mode" == "MANUAL" ]; then
+#		read -p $'Hit <\033[1;32mENTER>\e[0m:Confirm \033[1;32m <B>\e[0m:Go Back  > ' choice
+#	if [ "$choice" == "B" ] || [ "$choice" == "b" ]; then  return 0; fi
+#	fi
+#fi
 
 #Basic services
 #Sequence is very important!
@@ -3935,7 +3940,7 @@ printf_from "$R_STEP2" "${BoldWhiteOnYellow}" "=> STEP#2: Building IDXC [done]"
 update_progress "$R_STEP2" "$C_PROGRESS" "4" "1 2 3 4"  "$(timer "$start_time")"
 #--Finished STEP#2 Building IDXC------------------------------------------------------
 
-#--Starting STEP#3 Building SHC---
+#--Starting STEP#3 Building SHC-------------------------------------------------------
 local start_time=$(date +%s);
 printf_from "$R_STEP3" "${BoldWhiteOnYellow}" "=> STEP#3: Building SHC [creating $SHcount hosts]"
 tput_el_ed_from "$R_ROLL"
@@ -3960,18 +3965,12 @@ check_shc_status "$shc_members_list" "$R_STEP3"
 printf_from "$R_STEP3" "${BoldWhiteOnYellow}" "=> STEP#3: Building SHC [done]"
 update_progress "$R_STEP3" "$C_PROGRESS" "5" "1 2 3 4 5" "$(timer "$start_time")"
 update_progress "$R_BUILD_SITE" "$C_PROGRESS" "13" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
-#--Finished STEP#3 Building SHC---
+#--Finished STEP#3 Building SHC----------------------------------------------------------------
 
-#tput_el_ed_from "$R_ROLL"
-#create_single_idxc "$site$IDX_BASE:$IDXcount $dmc:1 $cm:1 $lm:1 LABEL:$idxc_label"
-#create_single_shc "$site$SH_BASE:$SHcount $site$DEP_BASE:1 $dmc:1 $cm:1 $lm:1 LABEL:$shc_label"
-#--Finished STEP#2 Building IDXC & SHC---
+tput_el_ed_from "$R_ROLL"
+echo
 
-#print_stats $START_TIME ${FUNCNAME}
-END_TIME=$(date +%s);
-TIME=`echo $((END_TIME - START_TIME)) | awk '{print int($1/60)":"int($1%60)}'`
-printf "${DarkGray}Execution time for ${FUNCNAME}(): [$TIME]${NC}\n"
-docker_status "$TIME"
+docker_status
 
 return 0
 }	#build_single_site()
@@ -3981,96 +3980,172 @@ build_multi_site() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function creates site-2-site cluster
 #http://docs.splunk.com/Documentation/Splunk/6.4.3/Indexer/Migratetomultisite
-
-mode="$1"		#either "AUTO" or "MANUAL"
-s=""; sites_str=""     			#used with "splunk edit cluster-config" on CM
-sites_list=""
+#build_single_site "STL$IDX_BASE:$STD_IDXC_COUNT STL$SH_BASE:$STD_SHC_COUNT STL$DEP_BASE:1 STLDMC:1 CM:1 STLLM:1 LABEL:STL$IDXCLUSTERLABEL"
 
 clear
+
+#extract these values from $1 if passed to us!
+LMname=`echo $1| $GREP -Po '(\s*\w*-*LM)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
+LMcount=`echo $1| $GREP -Po '(\s*\w*-*LM):\K(\d+)'| tr -d '[[:space:]]' `
+DMCname=`echo $1| $GREP -Po '(\s*\w*-*DMC)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
+DMCcount=`echo $1| $GREP -Po '(\s*\w*-*DMC):\K(\d+)'| tr -d '[[:space:]]' `
+DEPname=`echo $1| $GREP -Po '(\s*\w*-*DEP)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
+DEPcount=`echo $1| $GREP -Po '(\s*\w*-*DEP):\K(\d+)'| tr -d '[[:space:]]' `
+CMname=`echo $1| $GREP -Po '(\s*\w*-*CM)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
+CMcount=`echo $1| $GREP -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space:]]' `
+label=`echo $1| $GREP -Po '(\s*\w*-*LABEL):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
+IDXname=`echo $1| $GREP -Po '(\s*\w*-*IDX)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
+IDXcount=`echo $1| $GREP -Po '(\s*\w*-*IDX):\K(\d+)'| tr -d '[[:space:]]' `
+SHname=`echo $1| $GREP -Po '(\s*\w*-*SH)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
+SHcount=`echo $1| $GREP -Po '(\s*\w*-*SH):\K(\d+)'| tr -d '[[:space:]]' `
+site_list="$2"
+
+#Build sitesstr to be used with cluster-config cmd-----
+site_list_len=`echo $site_list|wc -w`
+sitesstr=""
+for i in `seq $site_list_len 1` ; do
+	sitesstr="site0$i,$sitesstr"
+done
+sitesstr=`echo ${sitesstr%?}`  		#remove last comma
+echo "sitesstr[$sitesstr]"
+#--------------------------------------------------------------
+primary_site=`echo $site_list|awk '{print $1}'`		#where basic services CM,LM resides
+#m_cm=$first_site"$CMname01"
+
+
 screen_header "${BoldWhiteOnTurquoise}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> MULTI-SITE CLUSTER"
 check_load
 local START_TIME=$(date +%s);
 
 
-
-#printf "Note:"
-#printf " -One DEP server per SHC will be automatically created.\n"
-#printf " -One CM server will be automatically created for the entire site-2-site cluster.\n"
-
-if [ "$mode" == "AUTO" ]; then
-	count=3;
-    IDXcount="$STD_IDXC_COUNT"; SHcount="$STD_SHC_COUNT"; shc_label="$SHCLUSTERLABEL"; idxc_label="$IDXCLUSTERLABEL"
-	#sites_list="$DEFAULT_SITES_NAMES"
-    sites_list="STL LON HKG"
-    sites_str="site1,site2,site3"
-	first_site=`echo $sites_list|awk '{print $1}'`		#where basic services CM,LM resides
-	m_cm=$first_site"CM01"
-	printf_from "$R_BUILD_SITE" "${BoldWhiteOnPink}" "BUILDING MULTI-SITE CLUSTER  --[$sites_list]"
-else
-	read -p "How many LOCATIONS to build (default 3)?  " count
-    if [ -z "$count" ]; then count=3; fi
-
-	#loop thru site count to capture site details
-	for (( i=1; i <= ${count}; i++)); do
-		printf "\n"
-        read -p "Enter site$i fullname (default SITE0$i)>  " site
-        if [ -z "$site" ]; then site="site0$i"; fi
-        read -p "How many IDX's (default $STD_IDXC_COUNT)>  " IDXcount
-        if [ -z "$IDXcount" ]; then IDXcount="$STD_IDXC_COUNT"; fi
-        read -p "How many SH's (default $STD_SHC_COUNT)>  " SHcount
-        if [ -z "$SHcount" ]; then SHcount="$STD_SHC_COUNT"; fi
-
-        sites_list="$sites_list ""$site"
-		sites_list=`echo $sites_list| tr '[a-z]' '[A-Z]' `	#upper case
-        s="site""$i"
-        sites_str="$sites_str""$s,"               #spaces causes error with "-available_sites" switch
-        #echo "$s [$sites_str]"
-    done
-	sites_str=`echo ${sites_str%?}`  			#remove last comma
-	first_site=`echo $sites_list|awk '{print $1}'`			#where basic services CM,LM resides
-	printf "\n"
-	read -p "Multi-site cluster must have one CM. Enter CM fullname (default $first_site"CM01")> " cm
-    m_cm=`echo $m_cm| tr '[a-z]' '[A-Z]' `
-    if [ -z "$m_cm" ]; then cm=$first_site"CM01"; fi
-fi
+#if [ "$mode" == "AUTO" ]; then
+#	count=3;
+#    IDXcount="$STD_IDXC_COUNT"; SHcount="$STD_SHC_COUNT"; shc_label="$SHCLUSTERLABEL"; idxc_label="$IDXCLUSTERLABEL"
+#	#sites_list="$DEFAULT_SITES_NAMES"
+#    sites_list="STL LON HKG"
+#    sites_str="site1,site2,site3"
+#	first_site=`echo $sites_list|awk '{print $1}'`		#where basic services CM,LM resides
+#	m_cm=$first_site"CM01"
+#	printf_from "$R_BUILD_SITE" "${BoldWhiteOnPink}" "BUILDING MULTI-SITE CLUSTER  --[$sites_list]"
+#else
+#	read -p "How many LOCATIONS to build (default 3)?  " count
+#    if [ -z "$count" ]; then count=3; fi
+#
+#	#loop thru site count to capture site details
+#	for (( i=1; i <= ${count}; i++)); do
+#		printf "\n"
+#        read -p "Enter site$i fullname (default SITE0$i)>  " site
+#        if [ -z "$site" ]; then site="site0$i"; fi
+#        read -p "How many IDX's (default $STD_IDXC_COUNT)>  " IDXcount
+#        if [ -z "$IDXcount" ]; then IDXcount="$STD_IDXC_COUNT"; fi
+#        read -p "How many SH's (default $STD_SHC_COUNT)>  " SHcount
+#        if [ -z "$SHcount" ]; then SHcount="$STD_SHC_COUNT"; fi
+#
+#        sites_list="$sites_list ""$site"
+#		sites_list=`echo $sites_list| tr '[a-z]' '[A-Z]' `	#upper case
+ #       s="site""$i"
+ #       sites_str="$sites_str""$s,"               #spaces causes error with "-available_sites" switch
+ #       #echo "$s [$sites_str]"
+ #   done
+#	sites_str=`echo ${sites_str%?}`  			#remove last comma
+#	first_site=`echo $sites_list|awk '{print $1}'`			#where basic services CM,LM resides
+#	printf "\n"
+#	read -p "Multi-site cluster must have one CM. Enter CM fullname (default $first_site"CM01")> " cm
+ #   m_cm=`echo $m_cm| tr '[a-z]' '[A-Z]' `
+ #   if [ -z "$m_cm" ]; then cm=$first_site"CM01"; fi
+#fi
 #------- Finished capturing sites names/basic services names ------------------
 
-
-
-
-printf_from "$R_BUILD_SITE" "${BoldWhiteOnPink}" "BUILDING MULTI-SITE CLUSTER  --[$sites_list]"
-printf "${DarkGray}Using Locations:[$sites_list] CM:[$m_cm] First_site:[$first_site] ${NC}\n\n" >&4
+printf_from "$R_BUILD_SITE" "${BoldWhiteOnPink}" "BUILDING MULTI-SITE CLUSTER  --[$site_list]"
+printf "${DarkGray}Using Locations:[$site_list] CM:[$m_cm] First_site:[$first_site] ${NC}\n\n" >&4
 
 #:--Starting STEP#1 Building basic services the cluster (s2s) ---
 #Basic services
 #Sequence is very important!
 local start_time=$(date +%s);
-printf_from "$R_STEP1" "${BoldWhiteOnYellow}" "=> STEP#1: Primary [$first_site] Building basic services [LM,DMC,CM]"
+local START_TIME=$(date +%s);
+printf_from "$R_STEP1" "${BoldWhiteOnYellow}" "=> STEP#1: Primary [$primary_site] Basic services [DMC,LM,CM]"
 tput_el_ed_from "$R_ROLL"
-create_splunk_container "$first_site$DMC_BASE" "1" "no" ; m_dmc=$gLIST
+
+create_splunk_container "$primary_site$DMCname" "$DMCcount" "no" ; m_dmc=$gLIST
 update_progress "$R_STEP1" "$C_PROGRESS" "m_dmc" "m_dmc m_lm m_cm" "$(timer "$start_time")"
-create_splunk_container "$first_site$LM_BASE" "1" "no"; m_lm=$gLIST
-make_lic_slave $m_lm $dmc ; make_dmc_search_peer $dmc $m_lm
-update_progress "$R_STEP1" "$C_PROGRESS" "m_lm" "dmc m_lm m_cm" "$(timer "$start_time")"
-create_splunk_container "$first_site$CM_BASE" "1" "no" ; cm=$gLIST
-make_lic_slave $m_lm $m_cm ; make_dmc_search_peer $dmc $m_cm
+
+create_splunk_container "$primary_site$LMname" "$LMcount" "no"; m_lm=$gLIST
+#echo "mdmc[$m_dmc] mlm[$m_lm]"
+make_lic_slave "$m_lm" "$m_dmc" ; make_dmc_search_peer "$m_dmc" "$m_lm"
+update_progress "$R_STEP1" "$C_PROGRESS" "m_lm" "m_dmc m_lm m_cm" "$(timer "$start_time")"
+
+create_splunk_container "$primary_site$CMname" "$CMcount" "no" ; m_cm=$gLIST
+make_lic_slave "$m_lm" "$m_cm" ; make_dmc_search_peer "$m_dmc" "$m_cm"
 update_progress "$R_STEP1" "$C_PROGRESS" "m_cm" "m_dmc m_lm m_cm" "$(timer "$start_time")"
-#:--Finsihed STEP#1 Building basic services the cluster (s2s) ---
+#--Finsihed STEP#1 Building basic services the cluster (s2s) ---
 
-
-#:--Starting STEP#2 Building sites IDXC's & SHC's ---
+#--Starting STEP#2 Building sites IDXC's & SHC's ---
 ##Loop thru list of sites & build generic SH/IDX hosts on each site
 #servers details/count is passed in first arg $1
 counter=0
-for site in $sites_list; do
+for site in $site_list; do
 	let counter++
 	printf_from "$R_STEP2" "${BoldWhiteOnYellow}" "=> STEP#2: Building all sites IDXC's & SHC's"
 	#sleep 5
-	highlighted_site=$(echo $sites_list| sed "s/$site/\\${BoldWhiteOnBlue}$site\\${BoldWhiteOnPink}/g")
+	highlighted_site=$(echo $site_list| sed "s/$site/\\${BoldWhiteOnBlue}$site\\${BoldWhiteOnPink}/g")
 	printf_from "$R_BUILD_SITE" "${BoldWhiteOnPink}" "BUILDING MULTI-SITE IDXC/SHC  --[$highlighted_site]"
 	tput_el_ed_from "$R_ROLL"
-	create_single_idxc "$site$IDX_BASE:$IDXcount $m_dmc $m_cm:1 $m_lm LABEL:$idxc_label"
-	create_single_shc "$site$SH_BASE:$SHcount $site$DEP_BASE:1 $m_dmc $m_cm $m_lm LABEL:$shc_label"
+
+#--Starting STEP#2 Building IDXC----------------------------------------------
+local start_time=$(date +%s);
+#printf_from "$R_STEP2" "${BoldWhiteOnYellow}" "=> STEP#2: Building IDXC [creating $IDXcount hosts]"
+tput_el_ed_from "$R_ROLL"
+IDXname="$site""$IDXname"
+create_splunk_container "$IDXname" "$IDXcount" "yes" "$R_STEP2"; idxc_members_list="$gLIST"
+#update_progress "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
+
+printf_from "$R_STEP2" "${BoldWhiteOnYellow}" "=> STEP#2: Building $IDXname [configure CM]"
+configure_cm "$m_cm" "$label" "$R_STEP2"
+#update_progress "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
+
+printf_from "$R_STEP2" "${BoldWhiteOnYellow}" "=> STEP#2: Building $IDXname  [configure members]"
+configure_idxc_members "$idxc_members_list" "$label" "$m_lm" "$m_cm" "$R_STEP2"
+#update_progress "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
+
+printf_from "$R_STEP2" "${BoldWhiteOnYellow}" "=> STEP#2: Buidling $IDXname [check status]"
+check_idxc_status "$m_cm" "$R_STEP2"
+#update_progress "$R_BUILD_SITE" "$C_PROGRESS" "8" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
+
+printf_from "$R_STEP2" "${BoldWhiteOnYellow}" "=> STEP#2: Building $IDXname [done]"
+#update_progress "$R_STEP2" "$C_PROGRESS" "4" "1 2 3 4"  "$(timer "$start_time")"
+#--Finished STEP#2 Building IDXC------------------------------------------------------
+#--Starting STEP#3 Building SHC-------------------------------------------------------
+local start_time=$(date +%s);
+SHname="$site""$SHname"; dep="$site""$DEPname"
+printf_from "$R_STEP3" "${BoldWhiteOnYellow}" "=> STEP#3: Building $SHname [creating $SHcount hosts]"
+tput_el_ed_from "$R_ROLL"
+create_splunk_container "$SHname" "$SHcount" "yes" "$R_STEP3"; shc_members_list="$gLIST"
+#update_progress "$R_BUILD_SITE" "$C_PROGRESS" "9" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
+
+printf_from "$R_STEP3" "${BoldWhiteOnYellow}" "=> STEP#3: Building $SHname [configure deployer]"
+configure_deployer "$dep" "$label" "$R_STEP3"
+#update_progress "$R_BUILD_SITE" "$C_PROGRESS" "10" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
+
+printf_from "$R_STEP3" "${BoldWhiteOnYellow}" "=> STEP#3: Building $SHname [configure members]"
+configure_shc_members "$shc_members_list" "$m_cm" "$m_dmc" "$m_lm" "$R_STEP3"
+#update_progress "$R_BUILD_SITE" "$C_PROGRESS" "11" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
+
+printf_from "$R_STEP3" "${BoldWhiteOnYellow}" "=> STEP#3: Building $SHname [configure captain]"
+configure_captain "$shc_members_list" "$R_STEP3"
+#update_progress "$R_BUILD_SITE" "$C_PROGRESS" "12" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
+
+printf_from "$R_STEP3" "${BoldWhiteOnYellow}" "=> STEP#3: Building $SHname [check status]"
+check_shc_status "$shc_members_list" "$R_STEP3"
+
+printf_from "$R_STEP3" "${BoldWhiteOnYellow}" "=> STEP#3: Building $SHname [done]"
+update_progress "$R_STEP3" "$C_PROGRESS" "5" "1 2 3 4 5" "$(timer "$start_time")"
+#update_progress "$R_BUILD_SITE" "$C_PROGRESS" "13" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
+#--Finished STEP#3 Building SHC----------------------------------------------------------------
+
+#tput_el_ed_from "$R_ROLL"
+	#create_single_idxc "$site$IDX_BASE:$IDXcount $m_dmc $m_cm:1 $m_lm LABEL:$idxc_label"
+	#create_single_shc "$site$SH_BASE:$SHcount $site$DEP_BASE:1 $m_dmc $m_cm $m_lm LABEL:$shc_label"
 done
 #--Finished STEP#2 Building IDXC & SHC---
 
@@ -4801,7 +4876,7 @@ if [ "$AWS_EC2" == "YES" ]; then
 		echo  "$external_ip $i"  >> aws_eip_mapping.tmp
 	done
 fi
-printf_from "$R_STEP2" "${BoldWhiteOnBlue}" "Host(container)%-7s State%-1s Splunkd%-1s Ver%-2s Internal IP%-2s Image used%-15s     URL%-13s${NC}"
+printf_from "$R_STEP2" "${BoldWhiteOnBlue}" "Host(container)%-7s State%-4s Splunkd%-1s Ver%-2s Docker IP%-5s Image%-15s     URL%-13s${NC}"
 tput_el_ed_from "$R_STEP3"
 
 ctr=0
