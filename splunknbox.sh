@@ -62,6 +62,7 @@ START_ALIAS_LINUX="192.168.1.100";  	END_ALIAS_LINUX="192.168.1.250"
 
 #OSX space will not be routed, and host reached from the laptop only
 START_ALIAS_OSX="10.0.0.100";  		END_ALIAS_OSX="10.0.0.250"
+#START_ALIAS_OSX=10.2.237.1"";  		END_ALIAS_OSX="10.2.237.49"
 
 DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine IP
 #---------------------------------
@@ -75,7 +76,7 @@ DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine IP
 #-----------------------------------
 #----------Images--------------------
 #My builds posted on docker hub    -MyH
-DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_7.0.1"
+DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_7.0.3"
 
 #DEFAULT_SPLUNK_IMAGE="splunk/splunk"		#official image -recommended-
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
@@ -221,6 +222,7 @@ BoldWhiteOnPink="\033[1;1;5;45m"
 BoldWhiteOnTurquoise="\033[1;1;5;46m"
 BoldYellowOnBlue="\033[1;33;44m"
 BoldYellowOnPurple="\033[1;33;44m"
+STEP_COLOR="$BoldWhiteOnBlue"
 
 DEFAULT_YES="\033[1;37mY\033[0m/n"
 DEFAULT_NO="y/\033[1;37mN\033[0m"
@@ -510,7 +512,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #Delete ip aliases on the interface (OS dependent)
 
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> REMOVE iP ALIASES"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> REMOVE iP ALIASES"
 printf "\n"
 #display_all_containers
 echo
@@ -1081,7 +1083,9 @@ if [ "$os" == "Darwin" ]; then
 else
 	printf "\n"
 fi
-
+if [ -z "$DNSSERVER" ]; then
+	DNSSERVER="127.0.0.1";
+fi
 #-----------discovering DNS setting for OSX. Used for container build--
 
 #TO DO:
@@ -1350,7 +1354,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #This function will set the splunk version to use for building containers.
 
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE IMAGES -> CHANGE DEFAULT SPLUNK IMAGE MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE IMAGES -> CHANGE DEFAULT SPLUNK IMAGE MENU"
 printf "\n"
 
 #count=`wc -l $CMD`
@@ -1474,7 +1478,7 @@ return 0
 reset_all_splunk_passwords() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> RESET SPLUNK INSTANCES PASSWORD MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> RESET SPLUNK INSTANCES PASSWORD MENU"
 printf "\n"
 display_all_containers
 
@@ -1496,7 +1500,7 @@ add_splunk_licenses() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${BoldWhiteOnBlue}ADD SPLUNK LICENSE MENU                                    ${NC}\n"
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> ADD SPLUNK LICENSE MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> ADD SPLUNK LICENSE MENU"
 printf "\n"
 display_all_containers
 
@@ -1516,7 +1520,7 @@ return 0
 restart_all_splunkd() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> RESTART SPLUNK INSTANCES MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> RESTART SPLUNK INSTANCES MENU"
 printf "\n"
 display_all_containers
 
@@ -1614,7 +1618,7 @@ add_os_utils_to_demos() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #Add missing OS utils to all non-demo containers
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> ADD OS UTILS MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> ADD OS UTILS MENU"
 printf "\n"
 printf "${BrownOrange}This option will add OS packages [vim net-tools telnet dnsutils] to all running demo containers only...\n"
 printf "${BrownOrange}Might be useful if you will be doing a lot of manual splunk configuration, however, it will increase container's size! ${NC}\n"
@@ -1661,7 +1665,7 @@ dmc_list=`docker ps -a --filter name="DMC|dmc" --format "{{.Names}}"|sort`
 demo_list=`docker ps -a --filter name="DEMO|demo|WORKSHOP|workshop" --format "{{.Names}}"|sort`
 rdparty_list=`docker ps -a --filter name="3RDP|3rdp" --format "{{.Names}}"|sort`
 
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> GROUP CONTAINERS BY ROLE MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> GROUP CONTAINERS BY ROLE MENU"
 printf "\n"
 #display_all_containers "DEMO"
 printf "${LightBlue}LMs${NC}: " ;      	printf "%-5s " $lm_list;echo
@@ -2016,7 +2020,6 @@ gLIST=""   #build global list of hosts created by this session. Used somewhere e
 
 printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}  basename[$basename]  hostcount[$hostcount] ${NC}\n" >&5
 
-
 #---If not passed; prompt user to get basename and count ----
 if [ -z "$basename" ]; then
         read -p ">>>> Enter BASE HOSTNAME (default: $BASEHOSTNAME)?: " basename
@@ -2051,7 +2054,8 @@ fi
 #print_step_bar_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}" "   -- BUILDING CONTAINERS --                           "
 pass_list=$(seq 1 $count |tr -d '\r' | tr  '\n' ' ')
 for (( a = 1; a <= count; a++ ))  ; do
-	clear_from_if_screen_ended "$R_ROLL"		#clearing anything below (6,0) when screen limit reached
+	#clear_from_if_screen_ended "$R_ROLL"		#clearing anything below (6,0) when screen limit reached
+	clear_from_if_screen_ended "$R_STEP1"		#clearing anything below
 	calc_next_seq_fullhostname_ip "$basename" "$count"	#function will return global $vip
 	construct_splunk_container $vip $fullhostname $lic_master $cluster_label $bindip_monitor
 	gLIST="$gLIST""$fullhostname "		#append last host create to the global LIST
@@ -2211,7 +2215,7 @@ create_demo_container_from_list() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE CONTAINERS -> CREATE & DOWNLOAD DEMO CONTAINERS MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE CONTAINERS -> CREATE & DOWNLOAD DEMO CONTAINERS MENU"
 printf "\n"
 printf "Demo images available from $SPLUNK_DOCKER_HUB:\n"
 printf "${Purple}     		IMAGE NAME${NC}		    CREATED	SIZE			AUTHOR\n"
@@ -2363,7 +2367,7 @@ create_3rdp_container_from_list() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE CONTAINERS -> CRREATE 3RD PARTY CONTAINERS MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE CONTAINERS -> CRREATE 3RD PARTY CONTAINERS MENU"
 printf "\n"
 printf "${BrownOrange}*Depending on the time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
 printf "\n"
@@ -2785,7 +2789,7 @@ display_main_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function displays user options for the main menu
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU"
 
 tput cup 5 25
 tput rev  # Set reverse video mode
@@ -2820,7 +2824,7 @@ display_splunk_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU  -> SPLUNK MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU  -> SPLUNK MENU"
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
 printf "${Red}S${NC}) ${Red}S${NC}HOW all images details ${DarkGray}[custom view]${NC}\n"
@@ -2847,7 +2851,7 @@ display_system_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> SYSTEM MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> SYSTEM MENU"
 printf "\n\n"
 
 printf "${BoldWhiteOnGreen}Manage System:${NC}\n"
@@ -2866,7 +2870,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DEMOs MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> DEMOs MENU"
 printf "\n"
 echo
 printf "${BoldWhiteOnRed}Manage Demo Images:${NC}\n"
@@ -2893,7 +2897,7 @@ return 0
 display_3rdparty_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> 3RD PARTY MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> 3RD PARTY MENU"
 printf "\n"
 echo
 printf "${BoldWhiteOnRed}Manage 3rd Party Images:${NC}\n"
@@ -2920,7 +2924,7 @@ return 0
 display_clustering_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
 printf "\n"
 echo
 printf "${BoldWhiteOnBlue}AUTOMATIC BUILDS (components: R3/S2 1-CM 1-DEP 1-DMC 1-UF 3-SHC 3-IDXC): ${NC}\n"
@@ -2945,7 +2949,7 @@ return 0
 display_ll_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> LUNCH & LEARN MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> LUNCH & LEARN MENU"
 printf "\n"
 echo
 printf "${BoldWhiteOnYellow}Files to install for Lunch & Learn: ${NC}\n"
@@ -3741,23 +3745,23 @@ if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 local TIME_START=$(date +%s);
 
 #display all title with zero progress    ### DONT USE CLEAR ####
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> CREATING STAND-ALONE SHC"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> CREATING STAND-ALONE SHC"
 clear_page_starting_from "$R_BUILD_SITE"
 
 #initialize status sections
 #print_step_bar_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}"  "BUILDING SEARCH HEAD CLUSTER (SHC) --[$1]"
 print_step_bar_from "$R_BUILD_SITE" "${BoldWhiteOnPink}  " "BUILDING INDEPENDENT STAND-ALONE SEARC HHEAD CLUSTER"
-print_step_bar_from "$R_STEP1" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#1: Creating administrative hosts"
+print_step_bar_from "$R_STEP1" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Creating administrative hosts"
 update_progress_section "$R_STEP1" "$C_PROGRESS" "" "dmc lm dep"
-print_step_bar_from "$R_STEP2" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#2: Creating sh hosts"
+print_step_bar_from "$R_STEP2" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: Creating sh hosts"
 update_progress_section "$R_STEP2" "$C_PROGRESS" "" "sh1 sh2 sh3"
-print_step_bar_from "$R_STEP3" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#3: Deployer configuration"
+print_step_bar_from "$R_STEP3" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: Deployer configuration"
 update_progress_section "$R_STEP3" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP4" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} "  "STEP#4: shc members configurations"
+print_step_bar_from "$R_STEP4" "${STEP_COLOR}${DONT_ENTER_EMOJI} "  "STEP#4: shc members configurations"
 update_progress_section "$R_STEP4" "$C_PROGRESS" "" "sh1 sh2 sh3"
-print_step_bar_from "$R_STEP5" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} "  "STEP#5: Captain configuration"
+print_step_bar_from "$R_STEP5" "${STEP_COLOR}${DONT_ENTER_EMOJI} "  "STEP#5: Captain configuration"
 update_progress_section "$R_STEP5" "$C_PROGRESS" ""  "1"
-print_step_bar_from "$R_STEP6" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} "  "STEP#6: Verifying shc cluster status"
+print_step_bar_from "$R_STEP6" "${STEP_COLOR}${DONT_ENTER_EMOJI} "  "STEP#6: Verifying shc cluster status"
 update_progress_section "$R_STEP6" "$C_PROGRESS" "" "1"
 
 
@@ -3912,21 +3916,21 @@ clear_page_starting_from "$R_STEP1"
 if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
 #$1 CMbasename:count   $2 IDXbasename:count  $3 LMbasename:count
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> CREATING STAND-ALONE IDXC"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> CREATING STAND-ALONE IDXC"
 clear_page_starting_from "$R_BUILD_SITE"
 
 #initialize status section
 #print_step_bar_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}"  "BUILDING INDEX CLUSTER (IDXC) --[$1]"
 print_step_bar_from "$R_BUILD_SITE" "${BoldWhiteOnPink}  " "BUILDING INDEPENDENT STAND-ALONE INDEXING CLUSTER"
-print_step_bar_from "$R_STEP1" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#1: Creating idxc administrative hosts"
+print_step_bar_from "$R_STEP1" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Creating idxc administrative hosts"
 update_progress_section "$R_STEP1" "$C_PROGRESS" "" "dmc lm cm"
-print_step_bar_from "$R_STEP2" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#2: Creating idx hosts"
+print_step_bar_from "$R_STEP2" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: Creating idx hosts"
 update_progress_section "$R_STEP2" "$C_PROGRESS" "" "idx1 idx2 idx3"
-print_step_bar_from "$R_STEP3" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#3: Cluster Master configuration"
+print_step_bar_from "$R_STEP3" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: Cluster Master configuration"
 update_progress_section "$R_STEP3" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP4" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#4: idxc peer nodes configuration"
+print_step_bar_from "$R_STEP4" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#4: idxc peer nodes configuration"
 update_progress_section "$R_STEP4" "$C_PROGRESS" "" "idx1 idx2 idx3"
-print_step_bar_from "$R_STEP5" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#5: Verifying idxc status"
+print_step_bar_from "$R_STEP5" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: Verifying idxc status"
 update_progress_section "$R_STEP5" "$C_PROGRESS" ""  "1"
 
 
@@ -4043,17 +4047,17 @@ SHname="$SITEname""$SHname"
 
 
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> SINGLE SITE CLUSTER"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> SINGLE SITE CLUSTER"
 clear_page_starting_from "$R_ROLL"
 
 #initialize status section
 #print_step_bar_from "$R_BUILD_CLUSTER" "${BoldWhiteOnBlue}"  "BUILDING INDEX CLUSTER (IDXC) --[$1]"
 print_step_bar_from "$R_BUILD_SITE" "${BoldWhiteOnPink}  " "BUILDING SINGLE SITE CLUSTER [$SITEname_clean]"
-print_step_bar_from "$R_STEP1" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#1: Creating basic services"
+print_step_bar_from "$R_STEP1" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Creating basic services"
 update_progress_section "$R_STEP1" "$C_PROGRESS" "" "dmc lm cm dep"
-print_step_bar_from "$R_STEP2" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#2: Building IDXC"
+print_step_bar_from "$R_STEP2" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: Building IDXC"
 update_progress_section "$R_STEP2" "$C_PROGRESS" "" "idxc shc"
-print_step_bar_from "$R_STEP3" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#3: Building SHC"
+print_step_bar_from "$R_STEP3" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: Building SHC"
 update_progress_section "$R_STEP3" "$C_PROGRESS" "" "idxc shc"
 
 check_load
@@ -4189,7 +4193,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #http://docs.splunk.com/Documentation/Splunk/6.4.3/Indexer/Migratetomultisite
 
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> MULTI-SITE CLUSTER"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> MULTI-SITE CLUSTER"
 check_load
 local START_TIME=$(date +%s);
 
@@ -4228,17 +4232,17 @@ SITEname_primary_clean=`echo $SITEname_primary| sed 's/_//g'` #Remove "_" if fou
 #Initialize status section
 print_step_bar_from "$R_BUILD_SITE" "${BoldWhiteOnPink}  " "BUILDING $SITEname_list_len-SITE CLUSTER [$SITEname_list_clean]"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "" "1 2 3 4 5 6 7 8"
-print_step_bar_from "$R_STEP1" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#1: Basic services in primary [$SITEname_primary_clean] [DMC,LM,CM]"
+print_step_bar_from "$R_STEP1" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Basic services in primary [$SITEname_primary_clean] [DMC,LM,CM]"
 update_progress_section "$R_STEP1" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP2" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#2: Creating $IDXname [$IDXcount hosts]"
+print_step_bar_from "$R_STEP2" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: Creating $IDXname [$IDXcount hosts]"
 update_progress_section "$R_STEP2" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP3" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#3: Creating $SHname  [$SHcount hosts]"
+print_step_bar_from "$R_STEP3" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: Creating $SHname  [$SHcount hosts]"
 update_progress_section "$R_STEP3" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP4" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#4: ${SITEname}SHC  [configure deployer]"
+print_step_bar_from "$R_STEP4" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#4: ${SITEname}SHC  [configure deployer]"
 update_progress_section "$R_STEP4" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP5" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#5: ${SITEname}IDXC [configure members]"
+print_step_bar_from "$R_STEP5" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: ${SITEname}IDXC [configure members]"
 update_progress_section "$R_STEP5" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP6" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#6: ${SITEname}SHC  [configure members]"
+print_step_bar_from "$R_STEP6" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#6: ${SITEname}SHC  [configure members]"
 update_progress_section "$R_STEP6" "$C_PROGRESS" "" "1"
 
 
@@ -4322,15 +4326,15 @@ for SITEname in $SITEname_list; do
 	DEPname="$SITEname""$DEPname_s"; LABELname="$SITEname""$LABELname_s"
 
 	#initialize again stating #2
-    print_step_bar_from "$R_STEP2" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#2: Creating $IDXname [$IDXcount hosts]"
+    print_step_bar_from "$R_STEP2" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: Creating $IDXname [$IDXcount hosts]"
 	update_progress_section "$R_STEP2" "$C_PROGRESS" "" "1"
-	print_step_bar_from "$R_STEP3" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#3: Creating $SHname  [$SHcount hosts]"
+	print_step_bar_from "$R_STEP3" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: Creating $SHname  [$SHcount hosts]"
 	update_progress_section "$R_STEP3" "$C_PROGRESS" "" "1"
-	print_step_bar_from "$R_STEP4" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#4: ${SITEname}SHC  [configure deployer]"
+	print_step_bar_from "$R_STEP4" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#4: ${SITEname}SHC  [configure deployer]"
 	update_progress_section "$R_STEP4" "$C_PROGRESS" "" "1"
-	print_step_bar_from "$R_STEP5" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#5: ${SITEname}IDXC [configure members]"
+	print_step_bar_from "$R_STEP5" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: ${SITEname}IDXC [configure members]"
 	update_progress_section "$R_STEP5" "$C_PROGRESS" "" "1"
-	print_step_bar_from "$R_STEP6" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#6: ${SITEname}SHC  [configure members]"
+	print_step_bar_from "$R_STEP6" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#6: ${SITEname}SHC  [configure members]"
 	update_progress_section "$R_STEP6" "$C_PROGRESS" "" "1"
 
 
@@ -4379,9 +4383,9 @@ item=0
 ###At this point all SHs & IDXs are built for all SITES
 for SITEname in $SITEname_list; do		#-outer loop----
 	#initialize again stating #5
-	print_step_bar_from "$R_STEP5" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#5: ${SITEname}IDXC [configure members]"
+	print_step_bar_from "$R_STEP5" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: ${SITEname}IDXC [configure members]"
 	update_progress_section "$R_STEP5" "$C_PROGRESS" "" "1"
-	print_step_bar_from "$R_STEP6" "${BoldWhiteOnBlue}${DONT_ENTER_EMOJI} " "STEP#6: ${SITEname}SHC  [configure members]"
+	print_step_bar_from "$R_STEP6" "${STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#6: ${SITEname}SHC  [configure members]"
 	update_progress_section "$R_STEP6" "$C_PROGRESS" "" "1"
 	clear_page_starting_from "$R_ROLL"
 
@@ -4723,7 +4727,7 @@ extract_current_cursor_position () {
 
 clear
 #-----------show images details
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DOWNLOAD DEMO IMAGES"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> DOWNLOAD DEMO IMAGES"
 print_step_bar_from "$R_STEP1" "${BoldWhiteOnLightBlue}" "   -- AVIALABLE IMAGES FROM [$SPLUNK_DOCKER_HUB] -- "
 
 print_step_bar_from "$R_STEP2" "${BoldWhiteOnBlue}" "        Image%-30s Create%-7s Size%-12s Author%-21s${NC}"
@@ -4817,7 +4821,7 @@ download_3rdparty_image() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DOWNLOAD 3RD PARTY IMAGES MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> DOWNLOAD 3RD PARTY IMAGES MENU"
 printf "\n"
 printf "${BrownOrange}*Depending on time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
 printf "\n"
@@ -4881,7 +4885,7 @@ start_containers() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type="$1"
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> START $type CONTAINERS"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> START $type CONTAINERS"
 display_all_containers "$type"
 
 count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
@@ -4925,12 +4929,13 @@ return 0
 create_containers() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> CREATE CONTAINERS"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> CREATE CONTAINERS"
 
 #count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
 print_step_bar_from "$R_STEP1" "${BoldWhiteOnLightBlue}${YELLOW_LEFTHAND_EMOJI}  " "CREATING CONTAINERS  [$selected_count hosts]"; printf "\n"
 update_progress_section "$R_STEP1" "$C_PROGRESS" "" "1"
 clear_page_starting_from "$R_STEP3"
+docker_status
 
 read -p "Enter BASE HOSTNAME (default: $BASEHOSTNAME)?: " basename
 if [ -z "$basename" ]; then
@@ -4959,7 +4964,7 @@ stop_containers() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type="$1"
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> STOP $type CONTAINERS"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> STOP $type CONTAINERS"
 display_all_containers "$type"
 
 count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
@@ -5006,7 +5011,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type="$1"
 
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> DELETE $type CONTAINERS"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> DELETE $type CONTAINERS"
 display_all_containers "$type"
 #printf "\n"
 
@@ -5209,7 +5214,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type="$1"         #container type (ex DEMO, 3RDPARTY, empty for ALL)
 
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> LIST $type CONTAINERS"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> LIST $type CONTAINERS"
 print_step_bar_from "$R_STEP1" "${BoldWhiteOnLightBlue}" "   -- LISTING CONTAINERS -- "
 display_all_containers "$type" "$tagged"
 count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
@@ -5230,7 +5235,7 @@ remove_images() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 type="$1"
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> REMOVE $type IMAGES MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> REMOVE $type IMAGES MENU"
 printf "\n"
 printf "Current list of all $type images downloaded on this system:\n"
 display_all_images "$type"
@@ -5287,7 +5292,7 @@ clear
 if [ -z "$type" ]; then
 	p_type="*"
 fi
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> SHOW $type IMAGES"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> SHOW $type IMAGES"
 print_step_bar_from "$R_STEP1" "${BoldWhiteOnLightBlue}" "   -- LISTING IMAGES TYPE [$p_type] -- "
 #printf "Current list of $type images downloaded on this system:\n"
 display_all_images "$type"
@@ -5379,7 +5384,7 @@ return 0
 wipe_entire_system() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk n' Box v$GIT_VER: ${Yellow}MAIN MENU -> WIPE CLEAN SPLUNK N' BOX SYSTEM MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> WIPE CLEAN SPLUNK N' BOX SYSTEM MENU"
 printf "\n"
 printf "${DONT_ENTER_EMOJI}${LightRed} WARNING!${NC}\n"
 printf "${LightRed}This option will remove IP aliases, delete all containers, delete all images and remove all volumes! ${NC}\n"
@@ -5417,7 +5422,7 @@ read -p "Are you sure you want to proceed? [y/N]? " answer
 		fi
 
 	 	printf "\n\n"
-                echo -e "Life is good! Thank you for using Splunk n' Box v$GIT_VER\n"
+                echo -e "Life is good! Thank you for using Splunk N' Box v$GIT_VER\n"
 		printf "Please send feedback to mhassan@splunk.com \n"
 		exit
 fi
@@ -5563,22 +5568,24 @@ maxloglevel=7	 #The highest loglevel we use / allow to be displayed.
 # A POSIX variable
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 output_file=""
-while getopts "h?v:s:g:c:t:f:" opt; do
+skip_checks="NO"
+opt=""
+while getopts "h?v:sg:c:t:f:" opt; do
     case "$opt" in
-    h|\?)
-		printf "Usage:\n"
-        printf "\t-v[2|3|4|5|6]\tSet log level\n"
-		printf "\t-s[true]\tSkip startup checks (if all requirements are satisfied).${LightRed}**Use with caution***${NC}\n"
-		printf "\t-t\tSet pause time after each container creation. If not set use defaults (15-30 sec)"
-        printf "\t-f[filename]\tSet log file name\n"
-        exit 0
-        ;;
     v)  loglevel=$OPTARG;;
-    s)  skip_checks=$OPTARG;;
+   	s)  skip_checks="Y";;
     g)  graphics=$OPTARG;;
     c)  cluster=$OPTARG;;
     t)  set_timer=$OPTARG;;
-    f)  output_file=$OPTARG;;
+	f)  output_file=$OPTARG;;
+    h)
+		printf "Usage:\n"
+		printf "\t-s \t\tSkip startup checks if all requirements are satisfied.${LightRed}**Use with caution***${NC}\n"
+		printf "\t-v [3|4|5|6]\tlog level (default $DEFAULT_LOG_LEVEL)\n"
+		printf "\t-t [sec]\tpause time after each container creation (default 15 or 30 sec)\n"
+        printf "\t-f [filename]\tSet log file name\n"
+        exit 0
+        ;;
     esac
 done
 
@@ -5612,7 +5619,7 @@ clear
 trap redraw WINCH
 detect_os						#ggrep OSX is set here.Should be the first routine
 
-if [ -z "$skip_checks" ] || [ "$skip_checks" != "true" ];then
+if [ "$skip_checks" != "Y" ];then
 	startup_checks				#contains ggrep install if missing OSX (critical command)
 fi
 detect_ver
