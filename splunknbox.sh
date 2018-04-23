@@ -141,6 +141,7 @@ DEP_SHC_COUNT="1"					#default DEP count
 #------------------------------------------
 #---------DIRECTORIES & Logs-----------------------------
 DEFAULT_LOG_LEVEL=3
+DEFAULT_TIMER=30
 FILES_DIR="$PWD" 		#place anything needs to copy to container here
 TMP_DIR="$PWD/tmp"	#used as scrach space
 LOGS_DIR="$PWD/logs"		#store generated logs during run
@@ -2667,8 +2668,9 @@ else
 	loadavg="${LightGreenOnGray1}$loadavg"
 fi
 
-screen_footer "$Containers" "$Running" "$Paused" "$Stopped" "$Images" "${loadavg}" "$timer"
-#screen_footer "$Containers" "$Running" "$Paused" "$Stopped" "$Images" "${loadavg}"
+#Containers="$1"; Running="$2"; Paused="$3"; Stopped="$4"; Images="$5"; loadavg="$6"; timer="$7"
+#screen_footer "$Containers" "$Running" "$Paused" "$Stopped" "$Images" "${loadavg}" "$timer"
+screen_footer "$Containers" "$Running" "$Paused" "$Stopped" "$Images" "${loadavg}"
 tput rc		#restore cursor
 return
 }	#end docker_status()
@@ -2838,16 +2840,16 @@ dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
 screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU  -> SPLUNK MENU"
 printf "\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
-printf "${Red}S${NC}) ${Red}S${NC}HOW all images details ${DarkGray}[custom view]${NC}\n"
+printf "${Red}I${NC}) ${red}I${NC}mages details ${DarkGray}[custom view]${NC}\n"
 printf "${Red}R${NC}) ${Red}R${NC}EMOVE image(s) to recover disk-space (will extend build times) ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
-printf "${Red}F${NC}) DE${Red}F${NC}AULT Splunk images ${DarkGray}[currently: $DEFAULT_SPLUNK_IMAGE]${NC}\n"
+printf "${Red}F${NC}) SET DE${Red}F${NC}AULT Splunk image ${DarkGray}[currently: $DEFAULT_SPLUNK_IMAGE]${NC}\n"
 printf "\n"
 printf "${BoldWhiteOnYellow}Manage Containers:${NC}\n"
 printf "${Yellow}C${NC}) ${Yellow}C${NC}REATE generic Splunk container(s) ${DarkGray}[docker run ...]${NC}\n"
-printf "${Yellow}L${NC}) ${Yellow}L${NC}IST all containers ${DarkGray}[custom view]${NC} \n"
-printf "${Yellow}P${NC}) STO${Yellow}P${NC} container(s) ${DarkGray}[docker stop \$(docker ps -aq)]${NC}\n"
-printf "${Yellow}T${NC}) S${Yellow}T${NC}ART container(s) ${DarkGray}[docker start \$(docker ps -a --format \"{{.Names}}\")]${NC}\n"
 printf "${Yellow}D${NC}) ${Yellow}D${NC}ELETE container(s) & Volumes(s)${DarkGray} [docker rm -vf \$(docker ps -aq)]${NC}\n"
+printf "${Yellow}S${NC}) ${Yellow}S${NC}TART container(s) ${DarkGray}[docker start \$(docker ps -a --format \"{{.Names}}\")]${NC}\n"
+printf "${Yellow}T${NC}) S${Yellow}T${NC}OP container(s) ${DarkGray}[docker stop \$(docker ps -aq)]${NC}\n"
+printf "${Yellow}L${NC}) ${Yellow}L${NC}IST all containers ${DarkGray}[custom view]${NC} \n"
 printf "${Yellow}H${NC}) ${Yellow}H${NC}OSTS grouped by role ${DarkGray}[works only if you followed the host naming rules]${NC}\n"
 printf "\n"
 printf "${BoldWhiteOnGreen}Manage system:${NC}\n"
@@ -3032,7 +3034,7 @@ do
 
                #IMAGES -----------
                 r|R ) remove_images;;
-                s|S ) list_all_images;;
+                i|I ) list_all_images;;
                 f|F ) change_default_splunk_image;;
 
                 #CONTAINERS ------------
@@ -3040,8 +3042,8 @@ do
                 d|D ) delete_containers;;
                 v|V ) delete_all_volumes;;
                 l|L ) list_all_containers ;;
-                t|T ) start_containers;;
-                p|P ) stop_containers;;
+                s|S ) start_containers;;
+                t|T ) stop_containers;;
                 h|H ) list_all_hosts_by_role ;;
 
 				b|B) return 0;;
@@ -3908,8 +3910,14 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "8" "1 2 3 4 5 6 7 8" "$(t
 #--Finished STEP#4 Check SHC status---
 
 echo
-printf "${LightGreen}Build Completed!\n"
+printf "${LightGreen}Build Completed!\n\n"
+printf "${ACTIVE_STEP_COLOR}Deployer       :${NC} $dep\n"
+printf "${ACTIVE_STEP_COLOR}License Master :${NC} $lm\n"
+printf "${ACTIVE_STEP_COLOR}Master Console:${NC} $dmc\n"
+printf "${ACTIVE_STEP_COLOR}SHC Memebers   :${NC} $members_list\n"
+echo
 docker_status
+
 
 return 0
 }	#create_standalone_shc()
@@ -4013,12 +4021,16 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7" "$(tim
 #--Finsihed STEP#5 Verifying IDXC status---
 
 echo
-printf "${LightGreen}Build Completed!\n"
-#count=`wc -w $CMDLOGBIN| awk '{print $1}' `
-#printf "${DarkGray}Number of Splunk config commands issued: [%s]${NC}\n" "$count"
-
-#print_stats $START ${FUNCNAME}
+printf "${LightGreen}Build Completed!\n\n"
+printf "${ACTIVE_STEP_COLOR}Deployer:      ${NC} $cm\n"
+printf "${ACTIVE_STEP_COLOR}Cluster Master:${NC} $cm\n"
+printf "${ACTIVE_STEP_COLOR}License Master:${NC} $lm\n"
+printf "${ACTIVE_STEP_COLOR}Master Console:${NC} $dmc\n"
+printf "${ACTIVE_STEP_COLOR}SHC Memebers  :${NC} $members_list\n"
+echo
 docker_status
+
+
 
 return 0
 }	#end create_standalone_idxc()
@@ -5589,6 +5601,7 @@ OPTIND=1         # Reset in case getopts has been used previously in the shell.
 output_file=""
 skip_checks="NO"
 opt=""
+set_timer="$DEFAULT_TIMER"
 while getopts "h?v:sg:c:t:f:" opt; do
     case "$opt" in
     v)  loglevel=$OPTARG;;
