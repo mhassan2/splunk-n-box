@@ -224,11 +224,12 @@ BoldWhiteOnYellow="\033[1;1;5;43m"; BoldWhiteOnBlue="\033[1;1;5;44m"
 BoldWhiteOnLightBlue="\033[1;1;5;104m"; BoldWhiteOnPink="\033[1;1;5;45m"
 BoldWhiteOnTurquoise="\033[1;1;5;46m"; BoldYellowOnBlue="\033[1;33;44m"
 BoldYellowOnPurple="\033[1;33;44m"
-#INACTIVE_STEP_COLOR="$BoldWhiteOnBlue"
+#INACTIVE_TXT_COLOR="$BoldWhiteOnBlue"
 ACTION_COLOR="$BoldWhiteOnLightBlue"
-INACTIVE_STEP_COLOR="\033[1;30m"
-#ACTIVE_STEP_COLOR="\033[1;91m"
-ACTIVE_STEP_COLOR="\033[1;35m"
+INACTIVE_TXT_COLOR="\033[1;30m"
+ACTIVE_TXT_COLOR="${White}"
+#ACTIVE_TXT_COLOR="\033[1;35m"
+#ACTIVE_TXT_COLOR="\033[1;91m"
 DONE_STEP_COLOR="\033[1;32m"
 
 DEFAULT_YES="\033[1;37mY\033[0m/n"
@@ -246,6 +247,7 @@ DONT_ENTER_EMOJI="\xe2\x9b\x94"
 DOLPHIN1_EMOJI="\xf0\x9f\x90\xb3"
 DOLPHIN2_EMOJI="\xf0\x9f\x90\xac"
 BATTERY_EMOJI="\xf0\x9f\x94\x8b"
+COMPUTER_EMOJI="\xf0\x9f\x96\xa5"
 OPTICALDISK_EMOJI="\xf0\x9f\x92\xbf"
 YELLOWBOOK_EMOJI="\xf0\x9f\x93\x92"
 YELLOW_LEFTHAND_EMOJI="\xf0\x9f\x91\x89"
@@ -2595,13 +2597,8 @@ screen_footer() {
 #_debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 tput sc
-Containers="$1"; Running="$2"; Paused="$3"; Stopped="$4"; Images="$5"; loadavg="$6"; timer="$7"
-#gProgress=$(update_progress_section "sh2" "sh1 sh2 sh3" )
-if [ -n "$timer" ]; then
-	timerstr="Time:[$timer]"
-else
-	timerstr=""
-fi
+#screen_footer "$Containers" "$Running" "$Paused" "$Stopped" "$Images" "${loadavg}" "$freedisk"
+Containers="$1"; Running="$2"; Paused="$3"; Stopped="$4"; Images="$5"; loadavg="$6"; disk="$7"
 
 str="${WhiteOnGray1}Docker:[Containers: ${LightGreenOnGray1}$Containers ${WhiteOnGray1} \
 Running: ${LightGreenOnGray1}$Running ${WhiteOnGray1} \
@@ -2609,18 +2606,12 @@ Paused: ${LightGreenOnGray1}$Paused ${WhiteOnGray1} \
 Stopped: ${LightGreenOnGray1}$Stopped ${WhiteOnGray1} \
 Images: ${LightGreenOnGray1}$Images] ${WhiteOnGray1} \
 ${WhiteOnGray1} Load:[$loadavg${WhiteOnGray1}] ${WhiteOnGray1}\
-${timerstr}"
-#Progress:\"$gProgress\""
-#Progress:$progress"
-#printf "$progress";exit
+  FreeDisk:[${LightGreenOnGray1}$disk${WhiteOnGray1}]"
+
 #rows and cols are also detected in redraw function with a trap
 ROWS=$(tput lines)
 COLUMNS=$(tput cols)
 
-#size=$((${#str}))
-#size=`printf "$str"|wc -c` #get char count without the escape codes
-#size=$(($size - 1 ))	#remove escape code char count
-#this pitch solution was found here (with modification)
 #https://unix.stackexchange.com/questions/140251/strip-color-on-os-x-with-bsd-sed-or-any-other-tool
 size=$(echo $str| sed $'s,\\\\033\\[[0-9;]*[a-zA-Z],,g'|wc -c| tr -d '[:space:]')
 #echo "[$size]";exit
@@ -2657,9 +2648,11 @@ dockerinfo="Containers: $Containers Running:$Running Paused:$Paused Stopped:$Sto
 if [ "$os" == "Darwin" ]; then
         loadavg=`sysctl -n vm.loadavg | awk '{print $2}'`
         cores=`sysctl -n hw.ncpu`
+		freedisk=`df -kh /Users|tail -1 |awk '{print  $4}' |sed 's/i/B/g'` #docker image under /User
 elif [ "$os" == "Linux" ]; then
         loadavg=`cat /proc/loadavg |awk '{print $1}'|sed 's/,//g'`
         cores=`$GREP -c ^processor /proc/cpuinfo`
+		freedisk=`df -kh /var|tail -1 |awk '{print $4}'|sed 's/G/GB/g'` #docker images under /var
 fi
 
 load=`echo "$loadavg/1" | bc `   #convert float to int
@@ -2676,7 +2669,7 @@ fi
 
 #Containers="$1"; Running="$2"; Paused="$3"; Stopped="$4"; Images="$5"; loadavg="$6"; timer="$7"
 #screen_footer "$Containers" "$Running" "$Paused" "$Stopped" "$Images" "${loadavg}" "$timer"
-screen_footer "$Containers" "$Running" "$Paused" "$Stopped" "$Images" "${loadavg}"
+screen_footer "$Containers" "$Running" "$Paused" "$Stopped" "$Images" "${loadavg}" "$freedisk"
 tput rc		#restore cursor
 return
 }	#end docker_status()
@@ -2782,7 +2775,7 @@ size=$(($size + 4))	#take out ESC code for color & emoji
 #len=$(($size - 10))	#take out color ESC codes
 #echo "[size:$size vs len:$len vs MAXLEN:$MAXLEN]"
 #dont pad if strlen > maxlen
-MAXLEN=57
+MAXLEN=56
 if [ "$size" -gt "$MAXLEN" ]; then
 	len=1
 else
@@ -2848,9 +2841,9 @@ dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
 screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> SPLUNK MENU"
 printf "\n\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
-printf "${Red}I${NC}) ${red}I${NC}mages details ${DarkGray}[custom view]${NC}\n"
+printf "${Red}I${NC}) ${Red}I${NC}mages details ${DarkGray}[custom view]${NC}\n"
 printf "${Red}R${NC}) ${Red}R${NC}EMOVE image(s) to recover disk-space (will extend build times) ${DarkGray}[docker rmi --force \$(docker images)]${NC}\n"
-printf "${Red}F${NC}) SET DE${Red}F${NC}AULT Splunk image ${DarkGray}[currently: $DEFAULT_SPLUNK_IMAGE]${NC}\n"
+printf "${Red}F${NC}) DE${Red}F${NC}AULT Splunk image ${DarkGray}[currently: $DEFAULT_SPLUNK_IMAGE]${NC}\n"
 printf "\n"
 printf "${BoldWhiteOnYellow}Manage Containers:${NC}\n"
 printf "${Yellow}C${NC}) ${Yellow}C${NC}REATE generic Splunk container(s) ${DarkGray}[docker run ...]${NC}\n"
@@ -2895,7 +2888,7 @@ screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> 
 printf "\n\n"
 echo
 printf "${BoldWhiteOnRed}Manage Demo Images:${NC}\n"
-printf "${Red}I${NC}) ${red}I${NC}mages details ${DarkGray}[downloaded demos only]${NC}\n"
+printf "${Red}I${NC}) ${Red}I${NC}mages details ${DarkGray}[downloaded demos only]${NC}\n"
 printf "${Red}O${NC}) Download demo images from $SPLUNK_DOCKER_HUB ${DarkGray}[cache images] ${NC} \n"
 printf "${Red}R${NC}) ${Red}R${NC}EMOVE demo image(s)\n"
 printf "\n"
@@ -3174,12 +3167,21 @@ do
    					;;
                 4 ) build_multisite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 DMC:1 CM:1 LM:1 LABEL:site01$IDXCLUSTERLABEL" "site01_ site02_"
 					;;
-                5 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    		create_standalone_idxc;;
-				6 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    		create_standalone_shc;;
-                7 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
-		    		build_singlesite_cluster;;
+
+                5 ) read -p "How many indexers in this cluster? " idxc_count
+					read -p "Name of indexing cluster label? " idxc_label
+				 	create_standalone_idxc "$IDX_BASE:$idxc_count DMC:1 CM:1 LM:1 LABEL:$idxc_label"
+					;;
+                6 ) read -p "How many search heads in this cluster? " shc_count
+					read -p "Name of seach head cluster label? " shc_label
+					create_standalone_shc "$SH_BASE:$shc_count $DEP_BASE:1 DMC:1 LM:1 LABEL:$shc_label"
+					;;
+				7 ) read -p "How many indexers in this cluster? " idxc_count
+					read -p "Name of cluster label? " label
+                	read -p "How many search heads in this cluster? " shc_count
+					read -p "Name of seach head cluster label? " shc_label
+                	build_singlesite_cluster "$IDX_BASE:$idxc_count $SH_BASE:$shc_count $DEP_BASE:1 DMC:1 CM:1 LM:1 LABEL:SITE01_$IDXCLUSTERLABEL" "$label"
+		    		;;
                 8 ) printf "${White} **Please remember to follow host naming convention**${NC}\n";
 		    		build_multisite_cluster;;
 
@@ -3361,7 +3363,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #BoldWhiteOnGreen="\033[1;1;5;42m"
 #BoldWhiteOnYellow="\033[1;1;5;43m"
 #BoldWhiteOnBlue="\033[1;1;5;44m"
-#ACTIVE_STEP_COLOR="\033[1;1;5;104m"
+#ACTIVE_TXT_COLOR="\033[1;1;5;104m"
 #BoldWhiteOnPink="\033[1;1;5;45m"
 #BoldWhiteOnTurquoise="\033[1;1;5;46m"
 #BoldYellowOnBlue="\033[1;33;44m"
@@ -3760,8 +3762,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #	  -create single deployer and as many SH hosts required
 #	  -if param $1 is "AUTO" skip all user prompts and create standard cluster 3SH/1DEP
 #-----------------------------------------------------------------------------------------------------
-#$1 AUTO or MANUAL mode
-if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
 local TIME_START=$(date +%s);
 
@@ -3771,17 +3771,18 @@ screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> 
 #initialize status sections
 clear_page_starting_from "$R_BUILD_SITE"
 print_step_bar_from "$R_BUILD_SITE" "${BoldWhiteOnPink}  " "BUILDING INDEPENDENT STAND-ALONE SEARCH HEAD CLUSTER"
-print_step_bar_from "$R_STEP1" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Creating administrative hosts"
+update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "" "1 2 3 4 5 6"
+print_step_bar_from "$R_STEP1" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Creating administrative hosts"
 update_progress_section "$R_STEP1" "$C_PROGRESS" "" "dmc lm dep"
-print_step_bar_from "$R_STEP2" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: Creating sh hosts"
+print_step_bar_from "$R_STEP2" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: Creating sh hosts"
 update_progress_section "$R_STEP2" "$C_PROGRESS" "" "sh1 sh2 sh3"
-print_step_bar_from "$R_STEP3" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: Deployer configuration"
+print_step_bar_from "$R_STEP3" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: Deployer configuration"
 update_progress_section "$R_STEP3" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP4" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} "  "STEP#4: shc members configurations"
+print_step_bar_from "$R_STEP4" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} "  "STEP#4: shc members configurations"
 update_progress_section "$R_STEP4" "$C_PROGRESS" "" "sh1 sh2 sh3"
-print_step_bar_from "$R_STEP5" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} "  "STEP#5: Captain configuration"
+print_step_bar_from "$R_STEP5" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} "  "STEP#5: Captain configuration"
 update_progress_section "$R_STEP5" "$C_PROGRESS" ""  "1"
-print_step_bar_from "$R_STEP6" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} "  "STEP#6: Verifying shc cluster status"
+print_step_bar_from "$R_STEP6" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} "  "STEP#6: Verifying shc cluster status"
 update_progress_section "$R_STEP6" "$C_PROGRESS" "" "1"
 
 extract_current_cursor_position pos1; x=${pos1[0]};  y=${pos1[1]}
@@ -3803,7 +3804,7 @@ DMCcount=`echo $1| $GREP -Po '(\s*\w*-*DMC):\K(\d+)'| tr -d '[[:space:]]' `
 DEPname=`echo $1| $GREP -Po '(\s*\w*-*DEP)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
 DEPcount=`echo $1| $GREP -Po '(\s*\w*-*DEP):\K(\d+)'| tr -d '[[:space:]]' `
 
-label=`echo $1| $GREP -Po '(\s*\w*-*LABEL):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
+SHlabel=`echo $1| $GREP -Po '(\s*\w*-*LABEL):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
 SHname=`echo $1| $GREP -Po '(\s*\w*-*SH)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
 SHcount=`echo $1| $GREP -Po '(\s*\w*-*SH):\K(\d+)'| tr -d '[[:space:]]' `
 
@@ -3859,7 +3860,7 @@ printf "${DarkGray}Using DMC[$DMCname] LM:[$LMname] CM:[$CMname] LABEL:[$label] 
 local start_time=$(date +%s);
 local START_TIME=$(date +%s);
 #--Starting STEP#1 administrative hosts---
-print_step_bar_from "$R_STEP1" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating administrative hosts [DMC,LM,DEP]"
+print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating administrative hosts [DMC,LM,DEP]"
 clear_page_starting_from "$R_ROLL"
 create_splunk_container "$DMCname" "$DMCcount" "no"; dmc=$gLIST
 update_progress_section "$R_STEP1" "$C_PROGRESS" "dmc" "dmc lm dep" "$(timer "$start_time")"
@@ -3879,7 +3880,7 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "3" "1 2 3 4 5 6 7 8" "$(t
 #--Finished STEP#1 administrative hosts---
 
 #--Starting STEP#2 Creating SH hosts---
-print_step_bar_from "$R_STEP2" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2: Creating sh hosts [$SHcount]"
+print_step_bar_from "$R_STEP2" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2: Creating sh hosts [$SHcount]"
 clear_page_starting_from "$R_ROLL"
 create_splunk_container "$SHname" "$SHcount" "yes" "$R_STEP2"; members_list="$gLIST"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "4" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
@@ -3890,23 +3891,24 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "4" "1 2 3 4 5 6 7 8" "$(t
 #DEPLOYER CONFIGURATION: (create [shclustering] stanza; set SecretKey and restart) -----
 
 #--Starting STEP#1 Deployer configuration---
-print_step_bar_from "$R_STEP3" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3: Deployer configuration [$dep]"
+print_step_bar_from "$R_STEP3" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3: Deployer configuration [$dep]"
 clear_page_starting_from "$R_ROLL"
 #print_step_bar_from "$R_ROLL" "${DarkGray}" "Configuring SHC with created hosts: DEPLOYER[$dep]  MEMBERS[$members_list]" >&4
-configure_deployer "$dep" "$label" "$R_STEP3"
+configure_deployer "$dep" "$SHlabel" "$R_STEP3"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 #--Finished STEP#1 Deployer configuration---
 
 printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}After members_list loop> param2:[$2] members_list:[$members_list] sh_list:[$sh_list]${NC}\n" >&5
 
 #--Starting STEP#2 Cluster members configuration---
-print_step_bar_from "$R_STEP4" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#4: shc members configurations [$members_list]"
+print_step_bar_from "$R_STEP4" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#4: shc members configurations [$members_list]"
 config_sh_for_singlesite "$members_list" "$cm" "$dmc" "$lm" "$R_STEP4"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 #--Finished STEP#2 Cluster members configuration---
 
 #--Starting STEP#3 Captain configuration---
-print_step_bar_from "$R_STEP5" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#5: Captain configuration"
+last_field=`echo "$members_list" | rev | cut -d' ' -f1 | rev`
+print_step_bar_from "$R_STEP5" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#5: Captain configuration [$last_field]"
 clear_page_starting_from "$R_ROLL"
 configure_captain "$members_list" "$R_STEP5"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
@@ -3914,7 +3916,7 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7 8" "$(t
 
 
 #--Starting STEP#4 Check SHC status---
-print_step_bar_from "$R_STEP6" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#6: Verifying shc cluster status"
+print_step_bar_from "$R_STEP6" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#6: Verifying shc cluster status"
 clear_page_starting_from "$R_ROLL"
 check_shc_status "$members_list" "$R_STEP6"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "8" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
@@ -3922,10 +3924,11 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "8" "1 2 3 4 5 6 7 8" "$(t
 
 echo
 printf "${LightGreen}Build Completed!\n\n"
-printf "${ACTIVE_STEP_COLOR}Deployer       :${NC} $dep\n"
-printf "${ACTIVE_STEP_COLOR}License Master :${NC} $lm\n"
-printf "${ACTIVE_STEP_COLOR}Master Console :${NC} $dmc\n"
-printf "${ACTIVE_STEP_COLOR}SHC Memebers   :${NC} $members_list\n"
+printf "${ACTIVE_TXT_COLOR}SHC Label      :${NC} $SHlabel\n"
+printf "${ACTIVE_TXT_COLOR}Deployer       :${NC} $dep\n"
+printf "${ACTIVE_TXT_COLOR}License Master :${NC} $lm\n"
+printf "${ACTIVE_TXT_COLOR}Master Console :${NC} $dmc\n"
+printf "${ACTIVE_TXT_COLOR}SHC Memebers   :${NC} $members_list\n"
 echo
 docker_status
 
@@ -3941,7 +3944,6 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #$1 AUTO or MANUAL mode
 
 clear_page_starting_from "$R_STEP1"
-if [ "$1" == "AUTO" ]; then  mode="AUTO"; else mode="MANUAL"; fi
 
 #$1 CMbasename:count   $2 IDXbasename:count  $3 LMbasename:count
 screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> CREATING STAND-ALONE IDXC"
@@ -3949,15 +3951,16 @@ screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> 
 #initialize status section
 clear_page_starting_from "$R_BUILD_SITE"
 print_step_bar_from "$R_BUILD_SITE" "${BoldWhiteOnPink}  " "BUILDING INDEPENDENT STAND-ALONE INDEXING CLUSTER"
-print_step_bar_from "$R_STEP1" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Creating idxc administrative hosts"
+update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "" "1 2 3 4 5"
+print_step_bar_from "$R_STEP1" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Creating idxc administrative hosts"
 update_progress_section "$R_STEP1" "$C_PROGRESS" "" "dmc lm cm"
-print_step_bar_from "$R_STEP2" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: Creating idx hosts"
+print_step_bar_from "$R_STEP2" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: Creating idx hosts"
 update_progress_section "$R_STEP2" "$C_PROGRESS" "" "idx1 idx2 idx3"
-print_step_bar_from "$R_STEP3" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: Cluster Master configuration"
+print_step_bar_from "$R_STEP3" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: Cluster Master configuration"
 update_progress_section "$R_STEP3" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP4" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#4: idxc peer nodes configuration"
+print_step_bar_from "$R_STEP4" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#4: idxc nodes configuration"
 update_progress_section "$R_STEP4" "$C_PROGRESS" "" "idx1 idx2 idx3"
-print_step_bar_from "$R_STEP5" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: Verifying idxc status"
+print_step_bar_from "$R_STEP5" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: Verifying idxc status"
 update_progress_section "$R_STEP5" "$C_PROGRESS" ""  "1"
 
 extract_current_cursor_position pos1; x=${pos1[0]};  y=${pos1[1]}
@@ -3967,16 +3970,13 @@ print_step_bar_from "$R_LINE" "${BoldWhiteOnPink}  " "                          
 
 check_load
 #Extract values from $1 if passed to us!
-#lm=`echo $1| $GREP -Po '(\s*\w*-*LM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
-#cm=    `echo $1| $GREP -Po '(\s*\w*-*CM\d+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
-
 LMname=`echo $1| $GREP -Po '(\s*\w*-*LM)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
 LMcount=`echo $1| $GREP -Po '(\s*\w*-*LM):\K(\d+)'| tr -d '[[:space:]]' `
 DMCname=`echo $1| $GREP -Po '(\s*\w*-*DMC)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
 DMCcount=`echo $1| $GREP -Po '(\s*\w*-*DMC):\K(\d+)'| tr -d '[[:space:]]' `
 CMname=`echo $1| $GREP -Po '(\s*\w*-*CM)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
 CMcount=`echo $1| $GREP -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space:]]' `
-label=`echo $1| $GREP -Po '(\s*\w*-*LABEL):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
+IDXlabel=`echo $1| $GREP -Po '(\s*\w*-*LABEL):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
 IDXname=`echo $1| $GREP -Po '(\s*\w*-*IDX)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
 IDXcount=`echo $1| $GREP -Po '(\s*\w*-*IDX):\K(\d+)'| tr -d '[[:space:]]' `
 #echo "LMname:$LMname LMcount:$LMcount label:$label IDXname:$IDXname IDXcount:$IDXcount CMname:$CMname CMcount:$CMcount"
@@ -3990,7 +3990,7 @@ printf "${DarkGray}Using DMC:[$DMCname] LM:[$LMname] CM:[$CMname] LABEL:[$label]
 local start_time=$(date +%s);
 local START_TIME=$(date +%s);
 #--Starting STEP#1 administrative hosts---
-print_step_bar_from "$R_STEP1" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating administrative hosts [DMC,LM,CM]"
+print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating administrative hosts [DMC,LM,CM]"
 clear_page_starting_from "$R_ROLL"
 create_splunk_container "$DMCname" "$DMCcount" "no"; dmc=$gLIST
 update_progress_section "$R_STEP1" "$C_PROGRESS" "dmc" "dmc lm cm" "$(timer "$start_time")"
@@ -4007,27 +4007,27 @@ update_progress_section "$R_STEP1" "$C_PROGRESS" "cm" "dmc lm cm" "$(timer "$sta
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "3" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
 
 #create the remaining IDXs
-print_step_bar_from "$R_STEP2" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2: Creating idx hosts [$IDXcount]"
+print_step_bar_from "$R_STEP2" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2: Creating idx hosts [$IDXcount]"
 clear_page_starting_from "$R_ROLL"
 create_splunk_container "$IDXname" "$IDXcount" "yes" "$R_STEP2" "$R_ROLL" ; members_list="$gLIST"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "4" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
 #--Finished STEP#1 administrative hosts---
 
 #--Starting STEP#3 ClusterMaster configuration---
-print_step_bar_from "$R_STEP3" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3: Cluster Master configuration"
+print_step_bar_from "$R_STEP3" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3: Cluster Master configuration [$cm]"
 clear_page_starting_from "$R_ROLL"
-config_cm_for_singlesite "$cm" "$label" "$R_STEP3"
+config_cm_for_singlesite "$cm" "$IDXlabel" "$R_STEP3"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
 #--Finished STEP#3 ClusterMaster configuration---
 
 #--Starting STEP#4 IDXC nodes configuration---
-print_step_bar_from "$R_STEP4" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#4: idxc nodes configuration"
-config_idx_for_singlesite "$members_list" "$label" "$lm" "$cm" "$R_STEP4"
+print_step_bar_from "$R_STEP4" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#4: idxc nodes configuration [$members_list]"
+config_idx_for_singlesite "$members_list" "$IDXlabel" "$lm" "$cm" "$R_STEP4"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
 #--Finished STEP#4 IDXC nodes configuration---
 
 #--Starting STEP#5 Verifying IDXC status---
-print_step_bar_from "$R_STEP5" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} "  "STEP#5: Verifying idxc status"
+print_step_bar_from "$R_STEP5" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} "  "STEP#5: Verifying idxc status"
 clear_page_starting_from "$R_ROLL"
 check_idxc_status "$cm" "$R_STEP5"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
@@ -4035,10 +4035,11 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7" "$(tim
 
 echo
 printf "${LightGreen}Build Completed!\n\n"
-printf "${ACTIVE_STEP_COLOR}Cluster Master:${NC} $cm\n"
-printf "${ACTIVE_STEP_COLOR}License Master:${NC} $lm\n"
-printf "${ACTIVE_STEP_COLOR}Master Console:${NC} $dmc\n"
-printf "${ACTIVE_STEP_COLOR}SHC Memebers  :${NC} $members_list\n"
+printf "${ACTIVE_TXT_COLOR}Cluster Label :${NC} $IDXlabel\n"
+printf "${ACTIVE_TXT_COLOR}Cluster Master:${NC} $cm\n"
+printf "${ACTIVE_TXT_COLOR}License Master:${NC} $lm\n"
+printf "${ACTIVE_TXT_COLOR}Master Console:${NC} $dmc\n"
+printf "${ACTIVE_TXT_COLOR}SHC Memebers  :${NC} $members_list\n"
 echo
 docker_status
 
@@ -4092,26 +4093,26 @@ clear_page_starting_from "$R_ROLL"
 #clear_page_starting_from "$R_ROLL"
 clear_page_starting_from "$R_BUILD_SITE"
 print_step_bar_from "$R_BUILD_SITE" "${BoldWhiteOnPink}  " "BUILDING SINGLE SITE CLUSTER [$SITEname_clean]"
-print_step_bar_from "$R_STEP1" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Creating basic services"
-print_step_bar_from "$R_STEP2" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#2.1: Building IDXC [creating $IDXcount hosts]"
-print_step_bar_from "$R_STEP3" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#2.2: Building IDXC [configure CM]"
-print_step_bar_from "$R_STEP4" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#2.3: Building IDXC [configure members]"
-print_step_bar_from "$R_STEP5" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#2.4: Buidling IDXC [check status]"
-print_step_bar_from "$R_STEP6" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3.1: Building SHC [creating $SHcount hosts]"
-print_step_bar_from "$R_STEP7" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3.2: Building SHC [configure deployer]"
-print_step_bar_from "$R_STEP8" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3.3: Building SHC [configure members]"
-print_step_bar_from "$R_STEP9" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3.4: Building SHC [configure captain]"
-print_step_bar_from "$R_STEP10" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3.5: Building SHC [check status]"
-
+update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "" "1 2 3 4 5 6 7 8 9 10"
+print_step_bar_from "$R_STEP1" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Creating basic services"
 update_progress_section "$R_STEP1" "$C_PROGRESS" "" "dmc lm cm dep"
+print_step_bar_from "$R_STEP2" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#2.1: Building IDXC [creating $IDXcount hosts]"
 update_progress_section "$R_STEP2" "$C_PROGRESS" "" "idxc idxc"
+print_step_bar_from "$R_STEP3" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#2.2: Building IDXC [configure CM]"
 update_progress_section "$R_STEP3" "$C_PROGRESS" "" "idxc idxc"
+print_step_bar_from "$R_STEP4" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#2.3: Building IDXC [configure members]"
 update_progress_section "$R_STEP4" "$C_PROGRESS" "" "idxc idxc"
+print_step_bar_from "$R_STEP5" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#2.4: Buidling IDXC [check status]"
 update_progress_section "$R_STEP5" "$C_PROGRESS" "" "idxc idxc"
+print_step_bar_from "$R_STEP6" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#3.1: Building SHC [creating $SHcount hosts]"
 update_progress_section "$R_STEP6" "$C_PROGRESS" "" "shc shc"
+print_step_bar_from "$R_STEP7" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#3.2: Building SHC [configure deployer]"
 update_progress_section "$R_STEP7" "$C_PROGRESS" "" "shc shc"
+print_step_bar_from "$R_STEP8" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#3.3: Building SHC [configure members]"
 update_progress_section "$R_STEP8" "$C_PROGRESS" "" "shc shc"
+print_step_bar_from "$R_STEP9" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#3.4: Building SHC [configure captain]"
 update_progress_section "$R_STEP9" "$C_PROGRESS" "" "shc shc"
+print_step_bar_from "$R_STEP10" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#3.5: Building SHC [check status]"
 update_progress_section "$R_STEP10" "$C_PROGRESS" "" "shc shc"
 
 extract_current_cursor_position pos1; x=${pos1[0]};  y=${pos1[1]}
@@ -4162,7 +4163,7 @@ check_load
 #Sequence is very important!
 local start_time=$(date +%s);
 local START_TIME=$(date +%s);
-print_step_bar_from "$R_STEP1" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating basic services [DMC,LM,CM,DEP]"
+print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating basic services [DMC,LM,CM,DEP]"
 
 clear_page_starting_from "$R_ROLL"
 create_splunk_container "$DMCname" "$DMCcount" "no" "$R_STEP1" "$R_ROLL"; dmc=$gLIST
@@ -4191,22 +4192,22 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "4" "1 2 3 4 5 6 7 8 9 10 
 
 #--Starting STEP#2 Building IDXC----------------------------------------------
 local start_time=$(date +%s);
-print_step_bar_from "$R_STEP2" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2.1: Building IDXC [creating $IDXcount hosts]"
+print_step_bar_from "$R_STEP2" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2.1: Building IDXC [creating $IDXcount hosts]"
 clear_page_starting_from "$R_ROLL"
 create_splunk_container "$IDXname" "$IDXcount" "yes" "$R_STEP2"; idxc_members_list="$gLIST"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
 
-print_step_bar_from "$R_STEP3" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2.2: Building IDXC [configure CM]"
+print_step_bar_from "$R_STEP3" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2.2: Building IDXC [configure CM]"
 clear_page_starting_from "$R_ROLL"
 config_cm_for_singlesite "$cm" "$label" "$R_STEP3"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
 
-print_step_bar_from "$R_STEP4" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2.3: Building IDXC [configure members]"
+print_step_bar_from "$R_STEP4" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2.3: Building IDXC [configure members]"
 config_idx_for_singlesite "$idxc_members_list" "$label" "$lm" "$cm" "$R_STEP4"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
 
 #--Starting STEP#5 Verifying IDXC status---
-#print_step_bar_from "$R_STEP5" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} "  "STEP#5: Verifying idxc status"
+#print_step_bar_from "$R_STEP5" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} "  "STEP#5: Verifying idxc status"
 #clear_page_starting_from "$R_ROLL"
 #check_idxc_status "$cm" "$R_STEP5"
 #update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
@@ -4214,7 +4215,7 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7 8 9 10 
 
 
 
-print_step_bar_from "$R_STEP5" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2.4: Buidling IDXC [check status]"
+print_step_bar_from "$R_STEP5" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2.4: Buidling IDXC [check status]"
 clear_page_starting_from "$R_ROLL"
 check_idxc_status "$cm" "$R_STEP5"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "8" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
@@ -4222,26 +4223,26 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "8" "1 2 3 4 5 6 7 8 9 10 
 
 #--Starting STEP#3 Building SHC-------------------------------------------------------
 local start_time=$(date +%s);
-print_step_bar_from "$R_STEP6" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3.1: Building SHC [creating $SHcount hosts]"
+print_step_bar_from "$R_STEP6" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3.1: Building SHC [creating $SHcount hosts]"
 clear_page_starting_from "$R_ROLL"
 create_splunk_container "$SHname" "$SHcount" "yes" "$R_STEP6"; shc_members_list="$gLIST"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "9" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
 
-print_step_bar_from "$R_STEP7" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3.2: Building SHC [configure deployer]"
+print_step_bar_from "$R_STEP7" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3.2: Building SHC [configure deployer]"
 clear_page_starting_from "$R_ROLL"
 configure_deployer "$dep" "$label" "$R_STEP7"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "10" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
 
-print_step_bar_from "$R_STEP8" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3.3: Building SHC [configure members]"
+print_step_bar_from "$R_STEP8" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3.3: Building SHC [configure members]"
 config_sh_for_singlesite "$shc_members_list" "$cm" "$dmc" "$lm" "$R_STEP8"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "11" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
 
-print_step_bar_from "$R_STEP9" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3.4: Building SHC [configure captain]"
+print_step_bar_from "$R_STEP9" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3.4: Building SHC [configure captain]"
 clear_page_starting_from "$R_ROLL"
 configure_captain "$shc_members_list" "$R_STEP9"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "12" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
 
-print_step_bar_from "$R_STEP10" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3.5: Building SHC [check status]"
+print_step_bar_from "$R_STEP10" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3.5: Building SHC [check status]"
 clear_page_starting_from "$R_ROLL"
 check_shc_status "$shc_members_list" "$R_STEP10"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "13" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
@@ -4251,13 +4252,14 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "13" "1 2 3 4 5 6 7 8 9 10
 
 echo
 printf "${LightGreen}Build Completed!\n\n"
-printf "${ACTIVE_STEP_COLOR}Site Name      :${NC} $SITEname_clean\n"
-printf "${ACTIVE_STEP_COLOR}Deployer       :${NC} $dep\n"
-printf "${ACTIVE_STEP_COLOR}Cluster Master :${NC} $cm\n"
-printf "${ACTIVE_STEP_COLOR}License Master :${NC} $lm\n"
-printf "${ACTIVE_STEP_COLOR}Master Console :${NC} $dmc\n"
-printf "${ACTIVE_STEP_COLOR}SHC Memebers   :${NC} $shc_members_list\n"
-printf "${ACTIVE_STEP_COLOR}IDXC Memebers  :${NC} $idxc_members_list\n"
+printf "${ACTIVE_TXT_COLOR}Site Name      :${NC} $SITEname_clean\n"
+printf "${ACTIVE_TXT_COLOR}Site Label     :${NC} $label\n"
+printf "${ACTIVE_TXT_COLOR}Deployer       :${NC} $dep\n"
+printf "${ACTIVE_TXT_COLOR}Cluster Master :${NC} $cm\n"
+printf "${ACTIVE_TXT_COLOR}License Master :${NC} $lm\n"
+printf "${ACTIVE_TXT_COLOR}Master Console :${NC} $dmc\n"
+printf "${ACTIVE_TXT_COLOR}SHC Memebers   :${NC} $shc_members_list\n"
+printf "${ACTIVE_TXT_COLOR}IDXC Memebers  :${NC} $idxc_members_list\n"
 echo
 docker_status
 
@@ -4311,20 +4313,20 @@ SITEname_primary_clean=`echo $SITEname_primary| sed 's/_//g'` #Remove "_" if fou
 #Initialize status section
 print_step_bar_from "$R_BUILD_SITE" "${BoldWhiteOnPink}  " "BUILDING $SITEname_list_len-SITE CLUSTER [$SITEname_list_clean]"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "" "1 2 3 4 5 6 7 8"
-print_step_bar_from "$R_STEP1" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Basic services in primary [$SITEname_primary_clean] [DMC,LM,CM]"
+print_step_bar_from "$R_STEP1" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Basic services [$SITEname_primary_clean] [DMC,LM,CM]"
 update_progress_section "$R_STEP1" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP2" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: Creating $IDXname [$IDXcount hosts]"
+print_step_bar_from "$R_STEP2" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: Creating $IDXname [$IDXcount hosts]"
 update_progress_section "$R_STEP2" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP3" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: Creating $SHname  [$SHcount hosts]"
+print_step_bar_from "$R_STEP3" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: Creating $SHname  [$SHcount hosts]"
 update_progress_section "$R_STEP3" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP4" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#4: ${SITEname}SHC  [configure deployer]"
+print_step_bar_from "$R_STEP4" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#4: ${SITEname}SHC  [configure deployer]"
 update_progress_section "$R_STEP4" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP5" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: ${SITEname}IDXC [configure members]"
+print_step_bar_from "$R_STEP5" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: ${SITEname}IDXC [configure members]"
 update_progress_section "$R_STEP5" "$C_PROGRESS" "" "1"
-print_step_bar_from "$R_STEP6" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#6: ${SITEname}SHC  [configure members]"
+print_step_bar_from "$R_STEP6" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#6: ${SITEname}SHC  [configure members]"
 update_progress_section "$R_STEP6" "$C_PROGRESS" "" "1"
 print_step_bar_from "$R_LINE" "${BoldWhiteOnPink}  " "                                                                                "
-exit
+
 
 
 #if [ "$mode" == "AUTO" ]; then
@@ -4374,7 +4376,7 @@ LMname="$SITEname_primary""$LMname"; DMCname="$SITEname_primary""$DMCname"; CMna
 highlight_site=$(color_selected "$SITEname_primary" "$SITEname_list_clean")
 print_step_bar_from "$R_BUILD_SITE" "${BoldWhiteOnPink}  " "BUILDING $SITEname_list_len-SITE CLUSTER [$highlight_site]"
 
-print_step_bar_from "$R_STEP1" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Basic services in primary [$SITEname_primary_clean] [DMC,LM,CM]"
+print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Basic services [$SITEname_primary_clean] [DMC,LM,CM]"
 clear_page_starting_from "$R_ROLL"
 printf "${DarkGray}Locations:[$SITEname_list] CM:[$m_cm] First_site:[$SITEname_primary] ${NC}\n\n" >&4
 
@@ -4406,15 +4408,15 @@ for SITEname in $SITEname_list; do
 	DEPname="$SITEname""$DEPname_s"; LABELname="$SITEname""$LABELname_s"
 
 	#initialize again stating #2
-    print_step_bar_from "$R_STEP2" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: Creating $IDXname [$IDXcount hosts]"
+    print_step_bar_from "$R_STEP2" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: Creating $IDXname [$IDXcount hosts]"
 	update_progress_section "$R_STEP2" "$C_PROGRESS" "" "1"
-	print_step_bar_from "$R_STEP3" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: Creating $SHname  [$SHcount hosts]"
+	print_step_bar_from "$R_STEP3" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: Creating $SHname  [$SHcount hosts]"
 	update_progress_section "$R_STEP3" "$C_PROGRESS" "" "1"
-	print_step_bar_from "$R_STEP4" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#4: ${SITEname}SHC  [configure deployer]"
+	print_step_bar_from "$R_STEP4" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#4: ${SITEname}SHC  [configure deployer]"
 	update_progress_section "$R_STEP4" "$C_PROGRESS" "" "1"
-	print_step_bar_from "$R_STEP5" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: ${SITEname}IDXC [configure members]"
+	print_step_bar_from "$R_STEP5" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: ${SITEname}IDXC [configure members]"
 	update_progress_section "$R_STEP5" "$C_PROGRESS" "" "1"
-	print_step_bar_from "$R_STEP6" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#6: ${SITEname}SHC  [configure members]"
+	print_step_bar_from "$R_STEP6" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#6: ${SITEname}SHC  [configure members]"
 	update_progress_section "$R_STEP6" "$C_PROGRESS" "" "1"
 
 
@@ -4425,7 +4427,7 @@ for SITEname in $SITEname_list; do
 
 	#--Starting STEP#2 create generic IDX----------------------------------------------
 	local start_time=$(date +%s);
-	print_step_bar_from "$R_STEP2" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2: Creating $IDXname [$IDXcount hosts]"
+	print_step_bar_from "$R_STEP2" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2: Creating $IDXname [$IDXcount hosts]"
 	clear_page_starting_from "$R_ROLL"
 	create_splunk_container "$IDXname" "$IDXcount" "yes" "$R_STEP2"; idxc_members_list="$gLIST"
 	update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "2" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
@@ -4433,12 +4435,12 @@ for SITEname in $SITEname_list; do
 
 	#--Starting STEP#3 Building SHC-------------------------------------------------------
 	local start_time=$(date +%s);
-	print_step_bar_from "$R_STEP3" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3: Creating $SHname  [$SHcount hosts]"
+	print_step_bar_from "$R_STEP3" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3: Creating $SHname  [$SHcount hosts]"
 	clear_page_starting_from "$R_ROLL"
 	create_splunk_container "$SHname" "$SHcount" "yes" "$R_STEP3"; shc_members_list="$gLIST"
 	update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "3" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 
-	print_step_bar_from "$R_STEP4" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#4: ${SITEname}SHC configure deployer [$DEPname]"
+	print_step_bar_from "$R_STEP4" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#4: ${SITEname}SHC configure deployer [$DEPname]"
 	clear_page_starting_from "$R_ROLL"
 	create_splunk_container "$DEPname" "$DEPcount" "no" "$R_STEP4"; dep="$gLIST"
 	printf "${LighRed}DEBUG:=>${Yellow}In $FUNCNAME(): ${Purple}IDXname[$IDXname] SHname[$SHname] DEPname[$DEPname] dep[$dep] LABELname[$LABELname]${NC}\n" >&5
@@ -4463,9 +4465,9 @@ item=0
 ###At this point all SHs & IDXs are built for all SITES
 for SITEname in $SITEname_list; do		#-outer loop----
 	#initialize again stating #5
-	print_step_bar_from "$R_STEP5" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: ${SITEname}IDXC [configure members]"
+	print_step_bar_from "$R_STEP5" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: ${SITEname}IDXC [configure members]"
 	update_progress_section "$R_STEP5" "$C_PROGRESS" "" "1"
-	print_step_bar_from "$R_STEP6" "${INACTIVE_STEP_COLOR}${DONT_ENTER_EMOJI} " "STEP#6: ${SITEname}SHC  [configure members]"
+	print_step_bar_from "$R_STEP6" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#6: ${SITEname}SHC  [configure members]"
 	update_progress_section "$R_STEP6" "$C_PROGRESS" "" "1"
 	clear_page_starting_from "$R_ROLL"
 
@@ -4476,7 +4478,7 @@ for SITEname in $SITEname_list; do		#-outer loop----
 	m_cm_ip=`docker port $m_cm| awk '{print $3}'| cut -d":" -f1|head -1 `
 	highlight_site=$(color_selected "$SITEname" "$SITEname_list_clean")
 	print_step_bar_from "$R_BUILD_SITE" "${BoldWhiteOnPink}  " "BUILDING $SITEname_list_len-SITE CLUSTER [$highlight_site]"
-	print_step_bar_from "$R_STEP5" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#5.1: ${SITEname}IDXC [configure members]"
+	print_step_bar_from "$R_STEP5" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#5.1: ${SITEname}IDXC [configure members]"
 	clear_page_starting_from "$R_ROLL"
 	printf "${LighRed}DEBUG:=>${Yellow}In $FUNCNAME(): ${Purple}SITEname[$SITEname] sites[$sites] $site[$site] ${NC}\n" >&5
 	printf "${LighRed}DEBUG:=>${Yellow}In $FUNCNAME(): ${Purple}SITEname_idx_list[$SITEname_idx_list] SITEname_sh_list[$SITEname_sh_list]${NC}\n" >&5
@@ -4490,14 +4492,14 @@ for SITEname in $SITEname_list; do		#-outer loop----
 	#------------ idx loop ----
 
 	update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
-	print_step_bar_from "$R_STEP5" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#5.2: ${SITEname}IDXC [check status]"
+	print_step_bar_from "$R_STEP5" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#5.2: ${SITEname}IDXC [check status]"
 	check_idxc_status "$m_cm" "$R_STEP5"
 	update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 
 	#------------ sh loop -----
 	site_sh_list=`echo $shc_members_list | $GREP -Po '('$SITEname'\w+\d+)' | tr -d '\r' | tr  '\n' ' '  `
 	clear_page_starting_from "$R_ROLL"
-	print_step_bar_from "$R_STEP6" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#6.1: ${SITEname}SHC [configure members]"
+	print_step_bar_from "$R_STEP6" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#6.1: ${SITEname}SHC [configure members]"
 	printf "${LighRed}DEBUG:=>${Yellow}In $FUNCNAME(): ${Purple}SITEname_sh_list[$SITEname_sh_list] site_sh_list[$site_sh_list] m_dmc[$m_dmc] m_lm[$m_lm]${NC}\n" >&3
 	for sh in $SITEname_sh_list; do
 		config_sh_for_multisite "$sh" "$SITEname" "$site" "$m_cm_ip" "$R_STEP6"
@@ -4506,11 +4508,11 @@ for SITEname in $SITEname_list; do		#-outer loop----
 
 	#--- captain & shc status ----
 	clear_page_starting_from "$R_ROLL"
-	print_step_bar_from "$R_STEP6" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#6.2: ${SITEname}SHC [configure captain]"
+	print_step_bar_from "$R_STEP6" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#6.2: ${SITEname}SHC [configure captain]"
 	configure_captain "$SITEname_sh_list" "$R_STEP6"
 	update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 
-	print_step_bar_from "$R_STEP6" "${ACTIVE_STEP_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#6.3: ${SITENAME}SHC [check status]"
+	print_step_bar_from "$R_STEP6" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#6.3: ${SITENAME}SHC [check status]"
 	check_shc_status "$SITEname_sh_list" "$R_STEP6"
 	update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "8" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 	#--- captain & shc status ----
@@ -4522,13 +4524,13 @@ disable_cm_maintenance_mode "$m_cm"
 #-------Configure all sites idxs to be search peers ---
 echo
 printf "${LightGreen}Build Completed!\n\n"
-printf "${ACTIVE_STEP_COLOR}Sites          :${NC} $SITEname_list\n"
-printf "${ACTIVE_STEP_COLOR}Deployer       :${NC} $dep\n"
-printf "${ACTIVE_STEP_COLOR}Cluster Master :${NC} $m_cm\n"
-printf "${ACTIVE_STEP_COLOR}License Master :${NC} $lm\n"
-printf "${ACTIVE_STEP_COLOR}Master Console :${NC} $m_dmc\n"
-printf "${ACTIVE_STEP_COLOR}SHC Memebers   :${NC} $shc_members_list\n"
-printf "${ACTIVE_STEP_COLOR}IDXC Memebers  :${NC} $idxc_members_list\n"
+printf "${ACTIVE_TXT_COLOR}Sites          :${NC} $SITEname_list\n"
+printf "${ACTIVE_TXT_COLOR}Deployer       :${NC} $dep\n"
+printf "${ACTIVE_TXT_COLOR}Cluster Master :${NC} $m_cm\n"
+printf "${ACTIVE_TXT_COLOR}License Master :${NC} $lm\n"
+printf "${ACTIVE_TXT_COLOR}Master Console :${NC} $m_dmc\n"
+printf "${ACTIVE_TXT_COLOR}SHC Memebers   :${NC} $shc_members_list\n"
+printf "${ACTIVE_TXT_COLOR}IDXC Memebers  :${NC} $idxc_members_list\n"
 echo
 docker_status
 
@@ -4619,7 +4621,7 @@ fi
 if [ "$1" ]; then
 	printf "=>${White}OS:${NC}[FreeMem:${os_free_mem}GB Load:$loadavg]${NC}\n"
 else
-	printf "${White}${DOLPHIN1_EMOJI}${NC} [ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}${BATTERY_EMOJI}${NC} [FreeMem:${os_free_mem}GB Load:$loadavg] ${White}${OPTICALDISK_EMOJI}${NC} [$DEFAULT_SPLUNK_IMAGE] ${White}${YELLOWBOOK_EMOJI} LogLevel:${NC}[$loglevel] ${White}${TIMER_EMOJI} Timer:[$set_timer]${NC}\n"
+	printf "${White}${DOLPHIN1_EMOJI}${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}${COMPUTER_EMOJI}${NC} [FreeMem:${os_free_mem}GB Load:$loadavg] ${White}${OPTICALDISK_EMOJI}${NC}[$DEFAULT_SPLUNK_IMAGE] ${White}${YELLOWBOOK_EMOJI}LogLevel:${NC}[$loglevel] ${White}${TIMER_EMOJI}Timer:[$set_timer]${NC}\n"
 fi
 
 return 0
@@ -4823,7 +4825,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 clear
 #-----------show images details
 screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> DOWNLOAD DEMO IMAGES"
-print_step_bar_from "$R_STEP1" "${ACTIVE_STEP_COLOR}" "   -- AVIALABLE IMAGES FROM [$SPLUNK_DOCKER_HUB] -- "
+print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}" "   -- AVIALABLE IMAGES FROM [$SPLUNK_DOCKER_HUB] -- "
 
 print_step_bar_from "$R_STEP2" "${BoldWhiteOnBlue}" "        Image%-30s Create%-7s Size%-12s Author%-21s${NC}"
 clear_page_starting_from "$R_STEP3"
@@ -4887,7 +4889,7 @@ if [ -z "$choice" ]; then
 	fi
 fi
 selected_count=`echo $choice| wc -w | tr -d '[[:space:]]' `
-print_step_bar_from "$R_STEP1" "${ACTIVE_STEP_COLOR}" "   -- RETRIEVING [$selected_count]..."; printf "\n"
+print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}" "   -- RETRIEVING [$selected_count]..."; printf "\n"
 update_progress_section "$R_STEP1" "$C_PROGRESS" "" ""
 docker_status
 clear_page_starting_from "$R_ROLL"
@@ -5558,7 +5560,7 @@ MESSAGE[6]="Please set your terminal to full mode (currently:$COLUMNS"x"$LINES)"
 MESSAGE[7]="This script is licensed under Apache 2.0 All rights reserved Splunk Inc 2005-2018"
 MESSAGE[8]="https://www.splunk.com/en_us/legal/splunk-software-license-agreement.html"
 #MESSAGE[7]=""
-MESSAGE[10]="${NC}Hit ${Yellow}<ENTER>${NC} to continue & accept Splunk software license agreement"
+MESSAGE[10]="${NC}Hit ${Yellow}<ENTER>${NC} to accept Splunk software license agreement & continue"
 
 # Calculate x and y coordinates so that we can display $MESSAGE
 # centered in the screen
