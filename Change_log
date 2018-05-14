@@ -249,7 +249,7 @@ v4.5 01/14/2018 (ncursor release)
 -Titles and menus are now consistant
 -Implemented scrolling for any listings larger than current screen ROWS
 
-v4.6
+v5.0 05/13/2018
 -rewrote the entire build_single_site() & build_multi_site(). Spawned multiple supporting functions and added support to tput
 -running in debug mode disables most tputs commands
 -Cleaned up image listing routines
@@ -262,7 +262,8 @@ v4.6
 -Rearranged splunk menu selection letters and made them consistant with image screens
 -added delete all container cli switch (-d). User has the ability to delete all containers upon script start
 -added timer switch (-t). User has the ability to adjust pause timer upon script start. Faster systems can handle smaller pause timer. User should experiment with ideal value.
-Splunk 7.1.0 changes:
+
+v5.0.1 05/14/2018 (Splunk 7.1.0 changes):
 -support for all missing splunk images up to 7.1.0 (new entrypoint.sh to accomidate new pass requirements)
 -Changed default splunk password from "hello" to "hello1234" to accomidate 7.1.0+ releases pass requirements
 -fixed few spots where $USERPASS (hello1234) is hard coded
