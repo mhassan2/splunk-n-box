@@ -1,1 +1,6 @@
 *.log
+*NFR*
+tips
+mux.sh
+file
+*.lic

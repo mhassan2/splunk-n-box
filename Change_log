@@ -243,6 +243,32 @@ v4.4 12/27/2017
 -made splunknbox_logo.png transperant
 
 
+v4.5 01/14/2018 (ncursor release)
+-begining work to integrate viz.sh (graphviz) into main
+-Footer and Header (docker status/load) added throu out the system
+-Titles and menus are now consistant
+-Implemented scrolling for any listings larger than current screen ROWS
+
+v4.6
+-rewrote the entire build_single_site() & build_multi_site(). Spawned multiple supporting functions and added support to tput
+-running in debug mode disables most tputs commands
+-Cleaned up image listing routines
+-added CLI switch to control pause timeout after container build. Will help speedup execution on faster systems
+-Incorporated last_ip_used fix reported by user csiess. Thank you
+-Set --dns switch (at docker run) to 127.0.0.1 if network is missing
+-Rearranged startup screen. Lines are now accurately centered (internal row,col caluction bug)
+-Added pause timer to header status bar
+-Added FreeDisk space to footer status bar
+-Rearranged splunk menu selection letters and made them consistant with image screens
+-added delete all container cli switch (-d). User has the ability to delete all containers upon script start
+-added timer switch (-t). User has the ability to adjust pause timer upon script start. Faster systems can handle smaller pause timer. User should experiment with ideal value.
+Splunk 7.1.0 changes:
+-support for all missing splunk images up to 7.1.0 (new entrypoint.sh to accomidate new pass requirements)
+-Changed default splunk password from "hello" to "hello1234" to accomidate 7.1.0+ releases pass requirements
+-fixed few spots where $USERPASS (hello1234) is hard coded
+-Set allowRemoteLogin=always in /opt/splunk/etc/system/default/server.conf
+
+
 
 
 

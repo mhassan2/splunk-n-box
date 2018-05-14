@@ -10,8 +10,8 @@
 #############################################################################
 reset
 PWD=`pwd`
-TMPDIR="$PWD/tmp"
-SCRIPTSDIR="$PWD/scripts"
+TMPDIR="/Users/mhassan/splunk-n-box/tmp"
+SCRIPTSDIR="/Users/mhassan/splunk-n-box/scripts"
 
 rm -fr $TMPDIR/run.dot $TMPDIR/run.png $TMPDIR/shc_memebers.tmp $TMPDIR/idxc_memebers.tmp
 
@@ -134,11 +134,12 @@ label=\"Splunk N' Box Current Status [total:$n load:$load]\";
 #label= <<font color="green">SPLUNK N' BOX STATUS [total:$n load:$load]</font>>
 node [	nodesep=1.0,
 		rankdir=LR,
+		#node [shape=box, color=blue]
 		#outputMode=nodesfirst,
 		outputorder=nodesfirst
 		outputMode=nodesfirst,
 		packMode=clust,
-		style=rounded,
+		style=box,
 		penwidth=1.0,
 		fontcolor=blue,
 		fontsize=10
@@ -153,6 +154,9 @@ node [	nodesep=1.0,
     	labeljust=c
     	color=gray;style=filled
     	overlap=prism; overlap_scaling=0.01; ratio=0.7;
+		#width=900,
+		#height=900,
+		#fixedsize=true,
 edge [penwidth=0.75,arrowsize=0.6]
 edge [color=black, fontsize=8, forcelabels=true]
 //-------------------------------------" > $TMPDIR/run.dot
@@ -268,7 +272,7 @@ subgraph cluster_$gCOUNTER {
 label=\"Generic Hosts (non-clustered)\";
 	labelloc=t;
 	labeljust=c;
-	color=blue;		#box color
+	color=blue;
 	style=filled;
 	labelfontname=Arial;
 	style=rounded;
@@ -346,7 +350,7 @@ subgraph cluster_$gCOUNTER {
 	labelloc=b;
 #	labeljust=r;
     labeljust=c;
-	color=lightcyan;	#box color
+	color=lightcyan;
 	fontcolor=Red;
 	style=\"rounded,filled\";
     labelfontcolor=\"turquoise\";" >> $TMPDIR/run.dot
@@ -530,12 +534,13 @@ return
 }	#end main_loop()
 #---------------------------------------------------------------------------------
 
+	main_loop
 #### MAIN #####
 while true; do
 	trap "reset; exit" 9 SIGINT SIGTERM SIGKILL
 #	trap return
 	#tput clear
-	#reset   #reset terminal
+	reset   #reset terminal
 #	clear
 	tput sgr0 #; tput cup 0 0
 	#$SCRIPTSDIR/imgcat.sh $TMPDIR/run.png
@@ -546,7 +551,6 @@ while true; do
 	#open $TMPDIR/run.png
 	main_loop
 	gCOUNTER=0
-
 done
 exit 0
 ########## END MAIN ###########3
