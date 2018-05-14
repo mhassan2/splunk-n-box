@@ -1,7 +1,8 @@
 #!/bin/bash
+
 #################################################################################
-#	__VERSION: 4.6-2 $
-#	__DATE: Wed Feb 07,2018 - 10:22:50PM -0600 $
+#	__VERSION: 5.0-1 $
+#	__DATE: Mon May 14,2018 - 01:13:54PM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1175,9 +1176,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 4.6-2 $" | \
+GIT_VER=`echo "__VERSION: 5.0-1 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Wed Feb 07,2018 - 10:22:50PM -0600 $" | \
+GIT_DATE=`echo "__DATE: Mon May 14,2018 - 01:13:54PM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
