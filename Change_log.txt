@@ -269,4 +269,6 @@ v5.0.1 05/14/2018 (Splunk 7.1.0 changes):
 -fixed few spots where $USERPASS (hello1234) is hard coded
 -Set allowRemoteLogin=always in /opt/splunk/etc/system/default/server.conf
 
+v5.0.10 05/15/2018:
+-Welcome screen will now notify user if screen is not full mode
 
