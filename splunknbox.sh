@@ -525,7 +525,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #Delete ip aliases on the interface (OS dependent)
 
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> REMOVE iP ALIASES"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> REMOVE iP ALIASES"
 printf "\n"
 #display_all_containers
 echo
@@ -859,7 +859,7 @@ return 0
 startup_checks() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-printf "${WhiteOnGray1}Splunk N' Box (v${Yellow}$GIT_VER${WhiteOnGray1}): Starting validation checks...${NC}\n"
+printf "${WhiteOnGray1}Splunk N' A Box (v${Yellow}$GIT_VER${WhiteOnGray1}): Starting validation checks...${NC}\n"
 
 printf "${LightBlue}==> ${NC}$os_banner${NC}\n"
 #-------------------sanity checks -------------------
@@ -1429,7 +1429,7 @@ return 0
 reset_all_splunk_passwords() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> RESET SPLUNK INSTANCES PASSWORD MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> RESET SPLUNK INSTANCES PASSWORD MENU"
 printf "\n"
 display_all_containers
 
@@ -1451,7 +1451,7 @@ add_splunk_licenses() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 printf "${BoldWhiteOnBlue}ADD SPLUNK LICENSE MENU                                    ${NC}\n"
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> ADD SPLUNK LICENSE MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> ADD SPLUNK LICENSE MENU"
 printf "\n"
 display_all_containers
 
@@ -1471,7 +1471,7 @@ return 0
 restart_all_splunkd() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> RESTART SPLUNK INSTANCES MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> RESTART SPLUNK INSTANCES MENU"
 printf "\n"
 display_all_containers
 
@@ -1569,7 +1569,7 @@ add_os_utils_to_demos() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #Add missing OS utils to all non-demo containers
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> ADD OS UTILS MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> ADD OS UTILS MENU"
 printf "\n"
 printf "${BrownOrange}This option will add OS packages [vim net-tools telnet dnsutils] to ALL running demo containers only...\n"
 printf "${BrownOrange}Might be useful if you will be doing a lot of manual splunk configuration, however, it will increase container's size! ${NC}\n"
@@ -1616,7 +1616,7 @@ dmc_list=`docker ps -a --filter name="DMC|dmc" --format "{{.Names}}"|sort`
 demo_list=`docker ps -a --filter name="DEMO|demo|WORKSHOP|workshop" --format "{{.Names}}"|sort`
 rdparty_list=`docker ps -a --filter name="3RDP|3rdp" --format "{{.Names}}"|sort`
 
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> GROUP CONTAINERS BY ROLE MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> GROUP CONTAINERS BY ROLE MENU"
 printf "\n"
 #display_all_containers "DEMO"
 printf "${LightBlue}LMs${NC}: " ;      	printf "%-5s " $lm_list;echo
@@ -1737,7 +1737,7 @@ LINE3="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &n
 LINE4="<H3 style=\"text-align: left;\"><font color=\"#867979\"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Cluster Label: </font><font color=\"#FF9033\"> $cluster_label</font></H3><BR/></CENTER>"
 
 LINE5="<H2><CENTER><font color=\"#867979\">User: </font> <font color=\"red\">$USERADMIN</font> &nbsp&nbsp<font color=\"#867979\">Password:</font> <font color=\"red\"> $SHOW_PASS</font></H2></font></CENTER><BR/>"
-LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' Box v$GIT_VER<BR/> Docker image [$SPLUNK_IMAGE]</font></CENTER>"
+LINE6="<CENTER><font color=\"#867979\">Created using Splunk N' A Box v$GIT_VER<BR/> Docker image [$SPLUNK_IMAGE]</font></CENTER>"
 
 #configure the custom login screen and http access for ALL (no exception)
 custom_web_conf="[settings]\nlogin_content=<div align=\"right\" style=\"border:1px solid blue;\"> $LINE1 $LINE2 $LINE3 $LINE4 $LINE5 $LINE6 </div> <p>This data is auto-generated at container build time (container internal IP=$container_ip)</p>\n\nenableSplunkWebSSL=0\n"
@@ -2199,7 +2199,7 @@ clear
 
 
 #-----------show images details
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE CONTAINERS -> CREATE & DOWNLOAD DEMO CONTAINERS MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE CONTAINERS -> CREATE & DOWNLOAD DEMO CONTAINERS MENU"
 printf "\n"
 printf "Demo images available from $SPLUNK_DOCKER_HUB:\n"
 print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}" " -- SELECTED AVIALABLE IMAGES FROM [$SPLUNK_DOCKER_HUB] -- "
@@ -2353,7 +2353,7 @@ create_3rdp_container_from_list() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE CONTAINERS -> CREATE 3RD PARTY CONTAINERS MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE CONTAINERS -> CREATE 3RD PARTY CONTAINERS MENU"
 printf "\n"
 printf "${BrownOrange}*Depending on the time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
 printf "\n"
@@ -2769,7 +2769,7 @@ display_main_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function displays user options for the main menu
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU"
 
 tput cup 5 25
 tput rev  # Set reverse video mode
@@ -2804,7 +2804,7 @@ display_splunk_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> SPLUNK MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> SPLUNK MENU"
 printf "\n\n\n"
 printf "${BoldWhiteOnRed}Manage Images:${NC}\n"
 printf "${Red}I${NC}) ${Red}I${NC}mages details ${DarkGray}[custom view]${NC}\n"
@@ -2831,7 +2831,7 @@ display_system_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> SYSTEM MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> SYSTEM MENU"
 printf "\n\n"
 
 printf "${BoldWhiteOnGreen}Manage System:${NC}\n"
@@ -2850,7 +2850,7 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 display_demos_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> DEMOs MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> DEMOs MENU"
 printf "\n\n"
 echo
 printf "${BoldWhiteOnRed}Manage Demo Images:${NC}\n"
@@ -2877,7 +2877,7 @@ return 0
 display_3rdparty_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> 3RD PARTY MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> 3RD PARTY MENU"
 printf "\n\n"
 echo
 printf "${BoldWhiteOnRed}Manage 3rd Party Images:${NC}\n"
@@ -2904,7 +2904,7 @@ return 0
 display_clustering_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
 printf "\n\n"
 echo
 printf "${BoldWhiteOnBlue}AUTOMATIC CLUSTER BUILDS (components: R3/S2 1-CM 1-DEP 1-DMC 1-UF 3-SHC 3-IDXC): ${NC}\n"
@@ -2930,7 +2930,7 @@ return 0
 display_ll_menu_options() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> LUNCH & LEARN MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> LUNCH & LEARN MENU"
 printf "\n\n"
 echo
 printf "${BoldWhiteOnYellow}Files to install for Lunch & Learn: ${NC}\n"
@@ -3848,7 +3848,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 local TIME_START=$(date +%s);
 
 #display all title with zero progress    ### DONT USE CLEAR ####
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> CREATE STAND-ALONE SEARCH HEAD CLUSTER"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> CREATE STAND-ALONE SEARCH HEAD CLUSTER"
 
 
 
@@ -3987,7 +3987,7 @@ local start_time=$(date +%s); local START_TIME=$(date +%s);
 clear_page_starting_from "$R_STEP1"
 
 #$1 CMbasename:count   $2 IDXbasename:count  $3 LMbasename:count
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> CREATING STAND-ALONE INDEXING CLUSTER"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> CREATING STAND-ALONE INDEXING CLUSTER"
 
 check_load
 #Extract values from $1 if passed to us!
@@ -4120,7 +4120,7 @@ IDXname="$SITElocation""$IDXname"
 SHname="$SITElocation""$SHname"
 
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> SINGLE SITE CLUSTER"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> SINGLE SITE CLUSTER"
 extract_current_cursor_position pos1; x=${pos1[0]};  y=${pos1[1]}
 let R_LINE=$x+2; let R_ROLL=$x+3
 
@@ -4259,7 +4259,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #http://docs.splunk.com/Documentation/Splunk/6.4.3/Indexer/Migratetomultisite
 
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> MULTI-SITE CLUSTER"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU -> MULTI-SITE CLUSTER"
 
 check_load
 local START_TIME=$(date +%s);
@@ -4856,7 +4856,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 clear
 #-----------show images details
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> DOWNLOAD DEMO IMAGES"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> DOWNLOAD DEMO IMAGES"
 print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}" " -- SELECTED AVIALABLE IMAGES FROM [$SPLUNK_DOCKER_HUB] -- "
 
 print_step_bar_from "$R_STEP2" "${BoldWhiteOnBlue}" "        Image%-30s Created%-7s Size%-12s Author%-21s${NC}"
@@ -4950,7 +4950,7 @@ download_3rdparty_image() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 #-----------show images details
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> DOWNLOAD 3RD PARTY IMAGES MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> DOWNLOAD 3RD PARTY IMAGES MENU"
 printf "\n"
 printf "${BrownOrange}*Depending on time of the day downloads may a take long time.Cached images are not downloaded! ${NC}\n"
 printf "\n"
@@ -5014,7 +5014,7 @@ start_containers() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type="$1"
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> START $type CONTAINERS"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> START $type CONTAINERS"
 display_all_containers "$type"
 
 count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
@@ -5058,7 +5058,7 @@ return 0
 create_containers() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> CREATE CONTAINERS"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> CREATE CONTAINERS"
 
 #count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
 clear_page_starting_from "$R_STEP2"
@@ -5093,7 +5093,7 @@ stop_containers() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 type="$1"
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> STOP $type CONTAINERS"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> STOP $type CONTAINERS"
 display_all_containers "$type"
 
 count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
@@ -5140,7 +5140,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type="$1"
 
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> DELETE $type CONTAINERS"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> DELETE $type CONTAINERS"
 display_all_containers "$type"
 #printf "\n"
 
@@ -5343,7 +5343,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type="$1"         #container type (ex DEMO, 3RDPARTY, empty for ALL)
 
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> LIST $type CONTAINERS"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> LIST $type CONTAINERS"
 print_step_bar_from "$R_STEP1" "${ACTION_COLOR}" "   -- LISTING CONTAINERS -- "
 display_all_containers "$type" "$tagged"
 count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
@@ -5365,7 +5365,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 #This function will set the splunk version to use for building containers.
 
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE IMAGES -> CHANGE DEFAULT SPLUNK IMAGE MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> MANAGE IMAGES -> CHANGE DEFAULT SPLUNK IMAGE MENU"
 printf "\n\n"
 
 #count=`wc -l $CMD`
@@ -5420,7 +5420,7 @@ remove_images() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 type="$1"
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> REMOVE $type IMAGES MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> REMOVE $type IMAGES MENU"
 printf "\n"
 printf "Current list of all $type images downloaded on this system:\n"
 display_all_images "$type"
@@ -5477,7 +5477,7 @@ clear
 if [ -z "$type" ]; then
 	p_type="*"
 fi
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> SHOW $type IMAGES"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> SHOW $type IMAGES"
 print_step_bar_from "$R_STEP1" "${ACTION_COLOR}" "   -- LISTING IMAGES TYPE [$p_type] -- "
 #printf "Current list of $type images downloaded on this system:\n"
 display_all_images "$type"
@@ -5569,7 +5569,7 @@ return 0
 wipe_entire_system() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
-screen_header "${WhiteOnGray1}" "Splunk N' Box v$GIT_VER: ${Yellow}MAIN MENU -> WIPE CLEAN SPLUNK N' BOX SYSTEM MENU"
+screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> WIPE CLEAN SPLUNK N' BOX SYSTEM MENU"
 printf "\n"
 printf "${DONT_ENTER_EMOJI}${LightRed} WARNING!${NC}\n"
 printf "${LightRed}This option will remove IP aliases, delete all containers, delete all images and remove all volumes! ${NC}\n"
@@ -5607,7 +5607,7 @@ read -p "Are you sure you want to proceed? [y/N]? " answer
 		fi
 
 	 	printf "\n\n"
-                echo -e "Life is good! Thank you for using Splunk N' Box v$GIT_VER\n"
+                echo -e "Life is good! Thank you for using Splunk N' A Box v$GIT_VER\n"
 		printf "Please send feedback to mhassan@splunk.com \n"
 		exit
 fi
@@ -5638,23 +5638,31 @@ if [ -z "$GIT_VER" ]; then
 	new="N"
 	colored_git_version="${LightRed}*UNKNOWN*${NC}"
 fi
+#normal screen size 127x28
+if [ "$COLUMNS" -lt "127" ] || [ "$LINES" -lt "28" ]; then
+	size_warning_msg="${Blue}For best result change your terminal setting to FULL screen [currently:$COLUMNS"x"$LINES]${NC}"
+else
+	size_warning_msg=""
+fi
 
 MESSAGE[1]=""
 MESSAGE[2]="Welcome to Splunk N\' A Box v${colored_git_version}${NC}"
 MESSAGE[3]="Splunk Docker Orchestration Tool"
 MESSAGE[4]=""
 MESSAGE[5]="https://github.com/mhassan2/splunk-n-box"
-MESSAGE[6]="Please set your terminal to full mode (currently:$COLUMNS"x"$LINES)"
+MESSAGE[6]="https://www.splunk.com/en_us/legal/splunk-software-license-agreement.html"
 MESSAGE[7]="This script is licensed under Apache 2.0 All rights reserved Splunk Inc 2005-2018"
-MESSAGE[8]="https://www.splunk.com/en_us/legal/splunk-software-license-agreement.html"
-#MESSAGE[7]=""
-MESSAGE[10]="${NC}Hit ${Yellow}<ENTER>${NC} to accept Splunk software license agreement & continue"
+MESSAGE[8]="$size_warning_msg"
 
 # Calculate x and y coordinates so that we can display $MESSAGE
 # centered in the screen
 x=$(( $LINES / 2 ))                             #centered in the screen
 num_of_msgs=${#MESSAGE[@]}
+let last_msg=$num_of_msgs+1
 z=0
+
+#last msg is dynamically calculated based on array size
+MESSAGE[$last_msg]="${NC}Hit ${Yellow}<ENTER>${NC} to accept Splunk software license agreement & continue"
 
 #-----show splunknbox logo only if imgcat is installed & and jpeg file exist -------
 #	Otherwise skip with no feedback -------------
@@ -5677,8 +5685,9 @@ for (( i=x; i <= (x + $num_of_msgs + 1); i++)); do
 		row=$(($i - 4))
         tput cup $row $col                 #set x and y position
         tput bold   #set reverse video mode
+
 		#last line #10 should print at end of screen
-		if [ "$z" == "10" ]; then
+		if [ "$z" == "$last_msg" ]; then
 			tput cup $LINES $(( ( $COLUMNS - $msg_len )  / 2 ))
 		fi
 		printf "$msg"
