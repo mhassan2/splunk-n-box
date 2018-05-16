@@ -5700,12 +5700,24 @@ rm -fr $TMP_DIR/online_ver.tmp		#start fresh
 wget -qO $TMP_DIR/online_ver.tmp "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
 online_ver=`cat $TMP_DIR/online_ver.tmp`
 colored_online_ver=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
-
-new=`awk -v n1=$online_ver -v n2=$GIT_VER 'BEGIN {if (n1>n2) print ("Y");}'  `
-
-if [ "$new" == "Y" ] && [ -n "$GIT_VER" ] && [ -n "$online_ver" ]; then
-	#tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
+#new=`awk -v n1=$online_ver -v n2=$GIT_VER 'BEGIN {if (n1>n2) print ("Y");}'  `
+online_ver="5.1-15"
+GIT_VER="5.0-14"
+n1=`echo $online_ver|sed 's/\.//g'|sed 's/-//g'`
+n2=`echo $GIT_VER|sed 's/\.//g'|sed 's/-//g'`
+if [ "$n1" -gt "$n2" ]; then
+    upgrade="Y"
+else
+    upgrade="N"
+fi
+#echo "$upgrade"
+if [ "$upgrade" == "Y" ] && [ -n "$GIT_VER" ] && [ -n "$online_ver" ]; then
+	tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
 	tput cup $LINES 0
+	tput el          # clear to the end of the line
+    #tput cud1        # move the cursor down
+	#tput cup 8 0        # go back to line 8 ready to output something there
+
 	printf "Checking for new version... [found $colored_online_ver${NC}]\n"
 	printf "\033[0m"
 	read -p $"Newer version available. Upgrade? [Y/n]? " answer
