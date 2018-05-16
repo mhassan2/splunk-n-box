@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#	__VERSION: 5.0-14 $
-#	__DATE: Wed May 16,2018 - 12:00:08AM -0600 $
+#	__VERSION: 5.0-18 $
+#	__DATE: Wed May 16,2018 - 02:14:20PM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1176,9 +1176,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 5.0-14 $" | \
+GIT_VER=`echo "__VERSION: 5.0-18 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Wed May 16,2018 - 12:00:08AM -0600 $" | \
+GIT_DATE=`echo "__DATE: Wed May 16,2018 - 02:14:20PM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
@@ -5624,6 +5624,7 @@ wget -qO $TMP_DIR/online_ver.tmp "https://raw.githubusercontent.com/mhassan2/spl
 online_ver=`cat $TMP_DIR/online_ver.tmp`
 colored_online_ver=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
 #new=`awk -v n1=$online_ver -v n2=$GIT_VER 'BEGIN {if (n1>n2) print ("Y");}'  `
+
 #online_ver="5.1-15";GIT_VER="5.1-15"
 n1=`echo $online_ver|sed 's/\.//g'|sed 's/-//g'`
 n2=`echo $GIT_VER|sed 's/\.//g'|sed 's/-//g'`
