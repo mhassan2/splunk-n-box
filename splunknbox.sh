@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#	__VERSION: 5.0-18 $
-#	__DATE: Wed May 16,2018 - 02:14:20PM -0600 $
+#	__VERSION: 5.0-20 $
+#	__DATE: Wed May 16,2018 - 02:14:23PM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1176,9 +1176,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 5.0-18 $" | \
+GIT_VER=`echo "__VERSION: 5.0-20 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Wed May 16,2018 - 02:14:20PM -0600 $" | \
+GIT_DATE=`echo "__DATE: Wed May 16,2018 - 02:14:23PM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
@@ -5699,8 +5699,8 @@ MESSAGE[7]="This script is licensed under Apache 2.0 All rights reserved Splunk 
 MESSAGE[8]="$size_warning_msg"
 
 # Calculate x and y coordinates so that we can display $MESSAGE
-# centered in the screen
-x=$(( $LINES / 2 ))                             #centered in the screen
+# centered on the screen
+x=$(( $LINES / 2 ))                  #centered on the screen
 num_of_msgs=${#MESSAGE[@]}
 let last_msg=$num_of_msgs+1
 z=0
@@ -5708,8 +5708,8 @@ z=0
 #last msg is dynamically calculated based on array size
 MESSAGE[$last_msg]="${NC}Hit ${Yellow}<ENTER>${NC} to accept Splunk software license agreement & continue"
 
-#-----show splunknbox logo only if imgcat is installed & and jpeg file exist -------
-#	Otherwise skip with no feedback -------------
+#-show splunknbox logo only if imgcat is installed & and jpeg file exist
+# Otherwise skip with no feedback -----
 condition=$(which imgcat 2>/dev/null | $GREP -v "not found" | wc -l)
 if [ $condition != "0" ] && [ -e img/splunknbox_logo.png ]; then
 	col=$(( ( $COLUMNS - 13 )  / 2 )); row=$(($x - 9)); tput cup $row $col
