@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#	__VERSION: 5.0-10 $
-#	__DATE: Mon May 14,2018 - 11:23:09PM -0600 $
+#	__VERSION: 5.0-12 $
+#	__DATE: Mon May 14,2018 - 11:23:16PM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -801,7 +801,8 @@ if [ -n "$cmd" ]; then
 else
 	printf "${BrownOrange}Installing [ggrep]${NC}:"
 	brew tap homebrew/dupes > /dev/null 2>&1
-	progress_bar_pkg_download "brew install homebrew/dupes/grep"
+	#progress_bar_pkg_download "brew install homebrew/dupes/grep"
+	progress_bar_pkg_download "brew install grep"
 #        printf "${BrownOrange}Running [sudo ln -s /usr/local/Cellar/grep/$cmd/bin/ggrep /usr/local/bin/ggrep]${NC}\n"
 # 	sudo ln -s /usr/local/Cellar/grep/$cmd/bin/ggrep /usr/local/bin/ggrep
 fi
@@ -1175,9 +1176,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 5.0-10 $" | \
+GIT_VER=`echo "__VERSION: 5.0-12 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Mon May 14,2018 - 11:23:09PM -0600 $" | \
+GIT_DATE=`echo "__DATE: Mon May 14,2018 - 11:23:16PM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
