@@ -5617,6 +5617,48 @@ return 0
 }	#end wipe_entire_system()
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
+check_for_upgrade() {
+#Checking online version...
+rm -fr $TMP_DIR/online_ver.tmp		#start fresh
+wget -qO $TMP_DIR/online_ver.tmp "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
+online_ver=`cat $TMP_DIR/online_ver.tmp`
+colored_online_ver=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
+#new=`awk -v n1=$online_ver -v n2=$GIT_VER 'BEGIN {if (n1>n2) print ("Y");}'  `
+#online_ver="5.1-15";GIT_VER="5.1-15"
+n1=`echo $online_ver|sed 's/\.//g'|sed 's/-//g'`
+n2=`echo $GIT_VER|sed 's/\.//g'|sed 's/-//g'`
+if [ "$n1" -gt "$n2" ]; then
+    upgrade="Y"
+else
+    upgrade="N"
+fi
+#echo "$upgrade"
+if [ "$upgrade" == "Y" ] && [ -n "$GIT_VER" ] && [ -n "$online_ver" ]; then
+	#tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
+#    tput cup $row $col                 #set x and y position
+#	tput cup $(($LINES - 3 )) 0
+#	tput el          # clear to the end of the line
+
+	printf "Newer version is available [found $colored_online_ver\033[0m] "
+	read -p "Upgrade? [Y/n] " answer
+	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+	#	tput cup $LINES 0
+		printf "Downloading [$PWD/${0##*/}] >> ${NC}"
+		progress_bar_pkg_download "curl -O https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/${0##*/}"
+		#curl --max-time 5 -O https://raw.github.com/mhassan2/splunk-n-box/master/${0##*/}
+		chmod 755  ${0##*/}   	#set x permission on splunknbox.sh
+	#	./$(basename $0) && exit  # restart the script
+		echo
+		printf "${Yellow}Please restart the script!${NC}                          \n\n"
+		exit
+
+	fi
+fi
+
+return 0
+}	#end check_for_upgrade
+#---------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------
 display_welcome_screen() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
@@ -5632,11 +5674,11 @@ COLUMNS=$(tput cols)
 LINES=$(tput lines)
 #echo "cols:$COLUMNS"
 #echo "lines:$LINES"
-new=""
 colored_git_version=`echo $GIT_VER|awk -F '[.-]' '{print "\\\033[1;33m"$1"\\\033[0;33m."$2"\\\033[1;31m-" $3"\\\033[0m"}'`
+
 #Dont prompt for upgrade if we cannot get GIT_VER ( missing ggrep)
 if [ -z "$GIT_VER" ]; then
-	new="N"
+	upgrade="N"
 	colored_git_version="${LightRed}*UNKNOWN*${NC}"
 fi
 #normal screen size 127x28
@@ -5689,51 +5731,13 @@ for (( i=x; i <= (x + $num_of_msgs + 1); i++)); do
 
 		#last line #10 should print at end of screen
 		if [ "$z" == "$last_msg" ]; then
-			tput cup $LINES $(( ( $COLUMNS - $msg_len )  / 2 ))
+			check_for_upgrade
+			tput cup $(($LINES-1)) $(( ( $COLUMNS - $msg_len )  / 2 ))
 		fi
 		printf "$msg"
+
 done
 
-
-#Checking online version...
-rm -fr $TMP_DIR/online_ver.tmp		#start fresh
-wget -qO $TMP_DIR/online_ver.tmp "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
-online_ver=`cat $TMP_DIR/online_ver.tmp`
-colored_online_ver=`echo $online_ver | awk -F '[.-]' '{print "\033[1;33m" $1 "\033[0;33m." $2 "\033[1;31m-" $3}'`
-#new=`awk -v n1=$online_ver -v n2=$GIT_VER 'BEGIN {if (n1>n2) print ("Y");}'  `
-online_ver="5.1-15"
-GIT_VER="5.0-14"
-n1=`echo $online_ver|sed 's/\.//g'|sed 's/-//g'`
-n2=`echo $GIT_VER|sed 's/\.//g'|sed 's/-//g'`
-if [ "$n1" -gt "$n2" ]; then
-    upgrade="Y"
-else
-    upgrade="N"
-fi
-#echo "$upgrade"
-if [ "$upgrade" == "Y" ] && [ -n "$GIT_VER" ] && [ -n "$online_ver" ]; then
-	tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
-	tput cup $LINES 0
-	tput el          # clear to the end of the line
-    #tput cud1        # move the cursor down
-	#tput cup 8 0        # go back to line 8 ready to output something there
-
-	printf "Checking for new version... [found $colored_online_ver${NC}]\n"
-	printf "\033[0m"
-	read -p $"Newer version available. Upgrade? [Y/n]? " answer
-	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
-		tput cup $LINES 0
-		printf "Downloading [$PWD/${0##*/}] >> ${NC}"
-		progress_bar_pkg_download "curl -O https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/${0##*/}"
-		#curl --max-time 5 -O https://raw.github.com/mhassan2/splunk-n-box/master/${0##*/}
-		chmod 755  ${0##*/}   	#set x permission on splunknbox.sh
-	#	./$(basename $0) && exit  # restart the script
-		echo
-		printf "${Yellow}Please restart the script!${NC}                          \n\n"
-		exit
-
-	fi
-fi
 
 # Just wait for user input...
 read -p "" readKey
