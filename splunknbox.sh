@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#	__VERSION: 5.0-20 $
-#	__DATE: Wed May 16,2018 - 02:14:23PM -0600 $
+#	__VERSION: 5.0-22 $
+#	__DATE: Wed May 16,2018 - 02:14:34PM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -794,7 +794,7 @@ else
 	progress_bar_pkg_download "brew install wget"
 fi
 #----------
-printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking ggrep package:${NC} "
+printf "${Yellow}   ${ARROW_EMOJI}${NC} Checking GNU grep package:${NC} "
 cmd=$(brew ls grep --versions|cut -d" " -f2)    #use native OS grep on this one!
 if [ -n "$cmd" ]; then
         printf "${Green}${CHECK_MARK_EMOJI} Installed${NC}\n"
@@ -1176,9 +1176,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 5.0-20 $" | \
+GIT_VER=`echo "__VERSION: 5.0-22 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Wed May 16,2018 - 02:14:23PM -0600 $" | \
+GIT_DATE=`echo "__DATE: Wed May 16,2018 - 02:14:34PM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
@@ -2908,7 +2908,7 @@ clear
 screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> CLUSTERING MENU"
 printf "\n\n"
 echo
-printf "${BoldWhiteOnBlue}AUTOMATIC CLUSTER BUILDS (components: R3/S2 1-CM 1-DEP 1-DMC 1-UF 3-SHC 3-IDXC): ${NC}\n"
+printf "${BoldWhiteOnBlue}AUTOMATIC CLUSTER BUILDS (components: R3/S2 1-CM 1-DEP 1-DMC 1-LM 3-SHC 3-IDXC): ${NC}\n"
 printf "${LightBlue}1${NC}) Create Stand-alone Index Cluster (IDXC)${NC}\n"
 printf "${LightBlue}2${NC}) Create Stand-alone Search Head Cluster (SHC)${NC}\n"
 printf "${LightBlue}3${NC}) Build Single-site Cluster${NC}\n"
@@ -3316,6 +3316,7 @@ for hostname in `echo $host_names` ; do
 	rm -fr transforms.conf.tmp
 	#-------------------------------------------
 done
+return
 }	#end install_ll_datasets()
 #---------------------------------------------------------------------------------------------------------------
 
@@ -5571,46 +5572,48 @@ wipe_entire_system() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 clear
 screen_header "${WhiteOnGray1}" "Splunk N' A Box v$GIT_VER: ${Yellow}MAIN MENU -> WIPE CLEAN SPLUNK N' BOX SYSTEM MENU"
-printf "\n"
-printf "${DONT_ENTER_EMOJI}${LightRed} WARNING!${NC}\n"
-printf "${LightRed}This option will remove IP aliases, delete all containers, delete all images and remove all volumes! ${NC}\n"
+printf "\n\n\n"
+printf "${DONT_ENTER_EMOJI}${LightRed} WARNING! WARNING! WARNING!${NC}\n"
+printf "${LightRed}You are about remove IP aliases, delete all containers, delete all images and remove all volumes! ${NC}\n"
 printf "${LightRed}Use this option only if you want to return the system to a clean state! ${NC}\n"
 printf "${LightRed}Restarting the script will recreate every thing again! ${NC}\n"
 printf "\n"
 read -p "Are you sure you want to proceed? [y/N]? " answer
-        if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
-                printf "${Yellow}Stopping all containers...${NC}\n"
-		docker stop $(docker ps -aq)
-                printf "\n"
-		printf "${Yellow}Deleting all containers...\n${NC}"
-        	docker rm -f $(docker ps -a --format "{{.Names}}");
-		printf "\n"
-                printf "${Yellow}Removing all images...${NC}\n"
-		docker rmi -f $(docker images -q)
-		printf "\n"
-		printf "${Yellow}Removing all volumes (including dangling)...${NC}\n"
-		docker volume rm $(docker volume ls -qf 'dangling=true')
-                printf "\n"
+if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+    printf "${Yellow}Stopping all containers...${NC}\n"
+	docker stop $(docker ps -aq)
+    printf "\n"
+	printf "${Yellow}Deleting all docker containers...${NC}\n"
+    docker rm -f $(docker ps -a --format "{{.Names}}");
+	printf "\n"
+    printf "${Yellow}Removing all docker images...${NC}\n"
+	docker rmi -f $(docker images -q)
+	printf "\n"
+	printf "${Yellow}Removing all dokcer volumes (including dangling)...${NC}\n"
+	docker volume rm $(docker volume ls -qf 'dangling=true')
+    printf "\n"
 
-                printf "${Yellow}Removing all IP aliases...${NC}\n"
-		remove_ip_aliases
-		printf "\n"
+    printf "${Yellow}Removing all IP aliases...${NC}\n"
+	remove_ip_aliases
+	printf "\n"
 
-		printf "${Red}Removing all dependency packages [brew ggrep pcre]? ${NC}\n"
-		read -p "Those packages are not a bad thing to have installed. Are you sure you want to proceed? [y/N]? " answer
-        	if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
-			#remove ggrep, pcre
-			brew uninstall ggrep pcre
+#sudo /Developer/Library/uninstall-devtools --mode=all
 
-			#remove brew
-			/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
-	#		sudo rm -rf /usr/local/Homebrew/
-		fi
+	printf "${Red}Removing all dependency packages [brew ggrep pcre bc]? ${NC}\n"
+	read -p "Are you sure you want to proceed? [y/N]? " answer
+    if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+		#remove ggrep, pcre
+		brew uninstall "grep pcre bc"
 
-	 	printf "\n\n"
-                echo -e "Life is good! Thank you for using Splunk N' A Box v$GIT_VER\n"
-		printf "Please send feedback to mhassan@splunk.com \n"
-		exit
+		#remove brew
+		/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
+	#	sudo rm -rf /usr/local/Homebrew/
+	fi
+
+	printf "\n\n"
+    echo -e "Life is good! Thank you for using Splunk N' A Box v$GIT_VER\n"
+	printf "Please send feedback to mhassan@splunk.com \n"
+	exit
 fi
 
 return 0
@@ -5671,6 +5674,8 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 # Save screen contents and make cursor invisible
 #tput smcup; tput civis
 tput clear
+tput civis      #cursor invisible
+
 COLUMNS=$(tput cols)
 LINES=$(tput lines)
 #echo "cols:$COLUMNS"
@@ -5684,7 +5689,7 @@ if [ -z "$GIT_VER" ]; then
 fi
 #normal screen size 127x28
 if [ "$COLUMNS" -lt "127" ] || [ "$LINES" -lt "28" ]; then
-	size_warning_msg="${Blue}For best result change your terminal setting to FULL screen [currently:$COLUMNS"x"$LINES]${NC}"
+	size_warning_msg="${LightBlue}For best result please expand your terminal to FULL screen [currently:$COLUMNS"x"$LINES]${NC}"
 else
 	size_warning_msg=""
 fi
@@ -5746,6 +5751,7 @@ read -p "" readKey
 tput clear
 tput sgr0	#reset terminal (doesn't always work)
 tput rc
+tput cnorm   	#cursor visible
 
 return 0
 }	#end display_welcome_screen()
