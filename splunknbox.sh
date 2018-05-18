@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#	__VERSION: 5.0-25 $
-#	__DATE: Thu May 17,2018 - 11:23:14PM -0600 $
+#	__VERSION: 5.0-22 $
+#	__DATE: Wed May 16,2018 - 02:14:34PM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1176,9 +1176,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 5.0-25 $" | \
+GIT_VER=`echo "__VERSION: 5.0-22 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Thu May 17,2018 - 11:23:14PM -0600 $" | \
+GIT_DATE=`echo "__DATE: Wed May 16,2018 - 02:14:34PM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
@@ -5643,7 +5643,7 @@ if [ "$upgrade" == "Y" ] && [ -n "$GIT_VER" ] && [ -n "$online_ver" ]; then
 #	tput cup $(($LINES - 3 )) 0
 #	tput el          # clear to the end of the line
 
-	printf "Newer version is available [found $colored_online_ver\033[0m] "
+	printf "Newer version [$colored_online_ver\033[0m] is available "
 	read -p "Upgrade? [Y/n] " answer
 	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 	#	tput cup $LINES 0
