@@ -4547,7 +4547,7 @@ printf "${ACTIVE_TXT_COLOR}License Master :${NC} $lm\n"
 printf "${ACTIVE_TXT_COLOR}Master Console :${NC} $m_dmc\n"
 printf "${ACTIVE_TXT_COLOR}SHC Memebers   :${NC} $shc_members_list\n"
 printf "${ACTIVE_TXT_COLOR}IDXC Memebers:${NC} $idxc_members_list\n"
-printf "${ACTIVE_TXT_COLOR}RF/SF orgain:${NC} $RFcount/$SFcount\n"
+printf "${ACTIVE_TXT_COLOR}RF/SF orgin	:${NC} $RFcount/$SFcount\n"
 docker_status
 
 return 0
