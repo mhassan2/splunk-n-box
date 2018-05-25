@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#	__VERSION: 5.0-40 $
-#	__DATE: Thu May 24,2018 - 12:12:15PM -0600 $
+#	__VERSION: 5.0-42 $
+#	__DATE: Thu May 24,2018 - 01:13:07PM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -176,20 +176,20 @@ DOCKER_MIN_VER=1.13.1				#min recommended docker version
 #--tput (R,0) locations ---------
 R_HEADER="0"
 R_BANNER="1"
-R_BUILD_SITE="2"
-R_BUILD_CLUSTER="3"
-R_STEP1="3"
-R_STEP2="4"
-R_STEP3="5"
-R_STEP4="6"
-R_STEP5="7"
-R_STEP6="8"
-R_STEP7="9"
-R_STEP8="10"
-R_STEP9="11"
-R_STEP10="12"
+R_BUILD_SITE="3"
+R_BUILD_CLUSTER="4"
+R_STEP1="4"
+R_STEP2="5"
+R_STEP3="6"
+R_STEP4="7"
+R_STEP5="8"
+R_STEP6="9"
+R_STEP7="10"
+R_STEP8="11"
+R_STEP9="12"
+R_STEP10="13"
 
-R_LINE="9"; R_ROLL="10"	#defaults
+R_LINE="10"; R_ROLL="11"	#defaults
 
 MAXLEN="55"		#fill until for status msgs
 C_PROGRESS="55"
@@ -1176,9 +1176,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 5.0-40 $" | \
+GIT_VER=`echo "__VERSION: 5.0-42 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Thu May 24,2018 - 12:12:15PM -0600 $" | \
+GIT_DATE=`echo "__DATE: Thu May 24,2018 - 01:13:07PM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
@@ -1889,7 +1889,7 @@ count="$2"		#input
 #get last seq used by last host created
 last_host_num=`docker ps -a --format "{{.Names}}"|$GREP "^$basename"|head -1| $GREP -P '\d+(?!.*\d)' -o`;
 if [ -z "$last_host_num" ]; then    					#no previous hosts with this name exists
-        printf "${DarkGray}[$basename] New basename. ${NC}" >&4
+        printf "${DarkGray}[$basename] New basename. ${NC}" >&5
 		starting=1
         ending=$count
 		last_host_num=0
@@ -1902,7 +1902,7 @@ fi
 if [ "$starting" -lt "10" ]; then  startx="0$starting"; else  startx="$starting";  fi
 if [ "$ending" -lt "10" ]; then endx="0$ending"; else endx=$ending; fi
 
-printf "${DarkGray}Next sequence:${NC} [${Green}$basename${Yellow}$startx${NC} --> ${Green}$basename${Yellow}$endx${NC}]\n"  >&4
+printf "${DarkGray}Next sequence:${NC} [${Green}$basename${Yellow}$startx${NC} --> ${Green}$basename${Yellow}$endx${NC}]\n"  >&5
 #---- end calculate sequence numbers -----------
 
 #---- calculate VIP numbers -----------
@@ -3137,12 +3137,12 @@ do
                 \? ) display_clustering_menu_help;;
 
 				##Automatic builds
-				1 ) create_standalone_idxc "$IDX_BASE:$STD_IDXC_COUNT DMC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL"
+				1 ) create_standalone_idxc "$IDX_BASE:$STD_IDXC_COUNT DMC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL RF:$R_FACTOR SF:$S_FACTOR"
 					;;
 				2 ) create_standalone_shc "$SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 DMC:1 LM:1 LABEL:$DEFAULT_SHC_LABEL"
 			#create_standalone_shc "STL$SH_BASE:$STD_SHC_COUNT STL$DEP_BASE:1 STLDMC:1 STLLM:1 LABEL:STL$DEFAULT_SHC_LABEL"
 					;;
-                3 ) build_singlesite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 DMC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL SNAME:$SINGLESITE"
+                3 ) build_singlesite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 DMC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL SNAME:$SINGLESITE RF:$_FACTOR SF:$S_FACTOR"
    					;;
                 #4 ) build_multisite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 DMC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "$MULTI_SITES_NAMES"
                 4 ) build_multisite_cluster "$IDX_BASE:2 $SH_BASE:3 $DEP_BASE:1 DMC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "$MULTI_SITES_NAMES"
@@ -3150,13 +3150,13 @@ do
 
 				##Manual builds
                 5 ) get_standalone_idxc_inputs
-				 	create_standalone_idxc "$IDX_BASE:$IDXcount DMC:1 CM:1 LM:1 LABEL:$label"
+				 	create_standalone_idxc "$IDX_BASE:$IDXcount DMC:1 CM:1 LM:1 LABEL:$label RF:$gRF SF:$gSF"
 					;;
                 6 ) get_standalone_shc_inputs
 					create_standalone_shc "$SH_BASE:$SHcount $DEP_BASE:1 DMC:1 LM:1 LABEL:$label"
 					;;
                 7 ) get_singlesite_inputs
-                	build_singlesite_cluster "$IDX_BASE:$IDXcount $SH_BASE:$SHcount $DEP_BASE:1 DMC:1 CM:1 LM:1 LABEL:$label SNAME:$SITElocation"
+                	build_singlesite_cluster "$IDX_BASE:$IDXcount $SH_BASE:$SHcount $DEP_BASE:1 DMC:1 CM:1 LM:1 LABEL:$label SNAME:$SITElocation RF:$gRF SF:$gSF"
 		    		;;
                 8 ) return	#not ready yet!!!
                 	get_multisite_inputs
@@ -3363,17 +3363,29 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 ###create_standalone_idxc "$IDX_BASE:$IDXcount DMC:1 CM:1 LM:1 LABEL:$label"
 
-#clear_page_starting_from "$R_ROLL"
-#read -p "Enter indexer host basename (default $IDX_BASE)? " IDXname ;
-#IDXname=`echo $IDXname| tr '[a-z]' '[A-Z]'` ; if [ -z "$IDXname" ]; then IDXname="$IDX_BASE"; fi
+clear_page_starting_from "$R_ROLL"
 read -p "Enter IDX cluster label (default $DEFAULT_IDXC_LABEL)? " label ;
 label=`echo $label| tr '[a-z]' '[A-Z]'`; if [ -z "$label" ]; then label="$DEFAULT_IDXC_LABEL"; fi
+
 read -p "How many indexers in this cluster (default 3)? " IDXcount;
 if [ -z "$IDXcount" ]; then IDXcount="$STD_IDXC_COUNT"; fi
 
-#read -p "What is the replication factor for this cluster (default 3)? " rep_factor;
-#read -p "What is the search factor for this cluster (default 2)? " rep_factor;
+read -p $'What is the \033[1;32mReplication Factor\033[0m'$' for this cluster (default '"$R_FACTOR"$')? ' gRF
+if [ -z "$gRF" ]; then gRF="$R_FACTOR"; fi
 
+read -p $'What is the \033[1;32mSearch Factor\033[0m'$' for this cluster (default '"$S_FACTOR"$')? ' gSF
+if [ -z "$gSF" ]; then gSF="$S_FACTOR"; fi
+
+while [[ "$gRF" -lt "$gSF" ]]
+	do
+	read -p "S-Factor cannnot be less than R-Factor, are you sure want to continue [y/N]? " answer
+    if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+    	break
+    else
+		read -p $'What is the \033[1;32mSearch Factor\033[0m'$' for this cluster (default '"$S_FACTOR"$')? ' gSF
+		if [ -z "$gSF" ]; then gSF="$S_FACTOR"; fi
+    fi
+done
 
 return
 }	#get_standalone_idxc_inputs()
@@ -3382,9 +3394,7 @@ return
 get_standalone_shc_inputs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-###create_standalone_shc "$SH_BASE:$SHcount $DEP_BASE:1 DMC:1 LM:1 LABEL:$label"
-
-#clear_page_starting_from "$R_ROLL"
+clear_page_starting_from "$R_ROLL"
 read -p "Enter SH cluster label (default $DEFAULT_SHC_LABEL)? " label ;
 label=`echo $label| tr '[a-z]' '[A-Z]'`; if [ -z "$label" ]; then label="$DEFAULT_SHC_LABEL"; fi
 #read -p "Enter indexer host basename (default $IDX_BASE)? " IDXname ;
@@ -3395,7 +3405,7 @@ if [ -z "$SHcount" ]; then
 fi
 while [ "$SHcount" -lt "3" ]
 	do
-	read -p "SHC requires minimum of 3 hosts, are you want to continue [y/N]? " answer
+	read -p "SHC requires minimum of 3 hosts, are you sure want to continue [y/N]? " answer
 	if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		break
 	else
@@ -3410,8 +3420,7 @@ return
 get_singlesite_inputs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
-###build_singlesite_cluster "$IDX_BASE:$idxc_count $SH_BASE:$shc_count $DEP_BASE:1 DMC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL SNAME:$SITElocation"
-
+clear_page_starting_from "$R_ROLL"
 read -p "Enter cluster label (default $DEFAULT_SHC_LABEL)? " label
 label=`echo $label| tr '[a-z]' '[A-Z]'`; if [ -z "$label" ]; then label="$DEFAULT_SHC_LABEL"; fi
 
@@ -3424,21 +3433,35 @@ if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then SITElo
 read -p "How many indexers in this cluster (default 3)? " IDXcount;
 if [ -z "$IDXcount" ]; then IDXcount="$STD_IDXC_COUNT"; fi
 
-#read -p "What is the replication factor for this cluster (default 3)? " rep_factor;
-#read -p "What is the search factor for this cluster (default 2)? " rep_factor;
-#search fact cannot be greator than rep factor!
-
 read -p "How many search heads in this cluster (default 3)? " SHcount
 if [ -z "$SHcount" ]; then SHcount="$STD_SHC_COUNT"; fi
-while [ "$SHcount" -lt "3" ]
+while [[ "$SHcount" -lt "3" ]]
 	do
-	read -p "SHC requires minimum of 3 hosts, are you want to continue [y/N]? " answer
+	read -p "SHC requires minimum of 3 hosts, are you sure want to continue [y/N]? " answer
 	if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		break
 	else
 		read -p "How many search heads in this cluster (default 3)? " SHcount
+		if [ -z "$SHcount" ]; then SHcount="$STD_SHC_COUNT"; fi
 	fi
-	done
+done
+
+read -p $'What is the \033[1;32mReplication Factor\033[0m'$' for this cluster (default '"$R_FACTOR"$')? ' gRF
+if [ -z "$gRF" ]; then gRF="$R_FACTOR"; fi
+
+read -p $'What is the \033[1;32mSearch Factor\033[0m'$' for this cluster (default '"$S_FACTOR"$')? ' gSF
+if [ -z "$gSF" ]; then gSF="$S_FACTOR"; fi
+
+while [[ "$gRF" -lt "$gSF" ]]
+	do
+	read -p "S-Factor cannnot be less than R-Factor, are you sure want to continue [y/N]? " answer
+    if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+    	break
+    else
+		read -p $'What is the \033[1;32mSearch Factor\033[0m'$' for this cluster (default '"$S_FACTOR"$')? ' gSF
+		if [ -z "$gSF" ]; then gSF="$S_FACTOR"; fi
+    fi
+done
 
 return
 }	#get_singlesite_inputs()
@@ -3449,6 +3472,7 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 ###build_singlesite_cluster "$IDX_BASE:$idxc_count $SH_BASE:$shc_count $DEP_BASE:1 DMC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL SNAME:$SITElocation"
 
+clear_page_starting_from "$R_ROLL"
 read -p "Enter cluster label (default $DEFAULT_SHC_LABEL)? " label
 label=`echo $label| tr '[a-z]' '[A-Z]'`; if [ -z "$label" ]; then label="$DEFAULT_SHC_LABEL"; fi
 
@@ -3476,7 +3500,7 @@ read -p "How many search heads in this cluster (default 3)? " SHcount
 if [ -z "$SHcount" ]; then SHcount="$STD_SHC_COUNT"; fi
 while [ "$SHcount" -lt "3" ]
 	do
-	read -p "SHC requires minimum of 3 hosts, are you want to continue [y/N]? " answer
+	read -p "SHC requires minimum of 3 hosts, are you sure want to continue [y/N]? " answer
 	if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 		break
 	else
@@ -3789,23 +3813,23 @@ printf "${Yellow}${ARROW_EMOJI}${NC}Disabling maintenance-mode..." >&3 ; display
 #restart_splunkd "$i"
 return
 
-}	#end disable_cm_maintenance_mode() {
+}	#end disable_cm_maintenance_mode()
 #----------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 config_cm_for_singlesite() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #STEP#3
-cm="$1"; label="$2"; step_pos="$3"
+cm="$1"; label="$2"; step_pos="$3"; rf="$4"; sf="$5"
 local start_time=$(date +%s);
 #clear_page_starting_from "$R_ROLL"
 clear_from_if_screen_ended "$R_ROLL"
 
 #-------CM config---
-CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk edit cluster-config  -mode master -replication_factor $R_FACTOR -search_factor $S_FACTOR -secret $MYSECRET -cluster_label $label -auth $USERADMIN:$USERPASS "
+CMD="docker exec -u splunk -ti $cm /opt/splunk/bin/splunk edit cluster-config  -mode master -replication_factor $rf -search_factor $sf -secret $MYSECRET -cluster_label $label -auth $USERADMIN:$USERPASS "
 OUT=`$CMD`; OUT=`echo $OUT | sed -e 's/^M//g' | tr -d '\r' | tr -d '\n' `   # clean it up
 printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$cm"
-printf " ${Yellow}${ARROW_EMOJI}${NC}Configuring CM [RF:$R_FACTOR SF:$S_FACTOR] and cluster label[$label] " >&3 ; display_output "$OUT" "property has been edited" "3"
+printf " ${Yellow}${ARROW_EMOJI}${NC}Configuring CM [RF:$rf SF:$sf] and cluster label[$label] " >&3 ; display_output "$OUT" "property has been edited" "3"
 update_progress_section "$step_pos" "$C_PROGRESS" "1" "1 2" "$(timer "$start_time")"
 clear_from_if_screen_ended "$R_ROLL"
 
@@ -4007,6 +4031,7 @@ check_shc_status "$members_list" "$R_STEP6"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "8" "1 2 3 4 5 6 7 8" "$(timer "$START_TIME")"
 #--Finished STEP#4 Check SHC status---
 
+clear_page_starting_from "$R_ROLL"
 echo
 printf "${LightGreen}Stand-Alone SH Cluster Build Completed!\n"
 printf "${ACTIVE_TXT_COLOR}SHC Label      :${NC} $SHlabel\n"
@@ -4045,6 +4070,8 @@ CMcount=`echo $1| $GREP -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space:]]' `
 IDXlabel=`echo $1| $GREP -Po '(\s*\w*-*LABEL):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
 IDXname=`echo $1| $GREP -Po '(\s*\w*-*IDX)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
 IDXcount=`echo $1| $GREP -Po '(\s*\w*-*IDX):\K(\d+)'| tr -d '[[:space:]]' `
+RFcount=`echo $1| $GREP -Po '(\s*\w*-*RF):\K(\d+)'| tr -d '[[:space:]]' `
+SFcount=`echo $1| $GREP -Po '(\s*\w*-*SF):\K(\d+)'| tr -d '[[:space:]]' `
 #echo "LMname:$LMname LMcount:$LMcount label:$label IDXname:$IDXname IDXcount:$IDXcount CMname:$CMname CMcount:$CMcount"
 #exit
 
@@ -4065,7 +4092,6 @@ print_step_bar_from "$R_STEP5" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP
 extract_current_cursor_position pos1; x=${pos1[0]};  y=${pos1[1]}
 let R_LINE=$x+2; let R_ROLL=$x+3
 print_step_bar_from "$R_LINE" "${BoldWhiteOnPink}  " "                                                                                "
-
 #printf "${DarkGray}Using DMC:[$DMCname] LM:[$LMname] CM:[$CMname] LABEL:[$label] IDXC:[$IDXname:$IDXcount]${NC}\n\n" >&4
 #--Starting STEP#1 administrative hosts---
 print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating basic services [DMC,LM,CM]"
@@ -4093,7 +4119,7 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "4" "1 2 3 4 5 6 7" "$(tim
 #--Starting STEP#3 ClusterMaster configuration---
 print_step_bar_from "$R_STEP3" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3: IDXC [configure cluster master $cm]"
 clear_page_starting_from "$R_ROLL"
-config_cm_for_singlesite "$cm" "$IDXlabel" "$R_STEP3"
+config_cm_for_singlesite "$cm" "$IDXlabel" "$R_STEP3" "$RFcount" "$SFcount"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
 #--Finished STEP#3 ClusterMaster configuration---
 
@@ -4110,13 +4136,15 @@ check_idxc_status "$cm" "$R_STEP5"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7" "$(timer "$START_TIME")"
 #--Finsihed STEP#5 Verifying IDXC status---
 
+clear_page_starting_from "$R_ROLL"
 echo
 printf "${LightGreen}Stand-Alone IDX Cluster Build Completed!\n"
-printf "${ACTIVE_TXT_COLOR}Cluster Label :${NC} $IDXlabel\n"
-printf "${ACTIVE_TXT_COLOR}Cluster Master:${NC} $cm\n"
-printf "${ACTIVE_TXT_COLOR}License Master:${NC} $lm\n"
-printf "${ACTIVE_TXT_COLOR}Master Console:${NC} $dmc\n"
-printf "${ACTIVE_TXT_COLOR}SHC Memebers  :${NC} $members_list\n"
+printf "${ACTIVE_TXT_COLOR}Cluster Label	:${NC} $IDXlabel\n"
+printf "${ACTIVE_TXT_COLOR}Cluster Master	:${NC} $cm\n"
+printf "${ACTIVE_TXT_COLOR}License Master	:${NC} $lm\n"
+printf "${ACTIVE_TXT_COLOR}Master Console	:${NC} $dmc\n"
+printf "${ACTIVE_TXT_COLOR}IDX Memebers	:${NC} $members_list\n"
+printf "${ACTIVE_TXT_COLOR}RFACTOR/SFACTOR	:${NC} $RFcount/$SFcount\n"
 echo
 docker_status
 
@@ -4146,6 +4174,8 @@ IDXname=`echo $1| $GREP -Po '(\s*\w*-*IDX)'| tr -d '[[:space:]]' | tr '[a-z]' '[
 IDXcount=`echo $1| $GREP -Po '(\s*\w*-*IDX):\K(\d+)'| tr -d '[[:space:]]' `
 SHname=`echo $1| $GREP -Po '(\s*\w*-*SH)' | tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]' `
 SHcount=`echo $1| $GREP -Po '(\s*\w*-*SH):\K(\d+)'| tr -d '[[:space:]]' `
+RFcount=`echo $1| $GREP -Po '(\s*\w*-*RF):\K(\d+)'| tr -d '[[:space:]]' `
+SFcount=`echo $1| $GREP -Po '(\s*\w*-*SF):\K(\d+)'| tr -d '[[:space:]]' `
 
 label=`echo $1| $GREP -Po '(\s*\w*-*LABEL):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
 SITElocation=`echo $1| $GREP -Po '(\s*\w*-*SNAME):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
@@ -4234,7 +4264,7 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6 7 8 9 10 
 
 print_step_bar_from "$R_STEP3" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3: IDXC [configure CM]"
 clear_page_starting_from "$R_ROLL"
-config_cm_for_singlesite "$cm" "$label" "$R_STEP3"
+config_cm_for_singlesite "$cm" "$label" "$R_STEP3" "$RFcount" "$SFcount"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
 
 print_step_bar_from "$R_STEP4" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#4: IDXC [configure members]"
@@ -4276,17 +4306,18 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "13" "1 2 3 4 5 6 7 8 9 10
 #--Finished STEP#3 Building SHC----------------------------------------------------------------
 
 
+clear_page_starting_from "$R_ROLL"
 echo
 printf "${LightGreen}Single-Site Cluster Build Completed!\n"
-printf "${ACTIVE_TXT_COLOR}Site Name      :${NC} $SITElocation_clean\n"
-printf "${ACTIVE_TXT_COLOR}Site Label     :${NC} $label\n"
-printf "${ACTIVE_TXT_COLOR}Deployer       :${NC} $dep\n"
-printf "${ACTIVE_TXT_COLOR}Cluster Master :${NC} $cm\n"
-printf "${ACTIVE_TXT_COLOR}License Master :${NC} $lm\n"
-printf "${ACTIVE_TXT_COLOR}Master Console :${NC} $dmc\n"
-printf "${ACTIVE_TXT_COLOR}SHC Memebers   :${NC} $shc_members_list\n"
-printf "${ACTIVE_TXT_COLOR}IDXC Memebers  :${NC} $idxc_members_list\n"
-echo
+printf "${ACTIVE_TXT_COLOR}Site Name	:${NC} $SITElocation_clean\n"
+printf "${ACTIVE_TXT_COLOR}Site Label	:${NC} $label\n"
+printf "${ACTIVE_TXT_COLOR}Deployer		:${NC} $dep\n"
+printf "${ACTIVE_TXT_COLOR}Cluster Master	:${NC} $cm\n"
+printf "${ACTIVE_TXT_COLOR}License Master	:${NC} $lm\n"
+printf "${ACTIVE_TXT_COLOR}Master Console	:${NC} $dmc\n"
+printf "${ACTIVE_TXT_COLOR}SHC Memebers	:${NC} $shc_members_list\n"
+printf "${ACTIVE_TXT_COLOR}IDXC Memebers	:${NC} $idxc_members_list\n"
+printf "${ACTIVE_TXT_COLOR}RFACTOR/SFACTOR	:${NC} $RFcount/$SFcount\n"
 docker_status
 
 
@@ -4511,7 +4542,7 @@ done
 disable_cm_maintenance_mode "$m_cm"
 
 
-#-------Configure all sites idxs to be search peers ---
+clear_page_starting_from "$R_ROLL"
 echo
 printf "${LightGreen}Multi-Site Cluster Build Completed!\n"
 printf "${ACTIVE_TXT_COLOR}Sites Locations:${NC} $SITElocation_list\n"
@@ -4520,7 +4551,8 @@ printf "${ACTIVE_TXT_COLOR}Cluster Master :${NC} $m_cm\n"
 printf "${ACTIVE_TXT_COLOR}License Master :${NC} $lm\n"
 printf "${ACTIVE_TXT_COLOR}Master Console :${NC} $m_dmc\n"
 printf "${ACTIVE_TXT_COLOR}SHC Memebers   :${NC} $shc_members_list\n"
-printf "${ACTIVE_TXT_COLOR}IDXC Memebers  :${NC} $idxc_members_list\n"
+printf "${ACTIVE_TXT_COLOR}IDXC Memebers:${NC} $idxc_members_list\n"
+printf "${ACTIVE_TXT_COLOR}RF/SF orgain:${NC} $RFcount/$SFcount\n"
 docker_status
 
 return 0
