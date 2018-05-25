@@ -273,6 +273,18 @@ v5.0.22 05/16/2018:
 -Welcome screen will now notify user if screen is not full mode
 -fixed brew install for ggrep. But reported by Justin Hamblin, thank you.
 -Fixed a bug in checking for online upgrades.
--turn off cursor during welcome screen
+-turned off cursor during welcome screen
+
+v5.0.40 24/16/2018:
+-fixed several bugs related to multisite clustering & enabled in UI...its about freaking time -:)
+-fixed bug to where some servers are not joining DMC (single and multi site builds)
+-made language consistent accross all LINE bars for builds
+-set default R_FACTOR=2 to match default site count in multisite
+-rewrote code to update local/server.conf instead of default/server.conf for allowRemoteLogin=always in [general] stanza
+-added more checks to clear rolling screen during create_splunk_container(). Should help with log level 4+ outputs
+
+
+
+
 
 
