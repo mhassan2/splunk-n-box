@@ -283,7 +283,8 @@ v5.0.40 24/16/2018:
 -rewrote code to update local/server.conf instead of default/server.conf for allowRemoteLogin=always in [general] stanza
 -added more checks to clear rolling screen during create_splunk_container(). Should help with log level 4+ outputs
 -manual cluster build asks for RF/SF now
-
+-changes DMC to MC every where
+-progress bar for BUILD CLUSTER than the rest of proress bars
 
 
 
