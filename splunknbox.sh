@@ -3150,7 +3150,7 @@ do
 				2 ) create_standalone_shc "$SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 MC:1 LM:1 LABEL:$DEFAULT_SHC_LABEL"
 			#create_standalone_shc "STL$SH_BASE:$STD_SHC_COUNT STL$DEP_BASE:1 STLMC:1 STLLM:1 LABEL:STL$DEFAULT_SHC_LABEL"
 					;;
-                3 ) build_singlesite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL SNAME:$SINGLESITE RF:$_FACTOR SF:$S_FACTOR"
+                3 ) build_singlesite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL SNAME:$SINGLESITE RF:$R_FACTOR SF:$S_FACTOR"
    					;;
                 #4 ) build_multisite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "$MULTI_SITES_NAMES"
                 4 ) build_multisite_cluster "$IDX_BASE:2 $SH_BASE:3 $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "$MULTI_SITES_NAMES"
@@ -4259,7 +4259,7 @@ update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6 7 8 9 10 
 
 print_step_bar_from "$R_STEP3" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3: IDXC [configure CM]"
 clear_page_starting_from "$R_ROLL"
-config_cm_for_singlesite "$cm" "$label" "$R_STEP3" "$RFcount" "$SFcount"
+config_cm_for_singlesite "$cm" "$label" "$R_STEP3" "$RFcount" "$RFcount"
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6 7 8 9 10 11 12 13" "$(timer "$START_TIME")"
 
 print_step_bar_from "$R_STEP4" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#4: IDXC [configure members]"
