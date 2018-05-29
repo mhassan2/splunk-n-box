@@ -226,17 +226,26 @@ BoldWhiteOnYellow="\033[1;1;5;43m"; BoldWhiteOnBlue="\033[1;1;5;44m"
 BoldWhiteOnLightBlue="\033[1;1;5;104m"; BoldWhiteOnPink="\033[1;1;5;45m"
 BoldWhiteOnTurquoise="\033[1;1;5;46m"; BoldYellowOnBlue="\033[1;33;44m"
 BoldYellowOnPurple="\033[1;33;44m"
+#-----------------------------------------
+BoldWhiteOnBlue="\033[44;5;70;1m"
+BoldGreenOnBlue="\033[44;5;92;1m"
+BoldYellowOnBlue="\033[44;5;93;1m"
+BoldRedOnBlue="\033[44;5;91;1m"
+BoldWhiteOnDarkRed="\033[48;5;88;1m"
+BoldWhiteOnDarkGreen="\033[48;5;28;1m"
+BoldWhiteOnLimeGreen="\033[48;5;40;1m"
+
 
 #R_PROGRESS_COLOR="${WhiteOnOrange}"		#progress status
-R_PROGRESS_COLOR="${BoldWhiteOnGreen}"		#progress status
+R_PROGRESS_COLOR="${BoldWhiteOnDarkGreen}"		#progress status
 R_BUILD_COLOR="${WhiteOnGray1}"			#build site status
 R_LINE_COLOR="$R_BUILD_COLOR"			#R_BUILD line
 #HEADER_COLOR="${WhiteOnGray1}"
-HEADER_COLOR=${BoldWhiteOnBlue}
-FOOTER_COLOR1=${HEADER_COLOR}			#sync with header colors
-FOOTER_COLOR2=${BoldWhiteOnBlue}		#docker counters colors
-FOOTER_COLOR3="${BoldWhiteOnYellow}"	#when loadavg Yellow
-FOOTER_COLOR4="${BoldWhiteOnRed}"		#when loadavg Red
+HEADER_COLOR="${BoldWhiteOnBlue}"
+FOOTER_COLOR1="${BoldWhiteOnBlue}"			#sync with header colors
+FOOTER_COLOR2="${BoldGreenOnBlue}"		#docker counters colors
+FOOTER_COLOR3="${BoldYellowOnBlue}"	#when loadavg Yellow
+FOOTER_COLOR4="${BoldRedOnBlue}"		#when loadavg Red
 
 #ACTION_COLOR="$BoldWhiteOnLightBlue"	#containers CREATE, DEL,STOP...etc
 ACTION_COLOR="$BoldWhiteOnGreen"	#containers CREATE, DEL,STOP...etc
@@ -2562,7 +2571,7 @@ for i in $pass; do
 	if [ "$i" == "$item" ]; then
 		#color="\033[1;${c}m"
 		tput cup $r_pos $c_pos
-		echo -ne "[${p_color}${done_str:0:$done_len}$item${WhiteOnRed}${todo_str:0:$todo_len}${NC}]${LightBlue} %$percent${NC} $timerstr\r"
+		echo -ne "[${p_color}${done_str:0:$done_len}$item${BoldWhiteOnDarkRed}${todo_str:0:$todo_len}${NC}]${LightBlue} %$percent${NC} $timerstr\r"
     	#printf "[\033[48;5;2m${done_str:0:$done_len}\033[48;5;1m${todo_str:0:$todo_len}\033[0m]\033[1;34m %%$percent\033[0m"
    		# printf "[${done_str:0:$done_len} ${todo_str:0:$todo_len}] ${percent}% \n"
 		#let c=$c-1	#gradually increase the color value
@@ -2600,11 +2609,11 @@ tput sc
 Containers="$1"; Running="$2"; Paused="$3"; Stopped="$4"; Images="$5"; c_loadavg="$6"; disk="$7"
 
 str="\
-${FOOTER_COLOR1} Docker:[Containers: ${FOOTER_COLOR2}$Containers \
-${FOOTER_COLOR1} Running: ${FOOTER_COLOR2}$Running \
-${FOOTER_COLOR1} Paused: ${FOOTER_COLOR2}$Paused \
-${FOOTER_COLOR1} Stopped: ${FOOTER_COLOR2}$Stopped \
-${FOOTER_COLOR1} Images: ${FOOTER_COLOR2}$Images] \
+${FOOTER_COLOR1} Docker:[Containers: ${FOOTER_COLOR2}$Containers${NC}\
+${FOOTER_COLOR1} Running: ${FOOTER_COLOR2}$Running${NC}\
+${FOOTER_COLOR1} Paused: ${FOOTER_COLOR2}$Paused${NC}\
+${FOOTER_COLOR1} Stopped: ${FOOTER_COLOR2}$Stopped${NC}\
+${FOOTER_COLOR1} Images: ${FOOTER_COLOR2}$Images]${NC}\
 ${FOOTER_COLOR1} Load:[$c_loadavg${NC}${FOOTER_COLOR1}]\
 ${FOOTER_COLOR1} FreeDisk:[${FOOTER_COLOR2}$disk\
 ${FOOTER_COLOR1}]"
@@ -2657,7 +2666,7 @@ elif [ "$os" == "Linux" ]; then
 fi
 
 load=`echo "$loadavg/1" | bc `   #convert float to int
-#load=4
+#load=13
 #c=`echo " $load > $MAXLOADAVG" | bc `;
 
 if [[ "$load" -ge "$cores" ]]; then
@@ -4217,7 +4226,8 @@ extract_current_cursor_position pos1; x=${pos1[0]};  y=${pos1[1]}
 let R_LINE=$x+2; let R_ROLL=$x+3
 
 clear_page_starting_from "$R_ROLL"
-
+idx_seq=$(seq 1 $STD_IDXC_COUNT)
+sh_seq=$(seq 1 $STD_IDXC_COUNT)
 #initialize status section
 #clear_page_starting_from "$R_ROLL"
 clear_page_starting_from "$R_BUILD_SITE"
@@ -4225,15 +4235,15 @@ print_step_bar_from "$R_BUILD_SITE" "${R_BUILD_COLOR}  " "BUILDING SINGLE-SITE C
 update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "" "1 2 3 4 5 6 7 8 9 10"
 
 print_step_bar_from "$R_STEP1" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Creating basic services"; update_progress_section "$R_STEP1" "$C_PROGRESS" "" "mc lm cm dep"
-print_step_bar_from "$R_STEP2" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: IDXC [creating $IDXcount hosts]"; update_progress_section "$R_STEP2" "$C_PROGRESS" "" "idxc idxc"
-print_step_bar_from "$R_STEP3" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: IDXC [configure CM]"; update_progress_section "$R_STEP3" "$C_PROGRESS" "" "idxc idxc"
-print_step_bar_from "$R_STEP4" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#4: IDXC [configure members]"; update_progress_section "$R_STEP4" "$C_PROGRESS" "" "idxc idxc"
-print_step_bar_from "$R_STEP5" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: IDXC [check status]"; update_progress_section "$R_STEP5" "$C_PROGRESS" "" "idxc idxc"
-print_step_bar_from "$R_STEP6" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#6: SHC [creating $SHcount hosts]"; update_progress_section "$R_STEP6" "$C_PROGRESS" "" "shc shc"
-print_step_bar_from "$R_STEP7" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#6: SHC [configure deployer]"; update_progress_section "$R_STEP7" "$C_PROGRESS" "" "shc shc"
-print_step_bar_from "$R_STEP8" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#8: SHC [configure members]"; update_progress_section "$R_STEP8" "$C_PROGRESS" "" "shc shc"
-print_step_bar_from "$R_STEP9" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#9: SHC [configure captain]"; update_progress_section "$R_STEP9" "$C_PROGRESS" "" "shc shc"
-print_step_bar_from "$R_STEP10" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#10: SHC [check status]"; update_progress_section "$R_STEP10" "$C_PROGRESS" "" "shc shc"
+print_step_bar_from "$R_STEP2" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#2: IDXC [creating $IDXcount hosts]"; update_progress_section "$R_STEP2" "$C_PROGRESS" "" "$idx_seq"
+print_step_bar_from "$R_STEP3" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#3: IDXC [configure CM]"; update_progress_section "$R_STEP3" "$C_PROGRESS" "" "1"
+print_step_bar_from "$R_STEP4" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#4: IDXC [configure members]"; update_progress_section "$R_STEP4" "$C_PROGRESS" "" "$idx_seq"
+print_step_bar_from "$R_STEP5" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#5: IDXC [check status]"; update_progress_section "$R_STEP5" "$C_PROGRESS" "" "1"
+print_step_bar_from "$R_STEP6" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#6: SHC [creating $SHcount hosts]"; update_progress_section "$R_STEP6" "$C_PROGRESS" "" "$sh_seq"
+print_step_bar_from "$R_STEP7" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#6: SHC [configure deployer]"; update_progress_section "$R_STEP7" "$C_PROGRESS" "" "1 2"
+print_step_bar_from "$R_STEP8" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#8: SHC [configure members]"; update_progress_section "$R_STEP8" "$C_PROGRESS" "" "$idx_seq"
+print_step_bar_from "$R_STEP9" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#9: SHC [configure captain]"; update_progress_section "$R_STEP9" "$C_PROGRESS" "" "1"
+print_step_bar_from "$R_STEP10" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#10: SHC [check status]"; update_progress_section "$R_STEP10" "$C_PROGRESS" "" "1"
 
 extract_current_cursor_position pos1; x=${pos1[0]};  y=${pos1[1]}
 let R_LINE=$x+2; let R_ROLL=$x+3
@@ -4245,26 +4255,26 @@ check_load
 print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating basic services [${Yellow}MC${NC},LM,CM,DEP]"; clear_page_starting_from "$R_ROLL"
 create_splunk_container "$MCname" "$MCcount" "no" "$R_STEP1" "$R_ROLL"; mc=$gLIST
 update_progress_section "$R_STEP1" "$C_PROGRESS" "mc" "mc lm cm dep" "$(timer "$start_time")"
-update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
+#update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
 
 print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating basic services [MC,${Yellow}LM${NC},CM,DEP]"; clear_page_starting_from "$R_ROLL"
 create_splunk_container "$LMname" "$LMcount" "no" "$R_STEP1" "$R_ROLL"; lm=$gLIST
 make_lic_slave "$lm" "$mc"; make_mc_search_peer "$mc" "$lm"
 update_progress_section "$R_STEP1" "$C_PROGRESS" "lm" "mc lm cm dep" "$(timer "$start_time")"
-update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
+#update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
 
 print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating basic services [MC,LM,${Yellow}CM${NC},DEP]"; clear_page_starting_from "$R_ROLL"
 create_splunk_container "$CMname" "$CMcount" "no"; cm=$gLIST
 make_lic_slave "$lm" "$cm" ; make_mc_search_peer "$mc" "$cm"
 update_progress_section "$R_STEP1" "$C_PROGRESS" "cm" "mc lm cm dep" "$(timer "$start_time")"
-update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
+#update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
 
 print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating basic services [MC,LM,CM,${Yellow}DEP${NC}]"; clear_page_starting_from "$R_ROLL"
 create_splunk_container "$DEPname" "$DEPcount" "no" "$R_STEP1" "$R_ROLL"; dep=$gLIST
 make_lic_slave "$lm" "$dep" ; make_mc_search_peer "$mc" "$dep"
 update_progress_section "$R_STEP1" "$C_PROGRESS" "dep" "mc lm cm dep" "$(timer "$start_time")"
-update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
 print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating basic services [MC,LM,CM,${NC}DEP]"
+update_progress_section "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
 
 #--Starting Building IDXC----------------------------------------------
 local start_time=$(date +%s);	#reset for each cluster
