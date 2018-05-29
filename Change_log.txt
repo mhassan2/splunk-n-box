@@ -286,6 +286,13 @@ v5.0.40 24/16/2018:
 -changes DMC to MC every where
 -progress bar for BUILD CLUSTER than the rest of proress bars
 
+v5.0.61 5/29/2018
+-Added more logic to s-2-s manual build
+-tweaked few UI elements (color consistancy, HEADER/FOOTER changes)
+-progress bar shows numbers
+-progress bar for SITE_BUILD match color
+-consistent cluster build reporting
+
 
 
 
