@@ -4412,7 +4412,7 @@ for (( idx=0; idx <= (${#fields[@]}-1)  ; idx++ )) ; do
 	sites_aff_list="$sites_aff_list""${Green}$SITEloc:${Blue}$AFFsite${NC}\t"
 	sites_dep_list="$sites_dep_list""${Green}$SITEloc:${Blue}$DEPcount${NC}\t"
 	#echo "[$SITEloc]"
-	echo "LOC:$SITEloc SITE:$SITEname IDX:$IDXcount SH:$SHcount AFF:$AFFsite"
+#	echo "LOC:$SITEloc SITE:$SITEname IDX:$IDXcount SH:$SHcount AFF:$AFFsite"
 	#echo
 done
 #printf "loc_list: [$loc_list]\n"
