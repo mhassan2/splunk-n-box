@@ -3177,7 +3177,8 @@ do
                 3 ) build_singlesite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL SNAME:$DEF_SINGLE_SITE RF:$R_FACTOR SF:$S_FACTOR"
    					;;
                 #4 ) build_multisite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "$DEF_MULTI_SITES"
-                4 ) build_multisite_cluster "$IDX_BASE:2 $SH_BASE:3 $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "$DEF_MULTI_SITES"
+				4)	build_multisite_cluster "$DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "LOC:STL SITE:site1 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT AFF:site1, LOC:ATL SITE:site2 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT AFF:site2" "RF:origin:2,total:3 SF:origin:1,total:2"
+#cluster_conf2="LOC:DC01 SITE:site1 IDX:4 SH:0 DEP:1 AFF:site1,LOC:DC02 SITE:site2 IDX:2 SH:1 AFF:site0"
 					;;
 
 				##Manual builds
@@ -3190,12 +3191,9 @@ do
                 7 ) get_singlesite_inputs
                 	build_singlesite_cluster "$IDX_BASE:$IDXcount $SH_BASE:$SHcount $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$label SNAME:$SITElocation RF:$gRF SF:$gSF"
 		    		;;
-                8 ) #return	#not ready yet!!!
-                	get_multisite_inputs
+                8 ) get_multisite_inputs
                 	build_multisite_cluster "$DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$label" "$gClusterConf" "$gClusterRepl"
-                #	build_multisite_cluster "$DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$label" "SITE1:DC01:IDX:3:SH:3:AFF:site1 SITE2:DC02:IDX:3:SH:3:AFF:site2" "RF:origin:2,total:3 SF:origin:1,total:2"
 
-                	#build_multisite_cluster "$IDX_BASE:$IDXcount $SH_BASE:$SHcount $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$label" "$DEF_MULTI_SITES"
 					;;
 	        	b|B) return 0;
 
@@ -4372,6 +4370,9 @@ MCcount=`echo $cluster_conf1 | $GREP -Po '(\s*\w*-*MC):\K(\d+)'| tr -d '[[:space
 CMname=`echo $cluster_conf1  | $GREP -Po '(\s*\w*-*CM)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
 CMcount=`echo $cluster_conf1 | $GREP -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space:]]' `
 #------------------------------------------------------------------------------
+#printf "cluster_conf1:[$cluster_conf1]"
+#printf "cluster_conf2:[$cluster_conf2]"
+#printf "factors_conf:[$factors_conf]"
 
 #cluster_conf2="LOC:DC01 SITE:site1 IDX:4 SH:0 DEP:1 AFF:site1,LOC:DC02 SITE:site2 IDX:2 SH:1 AFF:site0"
 defIFS="$(printf " \t\nx")"; defIFS="${defIFS%x}"	#save default IFS
@@ -4411,7 +4412,7 @@ for (( idx=0; idx <= (${#fields[@]}-1)  ; idx++ )) ; do
 	sites_aff_list="$sites_aff_list""${Green}$SITEloc:${Blue}$AFFsite${NC}\t"
 	sites_dep_list="$sites_dep_list""${Green}$SITEloc:${Blue}$DEPcount${NC}\t"
 	#echo "[$SITEloc]"
-#	echo "LOC:$SITEloc SITE:$SITEname IDX:$IDXcount SH:$SHcount AFF:$AFFsite"
+	echo "LOC:$SITEloc SITE:$SITEname IDX:$IDXcount SH:$SHcount AFF:$AFFsite"
 	#echo
 done
 #printf "loc_list: [$loc_list]\n"
@@ -4420,6 +4421,7 @@ done
 #printf "sites_idx_list: [$sites_idx_list]\n"
 #printf "sites_sh_list:  [$sites_sh_list]\n"
 #printf "sites_aff_list: [$sites_aff_list]\n"
+#exit
 
 #------------------------------------------------------------------------------
 
@@ -4442,7 +4444,7 @@ sites_list=`echo ${sites_list%?} | sed 's/ /,/g'`	#remove trailing space & repl 
 #sanity check
 loc_list_len=`echo $loc_list|wc -w |sed 's/ //g' `		#ex: [DC01 DC02 DC03]
 if [ "$loc_list_len" -eq "0" ]; then
-	printf "${LightRed} Error! Sites list is zero length\n"; exit
+	printf "${LightRed} Error! Sites list is zero length${NC}\n"; exit
 fi
 
 #local a_item=0
