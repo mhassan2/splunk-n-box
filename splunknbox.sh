@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#	__VERSION: 5.0-65 $
-#	__DATE: Tue May 29,2018 - 05:17:22PM -0600 $
+#	__VERSION: 5.0-69 $
+#	__DATE: Tue May 29,2018 - 06:18:57PM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1198,9 +1198,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 5.0-65 $" | \
+GIT_VER=`echo "__VERSION: 5.0-69 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Tue May 29,2018 - 05:17:22PM -0600 $" | \
+GIT_DATE=`echo "__DATE: Tue May 29,2018 - 06:18:57PM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
@@ -3368,22 +3368,12 @@ return
 #------------------------------------------------------------------------------------------------------
 color_selected() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-#BoldWhiteOnBlue="\033[1;1;5;44m"
-#BoldWhiteOnPink="\033[1;1;5;45m"
 
-#BoldWhiteOnRed="\033[1;1;5;41m"
-#BoldWhiteOnGreen="\033[1;1;5;42m"
-#BoldWhiteOnYellow="\033[1;1;5;43m"
-#BoldWhiteOnBlue="\033[1;1;5;44m"
-#ACTIVE_TXT_COLOR="\033[1;1;5;104m"
-#BoldWhiteOnPink="\033[1;1;5;45m"
-#BoldWhiteOnTurquoise="\033[1;1;5;46m"
-#BoldYellowOnBlue="\033[1;33;44m"
-#BoldYellowOnPurple="\033[1;33;44m"
+local site_loc="$1"; local loc_list_clean="$2"
 
-local SITElocation="$1"; LOCATIONSlist_clean="$2"
-SITElocation_clean=`echo $SITElocation| sed 's/_//g'` #Remove "_" if found. Used for title display only
-result=$(echo  $LOCATIONSlist_clean| sed "s/$SITElocation_clean/\\\033[1;1;5;43m$SITElocation_clean\\\033[1;1;5;45m/g")
+site_loc_clean=`echo $site_loc| sed 's/_//g'` #Remove "_" if found. Used for title display only
+#result=$(echo  $LOCATIONSlist_clean| sed "s/$SITElocation_clean/\\\033[1;1;5;43m$SITElocation_clean\\\033[1;1;5;45m/g")
+result=$(echo  $loc_list_clean| sed "s/$site_loc_clean/\\${BoldWhiteOnYellow}$site_loc_clean\\${R_BUILD_COLOR}/g")
 echo  "$result"
 #printf "%b" "$result"
 
