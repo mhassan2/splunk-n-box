@@ -292,6 +292,13 @@ v5.0.61 5/29/2018
 -progress bar shows numbers
 -progress bar for SITE_BUILD match color
 -consistent cluster build reporting
+-changed color for docker status and title bars
+
+v5.1 5/30/2018
+-fixed bug in update_progress_bar when element count is 10
+-more UI tweaks
+-Fixed bug with Auto s-2-s resulted from code movement (wrong parameters used)
+
 
 
 
