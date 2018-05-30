@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#	__VERSION: 5.0-69 $
-#	__DATE: Tue May 29,2018 - 06:18:57PM -0600 $
+#	__VERSION: 5.0-70 $
+#	__DATE: Tue May 29,2018 - 07:19:10PM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1198,9 +1198,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 5.0-69 $" | \
+GIT_VER=`echo "__VERSION: 5.0-70 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Tue May 29,2018 - 06:18:57PM -0600 $" | \
+GIT_DATE=`echo "__DATE: Tue May 29,2018 - 07:19:10PM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
@@ -3361,7 +3361,6 @@ done
 return
 }	#end install_ll_datasets()
 #---------------------------------------------------------------------------------------------------------------
-
 
 #### CLUSTERS ######
 
