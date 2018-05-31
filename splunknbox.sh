@@ -4494,7 +4494,7 @@ loc_list_clean=`echo $loc_list| sed 's/_//g'` #Remove "_" if found. Used for tit
 primary_loc=`echo $loc_list|awk '{print $1}'`		#where basic services CM,LM resides
 primary_loc_clean=`echo $primary_loc| sed 's/_//g'` #Remove "_" if found. Used for title display only
 
-osx_say "Starting $loc_list_len site cluster build, locations are $loc_list_clean, 9 steps"
+osx_say "Starting $loc_list_len site cluster build, 9 steps"
 #Initialize status section. First time!
 print_step_bar_from "$R_BUILD_SITE" "${R_BUILD_COLOR}  " "BUILDING $loc_list_len-SITE CLUSTER [$loc_list_clean]"; update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "" "1 2 3 4 5 6 7 8 9"
 print_step_bar_from "$R_STEP1" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Basic services [$primary_loc_clean] [MC,LM,CM]"; update_progress_bar "$R_STEP1" "$C_PROGRESS" "" "1"
