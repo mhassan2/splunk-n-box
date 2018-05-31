@@ -298,6 +298,8 @@ v5.1 5/30/2018
 -fixed bug in update_progress_bar when element count is 10
 -more UI tweaks
 -Fixed bug with Auto s-2-s resulted from code movement (wrong parameters used)
+-fixed minor bug where DEP was not set correctly in s-2-s
+-modified few mac voice lines
 
 
 
