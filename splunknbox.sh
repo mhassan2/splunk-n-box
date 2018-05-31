@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#	__VERSION: 5.1-8 $
-#	__DATE: Thu May 31,2018 - 03:03:25AM -0600 $
+#	__VERSION: 5.1-10 $
+#	__DATE: Thu May 31,2018 - 04:04:50AM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1202,9 +1202,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 5.1-8 $" | \
+GIT_VER=`echo "__VERSION: 5.1-10 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Thu May 31,2018 - 03:03:25AM -0600 $" | \
+GIT_DATE=`echo "__DATE: Thu May 31,2018 - 04:04:50AM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
@@ -4713,7 +4713,6 @@ osx_say "Multi site cluster ready. Total time $total_time"
 return 0
 }	#build_multisite_cluster()
 #---------------------------------------------------------------------------------------------------------------
-
 #---------------------------------------------------------------------------------------------------------------
 print_stats() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
