@@ -649,6 +649,9 @@ return 0
 check_load() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #We need to throttle back host creation if running on low powered server. Set to 4 x numb of cores
+#stress testing tool:
+#https://www.tecmint.com/linux-cpu-load-stress-test-with-stress-ng-tool/
+#Example: stress --cpu 8 --io 4 --vm 2 --vm-bytes 128M --timeout 10s
 
 if [ "$os" == "Darwin" ]; then
 	cores=`sysctl -n hw.ncpu`
@@ -679,7 +682,8 @@ do
 	if [  "$c" == "1" ]; then
 		echo
 		for c in $(seq 1 $t); do
-			echo -ne "${LightRed}High load avg [$loadavg] Max allowed[$MAXLOADAVG] Pausing ${Yellow}$t${NC} seconds... ${Yellow}$c${NC}\033[0K\r"
+			tput cup $(($LINES-2)) $(( ( $COLUMNS - 80 )  / 2 ))
+			echo -ne "${LightRed}Pausing execution due to high load avg [$loadavg]. Max allowed[$MAXLOADAVG] Wait: ${Yellow}$t${NC} seconds... ${Yellow}$c${NC}\033[0K\r"
         		sleep 1
 		done
 		t=`expr $t + $t`
@@ -2691,15 +2695,17 @@ elif [ "$os" == "Linux" ]; then
 fi
 
 load=`echo "$loadavg/1" | bc `   #convert float to int
-#load=13
+#load=7
 #c=`echo " $load > $MAXLOADAVG" | bc `;
 
-if [[ "$load" -ge "$cores" ]]; then
+if [[ "$load" -ge "$(( $cores * 2 ))"  ]]; then	#2xcpu count or more
+	color_loadavg="${BoldWhiteOnRed}$loadavg"
+elif [[ "$load" -ge "$cores" ]]; then			#1xcpu count
 	color_loadavg="${FOOTER_COLOR4}$loadavg"
-elif [[ "$load" -ge "$cores/2" ]]; then
+elif [[ "$load" -ge "$cores/2" ]]; then			#1/2 cpu count
 	color_loadavg="${FOOTER_COLOR3}$loadavg"
 else
-	color_loadavg="${FOOTER_COLOR2}$loadavg"
+	color_loadavg="${FOOTER_COLOR2}$loadavg"	#less than 1/2 cpu count
 fi
 
 #Containers="$1"; Running="$2"; Paused="$3"; Stopped="$4"; Images="$5"; loadavg="$6"; timer="$7"
@@ -3518,7 +3524,16 @@ get_multisite_inputs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 
 ###build_singlesite_cluster "$IDX_BASE:$idxc_count $SH_BASE:$shc_count $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL SNAME:$SITElocation"
+
+
+
 clear_page_starting_from "$R_ROLL"
+
+while true; do
+#Initialization is critical. MUST BE INIDE while true LOOP
+local str1="" str2="" str3="" site_rf="" site_sf="" availabel_sites="" cluster_label=""
+local idxcount="" shcount="" dep_count="" shc_pref="" set_affinity="" answer=""
+gClusterConf=""; gClusterRepl=""
 
 clear
 printf "Note:You must configure the site_replication_factor attribute correctly. Otherwise, the master will not start.\n"
@@ -3572,36 +3587,50 @@ for i in ${availabel_sites} ; do
 		dep_count="1"
 
 		#.................
-		read -p $'site\033[1;33m'"$c"$'\033[0m-SHC: Enable \033[1;34msearch affinity\033[0m in this location [y/N]? '   answer
+		read -p $'site\033[1;33m'"$c"$'\033[0m-SHC: Disable \033[1;34msearch affinity\033[0m [default enabled] [y/N]? '   answer
    		if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
-			affinity="yes"
+			set_affinity="yes"	#keep it enabled (default). search your site
 		else
-			affinity="no"
+			set_affinity="no"	#disable it. search all
 		fi
 		#.................
 		#.................
-		if [ "$affinity" == "no" ]; then	#answer is No
-			affinity="site$c"
+		if [ "$set_affinity" == "no" ]; then	#keep it enabled (default)
 			printf "${Cyan}This SHC will search ${NC}site${Yellow}$c${Cyan} only${NC}\n"
+			affinity_site="site$c"
 		else
-			affinity="site0"
 			printf "${Cyan}This SHC will search All sites (affinity=site0)${NC}\n"
+			affinity_site="site0"
 		fi
 		#.................
-	else #/$shc_pref="no"/
-		shcount="0"; affinity="0"; dep_count="0"
+	else #/$shc_pref="no"/ No shc on this site
+		shcount="0"; affinity_site="n/a"; dep_count="0"
 		printf "${BrownOrange}This location will NOT have SHC${NC}\n"
 
 	fi 	#/$shc_pref=n/
 	#----------------
 
 	#must have comma (separator) at the end
-	gClusterConf="$gClusterConf""SITE:site$c LOC:$i IDX:$idxcount SH:$shcount DEP:$dep_count AFF:$affinity LABEL:$cluster_label,"
+	gClusterConf="$gClusterConf""SITE:site$c LOC:$i IDX:$idxcount SH:$shcount DEP:$dep_count AFF:$affinity_site LABEL:$cluster_label,"
+	str1="$str1""SITE:${Yellow}site$c  ${Green}LOCATION:${Yellow}$i ${Green}IDXs:${Yellow}$idxcount ${Green}SHs:${Yellow}$shcount ${Green}DEPLOYERs:${Yellow}$dep_count ${Green}SEARCH_AFFINITY:${Yellow}$affinity_site ${Green}LABEL:${Yellow}$cluster_label${NC},"
 	let c++
 	echo
 done
 gClusterRepl="RF:$site_rf SF:$site_sf"
-#echo "[$gClusterConf] [$gClusterRepl]";exit
+str2="${Green}RF:${Yellow}$site_rf ${Green}SF:${Yellow}$site_sf${NC}"
+str3=`echo $str1 | tr ',' '\n'`
+
+printf "${Purple}Please confirm (will start over if incorrect)! ${NC}\n"
+printf "$str2\n"
+printf "$str3\n"
+read -p "Is this the correct configuration [Y/n]? " answer
+if [ -z "$answer" ]; then answer="Y"; fi
+if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+	break	#/exit while true/
+fi
+done  #/while true/
+
+#printf "[$gClusterConf]\n [$gClusterRepl]\n";exit
 #gClusterConf="SITE:site1 LOC:DC01 IDX:2 SH:2 AFF:site1"
 return
 }	#get_multisite_inputs()
@@ -3660,7 +3689,7 @@ return
 #---------------------------------------------------------------------------------------------------------------
 config_sh_for_multisite() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
-sh="$1";  SITElocation="$2"; local site="$3" ; m_cm="$4" ; step_pos="$5"; mc="$6"; lm="$7"
+sh="$1";  SITElocation="$2"; local site="$3" ; m_cm="$4" ; step_pos="$5"; mc="$6"; lm="$7"; affi_site="$8"
 local start_time=$(date +%s);
 
 #clear_page_starting_from "$R_ROLL"
@@ -3680,6 +3709,17 @@ printf "${DarkGray}CMD:[$CMD]${NC}\n" >&4
 logline "$CMD" "$sh"
 printf "${Yellow}${ARROW_EMOJI}${NC}Initializing shcluster-config " >&3 ;display_output "$OUT" "clustering has been initialized" "3"
 #-------member config---
+#------ search affinity config-----
+#edit server.conf
+#[general]
+#site = site0	#disable
+#remote site = 	#enabled *default
+#
+#[clustering]
+#multisite = true
+#...
+#
+#------ search affinity config-----
 
 #splunk edit cluster-config -mode searchhead -master_uri https://10.0.x.3:8089 -site site2 -secret idxcluster
 
@@ -5832,7 +5872,6 @@ fi
 #normal screen size 127x28
 if [ "$COLUMNS" -lt "127" ] || [ "$LINES" -lt "28" ]; then
 	size_warning_msg="${LightRed}For best result please expand your terminal to FULL screen [currently:$COLUMNS"x"$LINES]${NC}"
-	osx_say "Your terminal settings is not ideal. Please expand it to full mode. Please set colors to dark background"
 else
 	size_warning_msg=""
 fi
@@ -5886,7 +5925,10 @@ for (( i=x; i <= (x + $num_of_msgs + 1); i++)); do
 		printf "$msg"
 
 done
-
+#moved to end so it doesnt slow down welcome screen
+if [ -n "$size_warning_msg" ]; then
+	osx_say "Warning, terminal settings is not ideal. Please expand it to full mode. Please set colors to dark background"
+fi
 
 # Just wait for user input...
 read -p "" readKey
