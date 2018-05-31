@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#	__VERSION: 5.1-1 $
-#	__DATE: Wed May 30,2018 - 04:16:54PM -0600 $
+#	__VERSION: 5.1-3 $
+#	__DATE: Wed May 30,2018 - 04:16:55PM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -172,6 +172,7 @@ FLIPFLOP=0							#used to toggle color value in logline().Needs to be global
 LOCAL_SPLUNKD="/opt/splunk/bin/splunk"  #don't run local splunkd instance on docker-host
 LOW_MEM_THRESHOLD=6.0				#threshold of recommended free system memory in GB
 DOCKER_MIN_VER=1.13.1				#min recommended docker version
+MACSPEAK_VOL="7"					#default volume for MacOS speak feature
 #--------------------------------------------------------------------
 #--Progress status. tput (R,0) locations ---------
 R_HEADER="0"
@@ -275,6 +276,9 @@ OPTICALDISK_EMOJI="\xf0\x9f\x92\xbf"
 YELLOWBOOK_EMOJI="\xf0\x9f\x93\x92"
 YELLOW_LEFTHAND_EMOJI="\xf0\x9f\x91\x89"
 TIMER_EMOJI="\xe2\x8f\xb0"
+RED_BALL_EMOJI="\xf0\x9f\x94\xb4"
+BELL_EMOJI="\xf0\x9f\x94\x94"
+NO_BELL_EMOJI="\xf0\x9f\x94\x95"
 
 
 #---------------------------------------
@@ -1198,9 +1202,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 5.1-1 $" | \
+GIT_VER=`echo "__VERSION: 5.1-3 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Wed May 30,2018 - 04:16:54PM -0600 $" | \
+GIT_DATE=`echo "__DATE: Wed May 30,2018 - 04:16:55PM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
@@ -1257,13 +1261,13 @@ loglevel="${get_num}"
 
 #-------
 
-for v in $(seq 3 $loglevel); do
-    (( "$v" <= "$maxloglevel" )) && eval exec "$v>&2"  #Don't change anything higher than the maximum loglevel allowed.
+for l in $(seq 3 $loglevel); do
+    (( "$l" <= "$maxloglevel" )) && eval exec "$l>&2"  #Don't change anything higher than the maximum loglevel allowed.
 done
 
 #From the loglevel level one higher than requested, through the maximum;
-for v in $(seq $(( loglevel+1 )) $maxloglevel ); do
-    (( "$v" > "2" )) && eval exec "$v>/dev/null" #Redirect these to bit bucket, provided that they don't match stdout and stderr.
+for l in $(seq $(( loglevel+1 )) $maxloglevel ); do
+    (( "$l" > "2" )) && eval exec "$l>/dev/null" #Redirect these to bit bucket, provided that they don't match stdout and stderr.
 done
 return 0
 }	#end change_loglevel()
@@ -2617,16 +2621,26 @@ screen_footer() {
 tput sc
 #screen_footer "$Containers" "$Running" "$Paused" "$Stopped" "$Images" "${loadavg}" "$freedisk"
 Containers="$1"; Running="$2"; Paused="$3"; Stopped="$4"; Images="$5"; c_loadavg="$6"; disk="$7"
+if	[ "$(uname)" == "Linux" ]; then
+	speak_str=""
+
+elif [ "$set_macspeak" == "true" ]; then
+	speak="$BELL_EMOJI"
+	speak_str="  SPEAK[${BELL_EMOJI}${NC}${FOOTER_COLOR1}]             "
+
+else
+	speak_str="  SPEAK[${NO_BELL_EMOJI}${NC}${FOOTER_COLOR1}]          "
+fi
 
 str="\
 ${FOOTER_COLOR1} Docker:[Containers: ${FOOTER_COLOR2}$Containers${NC}\
 ${FOOTER_COLOR1} Running: ${FOOTER_COLOR2}$Running${NC}\
 ${FOOTER_COLOR1} Paused: ${FOOTER_COLOR2}$Paused${NC}\
 ${FOOTER_COLOR1} Stopped: ${FOOTER_COLOR2}$Stopped${NC}\
-${FOOTER_COLOR1} Images: ${FOOTER_COLOR2}$Images]${NC}\
+${FOOTER_COLOR1} Images: ${FOOTER_COLOR2}$Images${FOOTER_COLOR1}]${NC}\
 ${FOOTER_COLOR1} Load:[$c_loadavg${NC}${FOOTER_COLOR1}]\
-${FOOTER_COLOR1} FreeDisk:[${FOOTER_COLOR2}$disk\
-${FOOTER_COLOR1}]"
+${FOOTER_COLOR1} FreeDisk:[${FOOTER_COLOR2}$disk${NC}${FOOTER_COLOR1}]\
+${FOOTER_COLOR1} $speak_str"
 
 #rows and cols are also detected in redraw function with a trap
 ROWS=$(tput lines)
@@ -3984,6 +3998,7 @@ sh_list=`docker ps -a --filter name="$SHname" --format "{{.Names}}"|sort| tr '\n
 lm_list=`docker ps -a --filter name="LM|lm" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
 cm_list=`docker ps -a --filter name="CM|cm" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
 
+osx_say "Starting stand alone SHC build, 6 steps"
 #initialize status sections
 clear_page_starting_from "$R_BUILD_SITE"
 print_step_bar_from "$R_BUILD_SITE" "${R_BUILD_COLOR}  " "BUILDING INDEPENDENT STAND-ALONE SHC [$SHlabel]"
@@ -4014,19 +4029,21 @@ make_mc_search_peer $mc $lm
 update_progress_bar "$R_STEP1" "$C_PROGRESS" "lm" "mc lm dep" "$(timer "$start_time")"
 #update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6" "$(timer "$START_TIME")"
 
-print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating Basic services [CM,LN,${Yellow}DEP${NC}]"; clear_page_starting_from "$R_ROLL"
+print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating Basic services [CM,LM,${Yellow}DEP${NC}]"; clear_page_starting_from "$R_ROLL"
 create_splunk_container "$DEPname" "$DEPcount" "no"; dep="$gLIST"
 make_lic_slave $lm $dep; make_mc_search_peer $mc $dep
 update_progress_bar "$R_STEP1" "$C_PROGRESS" "dep" "mc lm dep" "$(timer "$start_time")"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6" "$(timer "$START_TIME")"
 print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating Basic services [CM,LN,${NC}DEP]"
 #--Finished STEP#1 administrative hosts---
+osx_say "Finished step 1, creating basic services"
 
 #--Starting STEP#2 Creating SH hosts---
 print_step_bar_from "$R_STEP2" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2: SHC [creating $SHcount generic $SHname's hosts]"; clear_page_starting_from "$R_ROLL"
 create_splunk_container "$SHname" "$SHcount" "yes" "$R_STEP2"; members_list="$gLIST"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "2" "1 2 3 4 5 6" "$(timer "$START_TIME")"
 #--Finished STEP#2 Creating SH hosts---
+osx_say "Finished step 2, creating $SHCcount generic SHC hosts"
 
 
 ## from this point on all hosts should be created and ready. Next steps are SHCluster configurations ##########
@@ -4038,6 +4055,7 @@ clear_page_starting_from "$R_ROLL"
 configure_deployer "$dep" "$SHlabel" "$R_STEP3"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "3" "1 2 3 4 5 6" "$(timer "$START_TIME")"
 #--Finished STEP#1 Deployer configuration---
+osx_say "Finished step 3, configuring deployer"
 
 printf "${LightRed}DEBUG:=> ${Yellow}In $FUNCNAME(): ${Purple}After members_list loop> param2:[$2] members_list:[$members_list] sh_list:[$sh_list]${NC}\n" >&6
 
@@ -4046,6 +4064,7 @@ print_step_bar_from "$R_STEP4" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "S
 config_sh_for_singlesite "$members_list" "$cm" "$mc" "$lm" "$R_STEP4"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "4" "1 2 3 4 5 6" "$(timer "$START_TIME")"
 #--Finished STEP#2 Cluster members configuration---
+osx_say "Finished step 4, configuring SHC members"
 
 #--Starting STEP#3 Captain configuration---
 last_field=`echo "$members_list" | rev | cut -d' ' -f1 | rev`
@@ -4054,6 +4073,7 @@ clear_page_starting_from "$R_ROLL"
 configure_captain "$members_list" "$R_STEP5"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6" "$(timer "$START_TIME")"
 #--Finished STEP#3 Captain configuration---
+osx_say "Finished step 5, boot straping captin"
 
 #--Starting STEP#4 Check SHC status---
 print_step_bar_from "$R_STEP6" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#6: SHC [check status]"
@@ -4061,6 +4081,7 @@ clear_page_starting_from "$R_ROLL"
 check_shc_status "$members_list" "$R_STEP6"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6" "$(timer "$START_TIME")"
 #--Finished STEP#4 Check SHC status---
+osx_say "Finished step 6, checking SHC status"
 
 clear_page_starting_from "$R_ROLL"
 echo
@@ -4072,6 +4093,9 @@ printf "${ACTIVE_TXT_COLOR}Deployer\t\t:${NC} $dep\n"
 printf "${ACTIVE_TXT_COLOR}SHC Memebers\t:${NC} $members_list\n"
 echo
 docker_status
+total_time=$(timer "$START_TIME")
+osx_say "Stand alone SHC ready. Total time $total_time"
+
 
 return 0
 }	#create_standalone_shc()
@@ -4107,6 +4131,7 @@ cm_list=`docker ps -a --filter name="$CMname" --format "{{.Names}}"|sort| tr '\n
 lm_list=`docker ps -a --filter name="$LMname" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'` #global list
 idx_list=`docker ps -a --filter name="$IDXname" --format "{{.Names}}"|sort| tr '\n' ' '|sed 's/: /:/g'`
 
+osx_say "Starting stand alone IDXC build, 5 steps"
 #initialize status section
 clear_page_starting_from "$R_BUILD_SITE"
 print_step_bar_from "$R_BUILD_SITE" "${R_BUILD_COLOR}  " "BUILDING INDEPENDENT STAND-ALONE IDXC [$IDXlabel]"
@@ -4139,30 +4164,35 @@ make_lic_slave "$lm" "$cm"; make_mc_search_peer "$mc" "$cm"
 update_progress_bar "$R_STEP1" "$C_PROGRESS" "3" "1 2 3" "$(timer "$start_time")"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5" "$(timer "$START_TIME")"
 print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating basic services [MC,LM,${NC}CM]";clear_page_starting_from "$R_ROLL"
+osx_say "Finished step 1, creating basic services"
 
 #create the remaining IDXs
 print_step_bar_from "$R_STEP2" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#2: IDXC [creating $IDXcount generic $IDXname's hosts]"; clear_page_starting_from "$R_ROLL"
 create_splunk_container "$IDXname" "$IDXcount" "yes" "$R_STEP2" "$R_ROLL" ; members_list="$gLIST"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "2" "1 2 3 4 5" "$(timer "$START_TIME")"
 #--Finished STEP#1 administrative hosts---
+osx_say "Finished step 2, creating $IDXcount generic hosts"
 
 #--Starting STEP#3 ClusterMaster configuration---
 print_step_bar_from "$R_STEP3" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3: IDXC [configure cluster master $cm]"; clear_page_starting_from "$R_ROLL"
 config_cm_for_singlesite "$cm" "$IDXlabel" "$R_STEP3" "$RFcount" "$SFcount"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "3" "1 2 3 4 5" "$(timer "$START_TIME")"
 #--Finished STEP#3 ClusterMaster configuration---
+osx_say "Finished step 3, configuring cluster master"
 
 #--Starting STEP#4 IDXC nodes configuration---
 print_step_bar_from "$R_STEP4" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#4: IDXC configure members [$members_list]"
 config_idx_for_singlesite "$members_list" "$IDXlabel" "$lm" "$cm" "$R_STEP4" "$mc"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "4" "1 2 3 4 5" "$(timer "$START_TIME")"
 #--Finished STEP#4 IDXC nodes configuration---
+osx_say "Finished step 4, configuring IDXC members"
 
 #--Starting STEP#5 Verifying IDXC status---
 print_step_bar_from "$R_STEP5" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} "  "STEP#5: IDXC [check status]"; clear_page_starting_from "$R_ROLL"
 check_idxc_status "$cm" "$R_STEP5"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5" "$(timer "$START_TIME")"
 #--Finsihed STEP#5 Verifying IDXC status---
+osx_say "Finished step 5, IDXC status check"
 
 clear_page_starting_from "$R_ROLL"
 echo
@@ -4175,6 +4205,8 @@ printf "${ACTIVE_TXT_COLOR}IDXC Memebers\t:${NC} $members_list\n"
 printf "${ACTIVE_TXT_COLOR}R-FACTOR/S-FACTOR\t:${NC} $RFcount/$SFcount\n"
 echo
 docker_status
+total_time=$(timer "$START_TIME")
+osx_say "Stand alone IDXC ready. Total time $total_time"
 
 return 0
 }	#end create_standalone_idxc()
@@ -4225,6 +4257,8 @@ let R_LINE=$x+2; let R_ROLL=$x+3
 clear_page_starting_from "$R_ROLL"
 idx_seq=$(seq 1 $STD_IDXC_COUNT)
 sh_seq=$(seq 1 $STD_IDXC_COUNT)
+
+osx_say "Starting single site cluster build, 10 steps"
 #initialize status section
 #clear_page_starting_from "$R_ROLL"
 clear_page_starting_from "$R_BUILD_SITE"
@@ -4272,6 +4306,7 @@ update_progress_bar "$R_STEP1" "$C_PROGRESS" "dep" "mc lm cm dep" "$(timer "$sta
 print_step_bar_from "$R_STEP1" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#1: Creating basic services [MC,LM,CM,${NC}DEP]"
 
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6 8 9 10" "$(timer "$START_TIME")"
+osx_say "Finished step 1, creating basic services"
 
 #--Starting Building IDXC----------------------------------------------
 local start_time=$(date +%s);	#reset for each cluster
@@ -4279,21 +4314,25 @@ print_step_bar_from "$R_STEP2" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "S
 clear_page_starting_from "$R_ROLL"
 create_splunk_container "$IDXname" "$IDXcount" "yes" "$R_STEP2"; idxc_members_list="$gLIST"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "2" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
+osx_say "Finished step 2, creating $IDXcount generic hosts"
 
 print_step_bar_from "$R_STEP3" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3: IDXC [configure CM]"
 clear_page_starting_from "$R_ROLL"
 config_cm_for_singlesite "$cm" "$label" "$R_STEP3" "$RFcount" "$RFcount"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "3" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
+osx_say "Finished step 3, configuring cluster master"
 
 print_step_bar_from "$R_STEP4" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#4: IDXC [configure members]"
 config_idx_for_singlesite "$idxc_members_list" "$label" "$lm" "$cm" "$R_STEP4" "$mc"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "4" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
+osx_say "Finished step 4, configuring IDXC members"
 
 #--Verifying IDXC status---
 print_step_bar_from "$R_STEP5" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#5: IDXC [check status]"
 clear_page_starting_from "$R_ROLL"
 check_idxc_status "$cm" "$R_STEP5"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
+osx_say "Finished step 5, IDXC status check"
 #--Finished Building IDXC------------------------------------------------------
 
 #--Starting Building SHC-------------------------------------------------------
@@ -4302,27 +4341,31 @@ print_step_bar_from "$R_STEP6" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "S
 clear_page_starting_from "$R_ROLL"
 create_splunk_container "$SHname" "$SHcount" "yes" "$R_STEP6"; shc_members_list="$gLIST"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
+osx_say "Finished step 6, creating $SHcount generic hosts"
 
 print_step_bar_from "$R_STEP7" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#7: SHC [configure deployer]"
 clear_page_starting_from "$R_ROLL"
 configure_deployer "$dep" "$label" "$R_STEP7"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
+osx_say "Finished step 7, deployer configuration"
 
 print_step_bar_from "$R_STEP8" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#8: SHC [configure members]"
 config_sh_for_singlesite "$shc_members_list" "$cm" "$mc" "$lm" "$R_STEP8"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "8" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
+osx_say "Finished step 4, configuring SHC members"
 
 print_step_bar_from "$R_STEP9" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#9: SHC [configure captain]"
 clear_page_starting_from "$R_ROLL"
 configure_captain "$shc_members_list" "$R_STEP9"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "9" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
+osx_say "Finished step 9, captin configuration"
 
 print_step_bar_from "$R_STEP10" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#10: SHC [check status]"
 clear_page_starting_from "$R_ROLL"
 check_shc_status "$shc_members_list" "$R_STEP10"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "10" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
+osx_say "Finished step 10, SHC status check"
 #--Finished Building SHC----------------------------------------------------------------
-
 
 clear_page_starting_from "$R_ROLL"
 printf "${LightGreen}Single-Site Cluster Build Completed!\n"
@@ -4337,6 +4380,8 @@ printf "${ACTIVE_TXT_COLOR}IDXC Memebers\t:${NC} $idxc_members_list\n"
 printf "${ACTIVE_TXT_COLOR}R-FACTOR/S-FACTOR\t:${NC} $RFcount/$SFcount\n"
 docker_status
 
+total_time=$(timer "$START_TIME")
+osx_say "single site cluster ready. Total time $total_time"
 
 return 0
 }	#build_singlesite_cluster()
@@ -4457,6 +4502,7 @@ loc_list_clean=`echo $loc_list| sed 's/_//g'` #Remove "_" if found. Used for tit
 primary_loc=`echo $loc_list|awk '{print $1}'`		#where basic services CM,LM resides
 primary_loc_clean=`echo $primary_loc| sed 's/_//g'` #Remove "_" if found. Used for title display only
 
+osx_say "Starting $loc_list_len site cluster build, 9 steps"
 #Initialize status section. First time!
 print_step_bar_from "$R_BUILD_SITE" "${R_BUILD_COLOR}  " "BUILDING $loc_list_len-SITE CLUSTER [$loc_list_clean]"; update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "" "1 2 3 4 5 6 7 8 9"
 print_step_bar_from "$R_STEP1" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Basic services [$primary_loc_clean] [MC,LM,CM]"; update_progress_bar "$R_STEP1" "$C_PROGRESS" "" "1"
@@ -4506,6 +4552,7 @@ config_cm_for_multisite "$m_cm" "$sites_list" "$R_STEP1" "$site_rf" "$site_sf"
 update_progress_bar "$R_STEP1" "$C_PROGRESS" "m_cm" "m_mc m_lm m_cm" "$(timer "$start_time")"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 #-----Building basic services in primary site only (exclude DEP) -------------------------------
+osx_say "Finished step 1, creating basic services in site 1"
 
 enable_cm_maintenance_mode "$m_cm"
 
@@ -4554,6 +4601,7 @@ for loc in $loc_list; do
 	create_splunk_container "$IDXname" "$IDXcount" "yes" "$R_STEP2"; idxc_members_list="$gLIST"
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "2" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 	#--- create generic IDX----------------------------------------------
+	osx_say "Finished step 2, creating $IDXcount generic hosts in $site"
 
 	#--- configure idx's to members----------------------------------------------
 	m_cm_ip=`docker port $m_cm| awk '{print $3}'| cut -d":" -f1|head -1 `
@@ -4569,6 +4617,7 @@ for loc in $loc_list; do
 	#------------ idx loop ----
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "3" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 	#--- configure idx's to members----------------------------------------------
+	osx_say "Finished step 3, configuring IDXC members for multi site in $site"
 
 	#--- Check IDXC status ----------------------------------------------
 	print_step_bar_from "$R_STEP4" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#4: IDXC [check status]"
@@ -4577,6 +4626,7 @@ for loc in $loc_list; do
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "4" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 	sleep 3
 	#--- Check IDXC status ----------------------------------------------
+	osx_say "Finished step 4, IDXC status check in $site"
 
 	#-- Building generic SHC-------------------------------------------------------
 	local start_time=$(date +%s);
@@ -4585,6 +4635,7 @@ for loc in $loc_list; do
 	create_splunk_container "$SHname" "$SHcount" "yes" "$R_STEP5"; shc_members_list="$gLIST"
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 	#-- Building generic SHC-------------------------------------------------------
+	osx_say "Finished step 5, creating $SHcount generic hosts in $site"
 
 	#-- configure deployer-------------------------------------------------------
 	print_step_bar_from "$R_STEP6" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#6: SHC [configure deployer]"
@@ -4594,6 +4645,7 @@ for loc in $loc_list; do
 	configure_deployer "$dep" "$LABELname" "$R_STEP6"
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 	#--Starting STEP# configure deployer-------------------------------------------------------
+	osx_say "Finished step 6, configuring deployer in $site"
 
 	#-- configure SHC members for multisite-------------------------------------------------------
 	#-- sh loop -----
@@ -4607,17 +4659,20 @@ for loc in $loc_list; do
 	#--- sh loop ------
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 	#-- configure SHC members for multisite-------------------------------------------------------
+	osx_say "Finished step 7, configuring SHC members for multi site in $site"
 
 	#--- Configure captain & check shc status ---------------------------------------
 	print_step_bar_from "$R_STEP8" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#8: SHC [bootstrap captain]"
 	clear_page_starting_from "$R_ROLL"
 	configure_captain "$shc_members_list" "$R_STEP8"
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "8" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
+	osx_say "Finished step 8, boot straping captin in $site"
 
 	print_step_bar_from "$R_STEP9" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#9: SHC [check status]"
 	clear_page_starting_from "$R_ROLL"
 	check_shc_status "$shc_members_list" "$R_STEP9"
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "9" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
+	osx_say "Finished step 9, SHC status check in $site"
 	sleep 3
 	#--- Configure captain & check shc status ---------------------------------------
 
@@ -4638,6 +4693,8 @@ printf "${ACTIVE_TXT_COLOR}Search Affinity\t:${NC}$sites_aff_list\n"
 printf "${ACTIVE_TXT_COLOR}IDXC Memebers\t:${NC}$sites_idx_list\n"
 printf "${ACTIVE_TXT_COLOR}RF/SF Factors\t:${NC}$factors_conf\n"
 docker_status
+total_time=$(timer "$START_TIME")
+osx_say "Multi site cluster ready. Total time $total_time"
 
 return 0
 }	#build_multisite_cluster()
@@ -4701,7 +4758,7 @@ elif [ "$os" == "Linux" ]; then
         cores=`$GREP -c ^processor /proc/cpuinfo`
 fi
 
-printf "${White}${DOLPHIN1_EMOJI}${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}${COMPUTER_EMOJI}${NC} [kern:$kern_ver cores:$cores] ${White}${OPTICALDISK_EMOJI}${NC}[$DEFAULT_SPLUNK_IMAGE] ${White}${YELLOWBOOK_EMOJI}LogLevel:${NC}[$loglevel] ${White}${TIMER_EMOJI}Timer:[$set_timer]${NC}\n"
+printf "${White}${DOLPHIN1_EMOJI}${NC}[ver:$dockerinfo_ver cpu:$dockerinfo_cpu mem:${dockerinfo_mem}GB] ${White}${COMPUTER_EMOJI}${NC} [$kern_ver cores:$cores] ${White}${OPTICALDISK_EMOJI}${NC}[$DEFAULT_SPLUNK_IMAGE] ${White}${YELLOWBOOK_EMOJI}LogLevel:${NC}[$loglevel] ${White}${TIMER_EMOJI}Timer:[$set_timer]${NC}\n"
 
 return 0
 }	#end display_system_banner()
@@ -5593,6 +5650,24 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 
 ###### MISC #####
+#--------------------------------------------------------
+function osx_say(){
+#expermintal and works on MacOS only.
+string="$1"
+
+if [ -z "$macspeak_vol" ]; then
+		macspeak_vol="$MACSPEAK_VOL"
+fi
+
+#printf "\033[1;32m$string\033[0m\n"
+if [ "$set_macspeak" == "true" ] && [ "$(uname)" == "Darwin" ]; then
+    say "[[volm 0.$((RANDOM%$macspeak_vol+1))]] $string"
+else
+	return
+fi
+
+}	#end function osx_say()
+#--------------------------------------------------------
 
 #---------------------------------------------------------------------------------------------------------------
 delete_all_volumes() {
@@ -5664,7 +5739,10 @@ return 0
 #---------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------
 check_for_upgrade() {
-#Checking online version...
+
+tput cup $(($LINES-5)) $(( ( $COLUMNS - 20 )  / 2 ))
+printf "Checking online version...\n"
+
 rm -fr $TMP_DIR/online_ver.tmp		#start fresh
 wget -qO $TMP_DIR/online_ver.tmp "https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/VERSION.TXT"
 online_ver=`cat $TMP_DIR/online_ver.tmp`
@@ -5678,7 +5756,11 @@ if [ "$n1" -gt "$n2" ]; then
     upgrade="Y"
 else
     upgrade="N"
+	tput cup $(($LINES-5)) $(( ( $COLUMNS - 20 )  / 2 ))
+	printf "                             \n"
+
 fi
+#upgrade=Y
 #echo "$upgrade"
 if [ "$upgrade" == "Y" ] && [ -n "$GIT_VER" ] && [ -n "$online_ver" ]; then
 	#tput cup $LINES $(( ( $COLUMNS - ${#MESSAGE[10]} )  / 2 ))
@@ -5686,16 +5768,20 @@ if [ "$upgrade" == "Y" ] && [ -n "$GIT_VER" ] && [ -n "$online_ver" ]; then
 #	tput cup $(($LINES - 3 )) 0
 #	tput el          # clear to the end of the line
 
+	tput cup $(($LINES-5)) $(( ( $COLUMNS - 40 )  / 2 ))
 	printf "Newer version [$colored_online_ver\033[0m] is available "
 	read -p "Upgrade? [Y/n] " answer
 	if [ -z "$answer" ] || [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
 	#	tput cup $LINES 0
+		tput cup $(($LINES-5)) $(( ( $COLUMNS - 40 )  / 2 ))
 		printf "Downloading [$PWD/${0##*/}] >> ${NC}"
+		tput cup $(($LINES-5)) $(( ( $COLUMNS - 70 )  / 2 ))
 		progress_bar_pkg_download "curl -O https://raw.githubusercontent.com/mhassan2/splunk-n-box/master/${0##*/}"
+		sleep 2
 		#curl --max-time 5 -O https://raw.github.com/mhassan2/splunk-n-box/master/${0##*/}
 		chmod 755  ${0##*/}   	#set x permission on splunknbox.sh
 	#	./$(basename $0) && exit  # restart the script
-		echo
+		tput cup $(($LINES-4)) $(( ( $COLUMNS - 40 )  / 2 ))
 		printf "${Yellow}Please restart the script!${NC}                          \n\n"
 		exit
 
@@ -5732,7 +5818,8 @@ if [ -z "$GIT_VER" ]; then
 fi
 #normal screen size 127x28
 if [ "$COLUMNS" -lt "127" ] || [ "$LINES" -lt "28" ]; then
-	size_warning_msg="${LightBlue}For best result please expand your terminal to FULL screen [currently:$COLUMNS"x"$LINES]${NC}"
+	size_warning_msg="${LightRed}For best result please expand your terminal to FULL screen [currently:$COLUMNS"x"$LINES]${NC}"
+	osx_say "Your terminal settings is not ideal. Please expand it to full mode. Please set colors to dark background"
 else
 	size_warning_msg=""
 fi
@@ -5836,22 +5923,26 @@ output_file=""
 checks_on_start="true"
 del_on_start="false"
 opt=""
+macspeak_vol="0"; set_macspeak="false"
 set_timer="$DEFAULT_TIMER"
-while getopts "h?v:dsg:c:t:f:" opt; do
+while getopts "h?l:dsg:c:t:f:a :" opt; do
     case "$opt" in
-    v)  loglevel=$OPTARG;;
+    l)  loglevel="$OPTARG";;
    	s)  checks_on_start="false";;
    	d)  del_on_start="true";;
-    g)  graphics=$OPTARG;;
-    c)  cluster=$OPTARG;;
-    t)  set_timer=$OPTARG;;
-	f)  output_file=$OPTARG;;
+    g)  graphics="$OPTARG";;
+    c)  cluster="$OPTARG";;
+    t)  set_timer="$OPTARG";;
+    a)  set_macspeak="true"; macspeak_vol="$OPTARG";;
+
+	f)  output_file="$OPTARG";;
     h)
 		printf "Usage:\n"
 		printf "\t-s \t\tSkip startup checks if all requirements are satisfied.${LightRed}**Use with caution***${NC}\n"
 		printf "\t-d \t\tDelete all containers on startup.${LightRed}**Use with caution***${NC}\n"
-		printf "\t-v [3|4|5|6]\tlog level (default $DEFAULT_LOG_LEVEL)\n"
+		printf "\t-l [3|4|5|6]\tlog level (default $DEFAULT_LOG_LEVEL)\n"
 		printf "\t-t [sec]\tpause time after each container creation (default 15 or 30 sec)\n"
+		printf "\t-a [vol]\tAnnounce progress on MacOS for cluster build\n"
         printf "\t-f [filename]\tSet log file name\n"
         exit 0
         ;;
@@ -5865,13 +5956,13 @@ shift $((OPTIND-1))
 
 #Start counting at 2 so that any increase to this will result in a minimum of file descriptor 3.  You should leave this alone.
 #Start counting from 3 since 1 and 2 are standards (stdout/stderr).
-for v in $(seq 3 $loglevel); do
-    (( "$v" <= "$maxloglevel" )) && eval exec "$v>&2"  #Don't change anything higher than the maximum loglevel allowed.
+for l in $(seq 3 $loglevel); do
+    (( "$l" <= "$maxloglevel" )) && eval exec "$l>&2"  #Don't change anything higher than the maximum loglevel allowed.
 done
 
 #From the loglevel level one higher than requested, through the maximum;
-for v in $(seq $(( loglevel+1 )) $maxloglevel ); do
-    (( "$v" > "2" )) && eval exec "$v>/dev/null" #Redirect these to bitbucket, provided that they don't match stdout and stderr.
+for l in $(seq $(( loglevel+1 )) $maxloglevel ); do
+    (( "$l" > "2" )) && eval exec "$l>/dev/null" #Redirect these to bitbucket, provided that they don't match stdout and stderr.
 done
 #DEBUG
 #printf "%s\n" "This message is seen at verbosity level 3 and above." >&3
