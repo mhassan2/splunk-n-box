@@ -1,7 +1,7 @@
 #!/bin/bash
 #################################################################################
-#	__VERSION: 5.1-3 $
-#	__DATE: Wed May 30,2018 - 04:16:55PM -0600 $
+#	__VERSION: 5.1-8 $
+#	__DATE: Thu May 31,2018 - 03:03:25AM -0600 $
 #	__AUTHOR: mhassan2 <mhassan@splunk.com> $
 #################################################################################
 
@@ -1202,9 +1202,9 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 
 #Lines below  must be broked with "\" .Otherwise git clean/smudge scripts will
 #screw up things if the $ sign is not the last char
-GIT_VER=`echo "__VERSION: 5.1-3 $" | \
+GIT_VER=`echo "__VERSION: 5.1-8 $" | \
 		$GREP -Po "\d+.\d+-\d+"`
-GIT_DATE=`echo "__DATE: Wed May 30,2018 - 04:16:55PM -0600 $" | \
+GIT_DATE=`echo "__DATE: Thu May 31,2018 - 03:03:25AM -0600 $" | \
 		$GREP -Po "\w+\s\w+\s\d{2},\d{4}\s-\s\d{2}:\d{2}:\d{2}(AM|PM)\s-\d{4}" `
 GIT_AUTHOR=`echo "__AUTHOR: mhassan2 <mhassan@splunk.com> $" | \
 		$GREP -Po "\w+\s\<\w+\@\w+.\w+\>"`
@@ -3201,7 +3201,7 @@ do
 					;;
                 3 ) build_singlesite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL SNAME:$DEF_SINGLE_SITE RF:$R_FACTOR SF:$S_FACTOR"
    					;;
-				4)	build_multisite_cluster "$DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "LOC:STL SITE:site1 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT DEP:1 AFF:site1, LOC:ATL SITE:site2 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT DEP:1 AFF:site2" "RF:origin:2,total:3 SF:origin:1,total:2"
+				4)	build_multisite_cluster "$DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "LOC:STL SITE:site1 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT DEP:1 AFF:site1 LABEL:$DEFAULT_IDXC_LABEL, LOC:ATL SITE:site2 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT DEP:1 AFF:site2" "RF:origin:2,total:3 SF:origin:1,total:2"
 #cluster_conf2="LOC:DC01 SITE:site1 IDX:4 SH:0 DEP:1 AFF:site1,LOC:DC02 SITE:site2 IDX:2 SH:1 AFF:site0"
 					;;
 
@@ -3216,7 +3216,7 @@ do
                 	build_singlesite_cluster "$IDX_BASE:$IDXcount $SH_BASE:$SHcount $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$label SNAME:$SITElocation RF:$gRF SF:$gSF"
 		    		;;
                 8 ) get_multisite_inputs
-                	build_multisite_cluster "$DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$label" "$gClusterConf" "$gClusterRepl"
+                	build_multisite_cluster "$DEP_BASE:1 MC:1 CM:1 LM:1" "$gClusterConf" "$gClusterRepl"
 
 					;;
 	        	b|B) return 0;
@@ -3550,33 +3550,58 @@ echo
 c=1
 for i in ${availabel_sites} ; do
     printf "${Purple}Site$c [Location: $i]: ${NC}\n"
+
+	#----------------
 	read -p $'site\033[1;33m'"$c"$'\033[0m-IDXC: How many \033[1;34mindexers\033[0m in this location. Default ['"$STD_IDXC_COUNT]? "   idxcount
 	if [ -z "$idxcount" ]; then idxcount="$STD_IDXC_COUNT"; fi
+	#----------------
 
-	read -p $'site\033[1;33m'"$c"$'\033[0m-SHC: Build SHC for this location [Y/n]? '   shc_pref
-	if [ -z "$shc_pref" ]; then
+	#----------------
+	read -p $'site\033[1;33m'"$c"$'\033[0m-SHC: Build SHC for this location [Y/n]? '  answer
+   	if [ "$answer" == "N" ] || [ "$answer" == "n" ]; then
+		shc_pref="no"
+	else
+		shc_pref="yes"
+	fi
+	#----------------
+
+	#----------------
+	if [ "$shc_pref" == "yes" ]; then
 		read -p $'site\033[1;33m'"$c"$'\033[0m-SHC: How many \033[1;34msearch heads\033[0m in this location. Default ['"$STD_SHC_COUNT]? "   shcount
 		if [ -z "$shcount" ]; then shcount="$STD_SHC_COUNT"; fi
-		read -p $'site\033[1;33m'"$c"$'\033[0m-SHC: Enable \033[1;34msearch affinity\033[0m in this location [y/N]? '   affinity
-		if [ -z "$affinity" ]; then
+		dep_count="1"
+
+		#.................
+		read -p $'site\033[1;33m'"$c"$'\033[0m-SHC: Enable \033[1;34msearch affinity\033[0m in this location [y/N]? '   answer
+   		if [ "$answer" == "Y" ] || [ "$answer" == "y" ]; then
+			affinity="yes"
+		else
+			affinity="no"
+		fi
+		#.................
+		#.................
+		if [ "$affinity" == "no" ]; then	#answer is No
 			affinity="site$c"
 			printf "${Cyan}This SHC will search ${NC}site${Yellow}$c${Cyan} only${NC}\n"
 		else
 			affinity="site0"
-			printf "${Cyan}This SHC will search all sites${NC}\n"
+			printf "${Cyan}This SHC will search All sites (affinity=site0)${NC}\n"
 		fi
-	else #/$shc_pref=n/
-		shcount="0"; affinity="site$c"
-		printf "${BrownOrange}This location will not have SHC${NC}\n"
-	fi
+		#.................
+	else #/$shc_pref="no"/
+		shcount="0"; affinity="0"; dep_count="0"
+		printf "${BrownOrange}This location will NOT have SHC${NC}\n"
 
-	#must have separator is comma at the end
-	gClusterConf="$gClusterConf""SITE:SITE$c LOC:$i IDX:$idxcount SH:$shcount DEP:0 AFF:$affinity,"
+	fi 	#/$shc_pref=n/
+	#----------------
+
+	#must have comma (separator) at the end
+	gClusterConf="$gClusterConf""SITE:site$c LOC:$i IDX:$idxcount SH:$shcount DEP:$dep_count AFF:$affinity LABEL:$cluster_label,"
 	let c++
 	echo
 done
 gClusterRepl="RF:$site_rf SF:$site_sf"
-#echo "[$gClusterConf] [RF:$gClusterRepl]"
+#echo "[$gClusterConf] [$gClusterRepl]";exit
 #gClusterConf="SITE:site1 LOC:DC01 IDX:2 SH:2 AFF:site1"
 return
 }	#get_multisite_inputs()
@@ -4171,7 +4196,7 @@ print_step_bar_from "$R_STEP2" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "S
 create_splunk_container "$IDXname" "$IDXcount" "yes" "$R_STEP2" "$R_ROLL" ; members_list="$gLIST"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "2" "1 2 3 4 5" "$(timer "$START_TIME")"
 #--Finished STEP#1 administrative hosts---
-osx_say "Finished step 2, creating $IDXcount generic hosts"
+osx_say "Finished step 2, creating $IDXcount IDXC generic hosts"
 
 #--Starting STEP#3 ClusterMaster configuration---
 print_step_bar_from "$R_STEP3" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3: IDXC [configure cluster master $cm]"; clear_page_starting_from "$R_ROLL"
@@ -4314,7 +4339,7 @@ print_step_bar_from "$R_STEP2" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "S
 clear_page_starting_from "$R_ROLL"
 create_splunk_container "$IDXname" "$IDXcount" "yes" "$R_STEP2"; idxc_members_list="$gLIST"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "2" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
-osx_say "Finished step 2, creating $IDXcount generic hosts"
+osx_say "Finished step 2, creating $IDXcount IDXC generic hosts"
 
 print_step_bar_from "$R_STEP3" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#3: IDXC [configure CM]"
 clear_page_starting_from "$R_ROLL"
@@ -4341,7 +4366,7 @@ print_step_bar_from "$R_STEP6" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "S
 clear_page_starting_from "$R_ROLL"
 create_splunk_container "$SHname" "$SHcount" "yes" "$R_STEP6"; shc_members_list="$gLIST"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6 7 8 9 10" "$(timer "$START_TIME")"
-osx_say "Finished step 6, creating $SHcount generic hosts"
+osx_say "Finished step 6, creating $SHcount SHC generic hosts"
 
 print_step_bar_from "$R_STEP7" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#7: SHC [configure deployer]"
 clear_page_starting_from "$R_ROLL"
@@ -4422,7 +4447,7 @@ CMcount=`echo $cluster_conf1 | $GREP -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space
 clear_page_starting_from "$R_ROLL"
 
 #-----extract these values from $2 ---------------------------------------------
-#cluster_conf2="LOC:DC01 SITE:site1 IDX:4 SH:0 DEP:1 AFF:site1,LOC:DC02 SITE:site2 IDX:2 SH:1 AFF:site0"
+#cluster_conf2="LOC:DC01 SITE:site1 IDX:4 SH:0 DEP:1 AFF:site1 LABEL:buttercup,LOC:DC02 SITE:site2 IDX:2 SH:1 AFF:site0"
 defIFS="$(printf " \t\nx")"; defIFS="${defIFS%x}"	#save default IFS
 IFS=","; read -a fields <<<"$cluster_conf2"			#convert to array
 IFS="$defIFS"		#**IF NOT RESTORED; WIL LIMPACT ENTIRE CODE***
@@ -4557,7 +4582,6 @@ for loc in $loc_list; do
 	IDXcount=`echo ${fields[$a_item]} | $GREP -Po '(\s*\w*-*IDX):\K(\d+)'| tr -d '[[:space:]]' `
 	SHname=`echo ${fields[$a_item]}   | $GREP -Po '(\s*\w*-*SH)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
 	SHcount=`echo ${fields[$a_item]}  | $GREP -Po '(\s*\w*-*SH):\K(\d+)'| tr -d '[[:space:]]' `
-	LABELname=`echo ${fields[$a_item]}| $GREP -Po '(\s*\w*-*LABEL):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
 	DEPname=`echo ${fields[$a_item]}  | $GREP -Po '(\s*\w*-*DEP)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
 	DEPcount=`echo ${fields[$a_item]} | $GREP -Po '(\s*\w*-*DEP):\K(\d+)'| tr -d '[[:space:]]' `
 	AFFsite=`echo ${fields[$a_item]}  | $GREP -Po '(\s*\w*-*AFF):\K(\w+)'| tr -d '[[:space:]]'| tr '[A-Z]' '[a-z]'`
@@ -4565,8 +4589,7 @@ for loc in $loc_list; do
 	SITEname=`echo ${fields[$a_item]} | $GREP -Po '(\s*\w*-*SITE):\K(\w+)'| tr -d '[[:space:]]'| tr '[A-Z]' '[a-z]'`
 
 	#convert basenames to include current site location
-	IDXname="$loc""$IDXname"; SHname="$loc""$SHname";
-	DEPname="$loc""$DEPname"; LABELname="$loc""$LABELname"
+	IDXname="$loc""$IDXname"; SHname="$loc""$SHname";DEPname="$loc""$DEPname"
 	highlight_site=$(color_selected "$loc" "$loc_list_clean")
 
 	#-- initialize again starting (must reset view for each site in the loop) --- Second time!
@@ -4592,7 +4615,7 @@ for loc in $loc_list; do
 	create_splunk_container "$IDXname" "$IDXcount" "yes" "$R_STEP2"; idxc_members_list="$gLIST"
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "2" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 	#--- create generic IDX----------------------------------------------
-	osx_say "Finished step 2, $site, creating $IDXcount generic hosts"
+	osx_say "Finished step 2, $site, creating $IDXcount IDXC generic hosts"
 
 	#--- configure idx's to members----------------------------------------------
 	m_cm_ip=`docker port $m_cm| awk '{print $3}'| cut -d":" -f1|head -1 `
@@ -4626,7 +4649,7 @@ for loc in $loc_list; do
 	create_splunk_container "$SHname" "$SHcount" "yes" "$R_STEP5"; shc_members_list="$gLIST"
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "5" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 	#-- Building generic SHC-------------------------------------------------------
-	osx_say "Finished step 5, creating $SHcount generic hosts in $site"
+	osx_say "Finished step 5, $site, creating $SHcount SHC generic hosts"
 
 	#-- configure deployer-------------------------------------------------------
 	print_step_bar_from "$R_STEP6" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#6: SHC [configure deployer]"
@@ -5649,6 +5672,7 @@ string="$1"
 if [ -z "$macspeak_vol" ]; then
 		macspeak_vol="$MACSPEAK_VOL"
 fi
+osascript -e 'set volume output volume 70'
 
 #printf "\033[1;32m$string\033[0m\n"
 if [ "$set_macspeak" == "true" ] && [ "$(uname)" == "Darwin" ]; then
