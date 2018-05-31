@@ -301,6 +301,7 @@ v5.1 5/30/2018
 -fixed minor bug where DEP was not set correctly in s-2-s
 -modified few mac voice lines
 -fixed manual input for s2s issues
+-high load alert msg shows right about docker_status now
 
 
 
