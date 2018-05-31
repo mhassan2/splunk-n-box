@@ -2025,6 +2025,7 @@ fi
 basename=`echo $basename| tr '[a-z]' '[A-Z]'`
 
 if [ -z "$hostcount" ]; then
+		printf "${LightRed}Something went wrong! You should not be here...${NC}\n"
         read -p ">>>> How many hosts to create (default 1)? " count
 		if [ -z "$count" ]; then count=1;  fi  #user accepted default 1
 else
@@ -3201,7 +3202,7 @@ do
                 3 ) build_singlesite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL SNAME:$DEF_SINGLE_SITE RF:$R_FACTOR SF:$S_FACTOR"
    					;;
                 #4 ) build_multisite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "$DEF_MULTI_SITES"
-				4)	build_multisite_cluster "$DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "LOC:STL SITE:site1 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT AFF:site1, LOC:ATL SITE:site2 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT AFF:site2" "RF:origin:2,total:3 SF:origin:1,total:2"
+				4)	build_multisite_cluster "$DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "LOC:STL SITE:site1 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT DEP:1 AFF:site1, LOC:ATL SITE:site2 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT DEP:0 AFF:site2" "RF:origin:2,total:3 SF:origin:1,total:2"
 #cluster_conf2="LOC:DC01 SITE:site1 IDX:4 SH:0 DEP:1 AFF:site1,LOC:DC02 SITE:site2 IDX:2 SH:1 AFF:site0"
 					;;
 
@@ -4567,8 +4568,8 @@ for loc in $loc_list; do
 	SHname=`echo ${fields[$a_item]}   | $GREP -Po '(\s*\w*-*SH)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
 	SHcount=`echo ${fields[$a_item]}  | $GREP -Po '(\s*\w*-*SH):\K(\d+)'| tr -d '[[:space:]]' `
 	LABELname=`echo ${fields[$a_item]}| $GREP -Po '(\s*\w*-*LABEL):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
-	DEPname=`echo ${fields[$a_item]}| $GREP -Po '(\s*\w*-*DEP):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
-	DEPcount=`echo ${fields[$a_item]}  | $GREP -Po '(\s*\w*-*DEP):\K(\d+)'| tr -d '[[:space:]]' `
+	DEPname=`echo ${fields[$a_item]}  | $GREP -Po '(\s*\w*-*DEP):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
+	DEPcount=`echo ${fields[$a_item]} | $GREP -Po '(\s*\w*-*DEP):\K(\d+)'| tr -d '[[:space:]]' `
 	AFFsite=`echo ${fields[$a_item]}  | $GREP -Po '(\s*\w*-*AFF):\K(\w+)'| tr -d '[[:space:]]'| tr '[A-Z]' '[a-z]'`
 	SITEloc=`echo ${fields[$a_item]}  | $GREP -Po '(\s*\w*-*LOC):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
 	SITEname=`echo ${fields[$a_item]} | $GREP -Po '(\s*\w*-*SITE):\K(\w+)'| tr -d '[[:space:]]'| tr '[A-Z]' '[a-z]'`
@@ -4611,7 +4612,7 @@ for loc in $loc_list; do
 
 	#------------ idx loop for all idxs in the entire cluster (all sites) -----
 	for idx in $idxc_members_list; do
-		printf "idx[$idx] loc[$loc] site[$site] m_cm_ip[$m_cm_ip]\n"
+		#printf "idx[$idx] loc[$loc] site[$site] m_cm_ip[$m_cm_ip]\n"
 		config_idx_for_multisite "$idx" "$loc" "$site" "$m_cm_ip" "$R_STEP3" "$m_mc" "$m_lm"
 	done
 	#------------ idx loop ----
