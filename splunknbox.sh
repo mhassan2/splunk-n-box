@@ -3201,8 +3201,7 @@ do
 					;;
                 3 ) build_singlesite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL SNAME:$DEF_SINGLE_SITE RF:$R_FACTOR SF:$S_FACTOR"
    					;;
-                #4 ) build_multisite_cluster "$IDX_BASE:$STD_IDXC_COUNT $SH_BASE:$STD_SHC_COUNT $DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "$DEF_MULTI_SITES"
-				4)	build_multisite_cluster "$DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "LOC:STL SITE:site1 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT DEP:1 AFF:site1, LOC:ATL SITE:site2 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT DEP:0 AFF:site2" "RF:origin:2,total:3 SF:origin:1,total:2"
+				4)	build_multisite_cluster "$DEP_BASE:1 MC:1 CM:1 LM:1 LABEL:$DEFAULT_IDXC_LABEL" "LOC:STL SITE:site1 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT DEP:1 AFF:site1, LOC:ATL SITE:site2 IDX:$STD_IDXC_COUNT SH:$STD_SHC_COUNT DEP:1 AFF:site2" "RF:origin:2,total:3 SF:origin:1,total:2"
 #cluster_conf2="LOC:DC01 SITE:site1 IDX:4 SH:0 DEP:1 AFF:site1,LOC:DC02 SITE:site2 IDX:2 SH:1 AFF:site0"
 					;;
 
@@ -4404,6 +4403,7 @@ local START_TIME=$(date +%s);
 #echo "[$factors_conf]"
 site_rf=`echo $factors_conf| $GREP -Po '(\s*\w*-*RF):\K(\w.*)\s' | tr -d '[[:space:]]'`
 site_sf=`echo $factors_conf| $GREP -Po '(\s*\w*-*SF):\K(\w.*)' | tr -d '[[:space:]]'`
+sites_factors_list="${Green}RF:${Blue}$site_rf\t${Green}SF:${Blue}$site_sf${NC}"
 #echo "RF:[$site_rf]"; echo "SF:[$site_sf]"
 #------------------------------------------------------------------------------
 
@@ -4419,21 +4419,16 @@ CMcount=`echo $cluster_conf1 | $GREP -Po '(\s*\w*-*CM):\K(\d+)'| tr -d '[[:space
 #printf "cluster_conf2:[$cluster_conf2]"
 #printf "factors_conf:[$factors_conf]"
 
-#cluster_conf2="LOC:DC01 SITE:site1 IDX:4 SH:0 DEP:1 AFF:site1,LOC:DC02 SITE:site2 IDX:2 SH:1 AFF:site0"
-defIFS="$(printf " \t\nx")"; defIFS="${defIFS%x}"	#save default IFS
-IFS=","; read -a fields <<<"$cluster_conf2"
-IFS="$defIFS"		#**IF NOT RESTORED; WIL LIMPACT ENTIRE CODE***
-#for x in "${fields[@]}";do
-#    echo "> [$x]"
-#done
 clear_page_starting_from "$R_ROLL"
 
 #-----extract these values from $2 ---------------------------------------------
+#cluster_conf2="LOC:DC01 SITE:site1 IDX:4 SH:0 DEP:1 AFF:site1,LOC:DC02 SITE:site2 IDX:2 SH:1 AFF:site0"
+defIFS="$(printf " \t\nx")"; defIFS="${defIFS%x}"	#save default IFS
+IFS=","; read -a fields <<<"$cluster_conf2"			#convert to array
+IFS="$defIFS"		#**IF NOT RESTORED; WIL LIMPACT ENTIRE CODE***
+
 loc_list=""; sites_list=""
 sites_idx_list="";sites_sh_list="";sites_loc_list="";sites_aff_list="";sites_dep_list=""
-#for (( idx=${#fields[@]}-1 ; idx>=0 ; idx-- )) ; do
-#    echo "$idx:${fields[idx]}"
-#done
 for (( idx=0; idx <= (${#fields[@]}-1)  ; idx++ )) ; do
     #echo "$idx: ${fields[idx]}"
 	IDXname=`echo ${fields[idx]}  | $GREP -Po '(\s*\w*-*IDX)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
@@ -4466,6 +4461,7 @@ done
 #printf "sites_idx_list: [$sites_idx_list]\n"
 #printf "sites_sh_list:  [$sites_sh_list]\n"
 #printf "sites_aff_list: [$sites_aff_list]\n"
+#printf "sites_factors_list: [$sites_factors_list]\n"
 #exit
 
 #------------------------------------------------------------------------------
@@ -4492,18 +4488,13 @@ if [ "$loc_list_len" -eq "0" ]; then
 	printf "${LightRed} Error! Sites list is zero length${NC}\n"; exit
 fi
 
-#local a_item=0
-#for loc in $loc_list; do
-#	site=${sites_array[$a_item]}
-#	echo "site[$a_item]:$site"
-#done
 
 #Primary site is the 1st site
 loc_list_clean=`echo $loc_list| sed 's/_//g'` #Remove "_" if found. Used for title display only
 primary_loc=`echo $loc_list|awk '{print $1}'`		#where basic services CM,LM resides
 primary_loc_clean=`echo $primary_loc| sed 's/_//g'` #Remove "_" if found. Used for title display only
 
-osx_say "Starting $loc_list_len site cluster build, 9 steps"
+osx_say "Starting $loc_list_len site cluster build, locations are $loc_list_clean, 9 steps"
 #Initialize status section. First time!
 print_step_bar_from "$R_BUILD_SITE" "${R_BUILD_COLOR}  " "BUILDING $loc_list_len-SITE CLUSTER [$loc_list_clean]"; update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "" "1 2 3 4 5 6 7 8 9"
 print_step_bar_from "$R_STEP1" "${INACTIVE_TXT_COLOR}${DONT_ENTER_EMOJI} " "STEP#1: Basic services [$primary_loc_clean] [MC,LM,CM]"; update_progress_bar "$R_STEP1" "$C_PROGRESS" "" "1"
@@ -4553,13 +4544,12 @@ config_cm_for_multisite "$m_cm" "$sites_list" "$R_STEP1" "$site_rf" "$site_sf"
 update_progress_bar "$R_STEP1" "$C_PROGRESS" "m_cm" "m_mc m_lm m_cm" "$(timer "$start_time")"
 update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "1" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 #-----Building basic services in primary site only (exclude DEP) -------------------------------
-osx_say "Finished step 1, creating basic services in site 1"
+osx_say "Finished step 1, site1, creating basic services"	#site1 is  unknown at this point
 
 enable_cm_maintenance_mode "$m_cm"
 
 #===========Building all sites IDXC & SHC (include DEP per site) ========================
 
-#|******************************************************|
 local a_item=0					#always start at first element in the array
 for loc in $loc_list; do
 	site=${sites_array[$a_item]}
@@ -4568,7 +4558,7 @@ for loc in $loc_list; do
 	SHname=`echo ${fields[$a_item]}   | $GREP -Po '(\s*\w*-*SH)'| tr -d '[[:space:]]' | tr '[a-z]' '[A-Z]'`
 	SHcount=`echo ${fields[$a_item]}  | $GREP -Po '(\s*\w*-*SH):\K(\d+)'| tr -d '[[:space:]]' `
 	LABELname=`echo ${fields[$a_item]}| $GREP -Po '(\s*\w*-*LABEL):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
-	DEPname=`echo ${fields[$a_item]}  | $GREP -Po '(\s*\w*-*DEP):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
+	DEPname=`echo ${fields[$a_item]}  | $GREP -Po '(\s*\w*-*DEP)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
 	DEPcount=`echo ${fields[$a_item]} | $GREP -Po '(\s*\w*-*DEP):\K(\d+)'| tr -d '[[:space:]]' `
 	AFFsite=`echo ${fields[$a_item]}  | $GREP -Po '(\s*\w*-*AFF):\K(\w+)'| tr -d '[[:space:]]'| tr '[A-Z]' '[a-z]'`
 	SITEloc=`echo ${fields[$a_item]}  | $GREP -Po '(\s*\w*-*LOC):\K(\w+)'| tr -d '[[:space:]]'| tr '[a-z]' '[A-Z]'`
@@ -4602,7 +4592,7 @@ for loc in $loc_list; do
 	create_splunk_container "$IDXname" "$IDXcount" "yes" "$R_STEP2"; idxc_members_list="$gLIST"
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "2" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 	#--- create generic IDX----------------------------------------------
-	osx_say "Finished step 2, creating $IDXcount generic hosts in $site"
+	osx_say "Finished step 2, $site, creating $IDXcount generic hosts"
 
 	#--- configure idx's to members----------------------------------------------
 	m_cm_ip=`docker port $m_cm| awk '{print $3}'| cut -d":" -f1|head -1 `
@@ -4618,7 +4608,7 @@ for loc in $loc_list; do
 	#------------ idx loop ----
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "3" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 	#--- configure idx's to members----------------------------------------------
-	osx_say "Finished step 3, configuring IDXC members for multi site in $site"
+	osx_say "Finished step 3, $site, configuring IDXC members for multi site"
 
 	#--- Check IDXC status ----------------------------------------------
 	print_step_bar_from "$R_STEP4" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#4: IDXC [check status]"
@@ -4627,7 +4617,7 @@ for loc in $loc_list; do
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "4" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 	sleep 3
 	#--- Check IDXC status ----------------------------------------------
-	osx_say "Finished step 4, IDXC status check in $site"
+	osx_say "Finished step 4, $site, IDXC status check"
 
 	#-- Building generic SHC-------------------------------------------------------
 	local start_time=$(date +%s);
@@ -4646,7 +4636,7 @@ for loc in $loc_list; do
 	configure_deployer "$dep" "$LABELname" "$R_STEP6"
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "6" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 	#--Starting STEP# configure deployer-------------------------------------------------------
-	osx_say "Finished step 6, configuring deployer in $site"
+	osx_say "Finished step 6, $site, configuring deployer"
 
 	#-- configure SHC members for multisite-------------------------------------------------------
 	#-- sh loop -----
@@ -4660,20 +4650,20 @@ for loc in $loc_list; do
 	#--- sh loop ------
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "7" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
 	#-- configure SHC members for multisite-------------------------------------------------------
-	osx_say "Finished step 7, configuring SHC members for multi site in $site"
+	osx_say "Finished step 7, $site, configuring SHC members for multi site"
 
 	#--- Configure captain & check shc status ---------------------------------------
 	print_step_bar_from "$R_STEP8" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#8: SHC [bootstrap captain]"
 	clear_page_starting_from "$R_ROLL"
 	configure_captain "$shc_members_list" "$R_STEP8"
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "8" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
-	osx_say "Finished step 8, boot straping captin in $site"
+	osx_say "Finished step 8, $site, boot straping captin"
 
 	print_step_bar_from "$R_STEP9" "${ACTIVE_TXT_COLOR}${YELLOW_LEFTHAND_EMOJI} " "STEP#9: SHC [check status]"
 	clear_page_starting_from "$R_ROLL"
 	check_shc_status "$shc_members_list" "$R_STEP9"
 	update_progress_bar "$R_BUILD_SITE" "$C_PROGRESS" "9" "1 2 3 4 5 6 7 8 9" "$(timer "$START_TIME")"
-	osx_say "Finished step 9, SHC status check in $site"
+	osx_say "Finished step 9, $site, SHC status check"
 	sleep 3
 	#--- Configure captain & check shc status ---------------------------------------
 
@@ -4692,7 +4682,7 @@ printf "${ACTIVE_TXT_COLOR}Deployers\t\t:${NC}$sites_dep_list\n"
 printf "${ACTIVE_TXT_COLOR}SHC Memebers\t:${NC}$sites_sh_list\n"
 printf "${ACTIVE_TXT_COLOR}Search Affinity\t:${NC}$sites_aff_list\n"
 printf "${ACTIVE_TXT_COLOR}IDXC Memebers\t:${NC}$sites_idx_list\n"
-printf "${ACTIVE_TXT_COLOR}RF/SF Factors\t:${NC}$factors_conf\n"
+printf "${ACTIVE_TXT_COLOR}RF/SF Factors\t:${NC}$sites_factors_list\n"
 docker_status
 total_time=$(timer "$START_TIME")
 osx_say "Multi site cluster ready. Total time $total_time"
