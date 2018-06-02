@@ -155,6 +155,7 @@ SPLUNK_LIC_DIR="$PWD/splunk_licenses"	#place all your license file here
 VOL_DIR="docker-volumes"				#volumes mount point.Full path is dynamic based on OS type
 SPLUNK_APPS_DIR="$PWD/splunk_apps"
 SPLUNK_DATASETS_DIR="$PWD/tutorial_datasets"
+CONT_LIST_FILE="$TMPDIR/containers_list.tmp"	#used in display_all_containers()
 #-----------------------------------------
 #--------Load control---------------------
 MAXLOADTIME=10						#seconds increments for timer
@@ -2279,7 +2280,7 @@ if [ -n "$choice" ]; then
 			progress_bar_image_download "$image_name"
         	fi
         	#echo "$id : ${list[$id - 1]}"
-       		printf "${NC}Using ${Purple}[$id:$image_name]:${NC}"; display_system_banner "short"
+       		printf "${NC}Using ${Purple}[$id:$image_name]:${NC}";
         	create_splunk_container "$image_name" "$number" "no"
         done
 else
@@ -2426,7 +2427,7 @@ if [ -n "$choice" ]; then
                         progress_bar_image_download "$image_name"
                 fi
                 #echo "$id : ${list[$id - 1]}"
-                printf "${NC}Using ${Purple}[$id:$image_name]:${NC}"; display_system_banner "short"
+                printf "${NC}Using ${Purple}[$id:$image_name]:${NC}";
                 construct_3rdp_container_from_image "$image_name" "1"
         done
 else
@@ -2438,7 +2439,7 @@ else
                 printf "${Yellow}Creating all 3rd party containers(s)...\n${NC}"
                 for image_name in $REPO_3RDPARTY_IMAGES; do
                        # progress_bar_image_download "$image_name"
-                        printf "${NC}Using ${Purple}[$image_name${NC}]"; display_system_banner "short"
+                        printf "${NC}Using ${Purple}[$image_name${NC}]";
                 	construct_3rdp_container_from_image "$image_name" "1"
                 done
         fi
@@ -2770,8 +2771,8 @@ fi
 
 # Reset original terminal settings.
 stty "$termios"
-docker_status
-sleep 2		#allow for extra time to view the data before clearing
+#docker_status
+#sleep 2		#allow for extra time to view the data before clearing
 }	#end clear_from_if_screen_ended()
 #----------------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------
@@ -3064,34 +3065,41 @@ return 0
 splunk_menu_inputs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function captures user selection for splunk_menu
+opt="$1"
+
 while true;
 do
 	clear
-        display_splunk_menu_options
-        choice=""
-	echo
-        read -p "Enter choice (? for help) : " choice
-                case "$choice" in
-                \? ) display_splunk_menu_help;;
+    display_splunk_menu_options
+    choice=""
+	if ( compare "1 2 3 4 5 6 7 8 9 10" "$opt" ); then
+		choice="$opt"
+	else
+       	read -p "Enter choice: " choice
+	fi
+	echo "Choice:[$choice]"
+    case "$choice" in
+        	\? ) display_splunk_menu_help;;
 
-               #IMAGES -----------
-                r|R ) remove_images;;
-                i|I ) list_all_images;;
-                f|F ) change_default_splunk_image;;
+            #IMAGES -----------
+            1|r|R ) remove_images;;
+            2|i|I ) list_all_images;;
+            3|f|F ) change_default_splunk_image;;
 
-                #CONTAINERS ------------
-                c|C) create_containers  ;;
-                d|D ) delete_containers;;
-                v|V ) delete_all_volumes;;
-                l|L ) list_all_containers ;;
-                s|S ) start_containers;;
-                t|T ) stop_containers;;
-                h|H ) list_all_hosts_by_role ;;
+            #CONTAINERS ------------
+            4|c|C) create_containers  ;;
+            5|d|D ) delete_containers;;
+            6|v|V ) delete_all_volumes;;
+            7|l|L ) list_all_containers ;;
+            8|s|S ) start_containers;;
+            9|t|T ) stop_containers;;
+            10|h|H ) list_all_hosts_by_role ;;
 
-				b|B) return 0;;
+			b|B) return 0;;
 
         esac  #end case ---------------------------
 	read -p $'\033[1;32mHit <ENTER> to continue...\e[0m'
+	opt=""
 done
 return 0
 }	#end splunk_menu_inputs()
@@ -3191,12 +3199,19 @@ return 0
 clustering_menu_inputs() {
 _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]}"
 #This function captures user selection for clustering_menu
+opt="$1"	#go stright to it now
+
 while true;
 do
         dockerinfo=`docker info|head -5| tr '\n' ' '|sed 's/: /:/g'`
         display_clustering_menu_options
         choice=""
-        read -p "Enter choice: " choice
+		if ( compare "1 2 3 4 5 6 7 8" "$opt" ); then
+			choice="$opt"
+		else
+       		read -p "Enter choice: " choice
+		fi
+		echo "Choice:[$choice]"
         case "$choice" in
                 \? ) display_clustering_menu_help;;
 
@@ -5246,9 +5261,11 @@ if [ -z "$count" ]; then
 fi
 local start_time=$(date +%s);
 clear_page_starting_from "$R_STEP2"
+osx_say "Start creating $count generic splunk containers"
 print_step_bar_from "$R_STEP2" "${ACTION_COLOR}${YELLOW_LEFTHAND_EMOJI}  " "CREATING $count CONTAINERS"; printf "\n"
 update_progress_bar "$R_STEP2" "$C_PROGRESS" "" "1" "$(timer "$start_time")"
 create_splunk_container "$basename" "$count" "yes" "$R_STEP2"  # ; members_list="$gLIST"
+osx_say "Finished creating $count generic splunk containers"
 #display_all_containers "$type"
 docker_status
 
@@ -5356,70 +5373,96 @@ _debug_function_inputs  "${FUNCNAME}" "$#" "[$1][$2][$3][$4][$5]" "${FUNCNAME[*]
 type="$1"		#container type (ex DEMO|WORKSHOP, 3RDPARTY, empty for ALL)
 tagged="$2"		#hosts to be tagged during display
 icon="$3"		#icon to be used for tagging during display
+short="$4"		#short version of display (faster output/no details)
+short="true"
 
 #curl http://169.254.169.254/latest/meta-data/public-hostname| sed 's/aws.com/aws.com \n/g'
 
 ### DONT CLEAR SCREEN HERE ####		###DONOT ADD TITLE BARS###
 
+docker_status
 if [ "$AWS_EC2" == "YES" ]; then
-	rm -fr aws_eip_mapping.tmp
+	rm -fr aws_url_mapping.tmp
 	for i in `curl -s http://169.254.169.254/latest/meta-data/public-hostname| sed 's/aws.com/aws.com \n/g' `; do
 		external_ip=`dig +short $i`
-		echo  "$external_ip $i"  >> aws_eip_mapping.tmp
+		echo  "$external_ip $i"  >> aws_url_mapping.tmp
 	done
 fi
-print_step_bar_from "$R_STEP2" "${BoldWhiteOnBlue}" "Host(container)%-7s State%-4s Splunkd%-1s Ver%-2s Docker IP%-5s Image%-15s     URL%-13s${NC}"
+print_step_bar_from "$R_STEP2" "${BoldWhiteOnBlue}" "Host(container)%-4s State%-1s Splunkd%-4s Image%-6s Bind IP%-7s Docker IP%-7s    URL%-20s         ${NC}"
 clear_page_starting_from "$R_STEP3"
 
-ctr=0
-hosts_sorted=`docker ps -a --format {{.Names}}| egrep -i "$type"| sort`
+#hosts_sorted=`docker ps -a --format {{.Names}}| egrep -i "$type"| sort`
 
-for host in $hosts_sorted ; do
+#sanity check (calling function should do the same after return)
+count=$(docker ps -a --filter name="$type" --format "{{.ID}}" | wc -l)
+if [ $count == 0 ]; then
+        return 0;
+	else
+		docker inspect --format='{{.Name}} {{.State.Status}} {{.Config.Image}} {{(index (index .HostConfig.PortBindings "8000/tcp") 0).HostIp}} {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -aq)| sed 's/\///g'|sed 's/splunknbox//g'|sed 's/registry.splunk.comsales\-engineering//g' | egrep -i "$type"| sort > $CONT_LIST_FILE
+fi
+
+ctr=0
+while read hostname hoststate imagename bind_ip docker_ip;  do
+
+
     let ctr++	#container display counter (starts at zero now that we have special DOCKER-MONITOR)
-    id=`docker ps -a --no-trunc --filter  name="^/$host$" --format {{.ID}}`
-    #These operations take long time execute
+    #These operations take long time execute ---disable---
     #cpu_percent=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $2}'`
     #mem_usage=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $3$4}'`
     #mem_limit=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $6$7}'`
     #mem_percent=`docker stats $id -a --no-stream |grep -v CONTAINER|awk '{print $8}'`
+	#------disable-----
 
-    internal_ip=`docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$id"`
-    bind_ip=`docker inspect --format '{{ .HostConfig }}' "$id"| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
-    hoststate=`docker ps -a --filter id="$id" --format "{{.Status}}" | awk '{print $1}'`
-    hostname=`docker ps -a --filter id="$id" --format "{{.Names}}"`
-    #imagename=`docker ps -a --filter id="$id" --format "{{.Image}}" | cut -d'/' -f2-3`  #remove repository name
-    imagename=`docker ps -a --filter id="$id" --format "{{.Image}}"|rev| cut -d'/' -f1|rev`  #img only
-    splunkd_ver=`docker exec "$hostname" /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
+	#id=`docker ps -a --no-trunc --filter  name="^/$host$" --format {{.ID}}`
+	#hostname=`docker ps -a --filter id="$id" --format "{{.Names}}"`
+ 	#hoststate=`docker ps -a --filter id="$id" --format "{{.Status}}" | awk '{print $1}'`
+	#imagename=`docker ps -a --filter id="$id" --format "{{.Image}}" | cut -d'/' -f2-3`  #remove repository name
+	#splunkd_ver=`docker exec "$hostname" /opt/splunk/bin/splunk version 2>/dev/null | awk '{print $2}'`
+	#bind_ip=`docker inspect --format '{{ .HostConfig }}' "$id"| $GREP -o '[0-9]\+[.][0-9]\+[.][0-9]\+[.][0-9]\+'| head -1`
+	#docker_ip=`docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$id"`
+
     host_line[$ctr]="$bind_ip"
     if [ "$AWS_EC2" == "YES" ]; then
-		eip=`$GREP "$bind_ip" aws_eip_mapping.tmp | awk '{print $2}'`
-	    eip="$bind_ip $eip:$SPLUNKWEB_PORT_EXT"
+		url=`$GREP "$bind_ip" aws_url_mapping.tmp | awk '{print $2}'`
+	    url="$bind_ip $url:$SPLUNKWEB_PORT_EXT"
 	else
-		eip="http://$bind_ip:$SPLUNKWEB_PORT_EXT"
+		url="http://$bind_ip:$SPLUNKWEB_PORT_EXT"
     fi
-
     #check splunk state if container is UP
-    if [ "$hoststate" == "Up" ]; then
-	#check splunkstate
-        splunkstate=`docker exec -ti "$id" /opt/splunk/bin/splunk status| $GREP splunkd| awk '{ print $3}'`
-    else
-        splunkstate="${Red}N/A${NC}"
-		splunkd_ver="N/A"
+    if [ "$hoststate" == "running" ]; then
+        #splunkstate=`docker exec  "$hostname" /opt/splunk/bin/splunk status| $GREP splunkd| head -1`
+		splunkstate=`curl -Is http://$bind_ip:8000 | head -n 1`
+		if [ -z "$splunkstate" ]; then
+        	splunkstate="${Red}Down${NC}"
+        	splunkd_ver="n/a"
+        	bind_ip="${NC}$bind_ip${NC}"
+		elif [ -n "$splunkstate" ]; then
+        	splunkstate="${Green}Up${NC}"
+   			#splunkd_ver=`docker exec  "$hostname" /opt/splunk/bin/splunk version | awk '{print $2}'`
+   			splunkd_ver=`echo $imagename|sed 's/splunk_//g'`
+        	bind_ip="${NC}$bind_ip${NC}"
+        	url="${NC}$url${NC}"
+		fi
+
+	else	#/host is dead
+        splunkstate="${DarkGray}n/a${NC}"
+        splunkd_ver="n/a"
+        bind_ip="${DarkGray}$bind_ip  ${NC}"
+        docker_ip="${DarkGray}n/a         ${NC}"
+        url="${DarkGray}n/a${NC}"
+
+
     fi
 
+    #bind_ip="${NC}192.168.111.111${NC}"		#debug
+   # docker_ip="${NC}${NC}"	#debug
     #set host state color. Use printf "%b" to show interpreting backslash escapes in there
     case "$hoststate" in
-        Up)      hoststate="${Green}Up${NC}" ;;
-        Created) hoststate="${DarkGray}Created${NC}" ;;
-        Exited)  hoststate="${Red}Exited${NC}" ;;
+        running) hoststate="${Green}UP${NC}" ;;
+        created) hoststate="${DarkGray}Created${NC}" ;;
+        exited)  hoststate="${Red}Exited${NC}" ;;
     esac
 
-    #set splunk state color
-    if ( compare "$splunkstate" "running" ); then
-                splunkstate="${Green}Running${NC}"
-    else
-                splunkstate="${Red}Down${NC}   "
-    fi
 
     #3rd party don't have splunk
     if ( compare "$hostname" "3RDP" ); then
@@ -5429,48 +5472,49 @@ for host in $hosts_sorted ; do
 	#indentation:
 	fmt_ctr="%-2s"
 	if ( compare "$tagged" "$hostname"  ); then
-		fmt_hostname="${DONT_ENTER_EMOJI}${DarkGray} %-18s"
+		fmt_hostname="${DONT_ENTER_EMOJI}${DarkGray} %-18b${NC}"
 		hoststate="${DarkGray} ** ${NC}"
         splunkstate="${DarkGray} ** ${NC}"
 		#splunkd_ver="${DarkGray}N/A"
-		#internal_ip=""
+		#docker_ip=""
 		#imagename=""
 	else
-		fmt_hostname="%-20s"
+		fmt_hostname="%-18b|"
 	fi
 
-	fmt_hoststate="%-18b"
-	fmt_splunkstate="%-18b"
-	fmt_splunkver="%-6s"
-	fmt_bind_ip="%-12s"
-	fmt_internal_ip="%-12s"
-	fmt_imagename="%-20s"
-	fmt_eip="%-30s"
+	fmt_hoststate="%-17b|"
+	fmt_splunkstate="%-15b|"
+	#fmt_splunkver="%-5b"
+	fmt_imagename="%-15b|"
+	fmt_bind_ip="%-20b|"
+	fmt_docker_ip="%-12b|"
+	fmt_url="%-2b"
 
-    if ( compare "$host_name" "DEMO" ) || ( compare "$host_name" "WORKSHOP" ) ; then
-        	printf "${LightCyan}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
-			"$ctr" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
+    if ( compare "$hostname" "DEMO" ) || ( compare "$hostname" "WORKSHOP" ) ; then
+        	printf "${Cyan}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_imagename $fmt_bind_ip $fmt_docker_ip $fmt_url ${NC}" \
+			"$ctr" "$hostname${NC}" "$hoststate" "$splunkstate" "$imagename" "$bind_ip" "$docker_ip" "$url"
+
    	elif ( compare "$hostname" "3RDP" ); then
 			open_ports=`docker port $hostname|$GREP -Po "\d+/tcp|udp"|tr -d '\n'| sed 's/tcp/tcp /g' `
-        	printf "${LightPurple}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
-			"$ctr" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$open_ports"
+        	printf "${LightCyan}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_imagename $fmt_bind_ip $fmt_docker_ip $fmt_url ${NC}" \
+			"$ctr" "$hostname${NC}" "$hoststate" "$splunkstate" "$imagename" "$bind_ip" "$docker_ip" "$open_ports"
 		#for y in $open_ports; do printf "%80s\n" "$y"; done
 
     elif ( compare "$hostname" "DEP" ); then
-        	printf "${LightBlue}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
-			"$ctr" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
+        	printf "${LightBlue}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_imagename $fmt_bind_ip $fmt_docker_ip $fmt_url ${NC}" \
+			"$ctr" "$hostname${NC}" "$hoststate" "$splunkstate" "$imagename" "$bind_ip" "$docker_ip" "$url"
 
     elif ( compare "$hostname" "CM" ); then
-        	printf "${LightBlue}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
-			"$ctr" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
+        	printf "${LightBlue}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_imagename $fmt_bind_ip $fmt_docker_ip $fmt_url ${NC}" \
+			"$ctr" "$hostname${NC}" "$hoststate" "$splunkstate" "$imagename" "$bind_ip" "$docker_ip" "$url"
 
     elif ( compare "$hostname" "MC" ); then
-        	printf "${LightBlue}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
-			"$ctr" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
+        	printf "${LightBlue}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_imagename $fmt_bind_ip $fmt_docker_ip $fmt_url ${NC}" \
+			"$ctr" "$hostname${NC}" "$hoststate" "$splunkstate" "$imagename" "$bind_ip" "$docker_ip" "$url"
 
     else 	###generic
-        	printf "${LightBlue}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_splunkver $fmt_internal_ip $fmt_imagename $fmt_eip ${NC}" \
-			"$ctr" "$hostname" "$hoststate" "$splunkstate" "$splunkd_ver" "$internal_ip" "$imagename" "$eip"
+        	printf "${LightBlue}$fmt_ctr) $fmt_hostname $fmt_hoststate $fmt_splunkstate $fmt_imagename $fmt_bind_ip $fmt_docker_ip $fmt_url ${NC}" \
+			"$ctr" "$hostname${NC}" "$hoststate" "$splunkstate" "$imagename" "$bind_ip" "$docker_ip" "$url"
    	fi
 
   	if [ -z "$bind_ip" ]; then
@@ -5478,15 +5522,21 @@ for host in $hosts_sorted ; do
     else
         printf "${NC}\n"
     fi
+	screen_limit=$(($ROWS - $R_STEP5))
+	mod=`expr $ctr % $screen_limit`
+	#clear_from_if_screen_ended "$R_STEP2" "p"
+	if [ "$mod" -eq "0" ];then
+		read -p $'\033[1;32mHit <ENTER> to show more...\e[0m' input </dev/tty	#inside while loop
+		clear_page_starting_from "$R_STEP3"
+	fi
 
-	clear_from_if_screen_ended "$R_STEP2" "p"
-done
+done < $CONT_LIST_FILE
 
 printf "count: %s\n" $ctr
 local timer
 local TIME_END=$(date +%s);
 timer=`echo $((TIME_END - TIME_START)) | awk '{print int($1/60)":"int($1%60)}'`
-docker_status "$timer"
+docker_status
 
 #only for the Mac
 #if [ "$os" == "Darwin" ]; then
@@ -5990,9 +6040,10 @@ output_file=""
 checks_on_start="true"
 del_on_start="false"
 opt=""
-macspeak_vol="0"; set_macspeak="false"
+macspeak_vol="0"; set_macspeak="false";
+clustering_menu_opt="";splunk_menu_opt=""
 set_timer="$DEFAULT_TIMER"
-while getopts "h?l:dsg:c:t:f:a :" opt; do
+while getopts "h?l:dsg:c:t:f:a :C:S:" opt; do
     case "$opt" in
     l)  loglevel="$OPTARG";;
    	s)  checks_on_start="false";;
@@ -6001,15 +6052,19 @@ while getopts "h?l:dsg:c:t:f:a :" opt; do
     c)  cluster="$OPTARG";;
     t)  set_timer="$OPTARG";;
     a)  set_macspeak="true"; macspeak_vol="$OPTARG";;
+    C)  clustering_menu_opt="$OPTARG";;
+    S)  splunk_menu_opt="$OPTARG";;
 
 	f)  output_file="$OPTARG";;
     h)
 		printf "Usage:\n"
-		printf "\t-s \t\tSkip startup checks if all requirements are satisfied.${LightRed}**Use with caution***${NC}\n"
+		printf "\t-s \t\tSkip startup checks.${LightRed}**Use with caution***${NC}\n"
 		printf "\t-d \t\tDelete all containers on startup.${LightRed}**Use with caution***${NC}\n"
-		printf "\t-l [3|4|5|6]\tlog level (default $DEFAULT_LOG_LEVEL)\n"
-		printf "\t-t [sec]\tpause time after each container creation (default 15 or 30 sec)\n"
-		printf "\t-a [vol]\tAnnounce progress on MacOS for cluster build\n"
+		printf "\t-l [3..5]\tLog level (default $DEFAULT_LOG_LEVEL)\n"
+		printf "\t-t [sec]\tPause time after each container creation (default 15 or 30 sec)\n"
+		printf "\t-a [vol]\tAnnounce progress on MacOS only\n"
+		printf "\t-C [1..8]\tGo directly to clustering menu options\n"
+		printf "\t-S [1..10]\tGo directly to splunk menu options [use number not letter]\n"
         printf "\t-f [filename]\tSet log file name\n"
         exit 0
         ;;
@@ -6056,6 +6111,16 @@ if [ "$del_on_start" == "true" ]; then
 	sleep 2
 	docker rm -vf $(docker ps -aq)
 fi
+
+if [ -n "$clustering_menu_opt" ];then
+	clustering_menu_inputs "$clustering_menu_opt"
+fi
+if [ -n "$splunk_menu_opt" ];then
+	splunk_menu_inputs "$splunk_menu_opt"
+fi
+
+#display_all_containers;exit		#debug
+
 #if [ "$cluster" == "1" ];then
 #	create_standalone_idxc "AUTO"
 #elif [ "$cluster" == "2" ];then
