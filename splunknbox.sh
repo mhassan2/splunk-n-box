@@ -155,7 +155,7 @@ SPLUNK_LIC_DIR="$PWD/splunk_licenses"	#place all your license file here
 VOL_DIR="docker-volumes"				#volumes mount point.Full path is dynamic based on OS type
 SPLUNK_APPS_DIR="$PWD/splunk_apps"
 SPLUNK_DATASETS_DIR="$PWD/tutorial_datasets"
-CONT_LIST_FILE="$TMPDIR/containers_list.tmp"	#used in display_all_containers()
+CONT_LIST_FILE="$TMP_DIR/containers_list.tmp"	#used in display_all_containers()
 #-----------------------------------------
 #--------Load control---------------------
 MAXLOADTIME=10						#seconds increments for timer
