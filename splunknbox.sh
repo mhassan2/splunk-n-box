@@ -76,7 +76,7 @@ DNSSERVER="192.168.1.19"		#if running dnsmasq. Set to docker-host machine IP
 #-----------------------------------
 #----------Images--------------------
 #My builds posted on docker hub    -MyH
-DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_7.1.1"
+DEFAULT_SPLUNK_IMAGE="splunknbox/splunk_7.2.0"
 
 #DEFAULT_SPLUNK_IMAGE="splunk/splunk"		#official image
 SPLUNK_DOCKER_HUB="registry.splunk.com"	#internal to splunk.Requires login
