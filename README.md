@@ -1,6 +1,10 @@
 ### **** ATTN.:
-### Ver 4.5 is major update that requires new directory structure. The cleanest was to upgrade is to start new download.
-### From you home directory type:   ``` git clone https://github.com/mhassan2/splunk-n-box ```
+#There is a confirmed IP aliasing bug in the latest docker release that applies to both Mac and Windows Docker Desktop versions. This bug breaks Splunk N' A Box. Feb 29,2020
+
+##Downgrading to the latest 2.1.x version (2.1.0.5) solves the problem. Here are the direct download links.
+##Mac: https://download.docker.com/mac/stable/40693/Docker.dmg
+##Windows: https://download.docker.com/win/stable/40693/Docker%20Desktop%20Installer.exe
+##
 <br><br>
 
 ## Videos:
@@ -24,6 +28,9 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 ## Feature list:
 
 - Menu driven and user friendly interface to manage splunk docker containers.<br>
+- Continues status bar feedback that communicate docker environment state.<br>
+- MacOS run can utitlize voice (siri) feedback.<br>
+- Tunning speed (useful with fast CPU hosts.<br>
 - Extensive error checking and validation.<br>
 - Support for multiple Splunk versions (images).<br>
 - Adaptive load control during cluster build (throttle execution if exceeds 4 x cores).<br>
@@ -35,10 +42,10 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 - Modular design that can easily be converted to a higher-level language like Python.<br>
 - Custom login screen (helpful for lab & Search Parties scenarios).<br>
 - Low resources requirements compared to VM based solutions.<br>
-- Eliminate the need to learn docker (but you should).<br>
+- Eliminate the need to learn docker CLI (but you should).<br>
 - MacOS & Linux support.<br>
 - Works with windows10 WSL (Windows Subsystem for Linux) Ubuntu bash.<br>
-- Automatic script upgrade (with version check).<br>
+- Automatic online script upgrade (with version check).<br>
 - AWS EC2 aware (shows the NATed IPs)<br>
 
 
