@@ -28,7 +28,7 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 ## Feature list:
 
 - Menu driven and user friendly colorful interface to manage splunk docker containers.<br>
-- Continues status bar feedback communicating docker environment state.<br>
+- Continues status bar feedback communicating docker host health and state.<br>
 - MacOS run can can utitlize voice (siri). Check the CLI options.<br>
 - Tunning speed (useful with fast CPU hosts).<br>
 - Extensive error checking and validation.<br>
