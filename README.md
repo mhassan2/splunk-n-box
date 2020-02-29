@@ -27,7 +27,7 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 
 ## Feature list:
 
-- Menu driven and user friendly interface to manage splunk docker containers.<br>
+- Menu driven and user friendly colorful interface to manage splunk docker containers.<br>
 - Continues status bar feedback communicating docker environment state.<br>
 - MacOS run can can utitlize voice (siri). Check the CLI options.<br>
 - Tunning speed (useful with fast CPU hosts).<br>
@@ -35,7 +35,8 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 - Support for multiple Splunk versions (images).<br>
 - Adaptive load control during cluster build (throttle execution if exceeds 4 x cores).<br>
 - Built-in dynamic hostnames and IPs allocation (no need for proxy container like NGINX)<br>
-- Automatically create & configure large number of Splunk hosts very fast.<br>
+- Automatically create & configure large number of Splunk hosts very fast 
+(under 10 mins for fully running single site cluster).<br>
 - Different levels of logging (show docker commands executed).<br>
 - Fully configured multi & single site cluster builds (including LM,CM, DEP, DMC servers).<br>
 - Manual and automatic cluster builds.<br>
