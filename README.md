@@ -55,6 +55,8 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 Source code is posted here: https://github.com/mhassan2/splunk-n-box<br>
 
 ```Ruby
+start by expanding your terminal display (iTerm) to maximum columns/rows
+
 cd ~
 git clone https://github.com/mhassan2/splunk-n-box
 cd splunk-n-box
