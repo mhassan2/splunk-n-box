@@ -1,10 +1,11 @@
 ### **** ATTN.:
-#There is a confirmed IP aliasing bug in the latest docker release that applies to both Mac and Windows Docker Desktop versions. This bug breaks Splunk N' A Box. Feb 29,2020
+There is a confirmed IP aliasing bug in the latest docker release that applies to both Mac and Windows Docker Desktop versions. This bug breaks Splunk N' A Box. Feb 29,2020
 
-##Downgrading to the latest 2.1.x version (2.1.0.5) solves the problem. Here are the direct download links.
-##Mac: https://download.docker.com/mac/stable/40693/Docker.dmg
-##Windows: https://download.docker.com/win/stable/40693/Docker%20Desktop%20Installer.exe
-##
+#Downgrading to the latest 2.1.x version (2.1.0.5) solves the problem. Here are the direct download links.
+#Mac: https://download.docker.com/mac/stable/40693/Docker.dmg
+
+#Windows: https://download.docker.com/win/stable/40693/Docker%20Desktop%20Installer.exe
+#
 <br><br>
 
 ## Videos:
