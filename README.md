@@ -13,7 +13,6 @@ Windows: https://download.docker.com/win/stable/40693/Docker%20Desktop%20Install
 
  :link: Run Splunk n' Box on USB stick:  https://youtu.be/qTAS1gvIGxM<Br>
 
- :link: In-depth docker video: https://youtu.be/rfjmeakbeH8?t=0s<br>
 
 
 
@@ -29,9 +28,9 @@ In my small test environment, I was able to quickly bring upward of 40+ Splunk D
 ## Feature list:
 
 - Menu driven and user friendly interface to manage splunk docker containers.<br>
-- Continues status bar feedback that communicate docker environment state.<br>
-- MacOS run can utitlize voice (siri) feedback.<br>
-- Tunning speed (useful with fast CPU hosts.<br>
+- Continues status bar feedback communicating docker environment state.<br>
+- MacOS run can can utitlize voice (siri). Check the CLI options.<br>
+- Tunning speed (useful with fast CPU hosts).<br>
 - Extensive error checking and validation.<br>
 - Support for multiple Splunk versions (images).<br>
 - Adaptive load control during cluster build (throttle execution if exceeds 4 x cores).<br>
